@@ -1,0 +1,13 @@
+{
+  "request_id": "synthetic-demo-request",
+  "product_id": "next_session_rank",
+  "mode": "research_network",
+  "scope": "CANDIDATE_SET",
+  "claim_type": "RESEARCH_RANK",
+  "security_codes": [],
+  "output_format": "markdown",
+  "detail_level": "standard",
+  "language": "ar",
+  "top_k": 5,
+  "requested_fields": []
+}

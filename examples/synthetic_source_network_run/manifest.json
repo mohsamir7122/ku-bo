@@ -1,0 +1,68 @@
+{
+  "artifacts": [
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/00_tradingview_screeners.json",
+      "sha256": "7781e962299574d1d51b3db931baa626cb005490e699549531a99ae851202605",
+      "size_bytes": 59,
+      "source_id": "tradingview_screeners",
+      "source_url": "https://www.tradingview.com/markets/stocks-kuwait/"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/01_investing_history.json",
+      "sha256": "05cdc6acd514664e6fc41030d8706c0e8f384f4db59bea68a89cee4802bd8d2a",
+      "size_bytes": 59,
+      "source_id": "investing_history",
+      "source_url": "https://www.investing.com/equities/kwt-real-est-historical-data"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/02_reuters_middle_east.json",
+      "sha256": "de6353a4a24ebef871a1c0b5542b20967ba5f4a1604cc51efe721553b2375d4c",
+      "size_bytes": 39,
+      "source_id": "reuters_middle_east",
+      "source_url": "https://www.reuters.com/world/middle-east/"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/03_telegram_kuwaitstockex.json",
+      "sha256": "dcd52c5d3183322218f0f3f2275c2ad6f08198ea890260b5646fac0e9e03fad3",
+      "size_bytes": 46,
+      "source_id": "telegram_kuwaitstockex",
+      "source_url": "https://t.me/s/kuwaitstockex"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/04_kuna.json",
+      "sha256": "2fd1cf2fc2eda7465eac76e86a14f767e9bf035bbdb4d3126f14306aff53a084",
+      "size_bytes": 50,
+      "source_id": "kuna",
+      "source_url": "https://www.kuna.net.kw/"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/05_boursa_disclosure_archive.json",
+      "sha256": "1409b841391bd1217abb0347640fad56b661c272157d198a159f480836815b53",
+      "size_bytes": 59,
+      "source_id": "boursa_disclosure_archive",
+      "source_url": "https://www.boursakuwait.com.kw/en/announcements/disclosures-and-announcements/historical-disclosures-and-announcements/"
+    },
+    {
+      "capture_kind": "RAW_PAGE",
+      "observed_at": "2026-08-07T00:50:00+03:00",
+      "path": "raw/06_boursa_current.json",
+      "sha256": "c767409d91f849523f2a2567a0175ae866103f2fc04a234c0afc6e1e9b0bd17f",
+      "size_bytes": 81,
+      "source_id": "boursa_current",
+      "source_url": "https://www.boursakuwait.com.kw/en/"
+    }
+  ],
+  "schema_version": "3.0"
+}

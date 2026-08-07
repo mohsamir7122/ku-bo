@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+runtime/
+htmlcov/
+*.log
+
+# Run-scoped artifacts are local by default. The policy note remains tracked.
+artifacts/*
+!artifacts/README.md

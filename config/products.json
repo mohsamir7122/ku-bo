@@ -1,0 +1,162 @@
+{
+  "catalog_version": "2.0",
+  "timezone": "Asia/Kuwait",
+  "products": [
+    {
+      "product_id": "next_session_rank",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 1,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "first_feasible_next_session_entry_with_fees_spread_slippage_and_nonfill",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "next_session_plus_5_event",
+      "product_family": "rare_event_probability",
+      "horizon_sessions": 1,
+      "target_rule": "GROSS_RETURN_GTE_5",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 120,
+      "benchmark_rule": "event_prevalence_and_market_context",
+      "cost_policy": "separate_detection_from_fillability_and_upper_limit_censoring",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_CALIBRATED"
+    },
+    {
+      "product_id": "next_session_plus_10_event",
+      "product_family": "rare_event_probability",
+      "horizon_sessions": 1,
+      "target_rule": "GROSS_RETURN_GTE_10",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 120,
+      "benchmark_rule": "rare_event_prevalence",
+      "cost_policy": "upper_limit_print_is_censored_until_fill_evidence_exists",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_CALIBRATED"
+    },
+    {
+      "product_id": "three_session_rank",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 3,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "feasible_entry_and_exit_net_of_costs",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "five_session_weekly_swing",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 5,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "feasible_entry_and_exit_net_of_costs",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "ten_session_diagnostic",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 10,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "feasible_entry_and_exit_net_of_costs",
+      "allowed_output": "DIAGNOSTIC_WINDOW_NOT_CHOSEN_POST_HOC"
+    },
+    {
+      "product_id": "fifteen_session_three_week_swing",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 15,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "feasible_entry_and_exit_net_of_costs",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "twenty_one_session_monthly_swing",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 21,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "feasible_entry_and_exit_net_of_costs",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "sixty_three_session_quarter_rank",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 63,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions", "issuer_reports"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 30,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "turnover_capacity_and_total_return_adjustment",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "one_hundred_twenty_six_session_half_year_rank",
+      "product_family": "cross_sectional_rank",
+      "horizon_sessions": 126,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions", "issuer_reports"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 20,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "turnover_capacity_and_total_return_adjustment",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "two_hundred_fifty_two_session_annual_investment",
+      "product_family": "investment_rank",
+      "horizon_sessions": 252,
+      "target_rule": "TOTAL_AND_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions", "issuer_reports"],
+      "execution_grade_required": false,
+      "minimum_independent_dates": 20,
+      "benchmark_rule": "point_in_time_market_and_sector_total_return",
+      "cost_policy": "total_return_capacity_turnover_and_drawdown",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
+      "product_id": "opening_gap_or_limit",
+      "product_family": "execution_sensitive",
+      "horizon_sessions": 1,
+      "target_rule": "GROSS_RETURN_GTE_5",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "official_disclosures", "corporate_actions", "opening_auction", "intraday_bars", "l1_quotes", "execution_fields"],
+      "execution_grade_required": true,
+      "minimum_independent_dates": 120,
+      "benchmark_rule": "opening_event_prevalence",
+      "cost_policy": "authorized_timestamped_quotes_spread_slippage_queue_and_nonfill",
+      "allowed_output": "BLOCKED_WITHOUT_AUTHORIZED_FEED"
+    },
+    {
+      "product_id": "intraday_continue_or_fade",
+      "product_family": "execution_sensitive",
+      "horizon_sessions": 1,
+      "target_rule": "NET_EXCESS_GT_0",
+      "required_capabilities": ["security_master", "security_status_history", "trading_calendar", "official_disclosures", "corporate_actions", "intraday_bars", "l1_quotes", "execution_fields"],
+      "execution_grade_required": true,
+      "minimum_independent_dates": 120,
+      "benchmark_rule": "same_interval_market_and_sector",
+      "cost_policy": "authorized_timestamped_entry_quotes_spread_slippage_queue_and_nonfill",
+      "allowed_output": "BLOCKED_WITHOUT_AUTHORIZED_FEED"
+    }
+  ]
+}

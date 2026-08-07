@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts-and-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package
+        run: python -m pip install --disable-pip-version-check -e .
+      - name: Compile
+        run: python -m compileall -q src tests scripts
+      - name: Unit and adversarial tests
+        run: python -m unittest discover -s tests -v
+      - name: Synthetic smoke check
+        run: python scripts/smoke_check.py
+      - name: Secret-pattern guard
+        run: python scripts/secret_guard.py
+      - name: Build and exercise the repository-bound wheel
+        run: |
+          python -m pip wheel --no-deps --wheel-dir dist .
+          python -m pip install --force-reinstall dist/*.whl
+          kubo --project-root "$GITHUB_WORKSPACE" validate-source-network

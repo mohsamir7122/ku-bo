@@ -1,0 +1,71 @@
+{
+  "schema_version": "3.0",
+  "allowed_outputs": ["CANDIDATE_RESEARCH_RANK", "WATCH", "ABSTAIN", "EXECUTION_BLOCKED"],
+  "forbidden_outputs": ["CALIBRATED_PROBABILITY", "HIGH_BUY_OPPORTUNITY", "GUARANTEED_RETURN", "FULL_MARKET_BEST_WITHOUT_RECONCILIATION"],
+  "profiles": [
+    {
+      "profile_id": "short_term_source_mosaic",
+      "products": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing"],
+      "required_role_quorum": {"MARKET_DISCOVERY": 2, "PRICE_HISTORY": 1, "NEWS_ARCHIVE": 2},
+      "confirmation_roles": ["OFFICIAL_EVENT", "ISSUER_PRIMARY"],
+      "minimum_independent_sources": 4,
+      "minimum_independent_community_sources": 0,
+      "max_source_age_hours": 36,
+      "signal_weights": {"CATALYST": 0.25, "PRICE_ACTIVITY": 0.25, "TECHNICAL": 0.15, "FUNDAMENTAL": 0.05, "SENTIMENT": 0.10, "LIQUIDITY": 0.10, "RISK": 0.10},
+      "sentiment_contribution_cap": 0.10,
+      "candidate_minimum_coverage": 0.55,
+      "full_market_coverage_required": 1.0,
+      "allowed_output": "CANDIDATE_RESEARCH_RANK",
+      "probability_allowed": false,
+      "recommendation_allowed": false
+    },
+    {
+      "profile_id": "medium_term_source_mosaic",
+      "products": ["ten_session_diagnostic", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank"],
+      "required_role_quorum": {"MARKET_DISCOVERY": 2, "PRICE_HISTORY": 2, "NEWS_ARCHIVE": 2, "FUNDAMENTAL_ARCHIVE": 1},
+      "confirmation_roles": ["OFFICIAL_EVENT", "ISSUER_PRIMARY"],
+      "minimum_independent_sources": 5,
+      "minimum_independent_community_sources": 0,
+      "max_source_age_hours": 168,
+      "signal_weights": {"CATALYST": 0.20, "PRICE_ACTIVITY": 0.20, "TECHNICAL": 0.15, "FUNDAMENTAL": 0.15, "SENTIMENT": 0.05, "LIQUIDITY": 0.10, "RISK": 0.15},
+      "sentiment_contribution_cap": 0.05,
+      "candidate_minimum_coverage": 0.60,
+      "full_market_coverage_required": 1.0,
+      "allowed_output": "CANDIDATE_RESEARCH_RANK",
+      "probability_allowed": false,
+      "recommendation_allowed": false
+    },
+    {
+      "profile_id": "long_term_source_mosaic",
+      "products": ["one_hundred_twenty_six_session_half_year_rank", "two_hundred_fifty_two_session_annual_investment"],
+      "required_role_quorum": {"PRICE_HISTORY": 2, "NEWS_ARCHIVE": 2, "FUNDAMENTAL_ARCHIVE": 2},
+      "confirmation_roles": ["OFFICIAL_EVENT", "ISSUER_PRIMARY"],
+      "minimum_independent_sources": 5,
+      "minimum_independent_community_sources": 0,
+      "max_source_age_hours": 720,
+      "signal_weights": {"CATALYST": 0.15, "PRICE_ACTIVITY": 0.10, "TECHNICAL": 0.05, "FUNDAMENTAL": 0.35, "SENTIMENT": 0.00, "LIQUIDITY": 0.10, "RISK": 0.25},
+      "sentiment_contribution_cap": 0.00,
+      "candidate_minimum_coverage": 0.70,
+      "full_market_coverage_required": 1.0,
+      "allowed_output": "CANDIDATE_RESEARCH_RANK",
+      "probability_allowed": false,
+      "recommendation_allowed": false
+    },
+    {
+      "profile_id": "execution_sensitive",
+      "products": ["opening_gap_or_limit", "intraday_continue_or_fade"],
+      "required_role_quorum": {"EXECUTION_TAPE": 1, "MARKET_DISCOVERY": 1},
+      "confirmation_roles": ["OFFICIAL_EVENT", "ISSUER_PRIMARY"],
+      "minimum_independent_sources": 2,
+      "minimum_independent_community_sources": 0,
+      "max_source_age_hours": 1,
+      "signal_weights": {"CATALYST": 0.15, "PRICE_ACTIVITY": 0.25, "TECHNICAL": 0.10, "FUNDAMENTAL": 0.00, "SENTIMENT": 0.00, "LIQUIDITY": 0.25, "RISK": 0.25},
+      "sentiment_contribution_cap": 0.00,
+      "candidate_minimum_coverage": 0.80,
+      "full_market_coverage_required": 1.0,
+      "allowed_output": "EXECUTION_BLOCKED",
+      "probability_allowed": false,
+      "recommendation_allowed": false
+    }
+  ]
+}

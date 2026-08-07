@@ -1,0 +1,20 @@
+{
+  "budget": {
+    "max_raw_bytes": 1000000,
+    "max_requests": 20,
+    "max_wall_seconds": 300
+  },
+  "covered_universe_count": 2,
+  "decision_at": "2026-08-07T01:00:00+03:00",
+  "expected_universe_count": 2,
+  "product_id": "next_session_rank",
+  "run_id": "synthetic-network-run",
+  "schema_version": "3.0",
+  "scope": "CANDIDATE_SET",
+  "timezone": "Asia/Kuwait",
+  "usage": {
+    "raw_bytes": 393,
+    "requests": 7,
+    "wall_seconds": 10
+  }
+}

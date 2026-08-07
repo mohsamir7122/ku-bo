@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/analysis-request.schema.json",
+  "title": "KU-BO Analysis Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id", "product_id"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "product_id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["research_network", "validated_forecast"], "default": "research_network"},
+    "scope": {"enum": ["NAMED_SECURITIES", "CANDIDATE_SET", "FULL_MARKET"], "default": "CANDIDATE_SET"},
+    "claim_type": {"enum": ["RESEARCH_RANK", "SINGLE_SECURITY", "COMPARISON", "EVIDENCE_AUDIT"], "default": "RESEARCH_RANK"},
+    "security_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "output_format": {"enum": ["json", "markdown"], "default": "json"},
+    "detail_level": {"enum": ["brief", "standard", "deep"], "default": "standard"},
+    "language": {"enum": ["ar", "en"], "default": "ar"},
+    "top_k": {"type": "integer", "minimum": 1, "maximum": 100, "default": 5},
+    "requested_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

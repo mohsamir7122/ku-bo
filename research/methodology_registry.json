@@ -1,0 +1,102 @@
+{
+  "registry_version": "1.0",
+  "checked_at": "2026-08-07T00:00:00+03:00",
+  "scope_note": "Primary papers and official documentation define implementation gates. Published results never transfer automatically to Boursa Kuwait.",
+  "methods": [
+    {
+      "method_id": "point_in_time_and_vintages",
+      "references": [
+        {"title": "FRED Real-Time Periods", "url": "https://fred.stlouisfed.org/docs/api/fred/realtime_period.html", "kind": "official_documentation"},
+        {"title": "SEC EDGAR APIs", "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces", "kind": "official_documentation"},
+        {"title": "Survivorship Bias in Performance Studies", "url": "https://academic.oup.com/rfs/article/5/4/553/1590264", "kind": "peer_reviewed_paper"}
+      ],
+      "production_state": "ENFORCED_CONTRACT",
+      "rules": ["decision_time_cutoff", "effective_dated_identity", "historical_universe_includes_delisted", "current_page_not_historical_proof", "raw_prices_separate_from_corporate_actions"],
+      "required_tests": ["future_revision_invisible", "after_hours_enters_next_session", "delisted_remains_in_universe", "current_page_rejected_as_historical_proof"]
+    },
+    {
+      "method_id": "purged_embargoed_walk_forward",
+      "references": [
+        {"title": "Advances in Financial Machine Learning Lecture 4", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3257420", "kind": "research_paper"},
+        {"title": "A Backtesting Protocol in the Era of Machine Learning", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3275654", "kind": "research_paper"},
+        {"title": "The Deflated Sharpe Ratio", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551", "kind": "research_paper"}
+      ],
+      "production_state": "BLOCKED_UNTIL_VALIDATED_DATASET",
+      "rules": ["feature_cutoff_precedes_decision", "purge_overlapping_labels", "embargo_after_test", "nested_selection_inside_training", "all_trials_counted", "untouched_final_holdout"],
+      "required_tests": ["no_train_label_overlap", "preprocessing_train_only", "outer_test_never_selects_hyperparameters", "all_trials_registered"]
+    },
+    {
+      "method_id": "small_market_event_study",
+      "references": [
+        {"title": "Event Studies in Economics and Finance", "url": "https://www.jstor.org/stable/2729691", "kind": "peer_reviewed_paper"},
+        {"title": "Conducting Event Studies on a Small Stock Exchange", "url": "https://pure.au.dk/portal/en/publications/conducting-event-studies-on-a-small-stock-exchange/", "kind": "peer_reviewed_paper"}
+      ],
+      "production_state": "UNVALIDATED_RESEARCH",
+      "rules": ["pre_registered_windows", "after_close_maps_to_next_tradable_session", "announcement_time_separate_from_effective_date", "coevents_recorded", "trade_to_trade_for_thin_stocks", "small_samples_descriptive_only"],
+      "required_tests": ["before_after_close", "no_trade_event_day", "coevent_flag", "small_sample_blocks_generalization"]
+    },
+    {
+      "method_id": "event_driven_agentic_research",
+      "references": [
+        {"title": "Janus-Q: End-to-End Event-Driven Trading via Hierarchical-Gated Reward Modeling", "url": "https://arxiv.org/abs/2602.19919", "kind": "research_paper"},
+        {"title": "Agentic Trading: When LLM Agents Meet Financial Markets", "url": "https://arxiv.org/abs/2605.19337", "kind": "research_paper"}
+      ],
+      "production_state": "RESEARCH_ONLY_UNVALIDATED",
+      "rules": ["agent_output_not_evidence", "event_dataset_point_in_time", "tool_trace_bound_to_raw_artifacts", "closed_loop_claim_requires_execution_semantics", "costs_survivorship_and_splits_reported", "simple_baseline_and_ablation_required"],
+      "required_tests": ["agent_cannot_self_validate", "future_event_invisible", "tool_trace_hash_resolves", "execution_protocol_explicit", "baseline_and_ablation_present"]
+    },
+    {
+      "method_id": "arabic_financial_sentiment",
+      "references": [
+        {"title": "When Is a Liability Not a Liability?", "url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.2010.01625.x", "kind": "peer_reviewed_paper"},
+        {"title": "FinBERT", "url": "https://arxiv.org/abs/1908.10063", "kind": "research_paper"},
+        {"title": "FinAraT5", "url": "https://aclanthology.org/2023.ldk-1.25.pdf", "kind": "peer_reviewed_paper"},
+        {"title": "Assessing Look-Ahead Bias in GPT Sentiment", "url": "https://arxiv.org/abs/2309.17322", "kind": "research_paper"},
+        {"title": "LLM-Based Financial Sentiment Analysis in Arabic: Evidence from Saudi Markets", "url": "https://arxiv.org/abs/2605.19714", "kind": "research_paper"}
+      ],
+      "production_state": "BLOCKED_UNTIL_KUWAIT_GOLD_SET",
+      "rules": ["tone_not_truth", "tone_not_market_probability", "kuwait_arabic_gold_set", "regional_corpus_requires_kuwait_transfer_validation", "out_of_time_evaluation", "company_name_mask_ablation", "author_reliability_from_resolved_claims"],
+      "required_tests": ["negation", "sarcasm", "numeric_direction", "kuwait_dialect", "company_mask", "out_of_knowledge_period"]
+    },
+    {
+      "method_id": "provenance_and_source_independence",
+      "references": [
+        {"title": "W3C PROV-DM", "url": "https://www.w3.org/TR/prov-dm/", "kind": "official_standard"},
+        {"title": "Min-Wise Independent Permutations", "url": "https://dl.acm.org/doi/10.1145/276698.276781", "kind": "peer_reviewed_paper"}
+      ],
+      "production_state": "ENFORCED_CONTRACT",
+      "rules": ["publisher_family_not_url_count", "upstream_origin_preserved", "exact_hash_dedup", "near_duplicate_cluster", "all_copies_retained_for_audit"],
+      "required_tests": ["syndicated_copies_one_family", "official_and_press_separate", "revision_chain_preserved", "quotation_not_primary"]
+    },
+    {
+      "method_id": "calibration_and_adaptive_uncertainty",
+      "references": [
+        {"title": "On Calibration of Modern Neural Networks", "url": "https://proceedings.mlr.press/v70/guo17a/guo17a.pdf", "kind": "peer_reviewed_paper"},
+        {"title": "Conformal Inference for Online Prediction with Arbitrary Distribution Shifts", "url": "https://jmlr.org/papers/volume25/22-1218/22-1218.pdf", "kind": "peer_reviewed_paper"}
+      ],
+      "production_state": "BLOCKED_UNTIL_PROSPECTIVE_CALIBRATION",
+      "rules": ["probability_requires_temporal_calibration", "brier_and_logloss_reported", "source_certainty_separate", "distribution_shift_can_force_abstain", "calibration_never_uses_test"],
+      "required_tests": ["probability_reliability", "shift_widens_or_abstains", "minimum_calibration_sample", "calibration_train_only"]
+    },
+    {
+      "method_id": "causal_regime_detection",
+      "references": [
+        {"title": "A New Approach to the Economic Analysis of Nonstationary Time Series", "url": "https://www.jstor.org/stable/1912559", "kind": "peer_reviewed_paper"},
+        {"title": "Bayesian Online Changepoint Detection", "url": "https://arxiv.org/abs/0710.3742", "kind": "research_paper"}
+      ],
+      "production_state": "DEFERRED",
+      "rules": ["filtered_not_smoothed_state", "train_window_only", "state_probabilities_retained", "regime_is_risk_context", "simple_baselines_required", "change_point_never_backdated"],
+      "required_tests": ["future_does_not_change_past_state", "change_point_has_real_detection_delay", "small_regime_sample_blocks_claim"]
+    },
+    {
+      "method_id": "illiquidity_and_execution_reality",
+      "references": [
+        {"title": "Illiquidity and Stock Returns", "url": "https://www.sciencedirect.com/science/article/pii/S1386418101000246", "kind": "peer_reviewed_paper"},
+        {"title": "A New Estimate of Transaction Costs", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=184681", "kind": "research_paper"}
+      ],
+      "production_state": "ENFORCED_GATES_PARTIAL_SIMULATOR_PENDING",
+      "rules": ["zero_volume_not_missing", "signal_separate_from_tradability", "no_fill_and_partial_fill", "limits_and_suspensions", "costs_spread_slippage_impact", "first_feasible_entry", "position_size_capped_by_available_volume"],
+      "required_tests": ["no_trade_no_fill", "suspension_blocks_execution", "large_order_partial_fill", "costs_can_reject_strategy"]
+    }
+  ]
+}

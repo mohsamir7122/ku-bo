@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/network-manifest.schema.json",
+  "title": "KU-BO Raw Evidence Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "runtime_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registry_id", "verified_domain", "subject_id", "security_codes", "evidence_sha256", "verified_at"],
+      "properties": {
+        "registry_id": {"type": "string", "minLength": 1},
+        "verified_domain": {"type": "string", "minLength": 1},
+        "subject_id": {"type": "string", "minLength": 1},
+        "security_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9]+$"}
+        },
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "verified_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "source_id", "source_url", "observed_at", "capture_kind"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^raw/[^/].*"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "capture_kind": {"enum": ["RAW_PAGE", "RAW_DOWNLOAD", "USER_EXPORT", "ACCESS_RECEIPT", "ARCHIVE_CAPTURE"]},
+        "runtime_authority": {"$ref": "#/$defs/runtime_authority"}
+      }
+    }
+  }
+}

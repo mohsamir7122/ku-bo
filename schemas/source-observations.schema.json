@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-observations.schema.json",
+  "title": "KU-BO Per-Run Source Observations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sources"],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source_observation"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "state", "access_mode", "attempted_at", "query_status", "roles_observed", "qualified_items", "zero_result", "raw_sha256s", "data_quality_flags", "limitations"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "state": {"enum": ["AVAILABLE", "PARTIAL", "BLOCKED", "ERROR", "AUTH_REQUIRED", "UNTESTED"]},
+        "access_mode": {"type": "string", "minLength": 1},
+        "attempted_at": {"type": "string", "format": "date-time"},
+        "query_status": {"enum": ["QUALIFIED", "ZERO_RESULT", "BLOCKED", "ERROR", "AUTH_REQUIRED", "PARSER_DRIFT", "DATA_QUALITY_REJECTED"]},
+        "roles_observed": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "qualified_items": {"type": "integer", "minimum": 0},
+        "zero_result": {"type": "boolean"},
+        "raw_sha256s": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/sha256"}},
+        "data_quality_flags": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "entitlement_id": {"type": "string"},
+        "entitlement_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "enabled_for_run": {"type": "boolean"},
+        "activation_id": {"type": "string", "minLength": 1},
+        "activation_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
