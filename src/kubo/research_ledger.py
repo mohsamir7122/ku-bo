@@ -14,8 +14,13 @@ import tempfile
 from typing import Any, Iterator, Sequence
 
 from .hashing import canonical_json_bytes, sha256_bytes, sha256_file
+from .outcome_evidence import (
+    OutcomeEvidenceError,
+    validate_outcome_evidence_packet,
+    validate_outcome_payload,
+)
 from .reporting import DEEP_RESEARCH_CANDIDATE_FIELDS
-from .request_contracts import is_forbidden_research_output_field
+from .request_contracts import AnalysisRequest, is_forbidden_research_output_field
 from .strict import parse_aware, require_sha256
 
 
@@ -74,6 +79,8 @@ _OUTCOME_RESERVED_PAYLOAD_FIELDS = frozenset(
         "event_hash",
         "event_seq",
         "evidence_hashes",
+        "evidence_packet_hash",
+        "evidence_packet_path",
         "ledger_id",
         "observed_at",
         "outcome_id",
@@ -162,9 +169,15 @@ def _validate_research_candidate(candidate: Any, index: int) -> list[str]:
     if unknown:
         errors.append(f"CANDIDATE_FIELDS_NOT_ALLOWED:{prefix}:" + ",".join(unknown))
 
-    code = str(candidate.get("security_code", "")).strip()
-    ticker = str(candidate.get("ticker", "")).strip()
-    if not code.isdigit() or not ticker:
+    raw_code = candidate.get("security_code")
+    raw_ticker = candidate.get("ticker")
+    code = raw_code if isinstance(raw_code, str) else ""
+    ticker = raw_ticker if isinstance(raw_ticker, str) else ""
+    if not re.fullmatch(r"[0-9]{1,12}", code) or not (
+        1 <= len(ticker) <= 32
+        and ticker == ticker.strip()
+        and all(character.isalnum() or character in "._-" for character in ticker)
+    ):
         errors.append(f"CANDIDATE_IDENTITY_INVALID:{prefix}")
     rank = candidate.get("rank")
     if isinstance(rank, bool) or not isinstance(rank, int) or rank <= 0:
@@ -295,9 +308,17 @@ def validate_research_report(report: dict[str, Any]) -> list[str]:
     if snapshot.get("mode") != "research_network":
         errors.append("REPORT_MODE_NOT_RESEARCH_NETWORK")
     request = snapshot.get("request")
+    request_contract: AnalysisRequest | None = None
     if not isinstance(request, dict):
         errors.append("REPORT_REQUEST_NOT_OBJECT")
     else:
+        try:
+            request_contract = AnalysisRequest.from_dict(request)
+        except (TypeError, ValueError):
+            errors.append("REQUEST_CONTRACT_INVALID")
+        else:
+            if request_contract.to_dict() != request:
+                errors.append("REQUEST_CONTRACT_NOT_CANONICAL")
         if not str(request.get("request_id", "")).strip():
             errors.append("MISSING_REQUEST_ID")
         if request.get("mode") != "research_network":
@@ -320,8 +341,35 @@ def validate_research_report(report: dict[str, Any]) -> list[str]:
         require_sha256(snapshot.get("evidence_packet_hash"), "evidence_packet_hash")
     except ValueError:
         errors.append("MISSING_OR_INVALID_EVIDENCE_PACKET_HASH")
-    if isinstance(request, dict):
-        request_scope = request.get("scope")
+    runtime_trust_required = snapshot.get("runtime_trust_required")
+    if not isinstance(runtime_trust_required, bool):
+        errors.append("RUNTIME_TRUST_REQUIRED_MUST_BE_BOOLEAN")
+    runtime_registry_id = snapshot.get("runtime_trust_registry_id")
+    runtime_registry_hash = snapshot.get("runtime_trust_registry_hash")
+    runtime_key_id = snapshot.get("runtime_trust_key_id")
+    if runtime_trust_required is True:
+        if not isinstance(runtime_registry_id, str) or not runtime_registry_id.strip():
+            errors.append("RUNTIME_TRUST_REGISTRY_ID_REQUIRED")
+        try:
+            require_sha256(runtime_registry_hash, "runtime_trust_registry_hash")
+        except ValueError:
+            errors.append("RUNTIME_TRUST_REGISTRY_HASH_REQUIRED")
+        if not isinstance(runtime_key_id, str) or not runtime_key_id.strip():
+            errors.append("RUNTIME_TRUST_KEY_ID_REQUIRED")
+    elif runtime_trust_required is False and any(
+        value is not None
+        for value in (runtime_registry_id, runtime_registry_hash, runtime_key_id)
+    ):
+        errors.append("RUNTIME_TRUST_PROVENANCE_FORBIDDEN_WHEN_NOT_REQUIRED")
+    exact_universe_reconciled = snapshot.get("exact_universe_reconciled")
+    full_market_claim_allowed = snapshot.get("full_market_claim_allowed")
+    if not isinstance(exact_universe_reconciled, bool):
+        errors.append("EXACT_UNIVERSE_RECONCILED_MUST_BE_BOOLEAN")
+    if not isinstance(full_market_claim_allowed, bool):
+        errors.append("FULL_MARKET_CLAIM_ALLOWED_MUST_BE_BOOLEAN")
+
+    if request_contract is not None:
+        request_scope = request_contract.scope
         packet_scope = snapshot.get("scope")
         compatible_packet_scopes = {
             "CANDIDATE_SET": {"CANDIDATE_SET", "FULL_MARKET"},
@@ -335,9 +383,17 @@ def validate_research_report(report: dict[str, Any]) -> list[str]:
             errors.append(
                 f"REPORT_SCOPE_INCOMPATIBLE_WITH_REQUEST:{request_scope}:{packet_scope}"
             )
-        requested_codes = {
-            str(item) for item in request.get("security_codes", [])
-        }
+        if (
+            request_scope == "NAMED_SECURITIES"
+            and packet_scope == "FULL_MARKET"
+            and exact_universe_reconciled is not True
+        ):
+            errors.append("NAMED_OVER_FULL_MARKET_REQUIRES_EXACT_UNIVERSE")
+        if request_scope == "FULL_MARKET" and (
+            packet_scope != "FULL_MARKET" or exact_universe_reconciled is not True
+        ):
+            errors.append("FULL_MARKET_REQUEST_REQUIRES_EXACT_UNIVERSE")
+        requested_codes = set(request_contract.security_codes)
         if requested_codes and isinstance(candidates, list):
             candidate_codes = {
                 str(item.get("security_code"))
@@ -356,6 +412,61 @@ def validate_research_report(report: dict[str, Any]) -> list[str]:
             errors.append("PROBABILITY_ALLOWED_IN_RESEARCH_REPORT")
         if boundaries.get("recommendation_allowed") not in (None, False):
             errors.append("RECOMMENDATION_ALLOWED_IN_RESEARCH_REPORT")
+        boundary_full_market = boundaries.get("full_market_claim_allowed")
+        if not isinstance(boundary_full_market, bool):
+            errors.append("FULL_MARKET_BOUNDARY_MUST_BE_BOOLEAN")
+        elif (
+            isinstance(full_market_claim_allowed, bool)
+            and boundary_full_market != full_market_claim_allowed
+        ):
+            errors.append("FULL_MARKET_BOUNDARY_BINDING_MISMATCH")
+
+    packet_scope = snapshot.get("scope")
+    status = snapshot.get("status")
+    candidate_rows = [item for item in candidates or [] if isinstance(item, dict)]
+    candidate_scope_labels = [
+        item.get("scope_label")
+        for item in candidate_rows
+        if "scope_label" in item
+    ]
+    candidate_role_gaps = [
+        item.get("per_security_role_gaps")
+        for item in candidate_rows
+        if "per_security_role_gaps" in item
+    ]
+    if full_market_claim_allowed is True:
+        if packet_scope != "FULL_MARKET" or exact_universe_reconciled is not True:
+            errors.append("FULL_MARKET_CLAIM_WITHOUT_EXACT_FULL_MARKET_PACKET")
+        if status != "RESEARCH_READY":
+            errors.append("FULL_MARKET_CLAIM_REQUIRES_RESEARCH_READY")
+        if any(label != "FULL_MARKET_RESEARCH_RANK" for label in candidate_scope_labels):
+            errors.append("FULL_MARKET_CANDIDATE_LABEL_MISMATCH")
+        if any(not isinstance(gaps, dict) or gaps for gaps in candidate_role_gaps):
+            errors.append("FULL_MARKET_CANDIDATE_ROLE_GAPS")
+    elif full_market_claim_allowed is False:
+        if any(label == "FULL_MARKET_RESEARCH_RANK" for label in candidate_scope_labels):
+            errors.append("FULL_MARKET_LABEL_WITHOUT_CLAIM_BOUNDARY")
+        if (
+            packet_scope == "FULL_MARKET"
+            and exact_universe_reconciled is True
+            and status == "RESEARCH_READY"
+        ):
+            errors.append("EXACT_FULL_MARKET_READY_WITHOUT_CLAIM_BOUNDARY")
+
+    diagnostics = snapshot.get("diagnostics")
+    if isinstance(diagnostics, dict):
+        if (
+            "exact_universe_reconciled" in diagnostics
+            and diagnostics.get("exact_universe_reconciled")
+            != exact_universe_reconciled
+        ):
+            errors.append("DIAGNOSTIC_EXACT_UNIVERSE_BINDING_MISMATCH")
+        if (
+            "full_market_claim_allowed" in diagnostics
+            and diagnostics.get("full_market_claim_allowed")
+            != full_market_claim_allowed
+        ):
+            errors.append("DIAGNOSTIC_FULL_MARKET_BOUNDARY_MISMATCH")
     return sorted(set(errors))
 
 
@@ -501,6 +612,100 @@ def _runtime_hmac_key(value: bytes | bytearray | memoryview | None) -> bytes | N
     return key
 
 
+def _canonical_evidence_packet_relative(value: Any) -> str:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ValueError("evidence_packet_path must be a canonical relative path")
+    if "\\" in value:
+        raise ValueError("evidence_packet_path must use forward slashes")
+    relative = Path(value)
+    if (
+        relative.is_absolute()
+        or not relative.parts
+        or ".." in relative.parts
+        or relative.as_posix() != value
+    ):
+        raise ValueError("evidence_packet_path must be a canonical relative path")
+    return value
+
+
+def _resolve_stored_evidence_packet(ledger_root: Path, relative_value: Any) -> tuple[Path, str]:
+    relative_text = _canonical_evidence_packet_relative(relative_value)
+    relative = Path(relative_text)
+    current = ledger_root
+    for index, part in enumerate(relative.parts):
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("evidence packet path must not contain symlink components")
+        if not current.exists():
+            raise ValueError("evidence packet path does not exist")
+        if index < len(relative.parts) - 1 and not current.is_dir():
+            raise ValueError("evidence packet path has a non-directory component")
+    if not current.is_dir():
+        raise ValueError("evidence packet must be a directory")
+    try:
+        resolved = current.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("evidence packet path cannot be resolved") from exc
+    if ledger_root not in resolved.parents:
+        raise ValueError("evidence packet must remain inside the ledger root")
+    return resolved, relative_text
+
+
+def _resolve_supplied_evidence_packet(ledger_root: Path, value: Path) -> tuple[Path, str]:
+    supplied = Path(value)
+    if ".." in supplied.parts:
+        raise ValueError("evidence pack path must not contain parent traversal")
+    lexical = supplied if supplied.is_absolute() else ledger_root / supplied
+    try:
+        relative = lexical.relative_to(ledger_root)
+    except ValueError as exc:
+        raise ValueError("evidence pack must be a directory inside the ledger root") from exc
+    if not relative.parts:
+        raise ValueError("evidence pack must be a subdirectory inside the ledger root")
+    try:
+        return _resolve_stored_evidence_packet(ledger_root, relative.as_posix())
+    except ValueError as exc:
+        if not supplied.is_absolute():
+            raise ValueError(
+                "relative evidence_pack paths are resolved inside the ledger root: " + str(exc)
+            ) from exc
+        raise
+
+
+def _validated_outcome_payload_for_decision(
+    payload: Any,
+    decision: dict[str, Any],
+    *,
+    observed_at: str,
+) -> tuple[dict[str, Any], str]:
+    if isinstance(payload, dict):
+        shadowed = sorted(set(payload).intersection(_OUTCOME_RESERVED_PAYLOAD_FIELDS))
+        if shadowed:
+            raise ValueError("outcome payload shadows envelope fields: " + ",".join(shadowed))
+        payload_security_code = payload.get("security_code")
+    else:
+        payload_security_code = None
+    snapshot = validate_outcome_payload(
+        payload,
+        expected_security_code=payload_security_code,
+        decision_at=decision.get("decision_at"),
+        observed_at=observed_at,
+    )
+    security_code = snapshot["security_code"]
+    report = decision.get("report")
+    candidates = report.get("candidates") if isinstance(report, dict) else None
+    matches = [
+        candidate
+        for candidate in candidates or []
+        if isinstance(candidate, dict) and candidate.get("security_code") == security_code
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "outcome payload security_code must match exactly one candidate in the decision report"
+        )
+    return snapshot, security_code
+
+
 class ResearchDecisionLedger:
     """Append-only research reports and separately linked realized outcomes.
 
@@ -515,6 +720,11 @@ class ResearchDecisionLedger:
         self.ledger_id = _nonempty(ledger_id, "ledger_id")
         if self.decision_path.resolve() == self.outcome_path.resolve():
             raise ValueError("decision and outcome streams must use separate paths")
+        decision_root = self.decision_path.parent.resolve()
+        outcome_root = self.outcome_path.parent.resolve()
+        if decision_root != outcome_root:
+            raise ValueError("decision and outcome streams must share one ledger directory")
+        self.ledger_root = outcome_root
 
     def decisions(self) -> list[dict[str, Any]]:
         with _exclusive_lock(self.decision_path):
@@ -589,6 +799,7 @@ class ResearchDecisionLedger:
                 "code_hash": code_hash,
                 "configuration_hash": configuration_hash,
                 "evidence_packet_hash": snapshot["evidence_packet_hash"],
+                "runtime_trust_registry_hash": snapshot["runtime_trust_registry_hash"],
                 "report": snapshot,
                 "report_hash": sha256_bytes(canonical_json_bytes(snapshot)),
                 "previous_event_hash": events[-1].get("event_hash") if events else None,
@@ -604,7 +815,7 @@ class ResearchDecisionLedger:
         decision_id: str,
         observed_at: str,
         payload: dict[str, Any],
-        evidence_hashes: Sequence[str],
+        evidence_pack: Path,
         actor_or_model_id: str,
         recorded_at: str | None = None,
         test_mode: bool = False,
@@ -614,17 +825,6 @@ class ResearchDecisionLedger:
         outcome_id = _nonempty(outcome_id, "outcome_id")
         decision_id = _nonempty(decision_id, "decision_id")
         actor_or_model_id = _nonempty(actor_or_model_id, "actor_or_model_id")
-        snapshot = _json_snapshot(payload, "outcome payload")
-        if not isinstance(snapshot, dict) or not snapshot:
-            raise ValueError("outcome payload must be a non-empty object")
-        shadowed = sorted(set(snapshot).intersection(_OUTCOME_RESERVED_PAYLOAD_FIELDS))
-        if shadowed:
-            raise ValueError("outcome payload shadows envelope fields: " + ",".join(shadowed))
-        if not isinstance(evidence_hashes, (list, tuple)) or not evidence_hashes:
-            raise ValueError("evidence_hashes must be a non-empty sequence")
-        normalized_hashes = [require_sha256(value, "evidence_hash") for value in evidence_hashes]
-        if len(set(normalized_hashes)) != len(normalized_hashes):
-            raise ValueError("evidence_hashes must be unique")
         observed = parse_aware(observed_at, "observed_at")
         supplied_recorded = _recorded_time(recorded_at, test_mode=test_mode) if recorded_at is not None else None
 
@@ -656,6 +856,23 @@ class ResearchDecisionLedger:
                 raise ValueError("observed_at cannot precede decision recorded_at")
             if outcomes and recorded < parse_aware(outcomes[-1].get("recorded_at"), "recorded_at"):
                 raise ValueError("recorded_at must be monotonic")
+            snapshot, security_code = _validated_outcome_payload_for_decision(
+                payload,
+                matching[0],
+                observed_at=observed.isoformat(),
+            )
+            resolved_pack, relative_pack = _resolve_supplied_evidence_packet(
+                self.ledger_root,
+                evidence_pack,
+            )
+            evidence = validate_outcome_evidence_packet(
+                resolved_pack,
+                outcome_id=outcome_id,
+                decision_id=decision_id,
+                security_code=security_code,
+                decision_at=matching[0]["decision_at"],
+                observed_at=observed.isoformat(),
+            )
             event: dict[str, Any] = {
                 "schema_version": "1.0",
                 "stream": OUTCOME_STREAM,
@@ -667,7 +884,9 @@ class ResearchDecisionLedger:
                 "observed_at": observed.isoformat(),
                 "recorded_at": recorded.isoformat(),
                 "actor_or_model_id": actor_or_model_id,
-                "evidence_hashes": normalized_hashes,
+                "evidence_packet_path": relative_pack,
+                "evidence_packet_hash": evidence.packet_hash,
+                "evidence_hashes": list(evidence.artifact_hashes),
                 "payload": snapshot,
                 "payload_hash": sha256_bytes(canonical_json_bytes(snapshot)),
                 "previous_event_hash": outcomes[-1].get("event_hash") if outcomes else None,
@@ -698,6 +917,7 @@ class ResearchDecisionLedger:
             "code_hash",
             "configuration_hash",
             "evidence_packet_hash",
+            "runtime_trust_registry_hash",
             "report",
             "report_hash",
             "previous_event_hash",
@@ -728,6 +948,9 @@ class ResearchDecisionLedger:
                 require_sha256(event.get("code_hash"), "code_hash")
                 require_sha256(event.get("configuration_hash"), "configuration_hash")
                 require_sha256(event.get("evidence_packet_hash"), "evidence_packet_hash")
+                runtime_registry_hash = event.get("runtime_trust_registry_hash")
+                if runtime_registry_hash is not None:
+                    require_sha256(runtime_registry_hash, "runtime_trust_registry_hash")
             except ValueError:
                 errors.append(prefix + ":ARTIFACT_HASH")
             report = event.get("report")
@@ -747,6 +970,10 @@ class ResearchDecisionLedger:
                 errors.append(prefix + ":DECISION_AT_BINDING")
             if event.get("evidence_packet_hash") != report.get("evidence_packet_hash"):
                 errors.append(prefix + ":EVIDENCE_PACKET_HASH_BINDING")
+            if event.get("runtime_trust_registry_hash") != report.get(
+                "runtime_trust_registry_hash"
+            ):
+                errors.append(prefix + ":RUNTIME_TRUST_REGISTRY_HASH_BINDING")
             try:
                 decision = parse_aware(event.get("decision_at"), "decision_at")
                 issued = parse_aware(event.get("issued_at"), "issued_at")
@@ -768,10 +995,13 @@ class ResearchDecisionLedger:
         decisions: list[dict[str, Any]],
     ) -> list[str]:
         errors: list[str] = []
+        decisions_by_id: dict[str, list[dict[str, Any]]] = {}
         decision_times: dict[str, tuple[datetime, datetime, datetime]] = {}
         for decision in decisions:
+            decision_id = str(decision.get("decision_id", ""))
+            decisions_by_id.setdefault(decision_id, []).append(decision)
             try:
-                decision_times[str(decision.get("decision_id", ""))] = (
+                decision_times[decision_id] = (
                     parse_aware(decision.get("decision_at"), "decision_at"),
                     parse_aware(decision.get("issued_at"), "issued_at"),
                     parse_aware(decision.get("recorded_at"), "recorded_at"),
@@ -792,6 +1022,8 @@ class ResearchDecisionLedger:
             "observed_at",
             "recorded_at",
             "actor_or_model_id",
+            "evidence_packet_path",
+            "evidence_packet_hash",
             "evidence_hashes",
             "payload",
             "payload_hash",
@@ -819,23 +1051,82 @@ class ResearchDecisionLedger:
                 errors.append(prefix + ":DUPLICATE_OR_EMPTY_OUTCOME_ID")
             outcome_ids.add(outcome_id)
             decision_id = str(event.get("decision_id", ""))
-            if decision_id not in decision_times:
+            matching_decisions = decisions_by_id.get(decision_id, [])
+            if len(matching_decisions) != 1 or decision_id not in decision_times:
                 errors.append(prefix + ":UNKNOWN_DECISION_ID")
+            matching_decision = matching_decisions[0] if len(matching_decisions) == 1 else None
+            try:
+                require_sha256(event.get("evidence_packet_hash"), "evidence_packet_hash")
+            except ValueError:
+                errors.append(prefix + ":EVIDENCE_PACKET_HASH")
             evidence_hashes = event.get("evidence_hashes")
-            if not isinstance(evidence_hashes, list) or not evidence_hashes or len(evidence_hashes) != len(set(evidence_hashes)):
+            if (
+                not isinstance(evidence_hashes, list)
+                or not evidence_hashes
+            ):
                 errors.append(prefix + ":EVIDENCE_HASHES")
             else:
+                normalized_evidence_hashes: list[str] = []
                 for digest in evidence_hashes:
                     try:
-                        require_sha256(digest, "evidence_hash")
+                        normalized_evidence_hashes.append(
+                            require_sha256(digest, "evidence_hash")
+                        )
                     except ValueError:
                         errors.append(prefix + ":EVIDENCE_HASH")
+                if len(normalized_evidence_hashes) != len(
+                    set(normalized_evidence_hashes)
+                ):
+                    errors.append(prefix + ":EVIDENCE_HASHES")
             payload = event.get("payload")
             if not isinstance(payload, dict) or not payload:
                 errors.append(prefix + ":PAYLOAD_NOT_OBJECT")
                 payload = {}
             if event.get("payload_hash") != sha256_bytes(canonical_json_bytes(payload)):
                 errors.append(prefix + ":PAYLOAD_HASH")
+            validated_payload: dict[str, Any] | None = None
+            security_code: str | None = None
+            if matching_decision is not None:
+                try:
+                    validated_payload, security_code = _validated_outcome_payload_for_decision(
+                        payload,
+                        matching_decision,
+                        observed_at=event.get("observed_at"),
+                    )
+                except (OutcomeEvidenceError, TypeError, ValueError) as exc:
+                    errors.append(prefix + ":PAYLOAD_CONTRACT:" + str(exc))
+            resolved_pack: Path | None = None
+            try:
+                resolved_pack, canonical_packet_path = _resolve_stored_evidence_packet(
+                    self.ledger_root,
+                    event.get("evidence_packet_path"),
+                )
+                if event.get("evidence_packet_path") != canonical_packet_path:
+                    errors.append(prefix + ":EVIDENCE_PACKET_PATH")
+            except (OSError, TypeError, ValueError) as exc:
+                errors.append(prefix + ":EVIDENCE_PACKET_PATH:" + str(exc))
+            if (
+                matching_decision is not None
+                and validated_payload is not None
+                and security_code is not None
+                and resolved_pack is not None
+            ):
+                try:
+                    evidence = validate_outcome_evidence_packet(
+                        resolved_pack,
+                        outcome_id=outcome_id,
+                        decision_id=decision_id,
+                        security_code=security_code,
+                        decision_at=matching_decision.get("decision_at"),
+                        observed_at=event.get("observed_at"),
+                    )
+                except (OutcomeEvidenceError, TypeError, ValueError) as exc:
+                    errors.append(prefix + ":EVIDENCE_PACKET:" + str(exc))
+                else:
+                    if event.get("evidence_packet_hash") != evidence.packet_hash:
+                        errors.append(prefix + ":EVIDENCE_PACKET_HASH_BINDING")
+                    if evidence_hashes != list(evidence.artifact_hashes):
+                        errors.append(prefix + ":EVIDENCE_HASHES_BINDING")
             try:
                 observed = parse_aware(event.get("observed_at"), "observed_at")
                 recorded = parse_aware(event.get("recorded_at"), "recorded_at")
@@ -957,8 +1248,10 @@ class ResearchDecisionLedger:
         path: Path,
         *,
         hmac_key: bytes | bytearray | memoryview | None = None,
+        expected_key_id: str | None = None,
     ) -> dict[str, Any]:
         key = _runtime_hmac_key(hmac_key)
+        expected = str(expected_key_id or "").strip() or None
         errors: list[str] = []
         decisions: list[dict[str, Any]] = []
         outcomes: list[dict[str, Any]] = []
@@ -974,6 +1267,15 @@ class ResearchDecisionLedger:
                 seal = json.loads(Path(path).read_text(encoding="utf-8"))
                 if not isinstance(seal, dict):
                     raise ValueError("seal is not an object")
+                if set(seal) != {
+                    "schema_version",
+                    "ledger_id",
+                    "sealed_at",
+                    "decision_stream",
+                    "outcome_stream",
+                    "authentication",
+                }:
+                    errors.append("SEAL_FIELDS")
                 expected_core = {
                     "schema_version": "1.0",
                     "ledger_id": self.ledger_id,
@@ -996,9 +1298,15 @@ class ResearchDecisionLedger:
                 if not isinstance(authentication, dict):
                     errors.append("SEAL_AUTHENTICATION")
                 elif authentication.get("algorithm") == "HMAC-SHA256":
+                    if set(authentication) != {"algorithm", "key_id", "tag"}:
+                        errors.append("SEAL_AUTHENTICATION_FIELDS")
                     if key is None:
                         errors.append("HMAC_KEY_REQUIRED")
+                    elif expected is None:
+                        errors.append("HMAC_EXPECTED_KEY_ID_REQUIRED")
                     else:
+                        if authentication.get("key_id") != expected:
+                            errors.append("HMAC_KEY_ID_MISMATCH")
                         authenticated_value = {
                             "seal": expected_core,
                             "algorithm": "HMAC-SHA256",
@@ -1011,7 +1319,12 @@ class ResearchDecisionLedger:
                             errors.append("HMAC_MISMATCH")
                         if not str(authentication.get("key_id", "")).strip():
                             errors.append("HMAC_KEY_ID")
-                elif authentication.get("algorithm") != "SHA256-CONTENT":
+                elif authentication.get("algorithm") == "SHA256-CONTENT":
+                    if set(authentication) != {"algorithm"}:
+                        errors.append("SEAL_AUTHENTICATION_FIELDS")
+                    if key is not None or expected is not None:
+                        errors.append("HMAC_DOWNGRADE_REJECTED")
+                else:
                     errors.append("UNSUPPORTED_SEAL_ALGORITHM")
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             errors.append(f"INVALID_SEAL:{exc}")

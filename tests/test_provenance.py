@@ -8,11 +8,38 @@ from unittest import mock
 
 from kubo.hashing import sha256_bytes
 from kubo.pipeline import ResearchPipeline
-from kubo.provenance import evidence_packet_hash, source_tree_hash
+from kubo.provenance import evidence_packet_hash, runtime_package_hash, source_tree_hash
 from kubo.synthetic_network import build_synthetic_network_run
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_runtime_package_hash_is_location_independent_and_content_sensitive(self) -> None:
+        with tempfile.TemporaryDirectory() as first_temp, tempfile.TemporaryDirectory() as second_temp:
+            first = Path(first_temp) / "kubo"
+            second = Path(second_temp) / "kubo"
+            first.mkdir()
+            second.mkdir()
+            for root in (first, second):
+                (root / "__init__.py").write_text('VERSION = "1"\n', encoding="utf-8")
+                (root / "engine.py").write_text("VALUE = 1\n", encoding="utf-8")
+                (root / "__pycache__").mkdir()
+                (root / "__pycache__" / "engine.pyc").write_bytes(b"ignored cache")
+            self.assertEqual(runtime_package_hash(first), runtime_package_hash(second))
+            (second / "engine.py").write_text("VALUE = 2\n", encoding="utf-8")
+            self.assertNotEqual(runtime_package_hash(first), runtime_package_hash(second))
+
+    def test_runtime_package_hash_cannot_fall_back_to_an_external_config_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "config").mkdir()
+            (root / "config" / "products.json").write_text("{}\n", encoding="utf-8")
+            empty_package = root / "kubo"
+            empty_package.mkdir()
+            with self.assertRaisesRegex(ValueError, "no hashable files"):
+                runtime_package_hash(empty_package)
+
+        self.assertRegex(runtime_package_hash(), r"^[0-9a-f]{64}$")
+
     def test_source_tree_hash_is_order_independent_and_content_sensitive(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

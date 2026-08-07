@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from copy import deepcopy
+import hashlib
+import inspect
 import json
 from pathlib import Path
 import tempfile
@@ -20,6 +21,8 @@ EVIDENCE_HASH = "c" * 64
 DECISION_AT = "2026-08-07T01:00:00+03:00"
 ISSUED_AT = "2026-08-07T02:00:00+03:00"
 RECORDED_AT = "2026-08-07T02:01:00+03:00"
+OUTCOME_OBSERVED_AT = "2026-08-08T13:00:00+03:00"
+OUTCOME_RECORDED_AT = "2026-08-08T13:01:00+03:00"
 
 
 def built_report(request_id: str = "request-1") -> dict:
@@ -91,6 +94,63 @@ def record(
         recorded_at=recorded_at,
         test_mode=True,
     )
+
+
+def outcome_payload(
+    *,
+    security_code: str = "101",
+    observed_at: str = OUTCOME_OBSERVED_AT,
+    value: int | float = 0.02,
+) -> dict:
+    return {
+        "schema_version": "1.0",
+        "security_code": security_code,
+        "metric_id": "next_session_decimal_return",
+        "value": value,
+        "unit": "DECIMAL_RETURN",
+        "measurement_start_at": DECISION_AT,
+        "measurement_end_at": observed_at,
+        "method_id": "official_close_to_close_v1",
+        "notes": "Measured from official closing-price evidence.",
+    }
+
+
+def write_outcome_pack(
+    ledger: ResearchDecisionLedger,
+    *,
+    outcome_id: str = "outcome-1",
+    decision_id: str = "decision-1",
+    security_code: str = "101",
+    observed_at: str = OUTCOME_OBSERVED_AT,
+    packet_root: Path | None = None,
+    content: bytes = b'{"security_code":"101","close_fils":100}\n',
+) -> Path:
+    root = packet_root or ledger.ledger_root / "outcome_evidence" / outcome_id
+    raw_path = root / "raw" / "official-close.json"
+    raw_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_path.write_bytes(content)
+    manifest = {
+        "schema_version": "1.0",
+        "outcome_id": outcome_id,
+        "decision_id": decision_id,
+        "security_code": security_code,
+        "artifacts": [
+            {
+                "path": "raw/official-close.json",
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "size_bytes": len(content),
+                "source_id": "official-market-close",
+                "source_url": "https://www.example.com/market/official-close.json",
+                "content_type": "application/json",
+                "observed_at": observed_at,
+            }
+        ],
+    }
+    (root / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    return root
 
 
 class ResearchLedgerTests(unittest.TestCase):
@@ -204,28 +264,34 @@ class ResearchLedgerTests(unittest.TestCase):
                 ledger.append_outcome(
                     outcome_id="outcome-orphan",
                     decision_id="missing",
-                    observed_at="2026-08-08T13:00:00+03:00",
-                    recorded_at="2026-08-08T13:01:00+03:00",
+                    observed_at=OUTCOME_OBSERVED_AT,
+                    recorded_at=OUTCOME_RECORDED_AT,
                     test_mode=True,
-                    payload={"actual_return": 0.02},
-                    evidence_hashes=[EVIDENCE_HASH],
+                    payload=outcome_payload(),
+                    evidence_pack=Path(directory) / "missing-pack",
                     actor_or_model_id="outcome-worker",
                 )
 
             record(ledger)
-            ledger.append_outcome(
+            pack = write_outcome_pack(ledger)
+            event = ledger.append_outcome(
                 outcome_id="outcome-1",
                 decision_id="decision-1",
-                observed_at="2026-08-08T13:00:00+03:00",
-                recorded_at="2026-08-08T13:01:00+03:00",
+                observed_at=OUTCOME_OBSERVED_AT,
+                recorded_at=OUTCOME_RECORDED_AT,
                 test_mode=True,
-                payload={"actual_return": 0.02, "target_hit": True},
-                evidence_hashes=[EVIDENCE_HASH],
+                payload=outcome_payload(),
+                evidence_pack=pack,
                 actor_or_model_id="outcome-worker",
             )
             self.assertEqual(len(ledger.decisions()), 1)
             self.assertNotIn("actual_return", json.dumps(ledger.decisions()))
             self.assertEqual(ledger.outcomes()[0]["decision_id"], "decision-1")
+            self.assertEqual(event["evidence_packet_path"], "outcome_evidence/outcome-1")
+            self.assertEqual(
+                event["evidence_hashes"],
+                [hashlib.sha256((pack / "raw" / "official-close.json").read_bytes()).hexdigest()],
+            )
             self.assertEqual(ledger.verify()["status"], "PASS")
 
     def test_outcome_before_decision_is_rejected(self) -> None:
@@ -239,8 +305,8 @@ class ResearchLedgerTests(unittest.TestCase):
                     observed_at="2026-08-06T13:00:00+03:00",
                     recorded_at="2026-08-07T03:00:00+03:00",
                     test_mode=True,
-                    payload={"actual_return": 0.02},
-                    evidence_hashes=[EVIDENCE_HASH],
+                    payload=outcome_payload(),
+                    evidence_pack=Path(directory) / "unused-pack",
                     actor_or_model_id="outcome-worker",
                 )
 
@@ -255,8 +321,8 @@ class ResearchLedgerTests(unittest.TestCase):
                     observed_at="2026-08-07T01:30:00+03:00",
                     recorded_at="2026-08-07T03:00:00+03:00",
                     test_mode=True,
-                    payload={"actual_return": 0.02},
-                    evidence_hashes=[EVIDENCE_HASH],
+                    payload=outcome_payload(),
+                    evidence_pack=Path(directory) / "unused-pack",
                     actor_or_model_id="outcome-worker",
                 )
 
@@ -271,41 +337,32 @@ class ResearchLedgerTests(unittest.TestCase):
                     observed_at="2026-08-07T02:00:30+03:00",
                     recorded_at="2026-08-07T03:00:00+03:00",
                     test_mode=True,
-                    payload={"actual_return": 0.02},
-                    evidence_hashes=[EVIDENCE_HASH],
+                    payload=outcome_payload(),
+                    evidence_pack=Path(directory) / "unused-pack",
                     actor_or_model_id="outcome-worker",
                 )
 
-    def test_outcome_requires_unique_valid_evidence_hashes(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            ledger = make_ledger(directory)
-            record(ledger)
-            for hashes in ([], ["bad"], [EVIDENCE_HASH, EVIDENCE_HASH]):
-                with self.subTest(hashes=hashes), self.assertRaises(ValueError):
-                    ledger.append_outcome(
-                        outcome_id="outcome-1",
-                        decision_id="decision-1",
-                        observed_at="2026-08-08T13:00:00+03:00",
-                        recorded_at="2026-08-08T13:01:00+03:00",
-                        test_mode=True,
-                        payload={"actual_return": 0.02},
-                        evidence_hashes=hashes,
-                        actor_or_model_id="outcome-worker",
-                    )
+    def test_outcome_api_accepts_only_an_evidence_pack_not_caller_hashes(self) -> None:
+        parameters = inspect.signature(ResearchDecisionLedger.append_outcome).parameters
+        self.assertIn("evidence_pack", parameters)
+        self.assertNotIn("evidence_hashes", parameters)
 
     def test_outcome_payload_cannot_shadow_linkage_envelope(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             ledger = make_ledger(directory)
             record(ledger)
+            pack = write_outcome_pack(ledger)
+            payload = outcome_payload()
+            payload["decision_id"] = "different-decision"
             with self.assertRaisesRegex(ValueError, "shadows envelope"):
                 ledger.append_outcome(
                     outcome_id="outcome-1",
                     decision_id="decision-1",
-                    observed_at="2026-08-08T13:00:00+03:00",
-                    recorded_at="2026-08-08T13:01:00+03:00",
+                    observed_at=OUTCOME_OBSERVED_AT,
+                    recorded_at=OUTCOME_RECORDED_AT,
                     test_mode=True,
-                    payload={"actual_return": 0.02, "decision_id": "different-decision"},
-                    evidence_hashes=[EVIDENCE_HASH],
+                    payload=payload,
+                    evidence_pack=pack,
                     actor_or_model_id="outcome-worker",
                 )
 
@@ -413,14 +470,102 @@ class ResearchLedgerTests(unittest.TestCase):
                 test_mode=True,
             )
             self.assertNotIn(runtime_key.hex(), seal_path.read_text(encoding="utf-8"))
-            self.assertEqual(ledger.verify_seal(seal_path, hmac_key=runtime_key)["status"], "PASS")
+            self.assertEqual(
+                ledger.verify_seal(
+                    seal_path,
+                    hmac_key=runtime_key,
+                    expected_key_id="runtime-key-v1",
+                )["status"],
+                "PASS",
+            )
             self.assertIn("HMAC_KEY_REQUIRED", ledger.verify_seal(seal_path)["errors"])
-            self.assertIn("HMAC_MISMATCH", ledger.verify_seal(seal_path, hmac_key=b"x" * 32)["errors"])
+            self.assertIn(
+                "HMAC_MISMATCH",
+                ledger.verify_seal(
+                    seal_path,
+                    hmac_key=b"x" * 32,
+                    expected_key_id="runtime-key-v1",
+                )["errors"],
+            )
+            self.assertIn(
+                "HMAC_KEY_ID_MISMATCH",
+                ledger.verify_seal(
+                    seal_path,
+                    hmac_key=runtime_key,
+                    expected_key_id="runtime-key-v2",
+                )["errors"],
+            )
 
             seal = json.loads(seal_path.read_text(encoding="utf-8"))
+            seal["notes"] = "unsigned-extra-field"
+            seal_path.write_text(json.dumps(seal), encoding="utf-8")
+            self.assertIn(
+                "SEAL_FIELDS",
+                ledger.verify_seal(
+                    seal_path,
+                    hmac_key=runtime_key,
+                    expected_key_id="runtime-key-v1",
+                )["errors"],
+            )
+            seal.pop("notes")
             seal["authentication"]["key_id"] = "tampered-key-id"
             seal_path.write_text(json.dumps(seal), encoding="utf-8")
-            self.assertIn("HMAC_MISMATCH", ledger.verify_seal(seal_path, hmac_key=runtime_key)["errors"])
+            self.assertIn(
+                "HMAC_MISMATCH",
+                ledger.verify_seal(
+                    seal_path,
+                    hmac_key=runtime_key,
+                    expected_key_id="runtime-key-v1",
+                )["errors"],
+            )
+
+    def test_hmac_verification_rejects_content_only_downgrade(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = make_ledger(directory)
+            record(ledger)
+            seal_path = Path(directory) / "seal.json"
+            runtime_key = bytes(range(32))
+            ledger.seal(
+                seal_path,
+                hmac_key=runtime_key,
+                key_id="runtime-key-v1",
+                sealed_at="2026-08-07T02:02:00+03:00",
+                test_mode=True,
+            )
+            seal = json.loads(seal_path.read_text(encoding="utf-8"))
+            seal["authentication"] = {"algorithm": "SHA256-CONTENT"}
+            seal_path.write_text(json.dumps(seal), encoding="utf-8")
+            result = ledger.verify_seal(
+                seal_path,
+                hmac_key=runtime_key,
+                expected_key_id="runtime-key-v1",
+            )
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertIn("HMAC_DOWNGRADE_REJECTED", result["errors"])
+
+    def test_runtime_trust_registry_hash_is_bound_into_decision_event(self) -> None:
+        report = built_report()
+        report.update(
+            {
+                "runtime_trust_required": True,
+                "runtime_trust_registry_id": "registry-1",
+                "runtime_trust_registry_hash": "e" * 64,
+                "runtime_trust_key_id": "runtime-key-v1",
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = make_ledger(directory)
+            event = record(ledger, report)
+            self.assertEqual(event["runtime_trust_registry_hash"], "e" * 64)
+            self.assertEqual(ledger.verify()["status"], "PASS")
+            event = json.loads(ledger.decision_path.read_text(encoding="utf-8"))
+            event["runtime_trust_registry_hash"] = None
+            ledger.decision_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+            errors = ledger.verify()["errors"]
+            self.assertTrue(
+                any("RUNTIME_TRUST_REGISTRY_HASH_BINDING" in item for item in errors),
+                errors,
+            )
 
     def test_old_seal_is_invalidated_by_later_outcome(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -432,14 +577,15 @@ class ResearchLedgerTests(unittest.TestCase):
                 sealed_at="2026-08-07T02:02:00+03:00",
                 test_mode=True,
             )
+            pack = write_outcome_pack(ledger)
             ledger.append_outcome(
                 outcome_id="outcome-1",
                 decision_id="decision-1",
-                observed_at="2026-08-08T13:00:00+03:00",
-                recorded_at="2026-08-08T13:01:00+03:00",
+                observed_at=OUTCOME_OBSERVED_AT,
+                recorded_at=OUTCOME_RECORDED_AT,
                 test_mode=True,
-                payload={"actual_return": 0.02},
-                evidence_hashes=[EVIDENCE_HASH],
+                payload=outcome_payload(),
+                evidence_pack=pack,
                 actor_or_model_id="outcome-worker",
             )
             result = ledger.verify_seal(seal_path)

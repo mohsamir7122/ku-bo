@@ -108,7 +108,7 @@ class CaptureContractTests(unittest.TestCase):
             "https://example.com/data?access_token=secret",  # secret-guard: allow — rejection fixture
             "https://example.com/data?token=secret",  # secret-guard: allow — rejection fixture
             "https://example.com/data?AccessToken=secret",  # secret-guard: allow — rejection fixture
-            "https://example.com/callback?code=oauth-code",
+            "https://example.com/callback?code=oauth-code",  # secret-guard: allow — rejection fixture
             "https://example.com/data?X-Amz-Credential=AKIA/example",  # secret-guard: allow — fixture
             "https://example.com/data?X-Amz-Signature=deadbeef",  # secret-guard: allow — fixture
             "https://example.com/data?XAmzSignature=deadbeef",  # secret-guard: allow — fixture

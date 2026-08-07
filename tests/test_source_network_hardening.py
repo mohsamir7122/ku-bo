@@ -7,6 +7,8 @@ import tempfile
 import unittest
 
 from kubo.pipeline import ResearchPipeline
+from kubo.reporting import build_report
+from kubo.request_contracts import AnalysisRequest
 from kubo.research_rank import rank_research_candidates
 from kubo.source_network import (
     NetworkRunContract,
@@ -466,6 +468,48 @@ class SourceNetworkHardeningTests(unittest.TestCase):
                 any("ticker mismatch" in item for item in result.structural_errors)
             )
 
+    def test_ticker_alias_grammar_is_enforced_in_identity_and_findings(self):
+        hostile_aliases = ("AAA BBB", "AAA`BBB", "AAA\nBBB", "*AAA*", "A" * 33, 101)
+        with tempfile.TemporaryDirectory() as directory:
+            for index, alias in enumerate(hostile_aliases):
+                with self.subTest(alias=alias):
+                    run = build_synthetic_network_run(Path(directory) / f"run-{index}")
+                    universe = read_json(run / "universe.json")
+                    universe["securities"][0]["ticker"] = alias
+                    write_json(run / "universe.json", universe)
+                    rows = read_findings(run / "findings.jsonl")
+                    for row in rows:
+                        if row["security_code"] == "101":
+                            row["ticker"] = alias
+                    write_findings(run / "findings.jsonl", rows)
+                    result = SourceNetworkRunValidator(
+                        run, self.catalog, "next_session_rank"
+                    ).validate()
+                    self.assertEqual(result.status, "BLOCKED")
+                    self.assertTrue(
+                        any(
+                            "ticker must contain 1..32" in error
+                            for error in result.structural_errors
+                        ),
+                        result.to_dict(),
+                    )
+
+    def test_unicode_alphanumeric_ticker_alias_is_accepted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = build_synthetic_network_run(Path(directory) / "run")
+            universe = read_json(run / "universe.json")
+            universe["securities"][0]["ticker"] = "سهم_١"
+            write_json(run / "universe.json", universe)
+            rows = read_findings(run / "findings.jsonl")
+            for row in rows:
+                if row["security_code"] == "101":
+                    row["ticker"] = "سهم_١"
+            write_findings(run / "findings.jsonl", rows)
+            result = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertNotEqual(result.status, "BLOCKED", result.to_dict())
+
     def test_effective_identity_bindings_are_required_for_every_scope(self):
         with tempfile.TemporaryDirectory() as directory:
             for scope in ("NAMED_SECURITIES", "CANDIDATE_SET", "FULL_MARKET"):
@@ -546,6 +590,94 @@ class SourceNetworkHardeningTests(unittest.TestCase):
             self.assertIn(
                 "FULL_MARKET_SUBSTANTIVE_FINDING_COVERAGE_INCOMPLETE:102",
                 plan["reasons"],
+            )
+
+    def test_full_market_claim_requires_role_quorum_for_every_member(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = build_synthetic_network_run(Path(directory) / "run")
+            contract = read_json(run / "research_run.json")
+            contract["scope"] = "FULL_MARKET"
+            write_json(run / "research_run.json", contract)
+            plan = self.pipeline.plan("next_session_rank", network_run_root=run)
+            self.assertTrue(plan["network_run"]["exact_universe_reconciled"])
+            self.assertEqual(plan["status"], "RESEARCH_PARTIAL")
+            self.assertFalse(plan["full_market_claim_allowed"])
+            self.assertFalse(
+                plan["network_run"]["claim_boundaries"]["full_market_claim_allowed"]
+            )
+            self.assertTrue(
+                all(
+                    row["scope_label"] == "CANDIDATE_SET_RESEARCH_RANK"
+                    for row in plan["ranked_candidates"]
+                )
+            )
+            report = build_report(
+                plan,
+                AnalysisRequest.from_dict(
+                    {
+                        "request_id": "full-market-role-gap",
+                        "product_id": "next_session_rank",
+                        "scope": "FULL_MARKET",
+                    }
+                ),
+            )
+            self.assertEqual(report["status"], "RESEARCH_PARTIAL")
+            self.assertFalse(report["full_market_claim_allowed"])
+            self.assertFalse(
+                report["claim_boundaries"]["full_market_claim_allowed"]
+            )
+
+    def test_complete_full_market_role_quorum_allows_full_label(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = build_synthetic_network_run(Path(directory) / "run")
+            contract = read_json(run / "research_run.json")
+            contract["scope"] = "FULL_MARKET"
+            write_json(run / "research_run.json", contract)
+            rows = read_findings(run / "findings.jsonl")
+            kuna = next(row for row in rows if row["finding_id"] == "f-102-kuna-context")
+            kuna["direction"] = "NEGATIVE"
+            independent_101 = dict(kuna)
+            independent_101.update(
+                {
+                    "finding_id": "f-101-kuna-independent-risk",
+                    "security_code": "101",
+                    "ticker": "AAA",
+                    "direction": "POSITIVE",
+                    "origin_id": "kuna-independent-risk-101",
+                    "event_key": "kuna-independent-risk-101",
+                    "claim_text": "Synthetic independent news-risk context for security 101.",
+                }
+            )
+            rows.append(independent_101)
+            write_findings(run / "findings.jsonl", rows)
+            plan = self.pipeline.plan("next_session_rank", network_run_root=run)
+            self.assertEqual(plan["status"], "RESEARCH_READY", plan)
+            self.assertTrue(plan["network_run"]["exact_universe_reconciled"])
+            self.assertTrue(plan["full_market_claim_allowed"])
+            self.assertTrue(
+                plan["network_run"]["claim_boundaries"]["full_market_claim_allowed"]
+            )
+            self.assertTrue(
+                all(
+                    row["scope_label"] == "FULL_MARKET_RESEARCH_RANK"
+                    for row in plan["ranked_candidates"]
+                )
+            )
+            report = build_report(
+                plan,
+                AnalysisRequest.from_dict(
+                    {
+                        "request_id": "complete-full-market",
+                        "product_id": "next_session_rank",
+                        "scope": "FULL_MARKET",
+                    }
+                ),
+            )
+            self.assertEqual(report["status"], "RESEARCH_READY")
+            self.assertTrue(report["exact_universe_reconciled"])
+            self.assertTrue(report["full_market_claim_allowed"])
+            self.assertTrue(
+                report["claim_boundaries"]["full_market_claim_allowed"]
             )
 
     def test_neutral_findings_cannot_fill_global_source_or_role_quorum(self):

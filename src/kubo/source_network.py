@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 
 from .hashing import sha256_file
 from .provenance import evidence_packet_hash as compute_evidence_packet_hash
+from .runtime_trust import RuntimeTrustError, RuntimeTrustRegistry
 from .strict import finite_number, https_url, parse_aware, parse_iso_date, require_sha256, safe_relative_path, strict_bool
 
 
@@ -106,6 +107,30 @@ def _is_substantive_finding(finding: "ResearchFinding") -> bool:
         and finding.materiality > 0
         and finding.signal_kind != "ARCHIVE_CONTEXT"
     )
+
+
+def _requires_external_runtime_trust(source: "NetworkSource") -> bool:
+    return (
+        source.requires_runtime_domain_registry
+        or not source.enabled_by_default
+        or source.source_class == "LICENSED"
+        or source.requires_entitlement
+    )
+
+
+def _ticker_alias(value: Any) -> str:
+    """Validate the deliberately small display-alias grammar.
+
+    Security identity is the official numeric code.  Tickers are display
+    aliases, so accepting whitespace, Markdown delimiters, or control
+    characters here would add ambiguity without improving identity coverage.
+    """
+
+    if not isinstance(value, str) or not 1 <= len(value) <= 32:
+        raise ValueError("ticker must contain 1..32 Unicode alphanumeric or ._- characters")
+    if any(not (character.isalnum() or character in "._-") for character in value):
+        raise ValueError("ticker must contain 1..32 Unicode alphanumeric or ._- characters")
+    return value.upper()
 
 
 @dataclass(frozen=True)
@@ -431,6 +456,11 @@ class NetworkRunValidation:
     official_confirmation_available: bool
     exact_universe_reconciled: bool
     evidence_packet_hash: str | None = None
+    runtime_trust_required: bool = False
+    sensitive_source_ids: tuple[str, ...] = ()
+    runtime_trust_registry_id: str | None = None
+    runtime_trust_registry_hash: str | None = None
+    runtime_trust_key_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         source_states = {item.source_id: item.state for item in self.observations}
@@ -468,21 +498,37 @@ class NetworkRunValidation:
             "official_confirmation_available": self.official_confirmation_available,
             "exact_universe_reconciled": self.exact_universe_reconciled,
             "evidence_packet_hash": self.evidence_packet_hash,
+            "runtime_trust_required": self.runtime_trust_required,
+            "sensitive_source_ids": list(self.sensitive_source_ids),
+            "runtime_trust_registry_id": self.runtime_trust_registry_id,
+            "runtime_trust_registry_hash": self.runtime_trust_registry_hash,
+            "runtime_trust_key_id": self.runtime_trust_key_id,
             "claim_boundaries": {
                 "allowed_output": self.policy.allowed_output if self.status == "PASS" else "WATCH_OR_ABSTAIN",
                 "probability_allowed": False,
                 "recommendation_allowed": False,
-                "full_market_claim_allowed": self.exact_universe_reconciled,
+                # Exact identity is necessary but per-security role coverage
+                # is evaluated by the ranking stage.  The pipeline may promote
+                # this conservative boundary only after that check succeeds.
+                "full_market_claim_allowed": False,
             },
         }
 
 
 class SourceNetworkRunValidator:
-    def __init__(self, run_root: Path, catalog: SourceNetworkCatalog, product_id: str):
+    def __init__(
+        self,
+        run_root: Path,
+        catalog: SourceNetworkCatalog,
+        product_id: str,
+        *,
+        runtime_trust_registry: RuntimeTrustRegistry | None = None,
+    ):
         self.run_root = run_root.resolve()
         self.catalog = catalog
         self.product_id = product_id
         self.policy = catalog.policy_for(product_id)
+        self.runtime_trust_registry = runtime_trust_registry
 
     def validate(self) -> NetworkRunValidation:
         errors: list[str] = []
@@ -492,6 +538,19 @@ class SourceNetworkRunValidator:
         artifacts, _artifact_hashes = self._load_manifest(contract, errors)
         observations = self._load_observations(contract, artifacts, errors, warnings)
         findings = self._load_findings(contract, observations, artifacts, errors, warnings)
+        sensitive_source_ids = tuple(
+            sorted(
+                {
+                    item.source_id
+                    for item in observations
+                    if item.contributes
+                    and _requires_external_runtime_trust(self.catalog.sources[item.source_id])
+                }
+            )
+        )
+        runtime_trust_required = bool(sensitive_source_ids)
+        if runtime_trust_required and self.runtime_trust_registry is None:
+            errors.append("RUNTIME_TRUST_REGISTRY_REQUIRED")
         exact_universe_reconciled = self._validate_universe(
             contract, artifacts, observations, findings, errors, warnings
         )
@@ -603,6 +662,23 @@ class SourceNetworkRunValidator:
             official_confirmation_available=official_confirmation_available,
             exact_universe_reconciled=exact_universe_reconciled,
             evidence_packet_hash=packet_hash,
+            runtime_trust_required=runtime_trust_required,
+            sensitive_source_ids=sensitive_source_ids,
+            runtime_trust_registry_id=(
+                self.runtime_trust_registry.registry_id
+                if runtime_trust_required and self.runtime_trust_registry is not None
+                else None
+            ),
+            runtime_trust_registry_hash=(
+                self.runtime_trust_registry.content_sha256
+                if runtime_trust_required and self.runtime_trust_registry is not None
+                else None
+            ),
+            runtime_trust_key_id=(
+                self.runtime_trust_registry.authenticated_key_id
+                if runtime_trust_required and self.runtime_trust_registry is not None
+                else None
+            ),
         )
 
     def _validate_universe(
@@ -661,8 +737,8 @@ class SourceNetworkRunValidator:
                 if not isinstance(row, dict):
                     raise ValueError(f"securities[{index}] is not an object")
                 code = str(row.get("security_code", "")).strip()
-                ticker = str(row.get("ticker", "")).strip().upper()
-                if not code.isdigit() or not ticker or code in bindings:
+                ticker = _ticker_alias(row.get("ticker"))
+                if not code.isdigit() or code in bindings:
                     raise ValueError("identity bindings require unique numeric code and ticker")
                 valid_from = parse_iso_date(row.get("valid_from"), "valid_from")
                 valid_to_value = row.get("valid_to")
@@ -906,6 +982,37 @@ class SourceNetworkRunValidator:
                         verified_at = parse_aware(authority.get("verified_at"), "runtime_authority.verified_at")
                         if verified_at > observed_at or (contract and verified_at > contract.decision_at):
                             raise ValueError("runtime authority was verified after the artifact or decision")
+                        registry = self.runtime_trust_registry
+                        if registry is None:
+                            raise ValueError("external runtime trust registry is required")
+                        if registry_id != registry.registry_id:
+                            raise ValueError("runtime authority registry_id does not match the trusted registry")
+                        if contract is None:
+                            raise ValueError("runtime authority requires a valid decision contract")
+                        observed_entry = registry.require_authority(
+                            source_id=source_id,
+                            subject_id=authority_subject,
+                            domain=authority_domain,
+                            decision_at=observed_at,
+                        )
+                        decision_entry = registry.require_authority(
+                            source_id=source_id,
+                            subject_id=authority_subject,
+                            domain=authority_domain,
+                            decision_at=contract.decision_at,
+                        )
+                        if observed_entry != decision_entry:
+                            raise ValueError("runtime authority binding changed before decision_at")
+                        for security_code in authority_codes:
+                            bound_entry = registry.require_authority(
+                                source_id=source_id,
+                                subject_id=authority_subject,
+                                domain=authority_domain,
+                                security_code=security_code,
+                                decision_at=contract.decision_at,
+                            )
+                            if bound_entry != decision_entry:
+                                raise ValueError("runtime authority security binding is ambiguous")
 
                     artifacts.append(
                         NetworkArtifact(
@@ -924,7 +1031,7 @@ class SourceNetworkRunValidator:
                         )
                     )
                     hashes.add(digest)
-                except (OSError, TypeError, ValueError) as exc:
+                except (OSError, RuntimeTrustError, TypeError, ValueError) as exc:
                     errors.append(f"{prefix}:{exc}")
 
             artifact_by_hash: dict[str, list[NetworkArtifact]] = {}
@@ -1073,6 +1180,41 @@ class SourceNetworkRunValidator:
                             raise ValueError(
                                 "licensed source requires entitlement_id and a same-source ACCESS_RECEIPT"
                             )
+                    if contributes and _requires_external_runtime_trust(source):
+                        registry = self.runtime_trust_registry
+                        if registry is None or contract is None:
+                            raise ValueError("sensitive source requires an external runtime trust registry")
+                        trust_entries = []
+                        if not source.enabled_by_default:
+                            attempted_entry = registry.require_activation(
+                                source_id=source_id,
+                                activation_id=activation_id,
+                                decision_at=attempted_at,
+                            )
+                            decision_entry = registry.require_activation(
+                                source_id=source_id,
+                                activation_id=activation_id,
+                                decision_at=contract.decision_at,
+                            )
+                            if attempted_entry != decision_entry:
+                                raise ValueError("runtime activation binding changed before decision_at")
+                            trust_entries.append(decision_entry)
+                        if source.requires_entitlement:
+                            attempted_entry = registry.require_entitlement(
+                                source_id=source_id,
+                                entitlement_id=entitlement,
+                                decision_at=attempted_at,
+                            )
+                            decision_entry = registry.require_entitlement(
+                                source_id=source_id,
+                                entitlement_id=entitlement,
+                                decision_at=contract.decision_at,
+                            )
+                            if attempted_entry != decision_entry:
+                                raise ValueError("runtime entitlement binding changed before decision_at")
+                            trust_entries.append(decision_entry)
+                        if len(set(trust_entries)) > 1:
+                            raise ValueError("source activation and entitlement do not share one trust entry")
                     if "EXECUTION_TAPE" in roles_observed and contributes:
                         if source.source_class != "LICENSED" or not source.requires_entitlement:
                             raise ValueError("execution tape requires an entitlement-enforced licensed source")
@@ -1096,7 +1238,7 @@ class SourceNetworkRunValidator:
                             activation_hash,
                         )
                     )
-                except (TypeError, ValueError) as exc:
+                except (RuntimeTrustError, TypeError, ValueError) as exc:
                     errors.append(f"{prefix}:{exc}")
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             errors.append(f"INVALID_SOURCE_OBSERVATIONS:{exc}")
@@ -1135,9 +1277,7 @@ class SourceNetworkRunValidator:
                 security_code = str(row.get("security_code", "")).strip()
                 if not security_code.isdigit():
                     raise ValueError("security_code must be the official numeric code")
-                ticker = str(row.get("ticker", "")).strip()
-                if not ticker:
-                    raise ValueError("ticker is required as a display alias")
+                ticker = _ticker_alias(row.get("ticker"))
                 source_id = str(row.get("source_id", ""))
                 if source_id not in self.catalog.sources or source_id not in observation_map:
                     raise ValueError("finding source was not observed")
@@ -1176,15 +1316,86 @@ class SourceNetworkRunValidator:
                 if source.requires_runtime_domain_registry and not any(
                     item.runtime_authority_registry_id
                     and _host_allowed(source_url, (item.runtime_authority_domain,))
-                    and (
-                        source.source_class != "PRIMARY_ISSUER"
-                        or security_code in item.runtime_authority_security_codes
-                    )
+                    and security_code in item.runtime_authority_security_codes
                     for item in url_artifacts
                 ):
                     raise ValueError(
                         "finding is not bound to a structured runtime domain/security authority"
                     )
+                if _requires_external_runtime_trust(source):
+                    registry = self.runtime_trust_registry
+                    if registry is None or contract is None:
+                        raise ValueError("sensitive finding requires an external runtime trust registry")
+                    trust_entries = []
+                    if source.requires_runtime_domain_registry:
+                        authority_entries = []
+                        for item in url_artifacts:
+                            if (
+                                item.runtime_authority_registry_id != registry.registry_id
+                                or security_code not in item.runtime_authority_security_codes
+                            ):
+                                continue
+                            try:
+                                observed_entry = registry.require_authority(
+                                    source_id=source_id,
+                                    subject_id=item.runtime_authority_subject_id,
+                                    domain=item.runtime_authority_domain,
+                                    security_code=security_code,
+                                    decision_at=item.observed_at,
+                                )
+                                decision_entry = registry.require_authority(
+                                    source_id=source_id,
+                                    subject_id=item.runtime_authority_subject_id,
+                                    domain=item.runtime_authority_domain,
+                                    security_code=security_code,
+                                    decision_at=contract.decision_at,
+                                )
+                            except RuntimeTrustError:
+                                continue
+                            if observed_entry == decision_entry:
+                                authority_entries.append(decision_entry)
+                        if len(set(authority_entries)) != 1:
+                            raise ValueError(
+                                "finding security_code lacks a unique external runtime authority"
+                            )
+                        trust_entries.append(authority_entries[0])
+                    if not source.enabled_by_default:
+                        attempted_entry = registry.require_activation(
+                            source_id=source_id,
+                            activation_id=observation.activation_id,
+                            security_code=security_code,
+                            decision_at=observation.attempted_at,
+                        )
+                        decision_entry = registry.require_activation(
+                            source_id=source_id,
+                            activation_id=observation.activation_id,
+                            security_code=security_code,
+                            decision_at=contract.decision_at,
+                        )
+                        if attempted_entry != decision_entry:
+                            raise ValueError("finding activation binding changed before decision_at")
+                        trust_entries.append(decision_entry)
+                    if source.requires_entitlement:
+                        attempted_entry = registry.require_entitlement(
+                            source_id=source_id,
+                            entitlement_id=observation.entitlement_id,
+                            security_code=security_code,
+                            decision_at=observation.attempted_at,
+                        )
+                        decision_entry = registry.require_entitlement(
+                            source_id=source_id,
+                            entitlement_id=observation.entitlement_id,
+                            security_code=security_code,
+                            decision_at=contract.decision_at,
+                        )
+                        if attempted_entry != decision_entry:
+                            raise ValueError("finding entitlement binding changed before decision_at")
+                        trust_entries.append(decision_entry)
+                    if len(set(trust_entries)) != 1:
+                        raise ValueError("sensitive finding trust bindings do not resolve to one entry")
+                    source_host = urlparse(source_url).hostname or ""
+                    if not trust_entries[0].authorizes_domain(source_host):
+                        raise ValueError("sensitive finding domain is outside its trusted entry")
                 if not any(item.capture_kind != "ACCESS_RECEIPT" for item in url_artifacts):
                     raise ValueError("access receipt cannot support a finding")
                 if not any(item.observed_at >= available_at for item in url_artifacts):

@@ -25,6 +25,7 @@ IGNORED_DIRECTORIES = frozenset(
         "venv",
     }
 )
+SENSITIVE_FILE_SUFFIXES = frozenset({".jks", ".key", ".keystore", ".p12", ".pfx"})
 
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
@@ -58,7 +59,7 @@ SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "signed-or-tokenized-url",
         re.compile(
             r"(?i)[?&](?:access_token|signature|token|x-amz-(?:credential|signature)|"
-            r"x-goog-signature)=[^&\s]+"
+            r"x-goog-(?:credential|signature)|oauth_token|code|jwt)=[^&\s]+"
         ),
     ),
     (
@@ -66,8 +67,17 @@ SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(
             r"(?i)[\"']?[A-Za-z0-9_-]*(?:access[_-]?token|api[_-]?key|auth[_-]?token|"
             r"bearer[_-]?token|client[_-]?secret|hmac[_-]?key|password|passwd|"
-            r"private[_-]?key|secret|session(?:id)?|signature)[\"']?\s*[:=]\s*"
+            r"private[_-]?key|secret|session(?:id)?|signature|token|cookie|credential)[\"']?\s*[:=]\s*"
             r"[\"'][A-Za-z0-9_./+=:@-]{8,}[\"']"
+        ),
+    ),
+    (
+        "credential-unquoted-config-assignment",
+        re.compile(
+            r"(?i)^\s*[A-Za-z0-9_.-]*(?:access[_-]?token|api[_-]?key|auth[_-]?token|"
+            r"bearer[_-]?token|client[_-]?secret|hmac[_-]?key|password|passwd|"
+            r"private[_-]?key|secret|session(?:id)?|signature|token|cookie|credential)"
+            r"\s*:\s*[A-Za-z0-9_./+=:@-]{8,}\s*(?:#.*)?$"
         ),
     ),
     (
@@ -75,7 +85,7 @@ SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(
             r"^\s*[A-Z0-9_]*(?:ACCESS_TOKEN|API_KEY|AUTH_TOKEN|BEARER_TOKEN|"
             r"CLIENT_SECRET|HMAC_KEY|PASSWORD|PASSWD|PRIVATE_KEY|SECRET|SESSIONID|"
-            r"SIGNATURE)\s*=\s*[^\s#]{8,}\s*$"
+            r"SIGNATURE|TOKEN|COOKIE|CREDENTIAL)\s*=\s*[^\s#]{8,}\s*$"
         ),
     ),
 )
@@ -92,6 +102,9 @@ def scan(root: Path) -> list[tuple[Path, int, str]]:
         try:
             payload = path.read_bytes()
         except OSError:
+            continue
+        if path.suffix.casefold() in SENSITIVE_FILE_SUFFIXES:
+            findings.append((path.relative_to(root), 0, "credential-file"))
             continue
         if b"\x00" in payload[:8192]:
             continue

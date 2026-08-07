@@ -505,17 +505,23 @@ class SourceNetworkTests(unittest.TestCase):
             self.assertEqual(plan["ranked_candidates"], [])
             self.assertIn("MISSING_SECURITY_IDENTITY_RECEIPT", plan["reasons"])
 
-    def test_exact_universe_can_label_full_market_research_rank(self):
+    def test_exact_universe_with_a_member_role_gap_cannot_claim_full_market(self):
         with tempfile.TemporaryDirectory() as directory:
             run = build_synthetic_network_run(Path(directory) / "run")
             payload = read_json(run / "research_run.json")
             payload["scope"] = "FULL_MARKET"
             write_json(run / "research_run.json", payload)
             plan = self.pipeline.plan("next_session_rank", network_run_root=run)
-            self.assertEqual(plan["status"], "RESEARCH_READY")
+            self.assertEqual(plan["status"], "RESEARCH_PARTIAL")
             self.assertTrue(plan["network_run"]["exact_universe_reconciled"])
-            self.assertTrue(plan["network_run"]["claim_boundaries"]["full_market_claim_allowed"])
-            self.assertTrue(all(row["scope_label"] == "FULL_MARKET_RESEARCH_RANK" for row in plan["ranked_candidates"]))
+            self.assertFalse(plan["full_market_claim_allowed"])
+            self.assertFalse(plan["network_run"]["claim_boundaries"]["full_market_claim_allowed"])
+            self.assertTrue(
+                all(
+                    row["scope_label"] == "CANDIDATE_SET_RESEARCH_RANK"
+                    for row in plan["ranked_candidates"]
+                )
+            )
 
     def test_live_probe_proves_access_only(self):
         with tempfile.TemporaryDirectory() as directory:

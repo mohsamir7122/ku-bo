@@ -19,6 +19,43 @@ DEFAULT_PROVENANCE_ROOTS = (
 )
 
 
+def runtime_package_hash(package_root: Path | None = None) -> str:
+    """Hash the exact installed ``kubo`` package used by this process.
+
+    ``--project-root`` selects external policy and configuration files.  It is
+    deliberately not a code-provenance authority: an installed wheel may be
+    executed against a checkout that contains no ``src/`` tree at all.  The
+    decision ledger therefore binds code to this importable package directory
+    and records configuration under a separate digest.
+    """
+
+    unresolved = Path(package_root) if package_root is not None else Path(__file__).parent
+    try:
+        root = unresolved.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("runtime package root does not exist") from exc
+    if not root.is_dir():
+        raise ValueError("runtime package root must be a directory")
+
+    entries: list[dict[str, str]] = []
+    for path in sorted(root.rglob("*")):
+        if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
+            continue
+        if path.is_symlink():
+            raise ValueError("runtime package must not contain symlinked files")
+        if not path.is_file():
+            continue
+        entries.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "sha256": sha256_file(path),
+            }
+        )
+    if not entries:
+        raise ValueError("runtime package contains no hashable files")
+    return sha256_bytes(canonical_json_bytes(entries))
+
+
 def source_tree_hash(
     project_root: Path,
     roots: Iterable[str] = DEFAULT_PROVENANCE_ROOTS,
@@ -118,4 +155,9 @@ def evidence_packet_hash(run_root: Path) -> str:
     return sha256_bytes(canonical_json_bytes(entries))
 
 
-__all__ = ["DEFAULT_PROVENANCE_ROOTS", "evidence_packet_hash", "source_tree_hash"]
+__all__ = [
+    "DEFAULT_PROVENANCE_ROOTS",
+    "evidence_packet_hash",
+    "runtime_package_hash",
+    "source_tree_hash",
+]

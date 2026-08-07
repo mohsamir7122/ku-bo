@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/runtime-trust-registry.schema.json",
+  "title": "KU-BO External Runtime Trust Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "registry_id",
+    "issued_at",
+    "expires_at",
+    "entries",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "audience": {"const": "kubo-source-network"},
+    "registry_id": {"$ref": "#/$defs/identifier"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "authentication": {"$ref": "#/$defs/authentication"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]*$"
+    },
+    "domain": {
+      "type": "string",
+      "maxLength": 253,
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$",
+      "not": {
+        "pattern": "(?:^|\\.)(?:home|internal|lan|local|localdomain|localhost|onion)$"
+      }
+    },
+    "security_code": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "nullable_identifier": {
+      "oneOf": [
+        {"$ref": "#/$defs/identifier"},
+        {"type": "null"}
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "subject_id",
+        "domains",
+        "security_codes",
+        "activation_id",
+        "entitlement_id",
+        "valid_from",
+        "valid_until"
+      ],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "subject_id": {"$ref": "#/$defs/identifier"},
+        "domains": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/domain"}
+        },
+        "security_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/security_code"}
+        },
+        "activation_id": {"$ref": "#/$defs/nullable_identifier"},
+        "entitlement_id": {"$ref": "#/$defs/nullable_identifier"},
+        "valid_from": {"type": "string", "format": "date-time"},
+        "valid_until": {"type": "string", "format": "date-time"}
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

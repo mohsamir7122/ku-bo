@@ -14,10 +14,11 @@ from .capture_plan import execute_capture_plan
 from .ledger import ForecastLedger
 from .pack import PackValidator
 from .pipeline import ResearchPipeline
-from .provenance import source_tree_hash
+from .provenance import runtime_package_hash, source_tree_hash
 from .research_ledger import ResearchDecisionLedger
 from .reporting import build_report, render_report
 from .request_contracts import AnalysisRequest
+from .runtime_trust import RuntimeTrustRegistry, load_runtime_trust_registry
 from .hashing import sha256_file
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
 
@@ -99,6 +100,81 @@ def _runtime_hmac_key() -> bytes | None:
     raise ValueError("KUBO_LEDGER_HMAC_KEY must start with hex: or base64:")
 
 
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"outcome payload contains duplicate object key: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_non_json_constant(value: str) -> None:
+    raise ValueError(f"outcome payload contains non-JSON numeric constant: {value}")
+
+
+def _load_strict_json_object(path: Path, field: str) -> dict[str, object]:
+    try:
+        payload = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_non_json_constant,
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise ValueError(f"{field} must be strict UTF-8 JSON") from exc
+    except ValueError:
+        raise
+    if not isinstance(payload, dict):
+        raise ValueError(f"{field} must be a JSON object")
+    return payload
+
+
+def _runtime_trust_hmac_key() -> bytes:
+    value = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY", "")
+    if not value:
+        raise ValueError("KUBO_RUNTIME_TRUST_HMAC_KEY is required with --runtime-trust-registry")
+    try:
+        if value.startswith("hex:"):
+            return bytes.fromhex(value[4:])
+        if value.startswith("base64:"):
+            return base64.b64decode(value[7:], validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError("KUBO_RUNTIME_TRUST_HMAC_KEY is not valid encoded bytes") from exc
+    raise ValueError("KUBO_RUNTIME_TRUST_HMAC_KEY must start with hex: or base64:")
+
+
+def _load_cli_runtime_trust_registry(
+    registry_path: Path | None,
+    run_root: Path | None,
+) -> RuntimeTrustRegistry | None:
+    if registry_path is None:
+        return None
+    if run_root is None:
+        raise ValueError("--runtime-trust-registry requires --network-run or --run")
+    resolved_run = run_root.resolve()
+    resolved_registry = registry_path.resolve()
+    if resolved_registry == resolved_run or resolved_run in resolved_registry.parents:
+        raise ValueError("runtime trust registry must remain outside the evidence packet")
+    key_id = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY_ID", "").strip()
+    if not key_id:
+        raise ValueError(
+            "KUBO_RUNTIME_TRUST_HMAC_KEY_ID is required with --runtime-trust-registry"
+        )
+    try:
+        run_payload = json.loads(
+            (resolved_run / "research_run.json").read_text(encoding="utf-8")
+        )
+        decision_at = run_payload["decision_at"]
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise ValueError("cannot resolve decision_at for runtime trust verification") from exc
+    return load_runtime_trust_registry(
+        resolved_registry,
+        key=_runtime_trust_hmac_key(),
+        expected_key_id=key_id,
+        decision_at=decision_at,
+    )
+
+
 def parser() -> argparse.ArgumentParser:
     root = _root()
     value = argparse.ArgumentParser(description="KU-BO Research Engine — auditable multi-source research")
@@ -116,6 +192,7 @@ def parser() -> argparse.ArgumentParser:
     validate_run = sub.add_parser("validate-network-run")
     validate_run.add_argument("--run", type=Path, required=True)
     validate_run.add_argument("--product", required=True)
+    validate_run.add_argument("--runtime-trust-registry", type=Path)
 
     probe = sub.add_parser("validate-live-probe")
     probe.add_argument("--probe", type=Path, required=True)
@@ -132,6 +209,7 @@ def parser() -> argparse.ArgumentParser:
     plan.add_argument("--pack", type=Path)
     plan.add_argument("--source-access", type=Path)
     plan.add_argument("--model-card", type=Path)
+    plan.add_argument("--runtime-trust-registry", type=Path)
 
     request = sub.add_parser("run-request")
     request.add_argument("--request", type=Path, required=True)
@@ -142,6 +220,7 @@ def parser() -> argparse.ArgumentParser:
     request.add_argument("--output", type=Path)
     request.add_argument("--research-ledger-dir", type=Path)
     request.add_argument("--ledger-id")
+    request.add_argument("--runtime-trust-registry", type=Path)
 
     capture = sub.add_parser("capture")
     capture.add_argument("--plan", type=Path, required=True)
@@ -152,6 +231,7 @@ def parser() -> argparse.ArgumentParser:
     verify_research.add_argument("--ledger-dir", type=Path, required=True)
     verify_research.add_argument("--ledger-id", required=True)
     verify_research.add_argument("--seal", type=Path)
+    verify_research.add_argument("--expected-key-id")
 
     seal_research = sub.add_parser("seal-research-ledger")
     seal_research.add_argument("--ledger-dir", type=Path, required=True)
@@ -166,7 +246,7 @@ def parser() -> argparse.ArgumentParser:
     outcome.add_argument("--decision-id", required=True)
     outcome.add_argument("--observed-at", required=True)
     outcome.add_argument("--payload", type=Path, required=True)
-    outcome.add_argument("--evidence-hash", action="append", required=True)
+    outcome.add_argument("--evidence-pack", type=Path, required=True)
     outcome.add_argument("--actor", default=f"kubo-outcome-recorder/{__version__}")
 
     validate_pack = sub.add_parser("validate-pack")
@@ -208,13 +288,26 @@ def main(argv: list[str] | None = None) -> int:
         report = network_catalog.report()
     elif args.command == "validate-network-run":
         assert network_catalog is not None
-        report = SourceNetworkRunValidator(args.run, network_catalog, args.product).validate().to_dict()
+        runtime_trust = _load_cli_runtime_trust_registry(
+            args.runtime_trust_registry,
+            args.run,
+        )
+        report = SourceNetworkRunValidator(
+            args.run,
+            network_catalog,
+            args.product,
+            runtime_trust_registry=runtime_trust,
+        ).validate().to_dict()
     elif args.command == "validate-live-probe":
         assert network_catalog is not None
         report = validate_live_probe(args.probe, network_catalog)
     elif args.command == "validate-pack":
         report = PackValidator(args.pack, Catalog(project_root / "config")).validate().to_dict()
     elif args.command == "plan":
+        runtime_trust = _load_cli_runtime_trust_registry(
+            args.runtime_trust_registry,
+            args.network_run,
+        )
         report = ResearchPipeline(project_root).plan(
             args.product,
             mode=args.mode,
@@ -223,10 +316,15 @@ def main(argv: list[str] | None = None) -> int:
             pack_root=args.pack,
             source_access_path=args.source_access,
             model_card_path=args.model_card,
+            runtime_trust_registry=runtime_trust,
         )
     elif args.command == "run-request":
         payload = json.loads(args.request.read_text(encoding="utf-8"))
         request_contract = AnalysisRequest.from_dict(payload)
+        runtime_trust = _load_cli_runtime_trust_registry(
+            args.runtime_trust_registry,
+            args.network_run,
+        )
         plan_report = ResearchPipeline(project_root).plan(
             request_contract.product_id,
             mode=request_contract.mode,
@@ -235,6 +333,7 @@ def main(argv: list[str] | None = None) -> int:
             pack_root=args.pack,
             source_access_path=args.source_access,
             model_card_path=args.model_card,
+            runtime_trust_registry=runtime_trust,
         )
         report = build_report(plan_report, request_contract)
         if args.research_ledger_dir is not None:
@@ -246,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
                 report,
                 actor_or_model_id=f"kubo-research-engine/{__version__}",
                 policy_hash=sha256_file(project_root / "config" / "research_policies.json"),
-                code_hash=source_tree_hash(project_root),
+                code_hash=runtime_package_hash(),
                 configuration_hash=source_tree_hash(
                     project_root,
                     ("config", "research"),
@@ -270,11 +369,21 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "verify-research-ledger":
         ledger = _research_ledger(args.ledger_dir, args.ledger_id)
-        report = ledger.verify_seal(args.seal, hmac_key=_runtime_hmac_key()) if args.seal else ledger.verify()
+        report = (
+            ledger.verify_seal(
+                args.seal,
+                hmac_key=_runtime_hmac_key(),
+                expected_key_id=args.expected_key_id,
+            )
+            if args.seal
+            else ledger.verify()
+        )
     elif args.command == "seal-research-ledger":
         key = _runtime_hmac_key()
         if key is not None and not args.key_id:
             raise ValueError("--key-id is required when KUBO_LEDGER_HMAC_KEY is set")
+        if key is None and args.key_id:
+            raise ValueError("--key-id requires KUBO_LEDGER_HMAC_KEY")
         seal = _research_ledger(args.ledger_dir, args.ledger_id).seal(
             args.seal,
             hmac_key=key,
@@ -282,13 +391,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         report = {"status": "PASS", "seal": seal}
     elif args.command == "append-research-outcome":
-        payload = json.loads(args.payload.read_text(encoding="utf-8"))
+        payload = _load_strict_json_object(args.payload, "outcome payload")
         event = _research_ledger(args.ledger_dir, args.ledger_id).append_outcome(
             outcome_id=args.outcome_id,
             decision_id=args.decision_id,
             observed_at=args.observed_at,
             payload=payload,
-            evidence_hashes=args.evidence_hash,
+            evidence_pack=args.evidence_pack,
             actor_or_model_id=args.actor,
         )
         report = {"status": "PASS", "event": event}

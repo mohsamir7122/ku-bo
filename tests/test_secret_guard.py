@@ -45,6 +45,44 @@ class SecretGuardTests(unittest.TestCase):
             )
             self.assertEqual(SECRET_GUARD.scan(root), [])
 
+    def test_detects_project_specific_tokens_and_signed_urls(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "runtime.conf").write_text(
+                "KUBO_BROKER_FEED_TOKEN=not-a-real-broker-token\n"
+                "KUBO_META_COOKIE=not-a-real-cookie\n"
+                "KUBO_RUNTIME_CREDENTIAL=not-a-real-credential\n"
+                "SOURCE_URL=https://example.test/data?oauth_token=not-a-real-token\n",  # secret-guard: allow — detection fixture
+                encoding="utf-8",
+            )
+            findings = SECRET_GUARD.scan(root)
+        self.assertEqual(
+            {(line, rule) for _, line, rule in findings},
+            {
+                (1, "credential-environment-assignment"),
+                (2, "credential-environment-assignment"),
+                (3, "credential-environment-assignment"),
+                (4, "signed-or-tokenized-url"),
+            },
+        )
+
+    def test_detects_unquoted_yaml_secret_and_binary_credential_container(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "credentials.yml").write_text(
+                "broker_feed_token: not-a-real-token-value\n",  # secret-guard: allow — detection fixture
+                encoding="utf-8",
+            )
+            (root / "client.p12").write_bytes(b"\x00not-a-real-credential-container")
+            findings = SECRET_GUARD.scan(root)
+        self.assertEqual(
+            {(path.name, line, rule) for path, line, rule in findings},
+            {
+                ("credentials.yml", 1, "credential-unquoted-config-assignment"),
+                ("client.p12", 0, "credential-file"),
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,5 +9,7 @@
 - `source-observations.schema.json`: حالة كل مصدر ونتيجة الاستعلام والأدوار المتاحة.
 - `universe.schema.json`: هوية الأسهم وعضوية النطاق بصورة Effective-dated ومربوطة بدليل رسمي.
 - `finding.schema.json`: عقد السطر الواحد داخل `findings.jsonl`.
+- `runtime-trust-registry.schema.json`: سجل التفويض الخارجي المصادق عليه للمصادر الحساسة.
+- `outcome-evidence-manifest.schema.json`: Manifest لأدلة النتيجة المحققة، مربوط بالقرار والسهم والتوقيت والبايتات الخام.
 
 وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر؛ المدققات الدلالية داخل `kubo.source_network` هي التي تفحص التوقيت وHash وهوية المصدر والنصاب وحدود الادعاء.

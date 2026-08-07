@@ -12,6 +12,8 @@ OUTPUT_FORMATS = frozenset({"json", "markdown"})
 DETAIL_LEVELS = frozenset({"brief", "standard", "deep"})
 LANGUAGES = frozenset({"ar", "en"})
 CLAIM_TYPES = frozenset({"RESEARCH_RANK", "SINGLE_SECURITY", "COMPARISON", "EVIDENCE_AUDIT"})
+CANONICAL_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+SECURITY_CODE_PATTERN = re.compile(r"^[0-9]{1,12}$")
 FORBIDDEN_RESEARCH_FIELD_MARKERS = frozenset(
     {
         "probability",
@@ -48,21 +50,42 @@ def is_forbidden_research_output_field(value: Any) -> bool:
 
 
 def _nonempty_string(value: Any, field: str) -> str:
-    text = str(value or "").strip()
-    if not text:
-        raise ValueError(f"{field} is required")
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{field} must be a non-empty JSON string")
+    return value
+
+
+def _canonical_identifier(value: Any, field: str) -> str:
+    text = _nonempty_string(value, field)
+    if not CANONICAL_IDENTIFIER_PATTERN.fullmatch(text):
+        raise ValueError(
+            f"{field} must be a canonical ASCII identifier (1..128 safe characters)"
+        )
     return text
 
 
-def _string_tuple(value: Any, field: str) -> tuple[str, ...]:
+def _string_tuple(
+    value: Any, field: str, *, canonical_whitespace: bool = False
+) -> tuple[str, ...]:
     if value is None:
         return ()
     if not isinstance(value, list):
         raise ValueError(f"{field} must be a list")
-    result = tuple(str(item).strip() for item in value)
+    if any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{field} must contain JSON strings")
+    if canonical_whitespace and any(item != item.strip() for item in value):
+        raise ValueError(f"{field} must not contain surrounding whitespace")
+    result = tuple(item if canonical_whitespace else item.strip() for item in value)
     if any(not item for item in result) or len(set(result)) != len(result):
         raise ValueError(f"{field} must contain unique non-empty strings")
     return result
+
+
+def _enum_string(payload: dict[str, Any], field: str, default: str) -> str:
+    value = payload.get(field, default)
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a JSON string")
+    return value
 
 
 @dataclass(frozen=True)
@@ -100,12 +123,12 @@ class AnalysisRequest:
         if unknown:
             raise ValueError("unknown request fields: " + ",".join(unknown))
 
-        mode = str(payload.get("mode", "research_network"))
-        scope = str(payload.get("scope", "CANDIDATE_SET"))
-        claim_type = str(payload.get("claim_type", "RESEARCH_RANK"))
-        output_format = str(payload.get("output_format", "json")).lower()
-        detail_level = str(payload.get("detail_level", "standard")).lower()
-        language = str(payload.get("language", "ar")).lower()
+        mode = _enum_string(payload, "mode", "research_network")
+        scope = _enum_string(payload, "scope", "CANDIDATE_SET")
+        claim_type = _enum_string(payload, "claim_type", "RESEARCH_RANK")
+        output_format = _enum_string(payload, "output_format", "json")
+        detail_level = _enum_string(payload, "detail_level", "standard")
+        language = _enum_string(payload, "language", "ar")
         for value, vocabulary, field in (
             (mode, REQUEST_MODES, "mode"),
             (scope, REQUEST_SCOPES, "scope"),
@@ -117,18 +140,34 @@ class AnalysisRequest:
             if value not in vocabulary:
                 raise ValueError(f"unsupported {field}: {value}")
 
-        security_codes = _string_tuple(payload.get("security_codes"), "security_codes")
+        security_codes = _string_tuple(
+            payload.get("security_codes"),
+            "security_codes",
+            canonical_whitespace=True,
+        )
+        if any(not SECURITY_CODE_PATTERN.fullmatch(code) for code in security_codes):
+            raise ValueError("security_codes must contain 1..12 digit official numeric codes")
         if scope == "NAMED_SECURITIES" and not security_codes:
             raise ValueError("NAMED_SECURITIES requires security_codes")
-        if claim_type == "SINGLE_SECURITY" and len(security_codes) != 1:
-            raise ValueError("SINGLE_SECURITY requires exactly one security_code")
-        if claim_type == "COMPARISON" and len(security_codes) < 2:
-            raise ValueError("COMPARISON requires at least two security_codes")
+        if claim_type == "SINGLE_SECURITY":
+            if scope != "NAMED_SECURITIES":
+                raise ValueError("SINGLE_SECURITY requires scope NAMED_SECURITIES")
+            if len(security_codes) != 1:
+                raise ValueError("SINGLE_SECURITY requires exactly one security_code")
+        if claim_type == "COMPARISON":
+            if scope != "NAMED_SECURITIES":
+                raise ValueError("COMPARISON requires scope NAMED_SECURITIES")
+            if len(security_codes) < 2:
+                raise ValueError("COMPARISON requires at least two security_codes")
+        if claim_type == "RESEARCH_RANK":
+            if scope not in {"CANDIDATE_SET", "FULL_MARKET"}:
+                raise ValueError("RESEARCH_RANK requires scope CANDIDATE_SET or FULL_MARKET")
+            if security_codes:
+                raise ValueError("RESEARCH_RANK does not accept security_codes")
 
-        try:
-            top_k = int(payload.get("top_k", 5))
-        except (TypeError, ValueError) as exc:
-            raise ValueError("top_k must be an integer") from exc
+        top_k = payload.get("top_k", 5)
+        if type(top_k) is not int:
+            raise ValueError("top_k must be a JSON integer")
         if not 1 <= top_k <= 100:
             raise ValueError("top_k must be between 1 and 100")
 
@@ -144,8 +183,8 @@ class AnalysisRequest:
             raise ValueError("research_network cannot request forecast, execution, or recommendation fields")
 
         return cls(
-            request_id=_nonempty_string(payload.get("request_id"), "request_id"),
-            product_id=_nonempty_string(payload.get("product_id"), "product_id"),
+            request_id=_canonical_identifier(payload.get("request_id"), "request_id"),
+            product_id=_canonical_identifier(payload.get("product_id"), "product_id"),
             mode=mode,
             scope=scope,
             claim_type=claim_type,
@@ -158,7 +197,10 @@ class AnalysisRequest:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["security_codes"] = list(self.security_codes)
+        payload["requested_fields"] = list(self.requested_fields)
+        return payload
 
 
 __all__ = [

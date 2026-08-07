@@ -1,14 +1,32 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "kubo-kuwait-research-engine"
 version = "0.1.0"
 description = "Auditable multi-source research and decision-support engine for Boursa Kuwait securities"
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
+authors = [{ name = "Mohamed Samir Rashed Shaheen" }]
+keywords = ["boursa-kuwait", "evidence", "financial-research", "provenance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: Other/Proprietary License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Office/Business :: Financial",
+]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/mohsamir7122/ku-bo"
+Documentation = "https://github.com/mohsamir7122/ku-bo/blob/main/README.md"
+Issues = "https://github.com/mohsamir7122/ku-bo/issues"
 
 [project.scripts]
 kubo = "kubo.cli_v3:main"

@@ -10,6 +10,7 @@ from .modelcard import validate_model_card
 from .pack import PackValidation, PackValidator
 from .provenance import evidence_packet_hash
 from .research_rank import rank_research_candidates
+from .runtime_trust import RuntimeTrustRegistry
 from .source_access import load_source_access
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator
 
@@ -30,11 +31,17 @@ class ResearchPipeline:
         network_run_root: Path | None = None,
         mode: str = "research_network",
         top_k: int = 5,
+        runtime_trust_registry: RuntimeTrustRegistry | None = None,
     ) -> dict[str, Any]:
         if product_id not in self.catalog.products:
             raise KeyError(product_id)
         if mode == "research_network":
-            return self._plan_research_network(product_id, network_run_root=network_run_root, top_k=top_k)
+            return self._plan_research_network(
+                product_id,
+                network_run_root=network_run_root,
+                top_k=top_k,
+                runtime_trust_registry=runtime_trust_registry,
+            )
         if mode != "validated_forecast":
             raise ValueError("mode must be research_network or validated_forecast")
         product = self.catalog.products[product_id]
@@ -99,7 +106,14 @@ class ResearchPipeline:
             },
         }
 
-    def _plan_research_network(self, product_id: str, *, network_run_root: Path | None, top_k: int) -> dict[str, Any]:
+    def _plan_research_network(
+        self,
+        product_id: str,
+        *,
+        network_run_root: Path | None,
+        top_k: int,
+        runtime_trust_registry: RuntimeTrustRegistry | None,
+    ) -> dict[str, Any]:
         product = self.catalog.products[product_id]
         policy = self.network_catalog.policy_for(product_id)
         if network_run_root is None:
@@ -110,6 +124,10 @@ class ResearchPipeline:
                 "policy": policy.profile_id,
                 "network_run": None,
                 "evidence_packet_hash": None,
+                "runtime_trust_registry_id": None,
+                "runtime_trust_registry_hash": None,
+                "runtime_trust_key_id": None,
+                "full_market_claim_allowed": False,
                 "ranked_candidates": [],
                 "reasons": ["NO_PER_RUN_SOURCE_PACKET"],
                 "claim_boundaries": {
@@ -121,7 +139,12 @@ class ResearchPipeline:
                 },
             }
 
-        validation = SourceNetworkRunValidator(network_run_root, self.network_catalog, product_id).validate()
+        validation = SourceNetworkRunValidator(
+            network_run_root,
+            self.network_catalog,
+            product_id,
+            runtime_trust_registry=runtime_trust_registry,
+        ).validate()
         if validation.status == "BLOCKED":
             status = "SOURCE_NETWORK_BLOCKED"
             reasons = list(validation.structural_errors)
@@ -132,6 +155,37 @@ class ResearchPipeline:
             status = "RESEARCH_READY"
             reasons = []
         ranked = rank_research_candidates(validation, source_map=self.network_catalog.sources, top_k=top_k)
+        full_market_role_gap_codes = sorted(
+            str(row.get("security_code"))
+            for row in ranked
+            if row.get("per_security_role_gaps")
+        )
+        full_market_contract = (
+            validation.contract
+            if validation.contract is not None
+            and validation.contract.scope == "FULL_MARKET"
+            else None
+        )
+        ranked_security_codes = {
+            str(row.get("security_code"))
+            for row in ranked
+            if str(row.get("security_code", ""))
+        }
+        full_market_claim_allowed = bool(
+            validation.status == "PASS"
+            and full_market_contract is not None
+            and validation.exact_universe_reconciled
+            and ranked
+            and len(ranked) == full_market_contract.expected_universe_count
+            and len(ranked_security_codes) == full_market_contract.expected_universe_count
+            and not full_market_role_gap_codes
+        )
+        if validation.exact_universe_reconciled and full_market_role_gap_codes:
+            status = "RESEARCH_PARTIAL"
+            reasons.append(
+                "FULL_MARKET_PER_SECURITY_ROLE_COVERAGE_INCOMPLETE:"
+                + ",".join(full_market_role_gap_codes)
+            )
         packet_hash: str | None = None
         if validation.status in {"PASS", "PARTIAL"}:
             try:
@@ -140,19 +194,31 @@ class ResearchPipeline:
                 status = "SOURCE_NETWORK_BLOCKED"
                 reasons.append(f"EVIDENCE_PACKET_CHANGED_AFTER_VALIDATION:{exc}")
                 ranked = []
+                full_market_claim_allowed = False
             else:
                 if packet_hash != validation.evidence_packet_hash:
                     status = "SOURCE_NETWORK_BLOCKED"
                     reasons.append("EVIDENCE_PACKET_CHANGED_AFTER_VALIDATION")
                     ranked = []
                     packet_hash = None
+                    full_market_claim_allowed = False
+        network_run = validation.to_dict()
+        network_claim_boundaries = network_run.get("claim_boundaries")
+        if isinstance(network_claim_boundaries, dict):
+            network_claim_boundaries["full_market_claim_allowed"] = (
+                full_market_claim_allowed
+            )
         return {
             "status": status,
             "mode": "research_network",
             "product": {**asdict(product), "required_capabilities": sorted(product.required_capabilities)},
             "policy": policy.profile_id,
-            "network_run": validation.to_dict(),
+            "network_run": network_run,
             "evidence_packet_hash": packet_hash,
+            "runtime_trust_registry_id": validation.runtime_trust_registry_id,
+            "runtime_trust_registry_hash": validation.runtime_trust_registry_hash,
+            "runtime_trust_key_id": validation.runtime_trust_key_id,
+            "full_market_claim_allowed": full_market_claim_allowed,
             "ranked_candidates": ranked,
             "reasons": list(dict.fromkeys([*reasons, *validation.warnings])),
             "claim_boundaries": {
@@ -162,6 +228,7 @@ class ResearchPipeline:
                 "probability_allowed": False,
                 "recommendation_allowed": False,
                 "full_market_best_requires_exact_reconciliation": True,
+                "full_market_claim_allowed": full_market_claim_allowed,
                 "detection_is_not_execution": True,
             },
         }

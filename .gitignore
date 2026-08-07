@@ -18,6 +18,11 @@ build/
 runtime/
 htmlcov/
 *.log
+*.jks
+*.key
+*.keystore
+*.p12
+*.pfx
 
 # Run-scoped artifacts are local by default. The policy note remains tracked.
 artifacts/*

@@ -18,15 +18,16 @@ flowchart TD
 
 ## مكونات مسار الشبكة
 
-- `SourceNetworkCatalog`: يقرأ سجل المصادر وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت.
-- `ingestion` و`capture_plan`: يجمعان البايتات العامة أوUser exports بصورة محدودة، ويحفظان Raw وManifest دون ترقيتها تلقائيًا إلى Finding.
+- `SourceNetworkCatalog`: يقرأ 40 تعريف مصدر و35 مجموعة استقلال وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت.
+- `ingestion` و`capture_plan`: يجمعان البايتات العامة أوUser exports بصورة محدودة، ويحفظان Raw وManifest دون ترقيتها تلقائيًا إلى Finding. خطة واحدة لا تتجاوز 32 مهمة أو128 MiB أو300 ثانية إجمالًا، ويحدث رفض التجاوز قبل Connector/I/O.
 - `Parser/QA`: حد عقدي مطلوب بين الجمع والتحقق، لكنه ليس مجموعة Parsers حية خاصة بالمواقع في الإصدار `0.1.0`. أي Parser لاحق يجب أن ينتج `fact_type` وهوية وتوقيتًا قابلة للتحقق وأن يخضع لاختبار Drift.
-- `SourceNetworkRunValidator`: يتحقق من عقد التشغيل، الأثر الخام، Manifest، محاولات المصادر، Findings، التوقيت، والـQuorum.
+- `RuntimeTrustRegistry`: يصادق سجلًا خارجيًا بـ`HMAC-SHA256` ومفتاح Runtime، ويتحقق من الجمهور والصلاحية ويربط المصادر الحساسة بالحساب/Subject والنطاق وSecurity codes وActivation/Entitlement.
+- `SourceNetworkRunValidator`: يتحقق من عقد التشغيل، وهوية Effective-dated إلزامية لكل Scope، والأثر الخام، وManifest، ومحاولات المصادر، و`fact_type`، وتطابق Finding URL مع Artifact URL، والتوقيت، والـQuorum.
 - `rank_research_candidates`: يجمع الإشارات بعد Dedup، ويطبق سقف ثقة فئة المصدر وسقف المزاج، ويرصد التعارض.
 - `analysts` و`liquidity`: ينتجان إشارات وصفية شفافة ويقيسان Tradability؛ لا ينتجان Probability.
 - `ResearchPipeline`: يحول نتيجة التحقق إلى `RESEARCH_READY` أو حالة توقف/نقص، ثم يعيد مرشحين بحدود الادعاء.
 - `request_contracts` و`reporting`: يطابقان Scope ونوع التقرير واللغة والعمق، ويرفضان Claims غير مسموحة.
-- `research_ledger`: يجمد Decision وOutcome في streamين منفصلين مع Hash chain وSeal.
+- `research_ledger`: يجمد Decision وOutcome في streamين منفصلين مع Hash chain وSeal؛ ويربط Outcome بحزمة Raw داخل Ledger يعاد التحقق منها عند القراءة والختم، لا بـHash يقدمه المتصل.
 - `cli_v3`: يوفر أوامر الجمع والتحقق والتخطيط والتقرير والسجل.
 
 ## استقلال المصادر
@@ -45,10 +46,14 @@ flowchart TD
 - Search/Storage: لا ينشئ Finding.
 - Licensed: يمكنه دعم Execution فقط مع Entitlement وتوقيت مثبتين.
 
+## حد الثقة والتفويض
+
+الـPacket كيان غير موثوق حتى يثبت العكس؛ لذلك لا يستطيع إيصال `runtime_authority` أوActivation أوEntitlement داخله أن يكون Root of Trust لنفسه. يفرض `0.1.0` سجل ثقة خارجيًا مهيأ خارج Packet ومصادقًا بـ`HMAC-SHA256` ومفتاح Runtime للمصادر Disabled/Runtime-bound/Licensed، ويربط المصدر بالـSubject/Account والنطاق وSecurity codes وActivation/Entitlement وفترة الصلاحية. غياب السجل أوالمفتاح، أوفشل المصادقة أوعدم وجود قيد فريد مطابق، يحجب المصدر Fail-closed.
+
 ## بوابات الفشل
 
 أي Hash غير مطابق، أو Hash تابع لمصدر آخر، أو Artifact جُمع بعد القرار، أو مسار Raw غير آمن، أو مصدر غير مسجل، أو URL خارج النطاق، أو Finding مستقبلي، أو Search Snippet/Access Receipt مستخدم كدليل، أو محاولة ترقية المنتدى إلى Catalyst تجعل الحزمة `BLOCKED`.
 
-نقص نصاب الأدوار يجعلها `PARTIAL`. تعطل مصدر منفرد لا يوقفها إذا اكتمل النصاب من مجموعات مستقلة أخرى.
+نقص نصاب الأدوار يجعلها `PARTIAL`. تعطل مصدر منفرد لا يوقفها إذا اكتمل النصاب من مجموعات مستقلة أخرى **وبقيت هوية Official/Licensed بديلة وحديثة لكل Security مغطى**؛ وإلا يكون فشل الهوية `SOURCE_NETWORK_BLOCKED`.
 
 الـRanker لا يستطيع إزالة Blocking Error، ولا يستطيع توليد Probability أو Recommendation.

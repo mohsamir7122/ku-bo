@@ -273,12 +273,6 @@ def rank_research_candidates(
                 reasons.append("DIRECTIONAL_CATALYST_NOT_PRIMARY_CONFIRMED")
             status = "WATCH" if reasons else "RESEARCH_CANDIDATE"
 
-        if validation.exact_universe_reconciled:
-            scope_label = "FULL_MARKET_RESEARCH_RANK"
-        else:
-            scope_label = "CANDIDATE_SET_RESEARCH_RANK"
-            reasons.append("NOT_A_FULL_MARKET_BEST_CLAIM")
-
         rows.append(
             {
                 "security_code": security_code,
@@ -290,7 +284,7 @@ def rank_research_candidates(
                 "decision_status": status,
                 "selected": False,
                 "rank": None,
-                "scope_label": scope_label,
+                "scope_label": None,
                 "evidence_coverage": round(evidence_coverage, 6),
                 "source_quality_factor": round(source_quality_factor, 6),
                 "evidence_direction_alignment": round(evidence_direction_alignment, 6),
@@ -310,6 +304,36 @@ def rank_research_candidates(
                 "reason_codes": list(dict.fromkeys(reasons)),
             }
         )
+
+    # A full-market label is one indivisible claim.  Exact point-in-time
+    # identity is necessary, but it is not sufficient when even one expected
+    # member misses a per-security evidence-role quorum.
+    full_market_claim_allowed = (
+        validation.exact_universe_reconciled
+        and bool(rows)
+        and all(not row["per_security_role_gaps"] for row in rows)
+    )
+    for row in rows:
+        if full_market_claim_allowed:
+            row["scope_label"] = "FULL_MARKET_RESEARCH_RANK"
+            continue
+        row["scope_label"] = "CANDIDATE_SET_RESEARCH_RANK"
+        if validation.exact_universe_reconciled:
+            row["reason_codes"] = list(
+                dict.fromkeys(
+                    [
+                        *row["reason_codes"],
+                        "FULL_MARKET_PER_SECURITY_ROLE_COVERAGE_INCOMPLETE",
+                        "NOT_A_FULL_MARKET_BEST_CLAIM",
+                    ]
+                )
+            )
+            if row["decision_status"] == "RESEARCH_CANDIDATE":
+                row["decision_status"] = "WATCH"
+        else:
+            row["reason_codes"] = list(
+                dict.fromkeys([*row["reason_codes"], "NOT_A_FULL_MARKET_BEST_CLAIM"])
+            )
 
     rows.sort(key=lambda row: (-row["research_score"], row["security_code"]))
     rank = 0

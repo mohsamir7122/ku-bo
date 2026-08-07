@@ -2,19 +2,30 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/mohsamir7122/ku-bo/schemas/analysis-request.schema.json",
   "title": "KU-BO Analysis Request",
+  "$comment": "The runtime additionally rejects requested_fields that collide after Unicode/case/separator normalization; that equivalence cannot be expressed portably in JSON Schema.",
   "type": "object",
   "additionalProperties": false,
   "required": ["request_id", "product_id"],
   "properties": {
-    "request_id": {"type": "string", "minLength": 1},
-    "product_id": {"type": "string", "minLength": 1},
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "product_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
     "mode": {"enum": ["research_network", "validated_forecast"], "default": "research_network"},
     "scope": {"enum": ["NAMED_SECURITIES", "CANDIDATE_SET", "FULL_MARKET"], "default": "CANDIDATE_SET"},
     "claim_type": {"enum": ["RESEARCH_RANK", "SINGLE_SECURITY", "COMPARISON", "EVIDENCE_AUDIT"], "default": "RESEARCH_RANK"},
     "security_codes": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {"type": "string", "pattern": "^[0-9]{1,12}$"}
     },
     "output_format": {"enum": ["json", "markdown"], "default": "json"},
     "detail_level": {"enum": ["brief", "standard", "deep"], "default": "standard"},
@@ -25,5 +36,72 @@
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 1}
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"claim_type": {"const": "SINGLE_SECURITY"}}, "required": ["claim_type"]},
+      "then": {
+        "properties": {
+          "scope": {"const": "NAMED_SECURITIES"},
+          "security_codes": {"minItems": 1, "maxItems": 1}
+        },
+        "required": ["scope", "security_codes"]
+      }
+    },
+    {
+      "if": {"properties": {"claim_type": {"const": "COMPARISON"}}, "required": ["claim_type"]},
+      "then": {
+        "properties": {
+          "scope": {"const": "NAMED_SECURITIES"},
+          "security_codes": {"minItems": 2}
+        },
+        "required": ["scope", "security_codes"]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {"properties": {"claim_type": {"const": "RESEARCH_RANK"}}, "required": ["claim_type"]},
+          {"not": {"required": ["claim_type"]}}
+        ]
+      },
+      "then": {
+        "properties": {
+          "scope": {"enum": ["CANDIDATE_SET", "FULL_MARKET"]},
+          "security_codes": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"scope": {"const": "NAMED_SECURITIES"}},
+        "required": ["scope"]
+      },
+      "then": {
+        "properties": {"security_codes": {"minItems": 1}},
+        "required": ["security_codes"]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {"properties": {"mode": {"const": "research_network"}}, "required": ["mode"]},
+          {"not": {"required": ["mode"]}}
+        ]
+      },
+      "then": {
+        "properties": {
+          "requested_fields": {
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "not": {
+                "pattern": "([Pp][Rr][Oo][Bb][Aa][Bb][Ii][Ll]([Ii][Tt][Yy]|[Ii][Ss][Tt][Ii][Cc])|[Rr][Ee][Cc][Oo][Mm][Mm][Ee][Nn][Dd]|[Ee][Nn][Tt][Rr][Yy]|[Ee][Xx][Ii][Tt]|[Gg][Uu][Aa][Rr][Aa][Nn][Tt][Ee][Ee][Dd][^A-Za-z0-9]*[Rr][Ee][Tt][Uu][Rr][Nn]|[Tt][Aa][Rr][Gg][Ee][Tt][^A-Za-z0-9]*[Pp][Rr][Ii][Cc][Ee]|[Ss][Tt][Oo][Pp][^A-Za-z0-9]*[Ll][Oo][Ss][Ss]|[Bb][Uu][Yy]|[Ss][Ee][Ll][Ll]|احتمال|توصية|دخول|خروج|شراء|بيع)"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -72,7 +72,7 @@ research_run/
 
 ## البدء
 
-يتطلب Python 3.11 أو أحدث ولا توجد تبعيات خارجية في النواة.
+يتطلب Python 3.11 أو أحدث ولا توجد تبعيات Python خارجية في النواة. ويحتاج Runtime إلى قاعدة مناطق IANA تتضمن `Asia/Kuwait`؛ توفرها بيئات Linux المدعومة وCI عادةً. في بيئة Windows أوContainer مصغرة بلا System tzdb، ثبّت حزمة `tzdata` في بيئة التشغيل قبل استخدام العقود الزمنية.
 
 ```bash
 python3 -m pip install -e .
@@ -137,7 +137,9 @@ kubo capture \
 
 ### حد الثقة للمصادر المحمية
 
-يفحص `0.1.0` البنية والروابط الداخلية لحقول `runtime_authority` وActivation وEntitlement داخل Packet، لكن هذه الحقول **ليست Root of Trust** لأنها قد تكون منشأة مع الحزمة نفسها. التصميم الأمني المطلوب قبل أي تشغيل Production هو سجل ثقة خارجي منفصل وموقّع يربط `source_id` بالحساب/Subject والنطاق و`security_code` والاستحقاق وفترة الصلاحية ومفتاح التوقيع. إلى أن ينفذ هذا السجل والتحقق من توقيعه، تبقى المصادر المعطلة أوالديناميكية أوالمرخصة غير مخولة للإنتاج حتى لو احتوت الحزمة على إيصال ذاتي متسق.
+يفشل `0.1.0` مغلقًا عند مساهمة مصدر معطل افتراضيًا أو ديناميكي النطاق أو مرخّص ما لم يُقدَّم سجل ثقة خارجي منفصل عن Packet، صالح وقت القرار، ومصادق عليه بـ`HMAC-SHA256` ومفتاح و`key_id` من بيئة التشغيل. يربط السجل `source_id` بالحساب/Subject والنطاق و`security_code` وActivation/Entitlement وفترة الصلاحية، ويجب أن يحل كل استخدام إلى قيد واحد مطابق. تبقى حقول `runtime_authority` وActivation وEntitlement داخل Packet مطلوبة لاتساق الأدلة، لكنها **ليست Root of Trust** ولا تكفي وحدها للتفويض. ويعرض ناتج التحقق وجوب السجل وقائمة المصادر الحساسة ومعرّف السجل وبصمة محتواه ومعرّف المفتاح المستخدم، من دون كشف المفتاح.
+
+تمرر الأوامر `validate-network-run` و`plan` و`run-request` السجل بالخيار `--runtime-trust-registry`، ويجب أن يبقى مساره خارج مجلد حزمة الأدلة. يقرأ CLI المفتاح فقط من `KUBO_RUNTIME_TRUST_HMAC_KEY` بصيغة `hex:` أو`base64:`، ومعرّفه من `KUBO_RUNTIME_TRUST_HMAC_KEY_ID`؛ ولا يقبل مفتاحًا أقصر من 32 بايت.
 
 ## منهج التحليل
 
@@ -171,7 +173,47 @@ kubo verify-research-ledger \
   --ledger-id kuwait-research-v1
 ```
 
-السجل Append-only مع Hash chain ولا توجد API لتعديل قرار قديم. Outcomes تضاف بأمر منفصل بعد وقت القرار. يمكن إنشاء HMAC Seal باستخدام `KUBO_LEDGER_HMAC_KEY` وقت التشغيل فقط بصيغة `hex:` أو`base64:` ومع `--key-id`. لا تحفظ قيمة المفتاح في `.env.example` أوGitHub.
+السجل Append-only مع Hash chain ولا توجد API لتعديل قرار قديم. يربط كل قرار بصمة حزمة الأدلة، وبصمة سياسات المشروع، وبصمة حزمة `kubo` المستوردة والمنفذة فعليًا؛ لذلك لا يستطيع `--project-root` مغاير انتحال بصمة كود Wheel مثبت.
+
+تُضاف النتيجة لاحقًا من Payload قياس صارم وحزمة Evidence حقيقية داخل مجلد السجل، لا من Hash يرسله المتصل:
+
+```text
+runtime/ledger/outcome_evidence/outcome-101-next/
+├── manifest.json
+└── raw/
+    └── official-close.json
+```
+
+```bash
+kubo append-research-outcome \
+  --ledger-dir runtime/ledger \
+  --ledger-id kuwait-research-v1 \
+  --outcome-id outcome-101-next \
+  --decision-id synthetic-demo-request \
+  --observed-at 2026-08-08T14:00:00+03:00 \
+  --payload runtime/outcome-101-next.json \
+  --evidence-pack outcome_evidence/outcome-101-next
+```
+
+يُحل المسار النسبي لـ`--evidence-pack` من داخل `--ledger-dir`. يتحقق الأمر من تطابق القرار والسهم والتوقيت، ومن قائمة `raw/` وحجم كل ملف وSHA-256 الفعلي، ثم يعيد `verify` و`seal` الفحص من البايتات نفسها. Payload القياس يحدد `metric_id` وقيمة رقمية منتهية و`unit` وفترة القياس و`method_id`؛ وجود البايتات لا يثبت صحة المنهج أوParser من دون مراجعة مستقلة.
+
+يمكن إنشاء HMAC Seal باستخدام `KUBO_LEDGER_HMAC_KEY` وقت التشغيل فقط بصيغة `hex:` أو`base64:` ومع `--key-id`. يتطلب التحقق بالمفتاح `--expected-key-id` ويرفض خفض الخوارزمية إلى Seal غير موقّع:
+
+```bash
+kubo seal-research-ledger \
+  --ledger-dir runtime/ledger \
+  --ledger-id kuwait-research-v1 \
+  --seal runtime/ledger/research-ledger.seal.json \
+  --key-id operations-2026
+
+kubo verify-research-ledger \
+  --ledger-dir runtime/ledger \
+  --ledger-id kuwait-research-v1 \
+  --seal runtime/ledger/research-ledger.seal.json \
+  --expected-key-id operations-2026
+```
+
+لا تحفظ قيمة المفتاح في `.env.example` أوGitHub، ولا تمررها كـCLI argument.
 
 تشغيل المثال الاصطناعي للتحقق من العقود فقط:
 
@@ -199,6 +241,7 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
+- `src/kubo/runtime_trust.py`: مصادقة سجل الثقة الخارجي وربط التفويض الحساس Fail-closed.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
 - `src/kubo/reporting.py`: مخرجات JSON وMarkdown حسب الطلب.
@@ -221,7 +264,7 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 
 ## حدود النسخة 0.1.0
 
-النواة والاختبارات وCLI تعمل بلا Credentials. أما الوصول الحي الكامل إلى المنصات المحمية وExecution-grade data فيتوقف عمدًا على التفويض وEntitlement القانوني، وعلى تنفيذ سجل الثقة الخارجي الموقّع الموضح أعلاه. لا يحتوي المستودع على Cookies أوTokens، ولا يدّعي أن Connector غير مفوض يعمل. كما لا يصف Synthetic Smoke Check بأنه Backtest أوأداء حقيقي. وعند تشغيل Wheel من خارج Checkout، يجب تمرير `--project-root` إلى نسخة من المستودع تحتوي ملفات `config/`؛ فالـWheel ليس حزمة إعداد مستقلة.
+النواة العامة والاختبارات وCLI تعمل بلا Credentials. أما مساهمة المصادر المحمية وExecution-grade data فتتوقف عمدًا على التفويض وEntitlement القانوني، وعلى سجل الثقة الخارجي المصادق عليه الموضح أعلاه مع مفتاح Runtime؛ غياب أي منها يحجب المصدر. لا يحتوي المستودع على Cookies أوTokens أوسجل ثقة تشغيلي، ولا يدّعي أن Connector غير مفوض يعمل. كما لا يصف Synthetic Smoke Check بأنه Backtest أوأداء حقيقي. وعند تشغيل Wheel من خارج Checkout، يجب تمرير `--project-root` إلى نسخة من المستودع تحتوي ملفات `config/`؛ فالـWheel ليس حزمة إعداد مستقلة.
 
 ## الترخيص
 
