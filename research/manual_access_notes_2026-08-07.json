@@ -1,0 +1,154 @@
+{
+  "schema_version": "3.0-manual-access-notes",
+  "observed_at": "2026-08-07T09:54:54+03:00",
+  "purpose": "Historical manual access notes only. This file is not a validated live probe, release evidence, historical coverage, market evidence, or forecast evidence.",
+  "sources": [
+    {
+      "source_id": "boursa_current",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.boursakuwait.com.kw/ar/",
+      "observation": "Public market pages opened; the site labels public market data as delayed by 15 minutes.",
+      "data_quality_flags": ["DELAYED_15_MINUTES_NOT_EXECUTION_TAPE"]
+    },
+    {
+      "source_id": "boursa_reports_archive",
+      "state": "PARTIAL",
+      "tested_url": "https://reports.boursakuwait.com.kw/en/products-and-services/historical-data/reports/market-summary",
+      "observation": "The report index and year selector were visible, including older years; file-by-file completeness was not established.",
+      "data_quality_flags": ["ARCHIVE_COMPLETENESS_UNVERIFIED"]
+    },
+    {
+      "source_id": "boursa_disclosure_archive",
+      "state": "PARTIAL",
+      "tested_url": "https://www.boursakuwait.com.kw/en/announcements/disclosures-and-announcements/historical-disclosures-and-announcements/",
+      "observation": "Historical disclosure search interface opened; dynamic-result coverage was not captured in this probe.",
+      "data_quality_flags": ["DYNAMIC_RESULTS_NOT_VERIFIED"]
+    },
+    {
+      "source_id": "cma_ifsah",
+      "state": "PARTIAL",
+      "tested_url": "https://www.cma.gov.kw/en/",
+      "observation": "The CMA portal and dated search interface opened and exposed the official iFSAH route; underlying filing results were not captured in this access probe.",
+      "data_quality_flags": ["IFSAH_RESULT_CONTENT_UNTESTED"]
+    },
+    {
+      "source_id": "investing_history",
+      "state": "AVAILABLE",
+      "tested_url": "https://sa.investing.com/equities/kuwait",
+      "observation": "Kuwait equities and historical-data routes were reachable with visible dated rows on sampled pages.",
+      "data_quality_flags": ["SECONDARY_SOURCE_REQUIRES_CROSS_CHECK"]
+    },
+    {
+      "source_id": "investing_commentary",
+      "state": "UNTESTED",
+      "tested_url": "https://sa.investing.com/indices/kwse-commentary",
+      "observation": "This commentary route was not reopened in the 09:54 access pass; its prior state is not carried forward as current evidence.",
+      "data_quality_flags": ["CURRENT_ACCESS_NOT_RETESTED", "COMMENTARY_NOT_OFFICIAL_FACT"]
+    },
+    {
+      "source_id": "tradingview_screeners",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.tradingview.com/markets/stocks-kuwait/",
+      "observation": "Kuwait market and stock-screening pages opened.",
+      "data_quality_flags": ["SECONDARY_SOURCE_REQUIRES_CROSS_CHECK"]
+    },
+    {
+      "source_id": "tradingview_ideas",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.tradingview.com/markets/stocks-kuwait/ideas/",
+      "observation": "Current and archived user ideas were visible; treated as community technical sentiment only.",
+      "data_quality_flags": ["COMMUNITY_IDEAS_NOT_OFFICIAL_FACT"]
+    },
+    {
+      "source_id": "argaam_kuwait",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.argaam.com/kw-ar",
+      "observation": "Kuwait market and company-history pages were reachable.",
+      "data_quality_flags": ["SECONDARY_SOURCE_REQUIRES_CROSS_CHECK"]
+    },
+    {
+      "source_id": "marketscreener_kuwait",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.marketscreener.com/stock-exchange/shares/middle-east/kuwait-116/",
+      "observation": "Kuwait stock-exchange discovery pages and market tools were reachable.",
+      "data_quality_flags": ["SECONDARY_SOURCE_REQUIRES_CROSS_CHECK"]
+    },
+    {
+      "source_id": "mubasher_kuwait",
+      "state": "PARTIAL",
+      "tested_url": "https://english.mubasher.info/markets/BK/",
+      "observation": "Pages opened, but sampled rendered fields contained obvious placeholder/entity and percentage anomalies; automatically rejected as a sole numeric authority.",
+      "data_quality_flags": ["PLACEHOLDER_ENTITY_NAME", "IMPLAUSIBLE_PERCENT_CHANGE", "STALE_OR_UNIT_CONFLICT"]
+    },
+    {
+      "source_id": "indexsignal_forum",
+      "state": "PARTIAL",
+      "tested_url": "https://www.indexsignal.com/community/forums/6/",
+      "observation": "Search indexes exposed dated Kuwait-market thread titles, while direct thread/forum access was inconsistent (403/timeout during this probe).",
+      "data_quality_flags": ["DIRECT_ACCESS_UNSTABLE", "SEARCH_SNIPPET_NOT_EVIDENCE"]
+    },
+    {
+      "source_id": "yahoo_finance_kw",
+      "state": "ERROR",
+      "tested_url": "https://finance.yahoo.com/quote/NBK.KW/",
+      "observation": "The attempted NBK.KW page returned no usable page content in the current access pass.",
+      "data_quality_flags": ["FETCH_ERROR_NO_CONTENT"]
+    },
+    {
+      "source_id": "kuna",
+      "state": "ERROR",
+      "tested_url": "https://www.kuna.net.kw/",
+      "observation": "The direct KUNA homepage request timed out in the current access pass.",
+      "data_quality_flags": ["FETCH_TIMEOUT"]
+    },
+    {
+      "source_id": "alrai_economy",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.alraimedia.com/اقتصاد",
+      "observation": "Current dated Kuwait-market and listed-company articles were discoverable and openable; each article remains editorial evidence and must be traced to its stated origin.",
+      "data_quality_flags": ["EDITORIAL_SOURCE_REQUIRES_ORIGIN_DEDUP"]
+    },
+    {
+      "source_id": "reuters_middle_east",
+      "state": "AVAILABLE",
+      "tested_url": "https://www.reuters.com/world/middle-east/",
+      "observation": "Recent dated Gulf-market articles involving Kuwait were discoverable; Reuters reporting is editorial evidence and does not replace an exchange filing.",
+      "data_quality_flags": ["EDITORIAL_SOURCE_NOT_OFFICIAL_FILING"]
+    },
+    {
+      "source_id": "telegram_boursakw",
+      "state": "UNTESTED",
+      "tested_url": "https://t.me/Boursakw",
+      "observation": "The current runtime could not safely materialize this Telegram preview, so no current access claim is made.",
+      "data_quality_flags": ["RUNTIME_URL_POLICY_PREVENTED_PROBE", "COMMUNITY_CONTENT_NOT_OFFICIAL_FACT"]
+    },
+    {
+      "source_id": "telegram_kuwaitstockex",
+      "state": "UNTESTED",
+      "tested_url": "https://t.me/s/kuwaitstockex",
+      "observation": "The current runtime could not safely materialize this Telegram preview, so no current access claim is made.",
+      "data_quality_flags": ["RUNTIME_URL_POLICY_PREVENTED_PROBE", "COMMUNITY_CONTENT_NOT_OFFICIAL_FACT"]
+    },
+    {
+      "source_id": "wayback_machine",
+      "state": "PARTIAL",
+      "tested_url": "https://web.archive.org/",
+      "observation": "Archive service was reachable, but no Boursa-specific capture completeness or first-public timestamp was established.",
+      "data_quality_flags": ["TARGET_CAPTURE_COVERAGE_UNVERIFIED", "CAPTURE_TIME_NOT_FIRST_PUBLIC_TIME"]
+    },
+    {
+      "source_id": "common_crawl",
+      "state": "AVAILABLE",
+      "tested_url": "https://commoncrawl.org/",
+      "observation": "Public web-crawl index and documentation were reachable; captures are context/recovery aids, not a complete market tape.",
+      "data_quality_flags": ["CRAWL_NOT_COMPLETE", "CAPTURE_TIME_NOT_FIRST_PUBLIC_TIME"]
+    },
+    {
+      "source_id": "ice_kuwait_archive",
+      "state": "AUTH_REQUIRED",
+      "tested_url": "https://developer.ice.com/fixed-income-data-services/catalog/kuwait-stock-exchange-boursa-kuwait",
+      "observation": "The Kuwait historical-data product page was reachable, but data use requires a commercial entitlement.",
+      "data_quality_flags": ["ENTITLEMENT_REQUIRED"]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/outcome-evidence-manifest.schema.json",
+  "title": "KU-BO Outcome Evidence Manifest",
+  "$comment": "Duplicate JSON keys, exact raw inventory, byte hashes, and temporal envelope binding are enforced by kubo.outcome_evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "outcome_id", "decision_id", "security_code", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "outcome_id": {"$ref": "#/$defs/identifier"},
+    "decision_id": {"$ref": "#/$defs/identifier"},
+    "security_code": {"$ref": "#/$defs/security_code"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$"
+    },
+    "security_code": {
+      "type": "string",
+      "pattern": "^[0-9]{1,12}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "source_id", "source_url", "content_type", "observed_at"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 1024,
+          "pattern": "^raw/[^\\\\\\r\\n]+$"
+        },
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 134217728
+        },
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048,
+          "pattern": "^https://"
+        },
+        "content_type": {
+          "type": "string",
+          "maxLength": 127,
+          "pattern": "^[a-z0-9][a-z0-9!#$%&'*+.^_`|~-]{0,62}/[a-z0-9][a-z0-9!#$%&'*+.^_`|~-]{0,62}$"
+        },
+        "observed_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

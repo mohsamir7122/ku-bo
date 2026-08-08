@@ -1,0 +1,59 @@
+# سياسة مصادر V3
+
+## المبدأ
+
+لا توجد قائمة «مصادر موثوقة دائمًا». توجد أدوار وحدود. كل تشغيل يختبر الوصول والجودة والتوقيت من جديد، ويحفظ الدليل الخام. المصدر المتاح اليوم قد يصبح محجوبًا أو تالف الـParser غدًا.
+
+## ترتيب الاستخدام
+
+ابدأ بالمصادر التي تحقق الأدوار المطلوبة بأقل تكلفة وبأعلى استقلال. استخدم الرسمي/جهة الإصدار لتأكيد الحقائق الرسمية، والمصادر المنظمة للمقارنة السوقية، والأخبار للسياق، والمجتمع للمزاج فقط، والأرشيف للبحث عن السياق والروابط القديمة.
+
+لا يشترط نجاح بورصة الكويت كي يبدأ Research Rank **إذا بقي إيصال هوية رسمي بديل وحديث** لكل Security مغطى. إذا تعذرت، سجل الفشل واستكمل النصاب من مصادر مستقلة، لكن لا تجعل Quorum الخبري يعوض فشل الهوية. لا تنقل صفة «رسمي» إلى مصدر تحريري؛ استخدم فقط مصدر هوية Official/Licensed مسجلًا، واجعل `official_confirmation_available = false` وخفّض المحفز الاتجاهي غير المؤكد إلى `WATCH`.
+
+لا تُعامل أقسام المنصة الواحدة كناشرين مستقلين، ولا تعتبر إفصاحًا رسميًا مختلفًا تأكيدًا لخبر آخر عن السهم نفسه. يلزم تطابق الحدث والاتجاه، مع Raw Evidence مربوط بالمصدر الذي يُنسب إليه.
+
+## مصادر البدء المسجلة
+
+- بورصة الكويت: الصفحات الحالية، أرشيف التقارير، وأرشيف الإفصاحات.
+- CMA/iFSAH وIssuer IR.
+- Investing.com، TradingView، Argaam، MarketScreener، Mubasher، Yahoo Finance، وTradingEconomics.
+- KUNA، Reuters، Zawya، Asharq Business، الراي، الأنباء، الجريدة، والقبس.
+- IndexSignal، Telegram public previews، وTradingView Ideas.
+- Wayback Machine، Common Crawl، والبحث على الويب.
+- ICE وAuthorized Broker Feed عند وجود Entitlement.
+
+القائمة الكاملة وعقود النطاق في `config/source_network.json`.
+
+وجود المصدر في الكتالوج لا يعني وجود Connector أوParser. المرجع الآلي لذلك هو `config/source_capabilities.json`: الحالة الافتراضية `DEFINED_ONLY`، والمحللان الحاليان لبورصة الكويت وInvesting مصنفان `END_TO_END_TESTED` على Fixtures مولدة مع `live_operational = false`. لا تُرفع الحالة إلى `LIVE_OPERATIONAL` من دون Capture حي مصرح به واختبار قبول ومراقبة Drift.
+
+الكتالوج الحالي يحتوي 40 تعريف مصدر تتجمع في 35 مجموعة استقلال؛ لا تستخدم الرقمين بالتبادل.
+
+## قواعد المجتمع والمنتديات
+
+- لا Price/Volume/Official Event/Catalyst/Fundamental من المنتدى.
+- لا اعتماد على Screenshot أو Forward أو Search Snippet.
+- لا مضاعفة للدرجة بسبب تكرار المنشور.
+- لا نسبة أكثر من سقف المزاج المحدد للأفق.
+- لا مساهمة مجتمع في الأفق الطويل أو منتجات التنفيذ.
+
+## قواعد الجودة
+
+ارفض المصدر من المساهمة في التشغيل عند وجود Placeholder، نسبة مستحيلة، Timestamp متناقض، وحدة غير محلولة، Parser Drift، Rate-limit محتواه ناقص، أو Raw Hash غير محلول. احتفظ بمحاولة المصدر وسبب رفضها.
+
+ارفض كذلك `QUALIFIED` عندما يساوي عدد العناصر المؤهلة صفرًا، وأي Hash مأخوذ من Artifact لمصدر آخر، وأي Artifact جُمع بعد `decision_at`. صفحة الوصول أو Search Snippet لا تصبح Market Evidence.
+
+كل Finding يحتاج `fact_type` مسموحًا في `fact_eligibility` للمصدر، ويجب أن يطابق `source_url` عنوان الـArtifact المشار إليه حرفيًا، لا أن يكتفي بمشاركة النطاق.
+
+## تفويض المصادر المحمية
+
+حقول `runtime_authority` وActivation وEntitlement داخل Packet ليست تفويضًا ذاتي الإثبات. يفرض `0.1.0` للمصادر المعطلة أوالديناميكية أوالمرخصة سجل ثقة خارجيًا منفصلًا عن Packet ومصادقًا بـ`HMAC-SHA256` ومفتاح Runtime، يربط `source_id` بالـSubject/Account والنطاق وSecurity codes وActivation/Entitlement وفترة الصلاحية وKey ID. يفشل المصدر مغلقًا عند غياب السجل أوالمفتاح، أوفشل المصادقة أوعدم وجود قيد فريد مطابق، حتى لو كان إيصال Packet منظمًا.
+
+لا تخلط KWD وFils، Board مختلفة، Last متأخرًا مع Close مكتمل، أو أسعارًا قبل/بعد Corporate Action. لا تجمع القيم المتعارضة بالمتوسط.
+
+## الأرشيفات
+
+يمكن لـWayback/Common Crawl إثبات أن Capture متاح بسياقه، لا أن الأرشيف كامل أو أن Capture Time هو First-public time. استخدمهما لاسترجاع صفحة أو رابط، ثم حاول الوصول إلى الأصل.
+
+## التنفيذ
+
+أي Price عامة متأخرة أو Last-only لا تثبت Entry أو Fill. الافتتاح، Intraday، L1/L2، Queue، وSlippage تحتاج مصدرًا مرخّصًا أو Broker Export مصرحًا به مع Entitlement وتوقيت.

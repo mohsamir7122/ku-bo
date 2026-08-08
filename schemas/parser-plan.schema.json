@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/parser-plan.schema.json",
+  "title": "KU-BO Parser Materialization Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "product_id",
+    "decision_at",
+    "scope",
+    "budget",
+    "usage_wall_seconds",
+    "bindings",
+    "parser_tasks"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "product_id": {"type": "string", "minLength": 1},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "scope": {"enum": ["NAMED_SECURITIES", "CANDIDATE_SET"]},
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_requests", "max_raw_bytes", "max_wall_seconds"],
+      "properties": {
+        "max_requests": {"type": "integer", "minimum": 1},
+        "max_raw_bytes": {"type": "integer", "minimum": 1},
+        "max_wall_seconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "usage_wall_seconds": {"type": "integer", "minimum": 0},
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "security_code",
+          "ticker",
+          "isin",
+          "valid_from",
+          "valid_to",
+          "official_artifact_sha256",
+          "secondary_artifact_sha256"
+        ],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+          "ticker": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,32}$"},
+          "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+          "valid_from": {"type": "string", "format": "date"},
+          "valid_to": {"type": ["string", "null"], "format": "date"},
+          "official_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "secondary_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "parser_tasks": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["parser_id", "artifact_sha256"],
+        "properties": {
+          "parser_id": {"enum": ["boursa_identity_html_v1", "investing_history_html_v1"]},
+          "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "catalog_version": "2.0",
+  "methods": [
+    {
+      "method_id": "naive_market_sector_baseline",
+      "family": "baseline",
+      "methodology_refs": ["point_in_time_and_vintages", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "ten_session_diagnostic", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank", "one_hundred_twenty_six_session_half_year_rank", "two_hundred_fifty_two_session_annual_investment"],
+      "required_capabilities": ["daily_eod", "security_master", "trading_calendar"],
+      "state": "FROZEN_BASELINE",
+      "validation_gates": ["point_in_time", "chronological_walk_forward", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry"],
+      "emits_probability": false,
+      "purpose": "No-change, market, sector, and transparent liquidity-aware reference baselines."
+    },
+    {
+      "method_id": "price_activity_momentum_and_reversal",
+      "family": "tape_baseline",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "ten_session_diagnostic", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing"],
+      "required_capabilities": ["daily_eod", "daily_market_totals", "security_master", "trading_calendar", "corporate_actions"],
+      "state": "UNVALIDATED_RESEARCH",
+      "validation_gates": ["point_in_time", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "regime_breakdown"],
+      "emits_probability": false,
+      "purpose": "Test continuation and reversal separately; never treat abnormal volume as directional proof."
+    },
+    {
+      "method_id": "official_event_study",
+      "family": "event_study",
+      "methodology_refs": ["point_in_time_and_vintages", "small_market_event_study", "event_driven_agentic_research", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank"],
+      "required_capabilities": ["official_disclosures", "daily_eod", "corporate_actions", "trading_calendar"],
+      "state": "UNVALIDATED_RESEARCH",
+      "validation_gates": ["point_in_time", "event_time_cutoff", "correction_chain", "chronological_walk_forward", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry"],
+      "emits_probability": false,
+      "purpose": "Estimate event-class reactions from first-public timestamps and abnormal returns."
+    },
+    {
+      "method_id": "arabic_financial_event_extractor",
+      "family": "evidence_extraction",
+      "methodology_refs": ["point_in_time_and_vintages", "arabic_financial_sentiment", "event_driven_agentic_research", "provenance_and_source_independence"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank", "one_hundred_twenty_six_session_half_year_rank", "two_hundred_fifty_two_session_annual_investment"],
+      "required_capabilities": ["official_disclosures"],
+      "state": "UNVALIDATED_RESEARCH",
+      "validation_gates": ["point_in_time", "entity_linkage", "semantic_deduplication", "event_time_cutoff", "human_qa_sample", "trial_registry"],
+      "emits_probability": false,
+      "purpose": "LLM/NLP extraction of issuer, event class, novelty, polarity, amount, and contradictions; not a direct trade probability."
+    },
+    {
+      "method_id": "social_diffusion_ablation",
+      "family": "social_ablation",
+      "methodology_refs": ["point_in_time_and_vintages", "arabic_financial_sentiment", "provenance_and_source_independence", "purged_embargoed_walk_forward"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing"],
+      "required_capabilities": ["social_evidence", "daily_eod", "security_master", "trading_calendar"],
+      "state": "UNVALIDATED_RESEARCH",
+      "validation_gates": ["point_in_time", "semantic_deduplication", "source_independence", "chronological_walk_forward", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "ablation"],
+      "emits_probability": false,
+      "purpose": "Measure attention and propagation only after official/news/tape baselines; reposts remain one event."
+    },
+    {
+      "method_id": "regularized_cross_sectional_ranker",
+      "family": "linear_model",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "causal_regime_detection", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_rank", "three_session_rank", "five_session_weekly_swing", "ten_session_diagnostic", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank", "one_hundred_twenty_six_session_half_year_rank", "two_hundred_fifty_two_session_annual_investment"],
+      "required_capabilities": ["daily_eod", "daily_market_totals", "security_master", "security_status_history", "trading_calendar", "corporate_actions"],
+      "state": "CANDIDATE",
+      "validation_gates": ["point_in_time", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "regime_breakdown"],
+      "emits_probability": false,
+      "purpose": "First learned ranker after frozen baselines; use constrained transparent coefficients."
+    },
+    {
+      "method_id": "rare_event_logistic_classifier",
+      "family": "calibrated_classifier",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "calibration_and_adaptive_uncertainty", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_plus_5_event", "next_session_plus_10_event"],
+      "required_capabilities": ["daily_eod", "daily_market_totals", "security_master", "security_status_history", "trading_calendar", "official_disclosures", "corporate_actions"],
+      "state": "CANDIDATE",
+      "validation_gates": ["point_in_time", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "calibration", "rare_event_prevalence", "upper_limit_censoring"],
+      "emits_probability": true,
+      "purpose": "Estimate explicitly defined +5%/+10% event probabilities only after held-out calibration and sufficient events."
+    },
+    {
+      "method_id": "fundamental_quality_value_ranker",
+      "family": "fundamental",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "illiquidity_and_execution_reality"],
+      "supports": ["sixty_three_session_quarter_rank", "one_hundred_twenty_six_session_half_year_rank", "two_hundred_fifty_two_session_annual_investment"],
+      "required_capabilities": ["issuer_reports", "official_disclosures", "corporate_actions", "daily_eod", "security_master", "trading_calendar"],
+      "state": "UNVALIDATED_RESEARCH",
+      "validation_gates": ["point_in_time", "filing_availability", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "sector_normalization"],
+      "emits_probability": false,
+      "purpose": "Longer-horizon quality, resilience, cash-flow, valuation, and balance-sheet ranking."
+    },
+    {
+      "method_id": "shallow_nonlinear_candidate",
+      "family": "nonlinear_model",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "causal_regime_detection", "illiquidity_and_execution_reality"],
+      "supports": ["next_session_rank", "next_session_plus_5_event", "next_session_plus_10_event", "three_session_rank", "five_session_weekly_swing", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank"],
+      "required_capabilities": ["daily_eod", "daily_market_totals", "security_master", "security_status_history", "trading_calendar", "official_disclosures", "corporate_actions"],
+      "state": "CANDIDATE",
+      "validation_gates": ["point_in_time", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "nested_model_selection", "regime_breakdown"],
+      "emits_probability": false,
+      "purpose": "Allowed only after a regularized baseline and adequate independent dates; no deep/RL-first shortcut."
+    },
+    {
+      "method_id": "opening_intraday_order_flow",
+      "family": "microstructure",
+      "methodology_refs": ["point_in_time_and_vintages", "purged_embargoed_walk_forward", "calibration_and_adaptive_uncertainty", "illiquidity_and_execution_reality"],
+      "supports": ["opening_gap_or_limit", "intraday_continue_or_fade"],
+      "required_capabilities": ["opening_auction", "intraday_bars", "l1_quotes", "execution_fields"],
+      "state": "BLOCKED_CAPABILITY",
+      "validation_gates": ["point_in_time", "timestamped_execution", "queue_and_nonfill", "chronological_walk_forward", "purge_embargo", "full_denominator", "costs_and_nonfill", "baseline_comparison", "trial_registry", "calibration"],
+      "emits_probability": true,
+      "purpose": "Remains blocked until a configured authorized feed proves auction, quote, timing, and entitlement fields."
+    }
+  ]
+}

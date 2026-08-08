@@ -1,0 +1,148 @@
+{
+  "schema_version": "3.0",
+  "sources": [
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "7781e962299574d1d51b3db931baa626cb005490e699549531a99ae851202605"
+      ],
+      "roles_observed": [
+        "MARKET_DISCOVERY",
+        "PRICE_HISTORY"
+      ],
+      "source_id": "tradingview_screeners",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "05cdc6acd514664e6fc41030d8706c0e8f384f4db59bea68a89cee4802bd8d2a"
+      ],
+      "roles_observed": [
+        "MARKET_DISCOVERY",
+        "PRICE_HISTORY"
+      ],
+      "source_id": "investing_history",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "de6353a4a24ebef871a1c0b5542b20967ba5f4a1604cc51efe721553b2375d4c"
+      ],
+      "roles_observed": [
+        "NEWS_ARCHIVE"
+      ],
+      "source_id": "reuters_middle_east",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "dcd52c5d3183322218f0f3f2275c2ad6f08198ea890260b5646fac0e9e03fad3"
+      ],
+      "roles_observed": [
+        "COMMUNITY_SENTIMENT"
+      ],
+      "source_id": "telegram_kuwaitstockex",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "2fd1cf2fc2eda7465eac76e86a14f767e9bf035bbdb4d3126f14306aff53a084"
+      ],
+      "roles_observed": [
+        "NEWS_ARCHIVE"
+      ],
+      "source_id": "kuna",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "1409b841391bd1217abb0347640fad56b661c272157d198a159f480836815b53"
+      ],
+      "roles_observed": [
+        "OFFICIAL_EVENT",
+        "NEWS_ARCHIVE"
+      ],
+      "source_id": "boursa_disclosure_archive",
+      "state": "AVAILABLE",
+      "zero_result": false
+    },
+    {
+      "access_mode": "PUBLIC_PAGE",
+      "attempted_at": "2026-08-07T00:50:00+03:00",
+      "data_quality_flags": [],
+      "entitlement_id": "",
+      "limitations": [
+        "SYNTHETIC_FIXTURE_ONLY"
+      ],
+      "qualified_items": 1,
+      "query_status": "QUALIFIED",
+      "raw_sha256s": [
+        "c767409d91f849523f2a2567a0175ae866103f2fc04a234c0afc6e1e9b0bd17f"
+      ],
+      "roles_observed": [
+        "IDENTITY_REFERENCE"
+      ],
+      "source_id": "boursa_current",
+      "state": "AVAILABLE",
+      "zero_result": false
+    }
+  ]
+}

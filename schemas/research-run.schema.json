@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-run.schema.json",
+  "title": "KU-BO Point-in-Time Research Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "product_id",
+    "decision_at",
+    "timezone",
+    "scope",
+    "covered_universe_count",
+    "expected_universe_count",
+    "budget",
+    "usage"
+  ],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "product_id": {"type": "string", "minLength": 1},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "scope": {"enum": ["NAMED_SECURITIES", "CANDIDATE_SET", "FULL_MARKET"]},
+    "covered_universe_count": {"type": "integer", "minimum": 0},
+    "expected_universe_count": {"type": "integer", "minimum": 1},
+    "budget": {"$ref": "#/$defs/budget"},
+    "usage": {"$ref": "#/$defs/usage"}
+  },
+  "$defs": {
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_requests", "max_raw_bytes", "max_wall_seconds"],
+      "properties": {
+        "max_requests": {"type": "integer", "minimum": 1},
+        "max_raw_bytes": {"type": "integer", "minimum": 1},
+        "max_wall_seconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requests", "raw_bytes", "wall_seconds"],
+      "properties": {
+        "requests": {"type": "integer", "minimum": 0},
+        "raw_bytes": {"type": "integer", "minimum": 0},
+        "wall_seconds": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

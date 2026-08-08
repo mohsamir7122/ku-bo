@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/finding.schema.json",
+  "title": "KU-BO Normalized Finding JSONL Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["finding_id", "security_code", "ticker", "source_id", "source_url", "published_at", "available_at", "capture_mode", "timing_grade", "raw_sha256", "evidence_roles", "signal_kind", "direction", "fact_type", "strength", "materiality", "origin_id", "event_key", "claim_text"],
+  "properties": {
+    "finding_id": {"type": "string", "minLength": 1},
+    "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+    "ticker": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "minLength": 1},
+    "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "published_at": {"type": "string", "format": "date-time"},
+    "available_at": {"type": "string", "format": "date-time"},
+    "capture_mode": {"enum": ["PROSPECTIVE", "ARCHIVE_CAPTURE", "USER_EXPORT"]},
+    "timing_grade": {"enum": ["A", "B", "C", "D", "E", "F"]},
+    "raw_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "evidence_roles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "signal_kind": {"enum": ["CATALYST", "PRICE_ACTIVITY", "TECHNICAL", "FUNDAMENTAL", "SENTIMENT", "LIQUIDITY", "RISK", "ARCHIVE_CONTEXT"]},
+    "direction": {"enum": ["POSITIVE", "NEGATIVE", "NEUTRAL"]},
+    "fact_type": {"type": "string", "minLength": 1},
+    "strength": {"type": "number", "minimum": 0, "maximum": 1},
+    "materiality": {"type": "number", "minimum": 0, "maximum": 1},
+    "origin_id": {"type": "string", "minLength": 1},
+    "event_key": {"type": "string", "minLength": 1},
+    "claim_text": {"type": "string", "minLength": 1}
+  }
+}

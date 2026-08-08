@@ -1,0 +1,77 @@
+{
+  "checked_at": "2026-08-07T00:00:00+03:00",
+  "registry_version": "2.0",
+  "scope_note": "Architectural and methodological comparison only. External results are not evidence of performance on Boursa Kuwait.",
+  "projects": [
+    {
+      "project_id": "microsoft_qlib",
+      "name": "Microsoft Qlib",
+      "url": "https://github.com/microsoft/qlib",
+      "evidence_type": "official_repository",
+      "verified_claim": "Open-source quantitative investment platform covering data, model, workflow, backtest, and portfolio research components.",
+      "adopt": ["experiment_registry", "baseline_first", "separate_data_model_backtest_layers"],
+      "reject_or_defer": ["assuming_non_kuwait_data_adapters_transfer", "using_framework_backtest_as_execution_proof"],
+      "local_verification_required": ["point_in_time_kuwait_universe", "corporate_actions", "fees_nonfill_limits"]
+    },
+    {
+      "project_id": "fingpt",
+      "name": "FinGPT",
+      "url": "https://github.com/ai4finance-foundation/fingpt",
+      "evidence_type": "official_repository",
+      "verified_claim": "Open-source financial large-language-model research framework with data and NLP workflows.",
+      "adopt": ["retrieval_grounded_financial_nlp", "structured_event_extraction"],
+      "reject_or_defer": ["llm_direct_trade_probability", "transplanting_external_sentiment_labels"],
+      "local_verification_required": ["arabic_kuwait_entity_linking", "human_qa", "event_ablation"]
+    },
+    {
+      "project_id": "tradingagents",
+      "name": "TradingAgents",
+      "url": "https://github.com/TauricResearch/TradingAgents",
+      "evidence_type": "official_repository",
+      "verified_claim": "Open-source multi-agent trading research framework that assigns analysis and decision roles.",
+      "adopt": ["role_separation", "structured_thesis_and_risk_review"],
+      "reject_or_defer": ["agent_agreement_as_statistical_independence", "agents_bypassing_stop_gates"],
+      "local_verification_required": ["shared_error_analysis", "costed_walk_forward", "prospective_ledger"]
+    },
+    {
+      "project_id": "janus_q",
+      "name": "Janus-Q",
+      "url": "https://arxiv.org/abs/2602.19919",
+      "evidence_type": "research_preprint",
+      "verified_claim": "Describes a finance news dataset with event types, stock links, sentiment, and cumulative abnormal returns.",
+      "adopt": ["event_taxonomy", "stock_linkage", "abnormal_return_event_study"],
+      "reject_or_defer": ["transplanting_reported_results", "assuming_taxonomy_is_complete_for_kuwait"],
+      "local_verification_required": ["kuwait_event_taxonomy", "publication_time_cutoff", "corporate_action_adjustment"]
+    },
+    {
+      "project_id": "arabic_saudi_sentiment_2026",
+      "name": "Arabic financial sentiment corpus for the Saudi market",
+      "url": "https://arxiv.org/abs/2605.19714",
+      "evidence_type": "research_preprint",
+      "verified_claim": "Reports an Arabic financial corpus and pipeline including cleaning, deduplication, entity linkage, and multi-class sentiment.",
+      "adopt": ["arabic_normalization", "semantic_deduplication", "canonical_company_linkage", "multi_class_annotations"],
+      "reject_or_defer": ["treating_saudi_corpus_as_kuwait_ground_truth"],
+      "local_verification_required": ["kuwait_corpus", "annotator_agreement", "dialect_and_abbreviation_errors"]
+    },
+    {
+      "project_id": "econ",
+      "name": "ECON",
+      "url": "https://arxiv.org/abs/2312.03758",
+      "evidence_type": "research_preprint",
+      "verified_claim": "Studies financial social-media event prediction with structured context rather than raw post counts alone.",
+      "adopt": ["social_denoising", "context_features", "large_movement_target_separation"],
+      "reject_or_defer": ["raw_social_count_as_fact", "external_market_performance_transfer"],
+      "local_verification_required": ["diffusion_ablation", "source_independence", "rumor_to_official_transition"]
+    },
+    {
+      "project_id": "agentic_trading_evidence_map_2026",
+      "name": "Agentic AI for Financial Trading evidence map",
+      "url": "https://arxiv.org/abs/2605.19337",
+      "evidence_type": "research_preprint",
+      "verified_claim": "Systematic evidence map reports weak and inconsistent disclosure of temporal splits, transaction costs, survivorship controls, and reproducibility across empirical agentic-trading studies.",
+      "adopt": ["time_consistent_split", "costs_nonfill", "survivorship_control", "reproducibility_artifacts"],
+      "reject_or_defer": ["architecture_novelty_as_evidence", "single_backtest_headline"],
+      "local_verification_required": ["walk_forward", "full_denominator", "ledger_seal", "prospective_trial"]
+    }
+  ]
+}

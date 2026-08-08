@@ -1,0 +1,51 @@
+{
+  "checked_at": "2026-08-07T00:00:00+03:00",
+  "registry_version": "2.0",
+  "rules": [
+    {
+      "rule_id": "boursa_public_market_data_delay",
+      "source_id": "boursa_current",
+      "title": "Boursa Kuwait public market data delay notice",
+      "url": "https://www.boursakuwait.com.kw/en/",
+      "authority": "official_exchange",
+      "verified_claim": "The public market watch/trading data is displayed with a 15-minute delay.",
+      "operational_effect": "Public pages cannot establish live execution capability; completed-session evidence still requires saved bytes and reconciliation."
+    },
+    {
+      "rule_id": "boursa_trading_session_schedule",
+      "source_id": "boursa_current",
+      "title": "Trading Information",
+      "url": "https://www.boursakuwait.com.kw/en/securities/trading/trading-information/",
+      "authority": "official_exchange",
+      "verified_claim": "The official page publishes the current opening auction, continuous trading, closing auction, and Trade-at-Last session times and describes broker live data versus the delayed website.",
+      "operational_effect": "Session times belong to an effective-dated session regime and must not be hard-coded across history without evidence."
+    },
+    {
+      "rule_id": "boursa_security_circuit_breakers",
+      "source_id": "boursa_current",
+      "title": "NMS and Circuit Breakers",
+      "url": "https://www.boursakuwait.com.kw/en/securities/trading/nms-and-circuit-breakers/",
+      "authority": "official_exchange",
+      "verified_claim": "The official page states security-level upper and lower price limits of +10% and -5% and describes the associated auction mechanism.",
+      "operational_effect": "Upper-limit detection is censored for execution until fill/queue evidence exists; lower-limit states are not normal executable quotes."
+    },
+    {
+      "rule_id": "boursa_approved_data_vendors",
+      "source_id": "boursa_current",
+      "title": "Data Vendors",
+      "url": "https://www.boursakuwait.com.kw/en/data-more-details/",
+      "authority": "official_exchange",
+      "verified_claim": "Boursa Kuwait publishes information on approved data vendors that may provide real-time, delayed, historical, and analytical data services.",
+      "operational_effect": "A licensed vendor is the logical path for execution-grade data, but a project entitlement must still be configured and evidenced."
+    },
+    {
+      "rule_id": "cma_ifsah_xbrl_mandate",
+      "source_id": "cma_ifsah",
+      "title": "Mandatory use of the electronic disclosure system based on XBRL",
+      "url": "https://www.cma.gov.kw/en/web/cma/cma-board-releases/resolutions-and-regulations/-/cmaboardreleases/detail/1611277",
+      "authority": "official_regulator",
+      "verified_claim": "The CMA release describes mandatory electronic disclosure through the XBRL-based iFSAH system beginning 5 January 2025 for the covered entities and disclosures.",
+      "operational_effect": "iFSAH is a primary structured disclosure source; collectors must preserve publication timestamps, attachments, corrections, and transition-channel completeness."
+    }
+  ]
+}

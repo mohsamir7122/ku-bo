@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "connector": "file",
+      "source_id": "investing_history",
+      "source_url": "https://www.investing.com/equities/kwt-real-est-historical-data",
+      "roles_observed": ["MARKET_DISCOVERY", "PRICE_HISTORY"],
+      "access_mode": "PUBLIC_PAGE",
+      "capture_kind": "RAW_PAGE",
+      "resource_path": "raw/01_investing_history.json",
+      "max_bytes": 1048576
+    }
+  ]
+}

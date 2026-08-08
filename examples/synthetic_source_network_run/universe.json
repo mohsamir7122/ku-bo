@@ -1,0 +1,30 @@
+{
+  "covered_security_codes": [
+    "101",
+    "102"
+  ],
+  "expected_security_codes": [
+    "101",
+    "102"
+  ],
+  "membership_as_of": "2026-08-07T00:50:00+03:00",
+  "membership_basis": "POINT_IN_TIME_OFFICIAL",
+  "membership_raw_sha256": "c767409d91f849523f2a2567a0175ae866103f2fc04a234c0afc6e1e9b0bd17f",
+  "membership_source_id": "boursa_current",
+  "reconciliation_status": "EXACT",
+  "schema_version": "3.0",
+  "securities": [
+    {
+      "security_code": "101",
+      "ticker": "AAA",
+      "valid_from": "2020-01-01",
+      "valid_to": null
+    },
+    {
+      "security_code": "102",
+      "ticker": "BBB",
+      "valid_from": "2020-01-01",
+      "valid_to": null
+    }
+  ]
+}
