@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-08-08",
+  "coverage": {
+    "market": "Boursa Kuwait",
+    "scope": "LIVE_PILOT_SEED",
+    "security_count": 5,
+    "notes": "Seed mapping for the first live-pilot price-history experiment. Mapping entries are candidates until raw captures prove each URL and identifier."
+  },
+  "mappings": [
+    {
+      "security_code": "108",
+      "boursa_symbol": "KFH",
+      "name_en": "Kuwait Finance House",
+      "name_ar": "بيت التمويل الكويتي",
+      "isin": "KW0EQ0100085",
+      "sector": "Banks",
+      "investing_slug": "kwt-fin-house",
+      "investing_url": "https://www.investing.com/equities/kwt-fin-house-historical-data",
+      "tradingview_symbol": "KSE:KFH",
+      "marketscreener_query": "Kuwait Finance House KFH Kuwait",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Investing historical-data URL was manually observed during the live-pilot feasibility review. Identity values were manually transcribed from a Boursa Kuwait report, but no raw official artifact is preserved here; this row remains a Seed candidate, not an auditable identity receipt."
+    },
+    {
+      "security_code": "101",
+      "boursa_symbol": "NBK",
+      "name_en": "National Bank of Kuwait",
+      "name_ar": "بنك الكويت الوطني",
+      "isin": "KW0EQ0100010",
+      "sector": "Banks",
+      "investing_slug": "national-bank-kt",
+      "investing_url": "https://www.investing.com/equities/national-bank-kt-historical-data",
+      "tradingview_symbol": "KSE:NBK",
+      "marketscreener_query": "National Bank of Kuwait NBK Kuwait",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Investing historical-data URL was manually observed during the live-pilot feasibility review. Identity values were manually transcribed from a Boursa Kuwait report, but no raw official artifact is preserved here; this row remains a Seed candidate, not an auditable identity receipt."
+    },
+    {
+      "security_code": "605",
+      "boursa_symbol": "ZAIN",
+      "name_en": "Mobile Telecommunications Company",
+      "name_ar": "زين",
+      "isin": "KW0EQ0601058",
+      "sector": "Telecommunications",
+      "investing_slug": "mobile-telecom",
+      "investing_url": "https://www.investing.com/equities/mobile-telecom-historical-data",
+      "tradingview_symbol": "KSE:ZAIN",
+      "marketscreener_query": "Mobile Telecommunications Company Zain Kuwait",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Investing historical-data URL was manually observed during the live-pilot feasibility review. Identity values were manually transcribed from a Boursa Kuwait report, but no raw official artifact is preserved here; this row remains a Seed candidate, not an auditable identity receipt."
+    },
+    {
+      "security_code": "623",
+      "boursa_symbol": "HUMANSOFT",
+      "name_en": "Humansoft Holding Company",
+      "name_ar": "هيومن سوفت القابضة",
+      "isin": "KW0EQ0601694",
+      "sector": "Consumer Services",
+      "investing_slug": "human-soft-hldng",
+      "investing_url": "https://www.investing.com/equities/human-soft-hldng-historical-data",
+      "tradingview_symbol": "KSE:HUMN",
+      "marketscreener_query": "Humansoft Holding Kuwait",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Investing historical-data URL was discovered by targeted web search during the live-pilot feasibility review. Identity values were manually transcribed from a Boursa Kuwait report, but no raw official artifact is preserved here; this row remains a Seed candidate, not an auditable identity receipt."
+    },
+    {
+      "security_code": "413",
+      "boursa_symbol": "MABANEE",
+      "name_en": "Mabanee Company",
+      "name_ar": "المباني",
+      "isin": "KW0EQ0400725",
+      "sector": "Real Estate",
+      "investing_slug": "mabanee-co",
+      "investing_url": "https://www.investing.com/equities/mabanee-co-historical-data",
+      "tradingview_symbol": "KSE:MABK",
+      "marketscreener_query": "Mabanee Company Kuwait",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Investing historical-data URL was discovered by targeted web search during the live-pilot feasibility review. Identity values were manually transcribed from a Boursa Kuwait report, but no raw official artifact is preserved here; this row remains a Seed candidate, not an auditable identity receipt."
+    }
+  ]
+}

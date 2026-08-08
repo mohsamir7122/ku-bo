@@ -22,6 +22,9 @@
 - Research Decision Ledger وOutcome stream منفصلان، Hash chain، File locking، وHMAC seal اختياري يرفض Downgrade. Outcome يتطلب Evidence packet فعليًا داخل Ledger ويعيد التحقق من Manifest والبايتات عند الإضافة والتحقق والختم، ولا يقبل Hash من المتصل.
 - CLI للجمع، التحقق، التخطيط، التقارير، Ledger verification/sealing، وإضافة Outcome.
 - محلل هوية خاص ببورصة الكويت ومحلل جدول تاريخ سعر خاص بـInvesting، مع مصالحة Security Code/Ticker/ISIN وفشل مغلق عند Parser Drift. اجتاز المسار اختبارًا من البايتات إلى Finding ثم Network Validation على Fixtures مولدة غير سوقية.
+- `stage-live-limited` يفصل Fixture plumbing عن Live access: الـFixture يعطي `PLUMBING_PASS` وReceipt غير حي، ولا يختلق HTTP 200. كما ينشر إلى Output جديد غير موجود بعد بالنقل الذري، ويرفض إعادة استخدام أي مسار، ويخرج Non-zero عند `CAPTURE_DEGRADED`.
+- Price Collection Workspace للخمسة Seed مع Symbol Mapping صارم وCollection Manifest؛ يمنع Path traversal وOverwrite، ويحجب Full Market حتى Official point-in-time reconciliation.
+- `USER_EXPORT` يتحقق من Manifest والهوية والـSHA-256 والفترة والوحدة قبل التطبيع، ويعطي `PRICE_IMPORT_READY_ONLY`. الناتج Parser Draft محجوب حتى يضاف Artifact هوية رسمي وEffective-dated bindings.
 - مصفوفة قدرات آلية تفصل تعريف المصدر وCapture وParser وFixture evidence عن `LIVE_OPERATIONAL`؛ لا تسجل أي مصدر حيًا تشغيليًا في هذه النسخة.
 - JSON Schemas وMethodology Registry ووثائق تشغيل وSecurity policy.
 - GitHub Actions على Python 3.11 و3.12 و3.13 و3.14 مع Compile وFull Suite وSmoke وSecret Guard وبناء Wheel واختباره بعقد `--project-root`.
@@ -45,6 +48,7 @@
 - Entitlement receipt وسجل الثقة يتحققان محليًا ولا يستعلمان حيًا من Vendor licensing service؛ لا يوجد Entitlement تشغيلي أوFeed مرخص مهيأ داخل المستودع.
 - لا يحتوي المستودع على سجل ثقة تشغيلي أومفتاح Runtime. الآلية منفذة، لكن تشغيل مصدر محمي يبقى محجوبًا حتى يقدمهما المشغل خارج Packet مع التفويض القانوني اللازم.
 - Full historical backtest يظل محجوبًا حتى Point-in-Time Universe وCorporate Actions وExecution data وSealed prospective denominator.
+- خريطة الأسعار الحالية Seed من خمسة أسهم وليست Full Market، ولا توجد CSV حقيقية أوCollection Manifest مقبولة داخل المستودع.
 - لا توجد خدمة Production منشورة، أوScheduler تشغيلي، أومراقبة توافر مستمرة، أوضمان لاستقرار أي مصدر خارجي.
 - لا توجد Captures حية مسجلة ومصرح بها تثبت قبول المحللين على الصفحات الخارجية الحالية. المحللان المنفذان مختبران على Fixtures تعاقدية مولدة فقط، وبقية المصادر بلا Parsers عاملة. التشغيل الحقيقي يحتاج تفويض الوصول وFixtures مصرح بها وQA ومراقبة Drift.
 - CI الحالي Linux فقط. يحتاج التشغيل على Windows أوContainer مصغر لا يملك System IANA tzdb إلى توفير حزمة `tzdata` خارجيًا قبل حل `Asia/Kuwait`؛ دعم منصة إضافية لا يُدّعى بلا CI خاص بها.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import tempfile
 import unittest
 from datetime import datetime
@@ -457,6 +458,53 @@ class BatchAndWriterTests(unittest.TestCase):
         self.assertEqual(report.source_count, 1)
         self.assertEqual(len(observations["sources"]), 1)
         self.assertEqual(len(observations["sources"][0]["raw_sha256s"]), 2)
+
+    @unittest.skipUnless(hasattr(os, "O_NOFOLLOW"), "requires POSIX no-follow support")
+    def test_writer_run_root_fd_stays_bound_after_path_replacement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            fixture = workspace / "fixtures"
+            run = workspace / "run"
+            moved = workspace / "moved-run"
+            fixture.mkdir()
+            run.mkdir()
+            (fixture / "payload.json").write_bytes(b"descriptor-bound evidence")
+            result = FileConnector(fixture, clock=fixed_clock).capture(capture_request())
+            flags = getattr(os, "O_PATH", os.O_RDONLY) | os.O_DIRECTORY | os.O_NOFOLLOW
+            root_fd = os.open(run, flags)
+            try:
+                writer = CapturePacketWriter(run, run_root_fd=root_fd)
+                os.close(root_fd)
+                root_fd = -1
+                with writer:
+                    run.rename(moved)
+                    run.mkdir()
+                    report = writer.write((result,))
+            finally:
+                if root_fd >= 0:
+                    os.close(root_fd)
+
+            self.assertEqual(report.status, "COMPLETE")
+            self.assertTrue((moved / "manifest.json").is_file())
+            self.assertTrue((moved / "source_observations.json").is_file())
+            self.assertFalse((run / "manifest.json").exists())
+            self.assertEqual(list(run.iterdir()), [])
+
+    @unittest.skipUnless(hasattr(os, "O_NOFOLLOW"), "requires POSIX no-follow support")
+    def test_writer_rejects_filesystem_root_fd_regardless_of_diagnostic_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            diagnostic_path = Path(directory) / "diagnostic-non-root"
+            flags = getattr(os, "O_PATH", os.O_RDONLY) | os.O_DIRECTORY | os.O_NOFOLLOW
+            root_fd = os.open("/", flags)
+            try:
+                with self.assertRaisesRegex(ValueError, "filesystem root"):
+                    CapturePacketWriter(
+                        diagnostic_path,
+                        run_root_fd=root_fd,
+                    )
+            finally:
+                os.close(root_fd)
+            self.assertFalse(diagnostic_path.exists())
 
     @unittest.skipUnless(hasattr(__import__("os"), "O_NOFOLLOW"), "requires POSIX no-follow support")
     def test_writer_rejects_precreated_symlink_parent_without_outside_write(self):

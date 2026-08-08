@@ -7,6 +7,7 @@ from hashlib import sha256
 from html.parser import HTMLParser
 import re
 from typing import Any
+from zoneinfo import ZoneInfo
 
 
 MAX_PARSER_BYTES = 10 * 1024 * 1024
@@ -302,6 +303,18 @@ def investing_price_finding(
     capture_mode: str,
 ) -> dict[str, Any]:
     latest = instrument.rows[0]
+    if observed_at.tzinfo is None or observed_at.utcoffset() is None:
+        raise ValueError("observed_at must be timezone-aware")
+    # A historical table captured today does not make its latest daily row a
+    # current-day market event.  Bind publication freshness to the provider's
+    # session date, while retaining capture time as the earliest evidenced
+    # availability in this run.  Midnight is deliberately conservative for
+    # age calculations and avoids inventing an exchange close time here.
+    session_at = datetime.fromisoformat(latest.session_date).replace(
+        tzinfo=ZoneInfo("Asia/Kuwait")
+    )
+    if session_at > observed_at.astimezone(ZoneInfo("Asia/Kuwait")):
+        raise ParserDriftError("FUTURE_SESSION_DATE", latest.session_date)
     change = float(latest.change_percent)
     if change > 0.05:
         direction = "POSITIVE"
@@ -319,7 +332,7 @@ def investing_price_finding(
         "ticker": instrument.ticker,
         "source_id": "investing_history",
         "source_url": source_url,
-        "published_at": observed_at.isoformat(),
+        "published_at": session_at.isoformat(),
         "available_at": observed_at.isoformat(),
         "capture_mode": capture_mode,
         "timing_grade": "C",

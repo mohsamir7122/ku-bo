@@ -1,5 +1,11 @@
 # تشغيل شبكة المصادر
 
+للتدرج من الـPilot إلى Backtest حقيقي، راجع أولًا `docs/REAL_BACKTEST_TRANSITION_AR.md`. هذه الوثيقة تفرق بين `Live Pilot Data Import` وبين `Point-in-Time Real Backtest Readiness`، وتحدد شروط `GO/NO-GO` قبل حساب أي Accuracy.
+
+قبل وضع أي ملفات أسعار في `USER_EXPORT`، راجع `docs/PRICE_FILE_COLLECTION_POLICY_AR.md`. هذه السياسة تحدد المصادر المقبولة، Manifest المطلوب، قواعد `RAW/ADJUSTED`, وحالات `ACCEPT`, `QUARANTINE`, و`REJECT`.
+
+لتجهيز تجربة تجميع أسعار موسعة لكل الأسهم، استخدم `docs/ALL_MARKET_PRICE_COLLECTION_RUNBOOK_AR.md`. هذه الوثيقة تسجل فرع التشغيل، مجلد Google Drive، أمر تجهيز Workspace، وحدود Codex Web مقابل Codex CLI.
+
 ## 1. تثبيت وفحص الإعداد
 
 ```bash
@@ -36,6 +42,17 @@ kubo materialize-parser-run \
 ```
 
 يتحقق الأمر من الـHashes والتوقيت والنطاق، ويصالح Security Code/Ticker/ISIN، ويكتب حزمة التشغيل ثم يشغل مدقق الشبكة. لا يفسر أخبارًا أومحفزات، ولا يكمل Quorum تلقائيًا. Fixtures الاختبار مولدة وليست قبولًا حيًا؛ راجع `config/source_capabilities.json` قبل افتراض وجود Parser أوConnector تشغيلي لأي مصدر.
+
+للمرحلة الحية المحدودة والمسرّحة، استخدم Wrapper ضيقًا يلتقط مصدرًا رسميًا واحدًا ومصدرًا ثانويًا واحدًا ثم يولد `parser_plan.json` ويمرر الناتج إلى مسار الـParser نفسه:
+
+```bash
+kubo stage-live-limited \
+  --plan examples/staged_live_limited_plan.json \
+  --fixture-root tests/fixtures/parser_contract \
+  --output-root runtime/staged-live-limited-run-001
+```
+
+هذا المثال Dry-run بالـFixtures؛ لذلك ينتج `PLUMBING_PASS` و`fixture_plumbing_receipt.json` ولا ينشئ Live Probe أوHTTP status وهميًا. عند تحويله إلى محاولة Public HTTP، غيّر `connector` إلى `public_http` و`access_mode` إلى `PUBLIC_PAGE` و`capture_kind` إلى `RAW_PAGE` لكل Capture، واحذف `resource_path`؛ ويمكن استخدام الزوج `PUBLIC_DOWNLOAD` و`RAW_DOWNLOAD` لمورد تنزيل عام. أبقِ `boursa_current` كمصدر رسمي و`investing_history` كمصدر ثانوي، واستخدم نطاقات Allowlist العامة فقط. سقف `max_requests: 16` في القالب يحسب robots والموارد والـredirects الفعلية. ينتهي `usage_wall_seconds` عند اكتمال التحقق والنشر الذري، ثم يُعطّل المؤقت قبل Teardown الأقفال والـFDs؛ لذلك لا يدخل Teardown الآمن في Usage المسجل. أي Login أوCAPTCHA أوRobots أوRate Limit ينتج `CAPTURE_DEGRADED` وExit code غير صفري ولا يُتجاوز. يجب أن يكون Output مسارًا جديدًا غير موجود بعد ليُنشر إليه بالنقل الذري؛ حتى المجلد الموجود والفارغ مرفوض. نجاح Plumbing لا يعني `LIVE_OPERATIONAL` ولا يثبت سعر تنفيذ أوتوصية.
 
 ## 3. جمع أدوار المصدر
 
