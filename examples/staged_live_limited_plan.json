@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "run_id": "staged-live-limited-demo",
+  "product_id": "next_session_rank",
+  "scope": "NAMED_SECURITIES",
+  "decision_delay_minutes": 5,
+  "budget": {
+    "max_requests": 2,
+    "max_raw_bytes": 1000000,
+    "max_wall_seconds": 60
+  },
+  "binding": {
+    "security_code": "101",
+    "ticker": "AAA",
+    "isin": "KW0EQ0000101",
+    "valid_from": "2020-01-01",
+    "valid_to": null
+  },
+  "official_capture": {
+    "connector": "file",
+    "source_id": "boursa_current",
+    "source_url": "https://www.boursakuwait.com.kw/en/",
+    "roles_observed": ["IDENTITY_REFERENCE"],
+    "access_mode": "USER_EXPORT",
+    "capture_kind": "USER_EXPORT",
+    "resource_path": "boursa_identity.html",
+    "timeout_seconds": 5,
+    "max_bytes": 500000
+  },
+  "secondary_capture": {
+    "connector": "file",
+    "source_id": "investing_history",
+    "source_url": "https://www.investing.com/equities/generated-test-historical-data",
+    "roles_observed": ["MARKET_DISCOVERY", "PRICE_HISTORY"],
+    "access_mode": "USER_EXPORT",
+    "capture_kind": "USER_EXPORT",
+    "resource_path": "investing_history.html",
+    "timeout_seconds": 5,
+    "max_bytes": 500000
+  }
+}
