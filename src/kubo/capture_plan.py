@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
+from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
-from typing import Any
+import stat
+from typing import Any, Iterator
 
 from .ingestion import (
     CapturePacketWriter,
@@ -19,12 +23,53 @@ MAX_CAPTURE_PLAN_BYTES = 128 * 1024 * 1024
 MAX_CAPTURE_PLAN_TIMEOUT_SECONDS = 300.0
 DEFAULT_CAPTURE_TASK_BYTES = 5 * 1024 * 1024
 DEFAULT_CAPTURE_TASK_TIMEOUT_SECONDS = 15.0
+_OUTPUT_RESERVATION_NAME = ".kubo-capture-plan-reservation"
+
+
+@dataclass(frozen=True)
+class _ReservedOutputRoot:
+    path: Path
+    fd: int
+    parent_fd: int
+    final_component: str
+    device: int
+    inode: int
+
+    def assert_named_identity(self) -> None:
+        try:
+            held = os.fstat(self.fd)
+            named = os.stat(
+                self.final_component,
+                dir_fd=self.parent_fd,
+                follow_symlinks=False,
+            )
+            marker = os.stat(
+                _OUTPUT_RESERVATION_NAME,
+                dir_fd=self.fd,
+                follow_symlinks=False,
+            )
+        except OSError as exc:
+            raise ValueError("output_root identity changed during capture") from exc
+        expected = (self.device, self.inode)
+        if (
+            not stat.S_ISDIR(held.st_mode)
+            or not stat.S_ISDIR(named.st_mode)
+            or not stat.S_ISREG(marker.st_mode)
+            or (held.st_dev, held.st_ino) != expected
+            or (named.st_dev, named.st_ino) != expected
+        ):
+            raise ValueError("output_root identity changed during capture")
 
 
 def _load(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError("capture plan must be a JSON object")
+    if "max_requests" in value or "budget" in value:
+        raise ValueError(
+            "capture plan does not accept max_requests budgets; "
+            "the task limit is not a network-transport request budget"
+        )
     unknown = sorted(set(value) - {"schema_version", "tasks"})
     if unknown:
         raise ValueError("unknown capture-plan fields: " + ",".join(unknown))
@@ -37,6 +82,156 @@ def _load(path: Path) -> dict[str, Any]:
             f"capture plan exceeds task limit of {MAX_CAPTURE_PLAN_TASKS}"
         )
     return value
+
+
+@contextmanager
+def _reserve_output_root(output_root: Path) -> Iterator[_ReservedOutputRoot]:
+    """Reserve one new/empty output directory for this invocation only.
+
+    The exclusive marker closes the common check-then-use race between two
+    capture-plan processes.  A crashed process deliberately leaves either the
+    marker or partial output behind, so a later invocation fails closed rather
+    than replacing evidence from the earlier attempt.
+    """
+
+    requested = Path(output_root)
+    if requested.is_absolute():
+        start = Path(requested.anchor)
+        components = requested.parts[1:]
+    else:
+        start = Path.cwd()
+        components = requested.parts
+    if (
+        not components
+        or any(component in {"", ".", ".."} for component in components)
+    ):
+        raise ValueError("output_root must identify a dedicated directory")
+    required_dirfd_functions = (os.open, os.mkdir, os.unlink, os.rmdir)
+    if not (
+        os.name == "posix"
+        and hasattr(os, "O_DIRECTORY")
+        and hasattr(os, "O_NOFOLLOW")
+        and all(function in os.supports_dir_fd for function in required_dirfd_functions)
+        and os.listdir in os.supports_fd
+    ):
+        raise RuntimeError(
+            "secure output_root reservation requires dir_fd and no-follow support"
+        )
+
+    directory_flags = (
+        os.O_RDONLY
+        | os.O_DIRECTORY
+        | os.O_NOFOLLOW
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+    marker_flags = (
+        os.O_WRONLY
+        | os.O_CREAT
+        | os.O_EXCL
+        | os.O_NOFOLLOW
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+    parent_fd = os.open(start, directory_flags)
+    root_fd = -1
+    marker_fd = -1
+    final_component = components[-1]
+    created = False
+    reservation_created = False
+    root_identity: tuple[int, int] | None = None
+    try:
+        for component in components[:-1]:
+            try:
+                os.mkdir(component, mode=0o700, dir_fd=parent_fd)
+            except FileExistsError:
+                pass
+            try:
+                next_fd = os.open(component, directory_flags, dir_fd=parent_fd)
+            except OSError as exc:
+                raise ValueError(
+                    "output_root parent contains a symlink or non-directory"
+                ) from exc
+            os.close(parent_fd)
+            parent_fd = next_fd
+
+        try:
+            os.mkdir(final_component, mode=0o700, dir_fd=parent_fd)
+            created = True
+        except FileExistsError:
+            pass
+        try:
+            root_fd = os.open(final_component, directory_flags, dir_fd=parent_fd)
+        except OSError as exc:
+            raise ValueError("output_root must be a new or empty directory") from exc
+        if os.listdir(root_fd):
+            raise ValueError("output_root must be empty")
+
+        try:
+            marker_fd = os.open(
+                _OUTPUT_RESERVATION_NAME,
+                marker_flags,
+                0o600,
+                dir_fd=root_fd,
+            )
+        except FileExistsError as exc:
+            raise ValueError("output_root is already reserved") from exc
+        except OSError as exc:
+            raise ValueError("output_root cannot be reserved safely") from exc
+        reservation_created = True
+        os.close(marker_fd)
+        marker_fd = -1
+
+        if os.listdir(root_fd) != [_OUTPUT_RESERVATION_NAME]:
+            raise ValueError("output_root changed while it was being reserved")
+
+        identity = os.fstat(root_fd)
+        root_identity = (identity.st_dev, identity.st_ino)
+        logical_root = start.joinpath(*components)
+        yield _ReservedOutputRoot(
+            path=logical_root,
+            fd=root_fd,
+            parent_fd=parent_fd,
+            final_component=final_component,
+            device=identity.st_dev,
+            inode=identity.st_ino,
+        )
+    finally:
+        if marker_fd >= 0:
+            os.close(marker_fd)
+        if reservation_created:
+            try:
+                os.unlink(_OUTPUT_RESERVATION_NAME, dir_fd=root_fd)
+            except FileNotFoundError:
+                pass
+        if root_fd >= 0:
+            os.close(root_fd)
+        if created and _named_directory_matches(
+            parent_fd,
+            final_component,
+            identity=root_identity,
+        ):
+            try:
+                os.rmdir(final_component, dir_fd=parent_fd)
+            except OSError:
+                pass
+        os.close(parent_fd)
+
+
+def _named_directory_matches(
+    parent_fd: int,
+    name: str,
+    *,
+    identity: tuple[int, int] | None,
+) -> bool:
+    if identity is None:
+        return False
+    try:
+        metadata = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+    except OSError:
+        return False
+    return stat.S_ISDIR(metadata.st_mode) and (
+        metadata.st_dev,
+        metadata.st_ino,
+    ) == identity
 
 
 def execute_capture_plan(
@@ -131,25 +326,48 @@ def execute_capture_plan(
             f"{MAX_CAPTURE_PLAN_TIMEOUT_SECONDS:g} seconds"
         )
 
-    file_connector = FileConnector(fixture_root) if fixture_root is not None else None
-    public_connector = PublicHttpConnector()
-    tasks = [
-        (
-            public_connector if connector_kind == "public_http" else file_connector,
-            capture_request,
-        )
-        for connector_kind, capture_request in planned_requests
-    ]
-    batch = capture_sources(tasks)
-    write = CapturePacketWriter(output_root).write(batch.results)
+    with _reserve_output_root(output_root) as reserved_output_root:
+        file_connector = FileConnector(fixture_root) if fixture_root is not None else None
+        public_connector = PublicHttpConnector()
+        tasks = [
+            (
+                public_connector if connector_kind == "public_http" else file_connector,
+                capture_request,
+            )
+            for connector_kind, capture_request in planned_requests
+        ]
+        batch = capture_sources(tasks)
+        if len(batch.results) != len(planned_requests):
+            raise RuntimeError("capture executor result count does not match planned tasks")
+        with CapturePacketWriter(
+            reserved_output_root.path,
+            run_root_fd=reserved_output_root.fd,
+        ) as writer:
+            write = writer.write(batch.results)
+        reserved_output_root.assert_named_identity()
     return {
         "status": batch.status,
         "capture": batch.to_dict(),
         "write": write.to_dict(),
+        "capture_accounting": {
+            "max_tasks": MAX_CAPTURE_PLAN_TASKS,
+            "planned_tasks": len(planned_requests),
+            "capture_results": len(batch.results),
+            "public_http_tasks": sum(
+                connector_kind == "public_http"
+                for connector_kind, _ in planned_requests
+            ),
+            "file_tasks": sum(
+                connector_kind == "file"
+                for connector_kind, _ in planned_requests
+            ),
+        },
         "claim_boundaries": {
             "raw_capture_is_qualified_finding": False,
             "parser_validation_required": True,
             "source_failure_blocks_other_sources": False,
+            "capture_task_limit_is_network_request_budget": False,
+            "network_request_budget_enforced": False,
         },
     }
 

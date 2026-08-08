@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from contextlib import redirect_stdout
+from dataclasses import replace
+from datetime import datetime
 from io import StringIO
 import json
 from pathlib import Path
@@ -15,6 +17,7 @@ from kubo.pipeline import ResearchPipeline
 from kubo.source_network import SourceNetworkCatalog
 from kubo.source_parsers import (
     ParserDriftError,
+    investing_price_finding,
     parse_boursa_identity_html,
     parse_investing_history_html,
 )
@@ -51,6 +54,32 @@ class SourceParserTests(unittest.TestCase):
         changed = content.replace("+1.00%", "+9.00%")
         with self.assertRaisesRegex(ParserDriftError, "CHANGE_PERCENT_RECONCILIATION_FAILED"):
             parse_investing_history_html(changed.encode("utf-8"))
+
+    def test_daily_price_finding_freshness_uses_session_date_not_capture_date(self) -> None:
+        instrument = parse_investing_history_html(
+            (FIXTURES / "investing_history.html").read_bytes()
+        )
+        historical = replace(
+            instrument,
+            rows=tuple(
+                replace(
+                    row,
+                    session_date=f"2020-01-{2 - index:02d}",
+                )
+                for index, row in enumerate(instrument.rows)
+            ),
+        )
+        captured_at = datetime.fromisoformat("2026-08-07T00:50:00+03:00")
+        finding = investing_price_finding(
+            historical,
+            security_code="101",
+            source_url="https://www.investing.com/equities/generated-test-historical-data",
+            raw_sha256="a" * 64,
+            observed_at=captured_at,
+            capture_mode="USER_EXPORT",
+        )
+        self.assertEqual(finding["published_at"], "2020-01-02T00:00:00+03:00")
+        self.assertEqual(finding["available_at"], captured_at.isoformat())
 
     def _capture_and_plan(self, directory: Path) -> tuple[Path, Path, dict[str, object]]:
         run_root = directory / "capture"

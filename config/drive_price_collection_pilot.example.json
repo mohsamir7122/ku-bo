@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Optional operator-local Google Drive destination for price-collection artifacts",
+  "root_folder_url": "https://drive.google.com/drive/folders/REPLACE_WITH_AUTHORIZED_FOLDER_ID",
+  "rclone_remote": "REPLACE_WITH_LOCAL_RCLONE_REMOTE",
+  "remote_path": "KU-BO Price Collection Pilot",
+  "notes": [
+    "Copy this file to config/drive_price_collection_pilot.local.json and fill it locally.",
+    "The local file is ignored by Git and must not contain credentials, tokens, cookies, or service-account keys.",
+    "The repository does not upload to Drive by itself; use an authorized connector or local rclone configuration."
+  ]
+}

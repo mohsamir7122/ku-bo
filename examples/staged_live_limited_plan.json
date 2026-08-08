@@ -3,9 +3,9 @@
   "run_id": "staged-live-limited-demo",
   "product_id": "next_session_rank",
   "scope": "NAMED_SECURITIES",
-  "decision_delay_minutes": 5,
+  "decision_delay_minutes": 0,
   "budget": {
-    "max_requests": 2,
+    "max_requests": 16,
     "max_raw_bytes": 1000000,
     "max_wall_seconds": 60
   },

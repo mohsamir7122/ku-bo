@@ -1003,22 +1003,91 @@ class CaptureWriteReport:
 
 
 class CapturePacketWriter:
-    """Write content-addressed raw files and deterministic V3 manifest/observations."""
+    """Write content-addressed raw files and deterministic V3 manifest/observations.
 
-    def __init__(self, run_root: Path):
-        self.run_root = Path(run_root).resolve()
-        if self.run_root == Path(self.run_root.anchor):
+    ``run_root_fd`` is the secure transaction mode.  The writer retains an
+    independent descriptor for the caller's already-vetted directory and
+    performs every directory traversal and write relative to that descriptor.
+    In this mode
+    ``run_root`` is diagnostic identity only: it is never resolved or reopened.
+    """
+
+    def __init__(self, run_root: Path, *, run_root_fd: int | None = None):
+        self._run_root_fd = -1
+        self._run_root_identity: tuple[int, int] | None = None
+        requested = Path(run_root)
+        if requested == Path(requested.anchor):
             raise ValueError("run_root must not be a filesystem root")
+        if run_root_fd is not None:
+            if isinstance(run_root_fd, bool) or not isinstance(run_root_fd, int):
+                raise TypeError("run_root_fd must be an integer directory descriptor")
+            if not self._dirfd_supported():
+                raise RuntimeError("run_root_fd requires secure dir_fd support")
+            directory_flags = (
+                os.O_RDONLY
+                | os.O_DIRECTORY
+                | os.O_NOFOLLOW
+                | getattr(os, "O_CLOEXEC", 0)
+            )
+            try:
+                # Reopening "." via openat retains the inode independently and
+                # normalizes Linux O_PATH descriptors into a readable dirfd
+                # suitable for fsync and subsequent *at operations.
+                descriptor = os.open(".", directory_flags, dir_fd=run_root_fd)
+            except OSError as exc:
+                raise ValueError("run_root_fd is not a readable directory descriptor") from exc
+            try:
+                metadata = os.fstat(descriptor)
+            except OSError as exc:
+                os.close(descriptor)
+                raise ValueError("run_root_fd is not a readable directory descriptor") from exc
+            if not stat.S_ISDIR(metadata.st_mode):
+                os.close(descriptor)
+                raise ValueError("run_root_fd must reference a directory")
+            try:
+                filesystem_root = os.stat("/", follow_symlinks=False)
+            except OSError as exc:
+                os.close(descriptor)
+                raise RuntimeError("cannot validate the filesystem root identity") from exc
+            if (metadata.st_dev, metadata.st_ino) == (
+                filesystem_root.st_dev,
+                filesystem_root.st_ino,
+            ):
+                os.close(descriptor)
+                raise ValueError("run_root_fd must not reference the filesystem root")
+            self.run_root = requested
+            self._run_root_fd = descriptor
+            self._run_root_identity = (metadata.st_dev, metadata.st_ino)
+            return
+
+        self.run_root = requested.resolve()
         self.run_root.mkdir(parents=True, exist_ok=True, mode=0o700)
         if not self.run_root.is_dir():
             raise ValueError("run_root must be a directory")
 
+    def __enter__(self) -> "CapturePacketWriter":
+        return self
+
+    def __exit__(self, _exc_type, _exc, _traceback) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if getattr(self, "_run_root_fd", -1) >= 0:
+            os.close(self._run_root_fd)
+            self._run_root_fd = -1
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except (AttributeError, OSError):
+            pass
+
     def write(self, results: Iterable[CaptureResult]) -> CaptureWriteReport:
+        if self._run_root_identity is not None:
+            self._assert_retained_root_identity()
         result_rows = tuple(results)
         if not result_rows:
             raise ValueError("at least one CaptureResult is required")
-        raw_root = self.run_root / "raw"
-        raw_root.mkdir(parents=True, exist_ok=True)
 
         artifact_by_path: dict[str, dict[str, object]] = {}
         digest_by_result: dict[int, str] = {}
@@ -1029,8 +1098,7 @@ class CapturePacketWriter:
             digest_by_result[index] = digest
             url_key = sha256_bytes((result.final_url + "\0" + result.capture_kind).encode("utf-8"))[:16]
             relative = Path("raw") / result.source_id / f"{url_key}-{digest}.bin"
-            target = self.run_root / relative
-            self._write_raw_once(target, result.content)
+            self._write_raw_once(relative, result.content)
             row = {
                 "path": relative.as_posix(),
                 "sha256": digest,
@@ -1098,13 +1166,15 @@ class CapturePacketWriter:
             )
 
         self._atomic_write(
-            self.run_root / "manifest.json",
+            Path("manifest.json"),
             canonical_json_bytes({"schema_version": "3.0", "artifacts": artifacts}),
         )
         self._atomic_write(
-            self.run_root / "source_observations.json",
+            Path("source_observations.json"),
             canonical_json_bytes({"schema_version": "3.0", "sources": observations}),
         )
+        if self._run_root_identity is not None:
+            self._assert_retained_root_identity()
         degraded = tuple(source_id for source_id, state in source_states if state != "AVAILABLE")
         status = "COMPLETE" if not degraded else "DEGRADED" if artifacts else "FAILED"
         return CaptureWriteReport(
@@ -1178,6 +1248,13 @@ class CapturePacketWriter:
 
     def _relative_target(self, path: Path) -> Path:
         candidate = Path(path)
+        if self._run_root_fd >= 0:
+            if candidate.is_absolute():
+                raise ValueError("output target must be relative when run_root_fd is used")
+            relative = candidate
+            if not relative.parts or ".." in relative.parts:
+                raise ValueError("output target escapes run_root")
+            return relative
         if not candidate.is_absolute():
             candidate = self.run_root / candidate
         try:
@@ -1190,19 +1267,23 @@ class CapturePacketWriter:
 
     @staticmethod
     def _dirfd_supported() -> bool:
+        required = (os.open, os.mkdir, os.rename, os.stat, os.unlink)
         return (
             os.name == "posix"
             and hasattr(os, "O_DIRECTORY")
             and hasattr(os, "O_NOFOLLOW")
-            and os.open in os.supports_dir_fd
-            and os.mkdir in os.supports_dir_fd
-            and os.rename in os.supports_dir_fd
+            and all(function in os.supports_dir_fd for function in required)
+            and os.stat in os.supports_follow_symlinks
         )
 
     @contextmanager
     def _secure_parent_fd(self, relative_parent: Path):
         flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
-        descriptor = os.open(self.run_root, flags)
+        if self._run_root_fd >= 0:
+            self._assert_retained_root_identity()
+            descriptor = os.dup(self._run_root_fd)
+        else:
+            descriptor = os.open(self.run_root, flags)
         try:
             for component in relative_parent.parts:
                 if component in {"", ".", ".."}:
@@ -1220,6 +1301,19 @@ class CapturePacketWriter:
             yield descriptor
         finally:
             os.close(descriptor)
+
+    def _assert_retained_root_identity(self) -> None:
+        if self._run_root_fd < 0 or self._run_root_identity is None:
+            raise ValueError("run_root_fd writer is closed")
+        try:
+            metadata = os.fstat(self._run_root_fd)
+        except OSError as exc:
+            raise ValueError("run_root_fd writer is closed or invalid") from exc
+        if not stat.S_ISDIR(metadata.st_mode) or (
+            metadata.st_dev,
+            metadata.st_ino,
+        ) != self._run_root_identity:
+            raise ValueError("run_root_fd identity changed")
 
     @staticmethod
     def _atomic_write_at(parent_fd: int, name: str, content: bytes) -> None:

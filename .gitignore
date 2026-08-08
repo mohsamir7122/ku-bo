@@ -16,6 +16,7 @@ dist/
 build/
 *.egg-info/
 runtime/
+data/
 htmlcov/
 *.log
 *.jks
@@ -23,6 +24,10 @@ htmlcov/
 *.keystore
 *.p12
 *.pfx
+
+# User-authorized exports and account-specific storage configuration stay local.
+examples/investing_user_exports/*.csv
+config/drive_price_collection_pilot.local.json
 
 # Run-scoped artifacts are local by default. The policy note remains tracked.
 artifacts/*

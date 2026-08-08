@@ -13,9 +13,11 @@ from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .ledger import ForecastLedger
 from .live_limited import stage_limited_live_run
+from .live_pilot import write_investing_seed_capture_plan
 from .pack import PackValidator
 from .parser_materialization import materialize_parser_run
 from .pipeline import ResearchPipeline
+from .price_collection_workspace import prepare_price_collection_workspace
 from .provenance import runtime_package_hash, source_tree_hash
 from .research_ledger import ResearchDecisionLedger
 from .reporting import build_report, render_report
@@ -23,16 +25,22 @@ from .request_contracts import AnalysisRequest
 from .runtime_trust import RuntimeTrustRegistry, load_runtime_trust_registry
 from .hashing import sha256_file
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
+from .symbol_mapping import SymbolMappingCatalog
+from .user_price_export import import_investing_user_exports
 
 
 BLOCKING_STATUSES = {
     "BLOCKED",
+    "CAPTURE_DEGRADED",
+    "DEGRADED",
     "FAIL",
+    "FULL_MARKET_IDENTITY_EVIDENCE_REQUIRED",
     "PACK_BLOCKED",
     "STOP_BACKTEST",
     "SOURCE_NETWORK_BLOCKED",
     "EXECUTION_BLOCKED",
     "PARTIAL",
+    "PARTIAL_UNIVERSE_MAPPING_REQUIRED",
     "RESEARCH_PARTIAL",
     "SOURCE_NETWORK_REQUIRED",
     "REQUEST_SCOPE_UNSATISFIED",
@@ -46,8 +54,11 @@ BLOCKING_STATUSES = {
 PROJECT_CONFIG_COMMANDS = frozenset(
     {
         "capture",
+        "generate-live-pilot-capture-plan",
+        "import-investing-user-exports",
         "materialize-parser-run",
         "plan",
+        "prepare-price-collection-workspace",
         "run-request",
         "stage-live-limited",
         "validate-config",
@@ -65,6 +76,7 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/source_capabilities.json"),
     Path("config/source_network.json"),
     Path("config/sources.json"),
+    Path("config/symbol_mapping.json"),
 )
 
 
@@ -232,6 +244,27 @@ def parser() -> argparse.ArgumentParser:
     capture.add_argument("--output-root", type=Path, required=True)
     capture.add_argument("--fixture-root", type=Path)
 
+    live_pilot = sub.add_parser("generate-live-pilot-capture-plan")
+    live_pilot.add_argument("--output", type=Path, required=True)
+
+    import_exports = sub.add_parser("import-investing-user-exports")
+    import_exports.add_argument("--input-dir", type=Path, required=True)
+    import_exports.add_argument("--output-root", type=Path, required=True)
+    import_exports.add_argument("--observed-at", required=True)
+    import_exports.add_argument("--decision-at")
+    import_exports.add_argument("--product-id", default="next_session_rank")
+
+    price_workspace = sub.add_parser("prepare-price-collection-workspace")
+    price_workspace.add_argument("--output-root", type=Path, required=True)
+    price_workspace.add_argument("--source-name", default="investing")
+    price_workspace.add_argument("--downloaded-by", default="")
+    price_workspace.add_argument(
+        "--expected-scope",
+        choices=("mapped", "all_market"),
+        default="mapped",
+    )
+    price_workspace.add_argument("--drive-folder-url", default="")
+
     materialize = sub.add_parser("materialize-parser-run")
     materialize.add_argument("--capture-root", type=Path, required=True)
     materialize.add_argument("--parser-plan", type=Path, required=True)
@@ -287,7 +320,10 @@ def main(argv: list[str] | None = None) -> int:
         "plan",
         "run-request",
         "capture",
+        "generate-live-pilot-capture-plan",
+        "import-investing-user-exports",
         "materialize-parser-run",
+        "prepare-price-collection-workspace",
         "stage-live-limited",
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
@@ -298,6 +334,7 @@ def main(argv: list[str] | None = None) -> int:
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
             "source_network": network_catalog.report(),
+            "symbol_mapping": SymbolMappingCatalog(project_root / "config").report(),
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
@@ -382,6 +419,29 @@ def main(argv: list[str] | None = None) -> int:
             fixture_root=args.fixture_root,
             catalog=network_catalog,
             user_agent=os.environ.get("KUBO_USER_AGENT") or None,
+        )
+    elif args.command == "generate-live-pilot-capture-plan":
+        report = write_investing_seed_capture_plan(
+            project_root / "config",
+            args.output,
+        )
+    elif args.command == "import-investing-user-exports":
+        report = import_investing_user_exports(
+            config_dir=project_root / "config",
+            input_dir=args.input_dir,
+            output_root=args.output_root,
+            observed_at=args.observed_at,
+            decision_at=args.decision_at,
+            product_id=args.product_id,
+        )
+    elif args.command == "prepare-price-collection-workspace":
+        report = prepare_price_collection_workspace(
+            config_dir=project_root / "config",
+            output_root=args.output_root,
+            source_name=args.source_name,
+            downloaded_by=args.downloaded_by,
+            expected_scope=args.expected_scope,
+            drive_folder_url=args.drive_folder_url,
         )
     elif args.command == "materialize-parser-run":
         assert network_catalog is not None

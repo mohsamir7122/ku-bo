@@ -141,7 +141,7 @@ kubo materialize-parser-run \
 
 ## التشغيل الحي المحدود والمسرّح
 
-المرحلة التالية بعد `0.1.0` هي أمر `stage-live-limited`: تشغيل محدود يربط مصدرًا رسميًا واحدًا (`boursa_current`) بمصدر ثانوي واحد (`investing_history`) وسهم واحد. يحفظ الأمر Raw artifacts و`access_probe.json`، ثم ينشئ `parser_plan.json` ويشغل `materialize-parser-run` ويعيد مدقق الشبكة. هذه المرحلة تثبت خط السباكة التشغيلي فقط، ولا ترفع أي مصدر إلى `LIVE_OPERATIONAL` ولا تنتج Forecast أوRecommendation.
+المرحلة التالية بعد `0.1.0` هي أمر `stage-live-limited`: تشغيل محدود يربط مصدرًا رسميًا واحدًا (`boursa_current`) بمصدر ثانوي واحد (`investing_history`) وسهم واحد. ينشئ `parser_plan.json` ويشغل `materialize-parser-run` ويعيد مدقق الشبكة. هذه المرحلة تثبت خط السباكة فقط، ولا ترفع أي مصدر إلى `LIVE_OPERATIONAL` ولا تنتج Forecast أوRecommendation.
 
 تشغيل dry-run مسرّح بالـfixtures:
 
@@ -149,14 +149,29 @@ kubo materialize-parser-run \
 kubo stage-live-limited \
   --plan examples/staged_live_limited_plan.json \
   --fixture-root tests/fixtures/parser_contract \
-  --output-root runtime/staged-live-limited
+  --output-root runtime/staged-live-limited-run-001
 ```
 
-للتشغيل الحي المحدود، استخدم الخطة نفسها كقالب وغيّر `connector` إلى `public_http` واحذف `resource_path` لصالح URL عام مسموح به لكل مصدر. إذا ظهر Login أوCAPTCHA أوRobots block أوRate limit، يسجل الأمر الحالة كفشل وصول ولا يتجاوزها. حتى عند نجاح الالتقاط، تبقى النتيجة `RESEARCH_PARTIAL` ما لم يكتمل نصاب المصادر والأدوار.
+في Fixture mode تكون الحالة العليا `PLUMBING_PASS` ويُكتب `fixture_plumbing_receipt.json` بلا اختلاق HTTP status أوLive access probe. أما Public HTTP فيكتب `access_probe.json` فقط من الاستجابة الفعلية. يجب أن يكون `output-root` مسارًا جديدًا غير موجود بعد؛ تُنشر الحزمة المكتملة إليه بنقل ذري، وتُرفض حتى إعادة استخدام مجلد موجود وفارغ.
+
+للتشغيل الحي المحدود، استخدم الخطة نفسها كقالب، ولكل Capture غيّر `connector` إلى `public_http` و`access_mode` إلى `PUBLIC_PAGE` و`capture_kind` إلى `RAW_PAGE`، ثم احذف `resource_path` واستخدم URL عامًا مسموحًا به. وإذا كان المورد تنزيلًا عامًا، استخدم الزوج `PUBLIC_DOWNLOAD` و`RAW_DOWNLOAD` بدلًا منهما. يحسب `max_requests` كل محاولة HTTPS فعلية، بما فيها `robots.txt` والـredirects؛ لذلك يضع القالب سقفًا قدره 16 للالتقاطين مع headroom لثلاثة redirects لكل طلب، مع إيقاف الطلب التالي قبل تجاوز السقف. القيمة `decision_delay_minutes: 0` تعني عدم الانتظار؛ وأي قيمة موجبة تُنفذ كتأخير فعلي داخل `max_wall_seconds` ولا تُنشئ Timestamp مستقبليًا. ينتهي قياس `usage_wall_seconds` عند اكتمال التحقق والنشر الذري؛ بعدها يُعطّل المؤقت ثم تُغلق الأقفال وواصفات الملفات بأمان، ولا يدخل هذا الـteardown في Usage المسجل. إذا ظهر Login أوCAPTCHA أوRobots block أوRate limit، يسجل الأمر `CAPTURE_DEGRADED` ويرجع Exit code غير صفري ولا يتجاوز الحجب. حتى عند نجاح الالتقاط، تبقى نتيجة Network validation غالبًا `RESEARCH_PARTIAL` ما لم يكتمل نصاب المصادر والأدوار.
 
 لا يغطي هذا المسار الأخبار أوالإفصاحات أوالمحفزات، ولا يجعل Investing مصدر تنفيذ أوFeed حيًا. أي تغيير في رؤوس الجدول أوالهوية أوOHLC أوتسلسل التاريخ أوتطابق نسبة التغير يفشل مغلقًا. بقية المصادر المسجلة بلا Parsers عاملة حتى يثبت العكس في مصفوفة القدرات.
 
 الموصلات التي تحتاج حسابًا، مثل Investing.com أوTelegram أوFacebook أوInstagram أوTikTok أوX، لا تصبح متاحة بمجرد تسجيل الدخول إلى Codex أوGitHub. كل Connector يحتاج تفويضه المستقل، والحسابات الاجتماعية غير الموثقة لا تُثبت حقائق شركة.
+
+## Price File Collection Pilot
+
+يوفر الفرع التجريبي أمرًا ينشئ Workspace فارغًا لملفات الأسعار وCollection Manifest من خريطة الأسهم المراجعة:
+
+```bash
+kubo prepare-price-collection-workspace \
+  --output-root runtime/price_collection/seed_run_001 \
+  --source-name investing \
+  --expected-scope mapped
+```
+
+لا يجمع هذا الأمر من الإنترنت ولا يرفع إلى Google Drive، ويرفض الكتابة فوق Workspace غير فارغ. استيراد CSV يتطلب Manifest بحالة `ACCEPTED` مع هوية وSHA-256 وفترة ووحدة مطابقة. النجاح يعطي `PRICE_IMPORT_READY_ONLY` وينتج Parser Plan Draft محجوبًا؛ لا يصبح صالحًا لـ`materialize-parser-run` قبل Artifact هوية رسمي وEffective-dated bindings. طلب `all_market` يظل محجوبًا حتى Point-in-Time Universe reconciliation رسمية. راجع `docs/ALL_MARKET_PRICE_COLLECTION_RUNBOOK_AR.md`.
 
 ### حد الثقة للمصادر المحمية
 
@@ -263,10 +278,14 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
 - `config/source_capabilities.json`: حالة Capture/Parser/Fixture/Live لكل مصدر من دون استنتاج القدرة من مجرد وجوده في الكتالوج.
+- `config/symbol_mapping.json`: Seed identity/provider mapping صارم للخمسة أسهم، وليس Universe كاملًا.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
 - `src/kubo/source_parsers.py`: المحللان المحدودان لبورصة الكويت وInvesting مع فشل Parser Drift مغلقًا.
 - `src/kubo/parser_materialization.py`: مصالحة الهوية وتحويل البايتات الملتقطة إلى حزمة قابلة للتحقق.
+- `src/kubo/live_limited.py`: Fixture/Public HTTP plumbing محدود مع فصل Live probe عن Fixture receipt.
+- `src/kubo/price_collection_workspace.py`: إنشاء Workspace وCollection Manifest بلا Overwrite.
+- `src/kubo/user_price_export.py`: تحقق Manifest وCSV وإنتاج Daily EOD ثانوي وParser Draft محجوب.
 - `src/kubo/runtime_trust.py`: مصادقة سجل الثقة الخارجي وربط التفويض الحساس Fail-closed.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
