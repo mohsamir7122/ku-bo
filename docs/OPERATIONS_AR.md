@@ -37,6 +37,17 @@ kubo materialize-parser-run \
 
 يتحقق الأمر من الـHashes والتوقيت والنطاق، ويصالح Security Code/Ticker/ISIN، ويكتب حزمة التشغيل ثم يشغل مدقق الشبكة. لا يفسر أخبارًا أومحفزات، ولا يكمل Quorum تلقائيًا. Fixtures الاختبار مولدة وليست قبولًا حيًا؛ راجع `config/source_capabilities.json` قبل افتراض وجود Parser أوConnector تشغيلي لأي مصدر.
 
+للمرحلة الحية المحدودة والمسرّحة، استخدم Wrapper ضيقًا يلتقط مصدرًا رسميًا واحدًا ومصدرًا ثانويًا واحدًا ثم يولد `access_probe.json` و`parser_plan.json` ويمرر الناتج إلى مسار الـParser نفسه:
+
+```bash
+kubo stage-live-limited \
+  --plan examples/staged_live_limited_plan.json \
+  --fixture-root tests/fixtures/parser_contract \
+  --output-root runtime/staged-live-limited
+```
+
+هذا المثال Dry-run بالـFixtures. عند تحويله إلى محاولة Public HTTP، يجب أن تبقى الخطة على `boursa_current` كمصدر رسمي و`investing_history` كمصدر ثانوي، وأن تستخدم نطاقات Allowlist العامة فقط. أي Login أوCAPTCHA أوRobots أوRate Limit يسجل كحالة وصول ولا يُتجاوز. نجاح الأمر لا يعني `LIVE_OPERATIONAL` ولا يثبت سعر تنفيذ أوتوصية؛ إنه يثبت فقط أن الالتقاط المحدود، الحفظ الخام، الـProbe، المصالحة، والتحقق تعمل معًا.
+
 ## 3. جمع أدوار المصدر
 
 استخدم `config/research_policies.json` لمعرفة النصاب. حاول مصادر مستقلة لكل دور، وسجل المحاولات الفاشلة والصفرية كما تسجل الناجحة. لا تتجاوز CAPTCHA أو Paywall أو Rate Limit ولا تستعمل Endpoint محميًا أو غير مصرح.

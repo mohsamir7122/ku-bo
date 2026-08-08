@@ -12,6 +12,7 @@ from . import __version__
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .ledger import ForecastLedger
+from .live_limited import stage_limited_live_run
 from .pack import PackValidator
 from .parser_materialization import materialize_parser_run
 from .pipeline import ResearchPipeline
@@ -48,6 +49,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "materialize-parser-run",
         "plan",
         "run-request",
+        "stage-live-limited",
         "validate-config",
         "validate-live-probe",
         "validate-network-run",
@@ -234,6 +236,11 @@ def parser() -> argparse.ArgumentParser:
     materialize.add_argument("--capture-root", type=Path, required=True)
     materialize.add_argument("--parser-plan", type=Path, required=True)
 
+    staged_live = sub.add_parser("stage-live-limited")
+    staged_live.add_argument("--plan", type=Path, required=True)
+    staged_live.add_argument("--output-root", type=Path, required=True)
+    staged_live.add_argument("--fixture-root", type=Path)
+
     verify_research = sub.add_parser("verify-research-ledger")
     verify_research.add_argument("--ledger-dir", type=Path, required=True)
     verify_research.add_argument("--ledger-id", required=True)
@@ -281,6 +288,7 @@ def main(argv: list[str] | None = None) -> int:
         "run-request",
         "capture",
         "materialize-parser-run",
+        "stage-live-limited",
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
@@ -381,6 +389,15 @@ def main(argv: list[str] | None = None) -> int:
             capture_root=args.capture_root,
             parser_plan_path=args.parser_plan,
             catalog=network_catalog,
+        )
+    elif args.command == "stage-live-limited":
+        assert network_catalog is not None
+        report = stage_limited_live_run(
+            plan_path=args.plan,
+            output_root=args.output_root,
+            fixture_root=args.fixture_root,
+            catalog=network_catalog,
+            user_agent=os.environ.get("KUBO_USER_AGENT") or None,
         )
     elif args.command == "verify-research-ledger":
         ledger = _research_ledger(args.ledger_dir, args.ledger_id)

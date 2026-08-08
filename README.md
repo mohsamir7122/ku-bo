@@ -139,6 +139,21 @@ kubo materialize-parser-run \
   --parser-plan /absolute/path/to/parser-plan.json
 ```
 
+## التشغيل الحي المحدود والمسرّح
+
+المرحلة التالية بعد `0.1.0` هي أمر `stage-live-limited`: تشغيل محدود يربط مصدرًا رسميًا واحدًا (`boursa_current`) بمصدر ثانوي واحد (`investing_history`) وسهم واحد. يحفظ الأمر Raw artifacts و`access_probe.json`، ثم ينشئ `parser_plan.json` ويشغل `materialize-parser-run` ويعيد مدقق الشبكة. هذه المرحلة تثبت خط السباكة التشغيلي فقط، ولا ترفع أي مصدر إلى `LIVE_OPERATIONAL` ولا تنتج Forecast أوRecommendation.
+
+تشغيل dry-run مسرّح بالـfixtures:
+
+```bash
+kubo stage-live-limited \
+  --plan examples/staged_live_limited_plan.json \
+  --fixture-root tests/fixtures/parser_contract \
+  --output-root runtime/staged-live-limited
+```
+
+للتشغيل الحي المحدود، استخدم الخطة نفسها كقالب وغيّر `connector` إلى `public_http` واحذف `resource_path` لصالح URL عام مسموح به لكل مصدر. إذا ظهر Login أوCAPTCHA أوRobots block أوRate limit، يسجل الأمر الحالة كفشل وصول ولا يتجاوزها. حتى عند نجاح الالتقاط، تبقى النتيجة `RESEARCH_PARTIAL` ما لم يكتمل نصاب المصادر والأدوار.
+
 لا يغطي هذا المسار الأخبار أوالإفصاحات أوالمحفزات، ولا يجعل Investing مصدر تنفيذ أوFeed حيًا. أي تغيير في رؤوس الجدول أوالهوية أوOHLC أوتسلسل التاريخ أوتطابق نسبة التغير يفشل مغلقًا. بقية المصادر المسجلة بلا Parsers عاملة حتى يثبت العكس في مصفوفة القدرات.
 
 الموصلات التي تحتاج حسابًا، مثل Investing.com أوTelegram أوFacebook أوInstagram أوTikTok أوX، لا تصبح متاحة بمجرد تسجيل الدخول إلى Codex أوGitHub. كل Connector يحتاج تفويضه المستقل، والحسابات الاجتماعية غير الموثقة لا تُثبت حقائق شركة.
