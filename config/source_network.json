@@ -22,7 +22,7 @@
       "roles": ["IDENTITY_REFERENCE", "OFFICIAL_EVENT", "MARKET_DISCOVERY"],
       "domains": ["boursakuwait.com.kw", "www.boursakuwait.com.kw", "docs.boursakuwait.com.kw"],
       "start_urls": ["https://www.boursakuwait.com.kw/en/"],
-      "access_modes": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD", "AUTHORIZED_BROWSER"],
+      "access_modes": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD", "AUTHORIZED_BROWSER", "USER_EXPORT"],
       "independence_group": "boursa_kuwait",
       "timing_grade_ceiling": "A",
       "fact_eligibility": ["IDENTITY", "STATUS", "DISCLOSURE", "RULE", "DELAYED_MARKET_CONTEXT"],

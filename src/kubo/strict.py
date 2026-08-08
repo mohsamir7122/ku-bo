@@ -108,6 +108,24 @@ def safe_relative_path(value: Any, field: str = "path") -> Path:
     return path
 
 
+def resolved_regular_file(root: Path, relative: Path, field: str = "path") -> Path:
+    """Resolve a required regular file without following any symlink component."""
+
+    root = root.resolve()
+    candidate = root
+    for component in relative.parts:
+        candidate = candidate / component
+        if candidate.is_symlink():
+            raise ValueError(f"{field} must not contain symlinks")
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"{field} is missing") from exc
+    if root not in resolved.parents or not resolved.is_file():
+        raise ValueError(f"{field} must resolve to a regular file inside the pack")
+    return resolved
+
+
 def https_url(value: Any, field: str) -> str:
     url = str(value or "")
     try:
@@ -150,6 +168,7 @@ __all__ = [
     "parse_aware",
     "parse_iso_date",
     "require_sha256",
+    "resolved_regular_file",
     "safe_relative_path",
     "sensitive_query_key",
     "strict_bool",

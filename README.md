@@ -77,7 +77,7 @@ research_run/
 ```bash
 python3 -m pip install -e .
 kubo validate-source-network
-kubo validate-live-probe --probe research/live_source_probe_2026-08-07.json
+kubo validate-live-probe --probe /absolute/path/to/fresh_access_probe.json
 ```
 
 واجهة `kubo` تعتمد على ملفات العقود داخل Checkout المشروع. عند تثبيت Wheel وتشغيل الأمر من خارجه، مرر جذر المستودع قبل اسم الأمر:
@@ -131,7 +131,15 @@ kubo capture \
 
 النتيجة Raw capture فقط، وتبقى `RAW_CAPTURE_PENDING_PARSER_VALIDATION`. لا تدخل في Rank قبل Parsing وIdentity وTiming وEvidence validation.
 
-لا تتضمن النسخة `0.1.0` Parsers حية خاصة بكل موقع تحول صفحات الإنترنت تلقائيًا إلى Findings. إنشاء Findings حقيقية يحتاج Parser/QA مستقلًا يطبق Schema والعقود أعلاه؛ المثال الحالي اصطناعي، وطبقة الجمع وحدها لا تؤهل الدليل.
+تتضمن النسخة `0.1.0` محللين محدودين ومحددين بالمصدر: `boursa_identity_html_v1` لهوية الورقة الرسمية، و`investing_history_html_v1` لجدول السعر التاريخي المنسوب إلى المزود. يفرض `materialize-parser-run` مصالحة Security Code/Ticker/ISIN، وربط كل مهمة ببايتات Manifest، ثم يعيد تشغيل مدقق الشبكة. اختبارات النهاية إلى النهاية تستخدم Fixtures مولدة لا تحتوي بيانات سوق حقيقية؛ لذلك تسجل `config/source_capabilities.json` المحللين كـ`END_TO_END_TESTED` فقط و`live_operational = false`.
+
+```bash
+kubo materialize-parser-run \
+  --capture-root /absolute/path/to/capture \
+  --parser-plan /absolute/path/to/parser-plan.json
+```
+
+لا يغطي هذا المسار الأخبار أوالإفصاحات أوالمحفزات، ولا يجعل Investing مصدر تنفيذ أوFeed حيًا. أي تغيير في رؤوس الجدول أوالهوية أوOHLC أوتسلسل التاريخ أوتطابق نسبة التغير يفشل مغلقًا. بقية المصادر المسجلة بلا Parsers عاملة حتى يثبت العكس في مصفوفة القدرات.
 
 الموصلات التي تحتاج حسابًا، مثل Investing.com أوTelegram أوFacebook أوInstagram أوTikTok أوX، لا تصبح متاحة بمجرد تسجيل الدخول إلى Codex أوGitHub. كل Connector يحتاج تفويضه المستقل، والحسابات الاجتماعية غير الموثقة لا تُثبت حقائق شركة.
 
@@ -239,8 +247,11 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 ## خريطة الملفات
 
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
+- `config/source_capabilities.json`: حالة Capture/Parser/Fixture/Live لكل مصدر من دون استنتاج القدرة من مجرد وجوده في الكتالوج.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
+- `src/kubo/source_parsers.py`: المحللان المحدودان لبورصة الكويت وInvesting مع فشل Parser Drift مغلقًا.
+- `src/kubo/parser_materialization.py`: مصالحة الهوية وتحويل البايتات الملتقطة إلى حزمة قابلة للتحقق.
 - `src/kubo/runtime_trust.py`: مصادقة سجل الثقة الخارجي وربط التفويض الحساس Fail-closed.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
@@ -252,7 +263,7 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 - `research/methodology_registry.json`: الأبحاث والقواعد والاختبارات المنهجية.
 - `.github/workflows/ci.yml`: Compile وUnit/Adversarial Tests وSmoke Check وSecret Guard.
 - `tests/test_source_network.py`: اختبارات الشبكة الخصمية.
-- `research/live_source_probe_2026-08-07.json`: إيصال تجربة الوصول الحية؛ يثبت الوصول فقط.
+- `research/manual_access_notes_2026-08-07.json`: ملاحظات تاريخية غير قابلة للاستخدام كـLive Probe أودليل إصدار.
 - `docs/SOURCE_NETWORK_REPLACEMENT_AR.md`: تقرير تاريخي لمرحلة استبدال الشبكة قبل إصدار `0.1.0` الحالي.
 - `docs/V3_1_HARDENING_AR.md`: لقطة تاريخية لتدقيق V3.1؛ الأرقام النهائية الحالية موثقة في `docs/BUILD_STATUS_AR.md`.
 - `docs/OPERATIONS_AR.md`: طريقة بناء تشغيل حقيقي.

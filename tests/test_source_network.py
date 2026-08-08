@@ -113,6 +113,7 @@ class SourceNetworkTests(unittest.TestCase):
             investing["roles"].append("OFFICIAL_EVENT")
             write_json(config / "source_network.json", network)
             write_json(config / "research_policies.json", read_json(ROOT / "config" / "research_policies.json"))
+            write_json(config / "source_capabilities.json", read_json(ROOT / "config" / "source_capabilities.json"))
             with self.assertRaisesRegex(ValueError, "non-primary source declares OFFICIAL_EVENT"):
                 SourceNetworkCatalog(config)
 
@@ -123,6 +124,7 @@ class SourceNetworkTests(unittest.TestCase):
             policies = read_json(ROOT / "config" / "research_policies.json")
             policies["profiles"][0]["confirmation_roles"] = ["NEWS_ARCHIVE"]
             write_json(config / "research_policies.json", policies)
+            write_json(config / "source_capabilities.json", read_json(ROOT / "config" / "source_capabilities.json"))
             with self.assertRaisesRegex(ValueError, "official confirmation roles"):
                 SourceNetworkCatalog(config)
 
@@ -133,6 +135,7 @@ class SourceNetworkTests(unittest.TestCase):
             policies = read_json(ROOT / "config" / "research_policies.json")
             policies["profiles"][0]["allowed_output"] = "CALIBRATED_PROBABILITY"
             write_json(config / "research_policies.json", policies)
+            write_json(config / "source_capabilities.json", read_json(ROOT / "config" / "source_capabilities.json"))
             with self.assertRaisesRegex(ValueError, "forbidden or unregistered"):
                 SourceNetworkCatalog(config)
 
@@ -144,6 +147,7 @@ class SourceNetworkTests(unittest.TestCase):
             telegram["roles"].append("NEWS_ARCHIVE")
             write_json(config / "source_network.json", network)
             write_json(config / "research_policies.json", read_json(ROOT / "config" / "research_policies.json"))
+            write_json(config / "source_capabilities.json", read_json(ROOT / "config" / "source_capabilities.json"))
             with self.assertRaisesRegex(ValueError, "community source declares non-community roles"):
                 SourceNetworkCatalog(config)
             network = read_json(ROOT / "config" / "source_network.json")
@@ -523,7 +527,7 @@ class SourceNetworkTests(unittest.TestCase):
                 )
             )
 
-    def test_live_probe_proves_access_only(self):
+    def test_legacy_live_probe_without_bytes_is_blocked(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "probe.json"
             write_json(
@@ -543,9 +547,8 @@ class SourceNetworkTests(unittest.TestCase):
                 },
             )
             report = validate_live_probe(path, self.catalog)
-            self.assertEqual(report["status"], "PASS")
-            self.assertFalse(report["claim_boundaries"]["access_probe_is_market_evidence"])
-            self.assertFalse(report["claim_boundaries"]["access_probe_is_forecast"])
+            self.assertEqual(report["status"], "BLOCKED")
+            self.assertIn("unknown or missing top-level fields", report["errors"][0])
 
 
 if __name__ == "__main__":

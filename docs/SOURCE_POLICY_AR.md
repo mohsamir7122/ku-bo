@@ -24,6 +24,8 @@
 
 القائمة الكاملة وعقود النطاق في `config/source_network.json`.
 
+وجود المصدر في الكتالوج لا يعني وجود Connector أوParser. المرجع الآلي لذلك هو `config/source_capabilities.json`: الحالة الافتراضية `DEFINED_ONLY`، والمحللان الحاليان لبورصة الكويت وInvesting مصنفان `END_TO_END_TESTED` على Fixtures مولدة مع `live_operational = false`. لا تُرفع الحالة إلى `LIVE_OPERATIONAL` من دون Capture حي مصرح به واختبار قبول ومراقبة Drift.
+
 الكتالوج الحالي يحتوي 40 تعريف مصدر تتجمع في 35 مجموعة استقلال؛ لا تستخدم الرقمين بالتبادل.
 
 ## قواعد المجتمع والمنتديات

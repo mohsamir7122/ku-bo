@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-from .hashing import sha256_file
+from .hashing import hash_json, sha256_file
 from .provenance import evidence_packet_hash as compute_evidence_packet_hash
 from .runtime_trust import RuntimeTrustError, RuntimeTrustRegistry
-from .strict import finite_number, https_url, parse_aware, parse_iso_date, require_sha256, safe_relative_path, strict_bool
+from .strict import finite_number, https_url, parse_aware, parse_iso_date, require_sha256, resolved_regular_file, safe_relative_path, strict_bool
 
 
 SOURCE_CLASSES = frozenset(
@@ -26,6 +27,26 @@ SOURCE_CLASSES = frozenset(
         "LICENSED",
         "STORAGE",
     }
+)
+CAPABILITY_STATUSES = frozenset(
+    {
+        "DEFINED_ONLY",
+        "CAPTURE_ONLY",
+        "PARSER_IMPLEMENTED",
+        "END_TO_END_TESTED",
+        "LIVE_OPERATIONAL",
+    }
+)
+CAPTURE_CAPABILITIES = frozenset(
+    {
+        "CATALOG_ONLY",
+        "PUBLIC_HTTP_OR_USER_EXPORT",
+        "AUTHORIZED_EXTERNAL",
+        "LICENSED_EXTERNAL",
+    }
+)
+FIXTURE_EVIDENCE_CLASSES = frozenset(
+    {"NONE", "GENERATED_CONTRACT_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE"}
 )
 ACCESS_STATES = frozenset({"AVAILABLE", "PARTIAL", "BLOCKED", "ERROR", "AUTH_REQUIRED", "UNTESTED"})
 QUERY_STATUSES = frozenset({"QUALIFIED", "ZERO_RESULT", "BLOCKED", "ERROR", "AUTH_REQUIRED", "PARSER_DRIFT", "DATA_QUALITY_REJECTED"})
@@ -169,6 +190,15 @@ class ResearchPolicy:
     recommendation_allowed: bool
 
 
+@dataclass(frozen=True)
+class SourceCapability:
+    status: str
+    capture: str
+    parser_ids: tuple[str, ...]
+    fixture_evidence: str
+    live_operational: bool
+
+
 class SourceNetworkCatalog:
     def __init__(self, config_dir: Path):
         network = _load_json(config_dir / "source_network.json")
@@ -182,6 +212,9 @@ class SourceNetworkCatalog:
         if self.roles != frozenset(ROLE_SIGNAL_KINDS):
             raise ValueError("role_vocabulary does not match the enforced role-to-signal contract")
         self.sources = self._load_sources(network.get("sources"))
+        self.capabilities = self._load_capabilities(
+            _load_json(config_dir / "source_capabilities.json")
+        )
         allowed_outputs = frozenset(str(item) for item in policy_payload.get("allowed_outputs", []))
         forbidden_outputs = frozenset(str(item) for item in policy_payload.get("forbidden_outputs", []))
         if not allowed_outputs or allowed_outputs & forbidden_outputs:
@@ -191,6 +224,66 @@ class SourceNetworkCatalog:
             allowed_outputs=allowed_outputs,
             forbidden_outputs=forbidden_outputs,
         )
+
+    def _load_capabilities(self, payload: dict[str, Any]) -> dict[str, SourceCapability]:
+        if payload.get("schema_version") != "1.0":
+            raise ValueError("source capability matrix schema must be 1.0")
+        if set(payload) != {
+            "schema_version",
+            "default_capability",
+            "overrides",
+            "claim_boundaries",
+        }:
+            raise ValueError("source capability matrix has unknown or missing fields")
+        boundaries = payload.get("claim_boundaries")
+        required_boundaries = {
+            "catalog_entry_is_connector": False,
+            "capture_success_is_parser_success": False,
+            "contract_fixture_is_live_acceptance": False,
+            "parser_implemented_is_live_operational": False,
+        }
+        if boundaries != required_boundaries:
+            raise ValueError("source capability claim boundaries must all remain false")
+        default = payload.get("default_capability")
+        overrides = payload.get("overrides")
+        if not isinstance(default, dict) or not isinstance(overrides, dict):
+            raise ValueError("source capability default and overrides must be objects")
+        unknown = sorted(set(overrides) - set(self.sources))
+        if unknown:
+            raise ValueError("source capability overrides reference unknown sources: " + ",".join(unknown))
+
+        result: dict[str, SourceCapability] = {}
+        for source_id in self.sources:
+            row = overrides.get(source_id, default)
+            if not isinstance(row, dict) or set(row) != {
+                "status",
+                "capture",
+                "parser_ids",
+                "fixture_evidence",
+                "live_operational",
+            }:
+                raise ValueError(f"invalid source capability fields: {source_id}")
+            status = str(row.get("status", ""))
+            capture = str(row.get("capture", ""))
+            fixture = str(row.get("fixture_evidence", ""))
+            parsers = tuple(str(item) for item in row.get("parser_ids", []))
+            live = strict_bool(row.get("live_operational"), f"{source_id}.live_operational")
+            if status not in CAPABILITY_STATUSES or capture not in CAPTURE_CAPABILITIES:
+                raise ValueError(f"invalid source capability state: {source_id}")
+            if fixture not in FIXTURE_EVIDENCE_CLASSES or len(parsers) != len(set(parsers)):
+                raise ValueError(f"invalid source parser/fixture capability: {source_id}")
+            if any(not parser_id or len(parser_id) > 128 for parser_id in parsers):
+                raise ValueError(f"invalid parser_id: {source_id}")
+            if status in {"PARSER_IMPLEMENTED", "END_TO_END_TESTED", "LIVE_OPERATIONAL"} and not parsers:
+                raise ValueError(f"parser-capable source has no parser_ids: {source_id}")
+            if status in {"DEFINED_ONLY", "CAPTURE_ONLY"} and parsers:
+                raise ValueError(f"non-parser source declares parser_ids: {source_id}")
+            if live != (status == "LIVE_OPERATIONAL"):
+                raise ValueError(f"live_operational conflicts with status: {source_id}")
+            if live and fixture != "RECORDED_AUTHORIZED_FIXTURE":
+                raise ValueError(f"live source lacks recorded authorized fixture evidence: {source_id}")
+            result[source_id] = SourceCapability(status, capture, parsers, fixture, live)
+        return result
 
     def _load_sources(self, rows: Any) -> dict[str, NetworkSource]:
         if not isinstance(rows, list) or not rows:
@@ -341,17 +434,35 @@ class SourceNetworkCatalog:
             raise KeyError(f"no source-network policy for product: {product_id}") from exc
 
     def report(self) -> dict[str, Any]:
+        status_counts: dict[str, int] = {}
+        for capability in self.capabilities.values():
+            status_counts[capability.status] = status_counts.get(capability.status, 0) + 1
         return {
             "status": "PASS",
             "sources": len(self.sources),
             "profiles": len(self.policies),
             "products": len(self.product_to_policy),
             "roles": sorted(self.roles),
+            "capability_status_counts": dict(sorted(status_counts.items())),
+            "parser_sources": sorted(
+                source_id
+                for source_id, capability in self.capabilities.items()
+                if capability.parser_ids
+            ),
+            "live_operational_sources": sorted(
+                source_id
+                for source_id, capability in self.capabilities.items()
+                if capability.live_operational
+            ),
             "claim_boundaries": {
                 "probability_allowed": False,
                 "recommendation_allowed": False,
                 "community_is_official_truth": False,
                 "search_snippet_is_evidence": False,
+                "catalog_entry_is_connector": False,
+                "capture_success_is_parser_success": False,
+                "contract_fixture_is_live_acceptance": False,
+                "parser_implemented_is_live_operational": False,
             },
         }
 
@@ -922,9 +1033,7 @@ class SourceNetworkRunValidator:
                     if relative_text in seen_paths:
                         raise ValueError("duplicate artifact path")
                     seen_paths.add(relative_text)
-                    file_path = (self.run_root / relative).resolve()
-                    if self.run_root not in file_path.parents or not file_path.is_file():
-                        raise ValueError("artifact file missing")
+                    file_path = resolved_regular_file(self.run_root, relative, "artifact path")
                     digest = require_sha256(row.get("sha256"), "sha256")
                     if sha256_file(file_path) != digest:
                         raise ValueError("artifact hash mismatch")
@@ -1485,7 +1594,12 @@ class SourceNetworkRunValidator:
         return findings
 
 
-def validate_live_probe(path: Path, catalog: SourceNetworkCatalog) -> dict[str, Any]:
+def validate_live_probe(
+    path: Path,
+    catalog: SourceNetworkCatalog,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
     """Validate an access-only observation receipt.
 
     A live probe can establish access state and visible source families. It can
@@ -1496,9 +1610,36 @@ def validate_live_probe(path: Path, catalog: SourceNetworkCatalog) -> dict[str, 
     rows_out: list[dict[str, Any]] = []
     try:
         payload = _load_json(path)
-        if payload.get("schema_version") != "3.0-access-probe":
+        if set(payload) != {
+            "schema_version",
+            "probe_id",
+            "probe_version",
+            "observed_at",
+            "expires_at",
+            "purpose",
+            "sources",
+        }:
+            raise ValueError("access probe has unknown or missing top-level fields")
+        if payload.get("schema_version") != "3.1-access-probe":
             raise ValueError("unsupported access probe schema")
+        probe_id = str(payload.get("probe_id", "")).strip()
+        probe_version = str(payload.get("probe_version", "")).strip()
+        purpose = str(payload.get("purpose", "")).strip()
+        if not probe_id or not probe_version or not purpose:
+            raise ValueError("probe_id, probe_version, and purpose are required")
         observed_at = parse_aware(payload.get("observed_at"), "observed_at")
+        expires_at = parse_aware(payload.get("expires_at"), "expires_at")
+        reference_now = now or datetime.now(timezone.utc)
+        if reference_now.tzinfo is None or reference_now.utcoffset() is None:
+            raise ValueError("now must be timezone-aware")
+        if observed_at > reference_now + timedelta(minutes=5):
+            raise ValueError("access probe observed_at is in the future")
+        if expires_at <= observed_at:
+            raise ValueError("access probe expires_at must follow observed_at")
+        if expires_at - observed_at > timedelta(hours=24):
+            raise ValueError("access probe validity cannot exceed 24 hours")
+        if reference_now > expires_at:
+            raise ValueError("access probe is expired")
         rows = payload.get("sources")
         if not isinstance(rows, list) or not rows:
             raise ValueError("probe sources must be non-empty")
@@ -1507,6 +1648,18 @@ def validate_live_probe(path: Path, catalog: SourceNetworkCatalog) -> dict[str, 
             try:
                 if not isinstance(row, dict):
                     raise ValueError("not an object")
+                if set(row) != {
+                    "source_id",
+                    "state",
+                    "tested_url",
+                    "final_url",
+                    "attempted_at",
+                    "http_status",
+                    "observation",
+                    "data_quality_flags",
+                    "artifact",
+                }:
+                    raise ValueError("unknown or missing fields")
                 source_id = str(row.get("source_id", ""))
                 if source_id not in catalog.sources or source_id in seen:
                     raise ValueError("unknown or duplicate source_id")
@@ -1516,22 +1669,104 @@ def validate_live_probe(path: Path, catalog: SourceNetworkCatalog) -> dict[str, 
                     raise ValueError("invalid state")
                 source = catalog.sources[source_id]
                 tested_url = https_url(row.get("tested_url"), "tested_url")
-                if source.domains and not _host_allowed(tested_url, source.domains):
-                    raise ValueError("tested URL outside registered domains")
+                final_url = https_url(row.get("final_url"), "final_url")
+                if source.domains and (
+                    not _host_allowed(tested_url, source.domains)
+                    or not _host_allowed(final_url, source.domains)
+                ):
+                    raise ValueError("tested/final URL outside registered domains")
+                attempted_at = parse_aware(row.get("attempted_at"), "attempted_at")
+                if attempted_at > observed_at or observed_at - attempted_at > timedelta(hours=1):
+                    raise ValueError("attempted_at is after or implausibly far before observed_at")
+                http_status_value = row.get("http_status")
+                if http_status_value is None:
+                    http_status = None
+                elif isinstance(http_status_value, bool) or not isinstance(http_status_value, int):
+                    raise ValueError("http_status must be an integer or null")
+                else:
+                    http_status = http_status_value
+                    if not 100 <= http_status <= 599:
+                        raise ValueError("http_status is outside 100..599")
+                if state in {"AVAILABLE", "PARTIAL"} and (
+                    http_status is None or not 200 <= http_status <= 299
+                ):
+                    raise ValueError("AVAILABLE/PARTIAL requires a successful HTTP status")
+                observation = row.get("observation")
+                if not isinstance(observation, str) or not observation.strip() or len(observation) > 2000:
+                    raise ValueError("observation must be a non-empty string of at most 2000 characters")
+                flags_value = row.get("data_quality_flags")
+                if not isinstance(flags_value, list) or any(
+                    not isinstance(item, str)
+                    or not re.fullmatch(r"[A-Z][A-Z0-9_]{0,127}", item)
+                    for item in flags_value
+                ):
+                    raise ValueError("data_quality_flags must be an array of stable uppercase codes")
+                if len(flags_value) != len(set(flags_value)):
+                    raise ValueError("data_quality_flags contains duplicates")
+                artifact_value = row.get("artifact")
+                artifact_out = None
+                if artifact_value is not None:
+                    if not isinstance(artifact_value, dict) or set(artifact_value) != {
+                        "path",
+                        "sha256",
+                        "size_bytes",
+                        "content_type",
+                        "capture_kind",
+                    }:
+                        raise ValueError("artifact has unknown or missing fields")
+                    relative = safe_relative_path(artifact_value.get("path"), "artifact.path")
+                    if not relative.parts or relative.parts[0] != "raw":
+                        raise ValueError("probe artifact must be inside raw/")
+                    probe_root = path.parent.resolve()
+                    artifact_path = resolved_regular_file(
+                        probe_root, relative, "probe artifact"
+                    )
+                    digest = require_sha256(artifact_value.get("sha256"), "artifact.sha256")
+                    size = artifact_value.get("size_bytes")
+                    if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+                        raise ValueError("artifact.size_bytes must be a non-negative integer")
+                    if artifact_path.stat().st_size != size or sha256_file(artifact_path) != digest:
+                        raise ValueError("probe artifact bytes do not match size/hash")
+                    content_type = str(artifact_value.get("content_type", "")).strip().lower()
+                    capture_kind = str(artifact_value.get("capture_kind", ""))
+                    if not content_type or capture_kind not in {
+                        "RAW_PAGE",
+                        "RAW_DOWNLOAD",
+                        "USER_EXPORT",
+                        "ARCHIVE_CAPTURE",
+                    }:
+                        raise ValueError("artifact content_type/capture_kind is invalid")
+                    artifact_out = {
+                        "path": relative.as_posix(),
+                        "sha256": digest,
+                        "size_bytes": size,
+                        "content_type": content_type,
+                        "capture_kind": capture_kind,
+                    }
+                if state in {"AVAILABLE", "PARTIAL"} and artifact_out is None:
+                    raise ValueError("AVAILABLE/PARTIAL requires a hash-bound raw artifact")
                 rows_out.append(
                     {
                         "source_id": source_id,
                         "state": state,
                         "tested_url": tested_url,
-                        "observation": str(row.get("observation", "")),
-                        "data_quality_flags": [str(item) for item in row.get("data_quality_flags", [])],
+                        "final_url": final_url,
+                        "attempted_at": attempted_at.isoformat(),
+                        "http_status": http_status,
+                        "observation": observation.strip(),
+                        "data_quality_flags": list(flags_value),
+                        "artifact": artifact_out,
                     }
                 )
             except (TypeError, ValueError) as exc:
                 errors.append(f"probe_source_{index}:{exc}")
         return {
             "status": "PASS" if not errors else "BLOCKED",
+            "probe_id": probe_id,
+            "probe_version": probe_version,
             "observed_at": observed_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "probe_hash": hash_json(payload),
             "sources": rows_out,
             "errors": errors,
             "claim_boundaries": {

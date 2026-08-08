@@ -20,7 +20,7 @@ flowchart TD
 
 - `SourceNetworkCatalog`: يقرأ 40 تعريف مصدر و35 مجموعة استقلال وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت.
 - `ingestion` و`capture_plan`: يجمعان البايتات العامة أوUser exports بصورة محدودة، ويحفظان Raw وManifest دون ترقيتها تلقائيًا إلى Finding. خطة واحدة لا تتجاوز 32 مهمة أو128 MiB أو300 ثانية إجمالًا، ويحدث رفض التجاوز قبل Connector/I/O.
-- `Parser/QA`: حد عقدي مطلوب بين الجمع والتحقق، لكنه ليس مجموعة Parsers حية خاصة بالمواقع في الإصدار `0.1.0`. أي Parser لاحق يجب أن ينتج `fact_type` وهوية وتوقيتًا قابلة للتحقق وأن يخضع لاختبار Drift.
+- `Parser/QA`: يحتوي محلل هوية Boursa ومحلل تاريخ سعر Investing فقط، مع مصالحة ISIN واختبارات Drift ونهاية إلى نهاية على Fixtures مولدة. مصفوفة `source_capabilities.json` تفصل `END_TO_END_TESTED` عن `LIVE_OPERATIONAL`؛ ولا توجد في المستودع Fixture حية مصرح بها ترفع أي مصدر إلى الحالة الثانية.
 - `RuntimeTrustRegistry`: يصادق سجلًا خارجيًا بـ`HMAC-SHA256` ومفتاح Runtime، ويتحقق من الجمهور والصلاحية ويربط المصادر الحساسة بالحساب/Subject والنطاق وSecurity codes وActivation/Entitlement.
 - `SourceNetworkRunValidator`: يتحقق من عقد التشغيل، وهوية Effective-dated إلزامية لكل Scope، والأثر الخام، وManifest، ومحاولات المصادر، و`fact_type`، وتطابق Finding URL مع Artifact URL، والتوقيت، والـQuorum.
 - `rank_research_candidates`: يجمع الإشارات بعد Dedup، ويطبق سقف ثقة فئة المصدر وسقف المزاج، ويرصد التعارض.

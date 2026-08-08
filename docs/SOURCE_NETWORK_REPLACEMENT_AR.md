@@ -35,7 +35,7 @@
 - Common Crawl كان متاحًا للاسترجاع والسياق، بينما Wayback لم يثبت اكتمال Captures خاصة ببورصة الكويت.
 - صفحة منتج ICE كانت متاحة، لكن البيانات نفسها تحتاج Entitlement تجاريًا.
 
-التفاصيل القابلة للتحقق محفوظة في `research/live_source_probe_2026-08-07.json`، مع حدود صريحة بأن نجاح الوصول لا يثبت Market Evidence أو Historical Coverage أو Forecast.
+النص التاريخي للتجربة محفوظ في `research/manual_access_notes_2026-08-07.json`. هذا الملف ملاحظات سردية فقط؛ لا يحتوي Raw Artifacts مربوطة بالـHash ولا ينجح كـ`3.1-access-probe` ولا يُستخدم كدليل إصدار. نجاح الوصول، حتى في Probe حديث صالح، لا يثبت Market Evidence أوHistorical Coverage أوForecast.
 
 ## نتيجة الاختبارات
 

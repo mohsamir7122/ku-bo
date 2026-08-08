@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-capabilities.schema.json",
+  "title": "KU-BO Source Capability Matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "default_capability", "overrides", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "default_capability": {"$ref": "#/$defs/capability"},
+    "overrides": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/capability"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog_entry_is_connector",
+        "capture_success_is_parser_success",
+        "contract_fixture_is_live_acceptance",
+        "parser_implemented_is_live_operational"
+      ],
+      "properties": {
+        "catalog_entry_is_connector": {"const": false},
+        "capture_success_is_parser_success": {"const": false},
+        "contract_fixture_is_live_acceptance": {"const": false},
+        "parser_implemented_is_live_operational": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "capture", "parser_ids", "fixture_evidence", "live_operational"],
+      "properties": {
+        "status": {"enum": ["DEFINED_ONLY", "CAPTURE_ONLY", "PARSER_IMPLEMENTED", "END_TO_END_TESTED", "LIVE_OPERATIONAL"]},
+        "capture": {"enum": ["CATALOG_ONLY", "PUBLIC_HTTP_OR_USER_EXPORT", "AUTHORIZED_EXTERNAL", "LICENSED_EXTERNAL"]},
+        "parser_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,127}$"}
+        },
+        "fixture_evidence": {"enum": ["NONE", "GENERATED_CONTRACT_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE"]},
+        "live_operational": {"type": "boolean"}
+      }
+    }
+  }
+}

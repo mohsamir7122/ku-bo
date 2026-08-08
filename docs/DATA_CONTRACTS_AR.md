@@ -90,7 +90,15 @@
 
 ## `live_source_probe`
 
-الـProbe يختبر الوصول فقط. يسجل وقت التجربة، المصدر، الحالة، URL، الملاحظة، وأعلام الجودة. نجاحه لا يُحتسب ضمن Quorum بحث حقيقي، ولا يثبت Market Fact أو Historical Coverage أو Forecast.
+الـProbe `3.1-access-probe` يختبر الوصول فقط. يحمل هوية وإصدارًا ووقت ملاحظة وانتهاء لا يتجاوز 24 ساعة، ويسجل لكل محاولة الرابط المطلوب والنهائي ووقت المحاولة وHTTP status والملاحظة وأعلام الجودة. حالة `AVAILABLE` أو`PARTIAL` لا تقبل بلا Artifact فعلي داخل `raw/` مربوط بالحجم وSHA-256 ونوع الالتقاط؛ وتُرفض المسارات الرمزية أوالخارجة عن الحزمة. نجاحه لا يُحتسب ضمن Quorum بحث حقيقي، ولا يثبت Market Fact أوHistorical Coverage أوForecast. ملف الملاحظات التاريخية تحت `research/` ليس Probe صالحًا.
+
+## `parser-plan.json`
+
+يربط خطة التحويل بوقت القرار والميزانية وBindings الهوية ومهام Parser محددة وبصمات Artifacts الخام. يدعم `0.1.0` فقط `boursa_identity_html_v1` و`investing_history_html_v1`. لا يمنح العقد حق الوصول إلى المصدر، ولا يحول Fixture مولدة إلى قبول حي.
+
+## `source_capabilities.json`
+
+يسجل آليًا لكل مصدر الفرق بين تعريف الكتالوج، والقدرة على Capture، ووجود Parser، واجتياز Fixture تعاقدية، والتشغيل الحي. الحالة الافتراضية `DEFINED_ONLY`، ولا يجوز اشتقاق Connector أوتغطية سوقية من وجود المصدر في `source_network.json`.
 
 ## Output Rank
 

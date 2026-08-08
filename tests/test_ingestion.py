@@ -591,6 +591,29 @@ class BatchAndWriterTests(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
+            (config / "source_capabilities.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "default_capability": {
+                            "status": "DEFINED_ONLY",
+                            "capture": "CATALOG_ONLY",
+                            "parser_ids": [],
+                            "fixture_evidence": "NONE",
+                            "live_operational": False,
+                        },
+                        "overrides": {},
+                        "claim_boundaries": {
+                            "catalog_entry_is_connector": False,
+                            "capture_success_is_parser_success": False,
+                            "contract_fixture_is_live_acceptance": False,
+                            "parser_implemented_is_live_operational": False,
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
             catalog = SourceNetworkCatalog(config)
             validation = SourceNetworkRunValidator(run, catalog, "next_session_rank").validate()
         self.assertEqual(validation.status, "BLOCKED", validation.to_dict())

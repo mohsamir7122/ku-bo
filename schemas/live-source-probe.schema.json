@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/live-source-probe.schema.json",
+  "title": "KU-BO Hash-bound Live Source Probe",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "probe_id", "probe_version", "observed_at", "expires_at", "purpose", "sources"],
+  "properties": {
+    "schema_version": {"const": "3.1-access-probe"},
+    "probe_id": {"type": "string", "minLength": 1},
+    "probe_version": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "purpose": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "state", "tested_url", "final_url", "attempted_at", "http_status", "observation", "data_quality_flags", "artifact"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "state": {"enum": ["AVAILABLE", "PARTIAL", "BLOCKED", "ERROR", "AUTH_REQUIRED", "UNTESTED"]},
+          "tested_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "final_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "attempted_at": {"type": "string", "format": "date-time"},
+          "http_status": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+          "observation": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "data_quality_flags": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,127}$"}
+          },
+          "artifact": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path", "sha256", "size_bytes", "content_type", "capture_kind"],
+                "properties": {
+                  "path": {"type": "string", "pattern": "^raw/"},
+                  "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                  "size_bytes": {"type": "integer", "minimum": 0},
+                  "content_type": {"type": "string", "minLength": 1},
+                  "capture_kind": {"enum": ["RAW_PAGE", "RAW_DOWNLOAD", "USER_EXPORT", "ARCHIVE_CAPTURE"]}
+                }
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"state": {"enum": ["AVAILABLE", "PARTIAL"]}}},
+            "then": {
+              "properties": {
+                "artifact": {"type": "object"},
+                "http_status": {"type": "integer", "minimum": 200, "maximum": 299}
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

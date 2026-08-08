@@ -27,7 +27,15 @@ Public HTTP يستخدم `public_http` داخل Plan ولا يرسل Cookies أ�
 
 قبل أي Connector أوكتابة، ترفض الأداة الخطة إذا تجاوزت 32 مهمة، أو128 MiB لمجموع `max_bytes`، أو300 ثانية لمجموع `timeout_seconds`. جزّئ العمل إلى تشغيلات مستقلة بدل محاولة رفع الحدود داخل JSON.
 
-لا توفر النسخة `0.1.0` Parsers حية خاصة بالمواقع. يجب أن تبني طبقة Parser/QA منفصلة، تحفظ `fact_type` والهوية والتوقيت والأصل، وتمنع Parser Drift قبل أن تكتب `findings.jsonl`.
+توفر النسخة `0.1.0` مسار Parser/QA ضيقًا لمصدرين فقط: هوية Boursa الرسمية وجدول Investing التاريخي. بعد Capture وإنشاء `parser-plan.json` مطابق للعقد، شغّل:
+
+```bash
+kubo materialize-parser-run \
+  --capture-root /absolute/path/to/capture \
+  --parser-plan /absolute/path/to/parser-plan.json
+```
+
+يتحقق الأمر من الـHashes والتوقيت والنطاق، ويصالح Security Code/Ticker/ISIN، ويكتب حزمة التشغيل ثم يشغل مدقق الشبكة. لا يفسر أخبارًا أومحفزات، ولا يكمل Quorum تلقائيًا. Fixtures الاختبار مولدة وليست قبولًا حيًا؛ راجع `config/source_capabilities.json` قبل افتراض وجود Parser أوConnector تشغيلي لأي مصدر.
 
 ## 3. جمع أدوار المصدر
 
@@ -90,10 +98,10 @@ kubo run-request \
 
 ```bash
 kubo validate-live-probe \
-  --probe research/live_source_probe_2026-08-07.json
+  --probe /absolute/path/to/fresh_access_probe.json
 ```
 
-هذا الأمر لا يجمع Market Evidence ولا يثبت Coverage. وظيفته التأكد من أن إيصال اختبار الوصول منضبط ولا ينسب إليه أكثر مما يثبت.
+يجب أن يكون Probe بإصدار `3.1-access-probe`، صالحًا لمدة لا تتجاوز 24 ساعة، وأن يربط كل حالة `AVAILABLE` أو`PARTIAL` بملف داخل `raw/` وحجمه وSHA-256. هذا الأمر لا يجمع Market Evidence ولا يثبت Coverage؛ وملاحظات `research/manual_access_notes_2026-08-07.json` تاريخية ولا يقبلها المدقق كإيصال حي.
 
 ## 7. مسار Forecast الصارم
 

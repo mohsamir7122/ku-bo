@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "default_capability": {
+    "status": "DEFINED_ONLY",
+    "capture": "CATALOG_ONLY",
+    "parser_ids": [],
+    "fixture_evidence": "NONE",
+    "live_operational": false
+  },
+  "overrides": {
+    "boursa_current": {
+      "status": "END_TO_END_TESTED",
+      "capture": "PUBLIC_HTTP_OR_USER_EXPORT",
+      "parser_ids": ["boursa_identity_html_v1"],
+      "fixture_evidence": "GENERATED_CONTRACT_FIXTURE",
+      "live_operational": false
+    },
+    "investing_history": {
+      "status": "END_TO_END_TESTED",
+      "capture": "PUBLIC_HTTP_OR_USER_EXPORT",
+      "parser_ids": ["investing_history_html_v1"],
+      "fixture_evidence": "GENERATED_CONTRACT_FIXTURE",
+      "live_operational": false
+    }
+  },
+  "claim_boundaries": {
+    "catalog_entry_is_connector": false,
+    "capture_success_is_parser_success": false,
+    "contract_fixture_is_live_acceptance": false,
+    "parser_implemented_is_live_operational": false
+  }
+}

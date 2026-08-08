@@ -1,7 +1,7 @@
 {
-  "schema_version": "3.0-access-probe",
+  "schema_version": "3.0-manual-access-notes",
   "observed_at": "2026-08-07T09:54:54+03:00",
-  "purpose": "Access-only probe. This receipt does not establish historical coverage, market facts, or forecast accuracy.",
+  "purpose": "Historical manual access notes only. This file is not a validated live probe, release evidence, historical coverage, market evidence, or forecast evidence.",
   "sources": [
     {
       "source_id": "boursa_current",

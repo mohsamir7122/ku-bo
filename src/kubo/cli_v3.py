@@ -13,6 +13,7 @@ from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .ledger import ForecastLedger
 from .pack import PackValidator
+from .parser_materialization import materialize_parser_run
 from .pipeline import ResearchPipeline
 from .provenance import runtime_package_hash, source_tree_hash
 from .research_ledger import ResearchDecisionLedger
@@ -44,6 +45,7 @@ BLOCKING_STATUSES = {
 PROJECT_CONFIG_COMMANDS = frozenset(
     {
         "capture",
+        "materialize-parser-run",
         "plan",
         "run-request",
         "validate-config",
@@ -58,6 +60,7 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/methods.json"),
     Path("config/products.json"),
     Path("config/research_policies.json"),
+    Path("config/source_capabilities.json"),
     Path("config/source_network.json"),
     Path("config/sources.json"),
 )
@@ -227,6 +230,10 @@ def parser() -> argparse.ArgumentParser:
     capture.add_argument("--output-root", type=Path, required=True)
     capture.add_argument("--fixture-root", type=Path)
 
+    materialize = sub.add_parser("materialize-parser-run")
+    materialize.add_argument("--capture-root", type=Path, required=True)
+    materialize.add_argument("--parser-plan", type=Path, required=True)
+
     verify_research = sub.add_parser("verify-research-ledger")
     verify_research.add_argument("--ledger-dir", type=Path, required=True)
     verify_research.add_argument("--ledger-id", required=True)
@@ -273,6 +280,7 @@ def main(argv: list[str] | None = None) -> int:
         "plan",
         "run-request",
         "capture",
+        "materialize-parser-run",
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
@@ -366,6 +374,13 @@ def main(argv: list[str] | None = None) -> int:
             fixture_root=args.fixture_root,
             catalog=network_catalog,
             user_agent=os.environ.get("KUBO_USER_AGENT") or None,
+        )
+    elif args.command == "materialize-parser-run":
+        assert network_catalog is not None
+        report = materialize_parser_run(
+            capture_root=args.capture_root,
+            parser_plan_path=args.parser_plan,
+            catalog=network_catalog,
         )
     elif args.command == "verify-research-ledger":
         ledger = _research_ledger(args.ledger_dir, args.ledger_id)
