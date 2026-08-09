@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-price-history.schema.json",
+  "title": "KU-BO research price history normalized rows",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "trade_date",
+          "security_code",
+          "ticker",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume",
+          "change_percent",
+          "source_id",
+          "source_url",
+          "raw_sha256",
+          "capture_mode",
+          "price_basis",
+          "currency",
+          "unit",
+          "corporate_action_status"
+        ],
+        "properties": {
+          "trade_date": {"type": "string", "format": "date"},
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9]{0,31}$"},
+          "open": {"type": "number", "exclusiveMinimum": 0},
+          "high": {"type": "number", "exclusiveMinimum": 0},
+          "low": {"type": "number", "exclusiveMinimum": 0},
+          "close": {"type": "number", "exclusiveMinimum": 0},
+          "volume": {"type": "integer", "minimum": 0},
+          "change_percent": {"type": "number"},
+          "source_id": {"type": "string", "minLength": 1},
+          "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "capture_mode": {
+            "enum": ["USER_EXPORT", "RECORDED_AUTHORIZED_FIXTURE"]
+          },
+          "price_basis": {"enum": ["RAW", "ADJUSTED"]},
+          "currency": {"const": "KWD"},
+          "unit": {"enum": ["fils", "KWD"]},
+          "corporate_action_status": {
+            "enum": [
+              "raw_unadjusted",
+              "provider_adjusted_method_unverified",
+              "officially_adjusted",
+              "not_applicable",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"},
+      "required": [
+        "research_price_history_is_complete_daily_eod",
+        "backtest_ready"
+      ]
+    }
+  }
+}
