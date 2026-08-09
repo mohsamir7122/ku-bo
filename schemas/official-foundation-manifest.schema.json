@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-foundation-manifest.schema.json",
+  "title": "KU-BO official identity and trading-calendar collection manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "identity_snapshot_effective_date",
+    "calendar_window_from",
+    "calendar_window_to",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "identity_snapshot_effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "calendar_window_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "calendar_window_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id",
+          "source_id",
+          "source_url",
+          "file_name",
+          "capture_mode",
+          "purpose",
+          "file_sha256",
+          "observed_at",
+          "captured_by",
+          "review_status",
+          "review_notes"
+        ],
+        "properties": {
+          "artifact_id": {
+            "enum": [
+              "short_sell_identity",
+              "listed_companies",
+              "market_holidays",
+              "trading_extension",
+              "contact_hours"
+            ]
+          },
+          "source_id": {
+            "enum": ["boursa_current", "boursa_reports_archive"]
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "file_name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,255}\\.html$"
+          },
+          "capture_mode": {
+            "enum": ["PUBLIC_PAGE", "AUTHORIZED_BROWSER"]
+          },
+          "purpose": {"type": "string", "minLength": 1},
+          "file_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "captured_by": {"type": "string", "minLength": 1},
+          "review_status": {"const": "ACCEPTED"},
+          "review_notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}
