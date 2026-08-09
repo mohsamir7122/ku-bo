@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/security-status-evidence.schema.json",
+  "title": "KU-BO current security status evidence rows",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "security_code",
+          "ticker",
+          "board",
+          "status",
+          "effective_from",
+          "effective_to",
+          "reason_code",
+          "notice_id",
+          "raw_sha256",
+          "identity_snapshot_sha256",
+          "temporal_scope",
+          "source_url"
+        ],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "board": {"const": "cash"},
+          "status": {"enum": ["TRADING", "SUSPENDED"]},
+          "effective_from": {"type": "string", "format": "date"},
+          "effective_to": {"type": "string", "maxLength": 0},
+          "reason_code": {
+            "enum": [
+              "PRESENT_IN_CURRENT_SUSPENDED_TABLE",
+              "ABSENT_FROM_COMPLETE_SUSPENDED_TABLE"
+            ]
+          },
+          "notice_id": {"type": "string", "minLength": 1},
+          "raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "identity_snapshot_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "temporal_scope": {"const": "CURRENT_SNAPSHOT_ONLY"},
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_status_is_status_history",
+        "absence_from_suspended_snapshot_proves_past_trading",
+        "security_status_history_ready"
+      ],
+      "properties": {
+        "current_status_is_status_history": {"const": false},
+        "absence_from_suspended_snapshot_proves_past_trading": {"const": false},
+        "security_status_history_ready": {"const": false}
+      }
+    }
+  }
+}
