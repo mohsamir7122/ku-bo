@@ -101,7 +101,7 @@ class ResearchPriceHistoryValidation:
 
 
 def _decimal(value: Any, field: str, *, positive: bool = False) -> Decimal:
-    text = str(value or "").replace(",", "").strip()
+    text = str("" if value is None else value).replace(",", "").strip()
     try:
         parsed = Decimal(text)
     except InvalidOperation as exc:
@@ -115,7 +115,7 @@ def _decimal(value: Any, field: str, *, positive: bool = False) -> Decimal:
 
 
 def _volume(value: Any) -> int:
-    text = str(value or "").strip()
+    text = str("" if value is None else value).strip()
     if not text.isdigit():
         raise ValueError("volume must be a whole non-negative integer")
     parsed = int(text)
