@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/data-quality-report.schema.json",
+  "title": "KU-BO data foundation quality report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "status",
+    "rows",
+    "securities",
+    "errors",
+    "warnings",
+    "coverage",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["PASS", "BLOCKED"]},
+    "rows": {"type": "integer", "minimum": 0},
+    "securities": {"type": "integer", "minimum": 0},
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["ticker", "row_count", "date_start", "date_end"],
+        "properties": {
+          "ticker": {"type": "string"},
+          "row_count": {"type": "integer", "minimum": 1},
+          "date_start": {"type": "string", "format": "date"},
+          "date_end": {"type": "string", "format": "date"},
+          "zero_volume_rows": {"type": "integer", "minimum": 0},
+          "units": {"type": "array", "items": {"type": "string"}},
+          "price_bases": {"type": "array", "items": {"type": "string"}},
+          "source_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"},
+      "required": ["backtest_ready"]
+    }
+  }
+}
