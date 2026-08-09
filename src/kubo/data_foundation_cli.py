@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .official_foundation_import import import_official_foundation
+from .official_foundation_workspace import prepare_official_foundation_workspace
 from .price_collection_workspace import prepare_price_collection_workspace
 from .research_price_history import read_research_price_history
 from .user_price_export import import_investing_user_exports
@@ -51,8 +53,8 @@ def _manifest_hashes(path: Path | None) -> frozenset[str] | None:
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(
         description=(
-            "KU-BO Data Foundation Pilot — authorized price exports and "
-            "research-history validation without forecasts"
+            "KU-BO Data Foundation Pilot — authorized price exports, current "
+            "official identity, and official trading-calendar snapshots without forecasts"
         )
     )
     value.add_argument(
@@ -84,6 +86,16 @@ def parser() -> argparse.ArgumentParser:
     validate_history = sub.add_parser("validate-research-price-history")
     validate_history.add_argument("--path", type=Path, required=True)
     validate_history.add_argument("--manifest", type=Path)
+
+    prepare_official = sub.add_parser("prepare-official-foundation")
+    prepare_official.add_argument("--output-root", type=Path, required=True)
+    prepare_official.add_argument("--run-id", required=True)
+    prepare_official.add_argument("--calendar-year", type=int, default=2026)
+    prepare_official.add_argument("--prepared-by", default="")
+
+    import_official = sub.add_parser("import-official-foundation")
+    import_official.add_argument("--workspace", type=Path, required=True)
+    import_official.add_argument("--output-root", type=Path, required=True)
     return value
 
 
@@ -129,12 +141,25 @@ def main(argv: list[str] | None = None) -> int:
             observed_at=args.observed_at,
             decision_at=args.decision_at,
         )
-    else:
+    elif args.command == "validate-research-price-history":
         _, validation = read_research_price_history(
             args.path,
             manifest_hashes=_manifest_hashes(args.manifest),
         )
         report = validation.to_dict()
+    elif args.command == "prepare-official-foundation":
+        report = prepare_official_foundation_workspace(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            calendar_year=args.calendar_year,
+            prepared_by=args.prepared_by,
+        )
+    else:
+        report = import_official_foundation(
+            config_dir=config_dir,
+            workspace=args.workspace,
+            output_root=args.output_root,
+        )
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 1 if report.get("status") in BLOCKING_STATUSES else 0
