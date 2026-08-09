@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/trading-calendar-report.schema.json",
+  "title": "KU-BO official trading-calendar report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "rows",
+    "calendar_year",
+    "trading_days",
+    "holiday_days",
+    "weekend_days",
+    "open_weekdays",
+    "session_regime_id",
+    "regime_effective_from",
+    "holiday_snapshot_subject_to_change",
+    "errors"
+  ],
+  "properties": {
+    "status": {"enum": ["PASS", "BLOCKED"]},
+    "rows": {"type": "integer", "minimum": 0},
+    "calendar_year": {"type": "integer", "minimum": 2000, "maximum": 2100},
+    "trading_days": {"type": "integer", "minimum": 0},
+    "holiday_days": {"type": "integer", "minimum": 0},
+    "weekend_days": {"type": "integer", "minimum": 0},
+    "open_weekdays": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 0, "maximum": 6},
+      "uniqueItems": true
+    },
+    "session_regime_id": {"type": "string", "minLength": 1},
+    "regime_effective_from": {"type": "string", "format": "date"},
+    "holiday_snapshot_subject_to_change": {"const": true},
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    }
+  }
+}
