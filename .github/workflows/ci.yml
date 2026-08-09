@@ -38,3 +38,4 @@ jobs:
           python -m pip wheel --no-deps --wheel-dir dist .
           python -m pip install --force-reinstall dist/*.whl
           kubo --project-root "$GITHUB_WORKSPACE" validate-source-network
+          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-pilot-config
