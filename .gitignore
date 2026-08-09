@@ -16,6 +16,10 @@ dist/
 build/
 *.egg-info/
 runtime/
+data/
+raw_exports/
+*.duckdb
+*.parquet
 htmlcov/
 *.log
 *.jks
