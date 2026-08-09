@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Iterable
 
+from .evidence_hashes import parse_supporting_hashes
 from .strict import parse_iso_date, require_sha256
 
 
@@ -29,6 +30,7 @@ class IdentityRecord:
     valid_to: date | None
     listing_status: str
     raw_sha256: str
+    supporting_raw_sha256s: tuple[str, ...] = ()
 
     def active_on(self, day: date) -> bool:
         return self.valid_from <= day and (self.valid_to is None or day <= self.valid_to)
@@ -92,6 +94,7 @@ def validate_security_master(path: Path, *, manifest_hashes: frozenset[str]) -> 
         return [], ["MASTER_HEADERS:" + ",".join(missing_headers)]
     if not rows:
         return [], ["MASTER_EMPTY"]
+    supports_multiple_hashes = "supporting_raw_sha256s" in headers
     for index, row in enumerate(rows):
         try:
             code = str(row.get("security_code", "")).strip()
@@ -116,6 +119,17 @@ def validate_security_master(path: Path, *, manifest_hashes: frozenset[str]) -> 
             raw_hash = require_sha256(row.get("raw_sha256"), "raw_sha256")
             if raw_hash not in manifest_hashes:
                 raise ValueError("raw_sha256 does not resolve")
+            supporting_hashes = (
+                parse_supporting_hashes(
+                    row.get("supporting_raw_sha256s"),
+                    field="supporting_raw_sha256s",
+                    manifest_hashes=manifest_hashes,
+                )
+                if supports_multiple_hashes
+                else ()
+            )
+            if raw_hash in supporting_hashes:
+                raise ValueError("primary raw_sha256 is duplicated in supporting evidence")
             records.append(
                 IdentityRecord(
                     security_code=code,
@@ -130,6 +144,7 @@ def validate_security_master(path: Path, *, manifest_hashes: frozenset[str]) -> 
                     valid_to=end,
                     listing_status=status,
                     raw_sha256=raw_hash,
+                    supporting_raw_sha256s=supporting_hashes,
                 )
             )
         except ValueError as exc:
