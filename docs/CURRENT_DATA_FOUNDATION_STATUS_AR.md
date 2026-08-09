@@ -2,22 +2,18 @@
 
 تاريخ اللقطة: `2026-08-09`
 
-المرحلة الأساسية:
+سلسلة الفروع المتراكمة:
 
 ```text
 build/data-foundation-v0.2
+  └── build/official-identity-calendar-v0.2
+        └── build/security-status-corporate-actions-v0.2
 ```
 
-المرحلة المتراكمة الحالية:
+قاعدة المرحلة الحالية:
 
 ```text
-build/official-identity-calendar-v0.2
-```
-
-قاعدة المرحلة المتراكمة:
-
-```text
-build/data-foundation-v0.2@5d64510f5fa442f1cdb832553bc2c2e9917a7a06
+build/official-identity-calendar-v0.2@67b5babe0926b94cafd40806dd341a3b25e160e2
 ```
 
 ## ما أصبح موجودًا في طبقة Price History
@@ -29,63 +25,73 @@ build/data-foundation-v0.2@5d64510f5fa442f1cdb832553bc2c2e9917a7a06
 - تحليل Investing CSV مباشرة من دون توليد HTML وسيط.
 - إنتاج `normalized/research_price_history.csv` بعقد مستقل عن Official Complete `daily_eod`.
 - إنتاج Data Quality Report وEvidence Manifest وSource Observation.
-- إضافة CLI مستقل باسم `kubo-data-foundation`.
 
-## ما أضيف في مرحلة Official Identity and Calendar
+## ما أصبح موجودًا في Current Official Identity and Calendar
 
-- Workspace منفصلة لخمس Official Boursa Artifacts.
-- Parser لجدول Security Code وISIN الرسمي.
-- Parser لجدول Listed Companies بعد Client Rendering.
-- مصالحة `security_code` و`ISIN` و`Ticker` والاسم عبر مصدرين رسميين.
+- مصالحة Security Code وISIN وTicker والاسم عبر مصدرين رسميين.
 - حفظ Primary وSupporting Evidence Hashes لكل Security Master row.
-- منع مساواة Listing Date بتاريخ صلاحية الهوية.
 - وسم الهوية الناتجة صراحةً بـ`CURRENT_SNAPSHOT_ONLY`.
-- Parser لصفحة Market Holidays لسنة واحدة.
-- Parser لـSunday–Thursday من صفحة Contact الرسمية.
-- Parser لـSession Regime الساري من 12 أكتوبر 2025.
 - بناء صف لكل يوم مدني في سنة 2026 داخل `trading_calendar.csv`.
+- فصل Listing Date عن Effective-Dated Identity.
+
+## ما أضيف في مرحلة Security Status and Corporate Actions
+
+- Workspace لصفحات Suspended Companies وDelisted Companies وCorporate Actions.
+- Parser يقبل Empty Suspended table فقط عند وجود Rendered Headers الصحيحة.
+- Current Status row لكل سهم من الأسهم الخمسة.
+- فصل `CURRENT_SNAPSHOT_ONLY` عن Historical Status History.
+- حفظ Official Delisting Archive وتعارضه مع Current Identity.
+- Query/Pagination receipt لصفحة Corporate Actions.
+- حفظ كل Market Schedule Rows ثم فصل Pilot Rows بعد مطابقة Security Code وTicker وISIN.
+- إنشاء `corporate_action_enrichment_queue.csv` لكل Action تحتاج Official Disclosure.
+- إبقاء Action Type وAmount وAdjustment Factor في حالة Pending.
 - إضافة Schemas وتقارير واختبارات Unit وEnd-to-End.
 
-## أقصى حالة ممكنة للمرحلة الحالية
+## أقصى الحالات الممكنة للمرحلة الحالية
 
-عند وضع Official Artifacts صحيحة ومراجعة:
+عند نجاح Current Status ووجود Corporate Action rows:
 
 ```text
-CURRENT_IDENTITY_AND_CALENDAR_READY
+CURRENT_STATUS_AND_CA_SCHEDULE_READY
 ```
 
-هذه الحالة تعني:
+تعني أن Official Schedule Dates جُمعت، ولا تعني أن Action Type أوAmount أوAdjustment Factor معروف.
 
-- Current Official Identity للأسهم الخمسة اجتازت المصالحة.
-- Trading Calendar لسنة 2026 اجتاز التحقق.
+عند نجاح Current Status وثبوت Zero Result داخل Query Window:
 
-ولا تعني:
+```text
+CURRENT_STATUS_AND_CA_ZERO_RESULT_READY
+```
 
+تعني Zero Result للفترة المحددة فقط.
+
+## ما لا تزال الحالات السابقة لا تعنيه
+
+- Historical suspension and resumption intervals جاهزة.
 - Historical Point-in-Time Universe جاهزة.
-- Security Status History جاهزة.
-- Corporate Actions جاهزة.
+- Corporate Action factor ledger جاهزة عندما توجد Action rows.
 - Benchmark جاهز.
 - Official Complete EOD جاهز.
-- Backtest أوForecast أصبح مسموحًا.
+- Backtest أوForecast مسموح.
 
 ## البيانات غير المرفوعة إلى GitHub
 
 لا يحتوي الفرع على:
 
 - Real Market CSV.
-- Official HTML captures فعلية.
+- Official rendered HTML captures فعلية.
 - Browser sessions أوCookies.
 - Credentials أوTokens.
 - Drive identifiers.
 
 جميع ملفات Runtime وRaw Evidence تبقى خارج Git.
 
-## بوابات المرحلة التالية
+## البوابات التالية
 
 ```text
-HISTORICAL_IDENTITY_AND_RENAMES
-SECURITY_STATUS_HISTORY
-CORPORATE_ACTION_LEDGER
+HISTORICAL_SUSPENSION_AND_RESUMPTION_NOTICES
+CORPORATE_ACTION_DISCLOSURE_ENRICHMENT
+CORPORATE_ACTION_ADJUSTMENT_FACTORS
 BENCHMARK_HISTORY
 OFFICIAL_COMPLETE_DAILY_EOD
 ```
@@ -94,4 +100,4 @@ OFFICIAL_COMPLETE_DAILY_EOD
 
 ## معيار القبول
 
-المرجع الوحيد لقبول الكود هو GitHub Actions على أحدث Head للـPull Request، وتشمل Compile، Full Unit/Adversarial Suite، Official Parser and Materialization Tests، Synthetic Smoke Check، Secret Guard، وبناء Wheel وتشغيل أوامر CLI بعد تثبيته.
+المرجع الوحيد لقبول الكود هو GitHub Actions على أحدث Head للـPull Request، وتشمل Compile، Full Unit/Adversarial Suite، Official Identity/Calendar Gates، Status/Corporate Parsers and Materialization Gates، Synthetic Smoke Check، Secret Guard، وبناء Wheel وتشغيل أوامر CLI بعد تثبيته.
