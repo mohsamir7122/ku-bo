@@ -84,6 +84,44 @@ class DataFoundationCliTests(unittest.TestCase):
                 report["claim_boundaries"]["workspace_contains_official_evidence"]
             )
 
+    def test_prepare_status_corporate_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            workspace = Path(directory) / "status-ca"
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--project-root",
+                        str(ROOT),
+                        "prepare-status-corporate",
+                        "--output-root",
+                        str(workspace),
+                        "--run-id",
+                        "status-ca-001",
+                        "--action-window-from",
+                        "2021-01-01",
+                        "--action-window-to",
+                        "2026-08-09",
+                        "--prepared-by",
+                        "unit-test",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            report = json.loads(output.getvalue())
+            self.assertEqual(report["status"], "PASS")
+            self.assertEqual(report["artifact_count"], 3)
+            self.assertTrue(
+                (workspace / "manifests" / "status_corporate_manifest.json").is_file()
+            )
+            self.assertFalse(
+                report["claim_boundaries"]["current_status_is_status_history"]
+            )
+            self.assertFalse(
+                report["claim_boundaries"][
+                    "corporate_action_schedule_contains_adjustment_factor"
+                ]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
