@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-identity-report.schema.json",
+  "title": "KU-BO current official identity reconciliation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "rows",
+    "expected_rows",
+    "errors",
+    "warnings",
+    "identity_scope",
+    "historical_identity_ready",
+    "validated_rows"
+  ],
+  "properties": {
+    "status": {"enum": ["PASS", "BLOCKED"]},
+    "rows": {"type": "integer", "minimum": 0},
+    "expected_rows": {"type": "integer", "minimum": 1},
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "identity_scope": {"const": "CURRENT_SNAPSHOT_ONLY"},
+    "historical_identity_ready": {"const": false},
+    "validated_rows": {"type": "integer", "minimum": 0}
+  }
+}
