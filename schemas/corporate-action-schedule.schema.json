@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/corporate-action-schedule.schema.json",
+  "title": "KU-BO official corporate-action schedule rows",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "security_code",
+          "ticker",
+          "isin",
+          "action_id",
+          "cum_date",
+          "ex_date",
+          "record_date",
+          "payment_date",
+          "action_type",
+          "adjustment_factor",
+          "factor_status",
+          "raw_sha256",
+          "query_id",
+          "coverage_scope",
+          "source_url"
+        ],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+          "action_id": {"type": "string", "pattern": "^ca-schedule-[0-9a-f]{24}$"},
+          "cum_date": {"type": "string", "format": "date"},
+          "ex_date": {"type": "string", "format": "date"},
+          "record_date": {"type": "string", "format": "date"},
+          "payment_date": {"type": "string"},
+          "action_type": {"const": "UNCLASSIFIED_ENTITLEMENT"},
+          "adjustment_factor": {"type": "string", "maxLength": 0},
+          "factor_status": {"const": "pending"},
+          "raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "query_id": {"type": "string", "minLength": 1},
+          "coverage_scope": {"const": "OFFICIAL_SCHEDULE_DATES_ONLY"},
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule_contains_action_type",
+        "schedule_contains_amount",
+        "corporate_action_factor_ledger_ready"
+      ],
+      "properties": {
+        "schedule_contains_action_type": {"const": false},
+        "schedule_contains_amount": {"const": false},
+        "corporate_action_factor_ledger_ready": {"type": "boolean"}
+      }
+    }
+  }
+}
