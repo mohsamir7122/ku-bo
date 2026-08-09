@@ -9,6 +9,8 @@ from .official_foundation_import import import_official_foundation
 from .official_foundation_workspace import prepare_official_foundation_workspace
 from .price_collection_workspace import prepare_price_collection_workspace
 from .research_price_history import read_research_price_history
+from .status_corporate_import import import_status_corporate
+from .status_corporate_workspace import prepare_status_corporate_workspace
 from .user_price_export import import_investing_user_exports
 from .vendor_symbol_mapping import (
     PilotIdentitySeedCatalog,
@@ -26,10 +28,8 @@ BLOCKING_STATUSES = frozenset(
 )
 
 
-
 def _root() -> Path:
     return Path(__file__).resolve().parents[2]
-
 
 
 def _manifest_hashes(path: Path | None) -> frozenset[str] | None:
@@ -49,12 +49,12 @@ def _manifest_hashes(path: Path | None) -> frozenset[str] | None:
     return frozenset(hashes)
 
 
-
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(
         description=(
             "KU-BO Data Foundation Pilot — authorized price exports, current "
-            "official identity, and official trading-calendar snapshots without forecasts"
+            "official identity, trading-calendar snapshots, current security "
+            "status evidence, and corporate-action schedules without forecasts"
         )
     )
     value.add_argument(
@@ -96,8 +96,23 @@ def parser() -> argparse.ArgumentParser:
     import_official = sub.add_parser("import-official-foundation")
     import_official.add_argument("--workspace", type=Path, required=True)
     import_official.add_argument("--output-root", type=Path, required=True)
-    return value
 
+    prepare_status = sub.add_parser("prepare-status-corporate")
+    prepare_status.add_argument("--output-root", type=Path, required=True)
+    prepare_status.add_argument("--run-id", required=True)
+    prepare_status.add_argument("--action-window-from", required=True)
+    prepare_status.add_argument("--action-window-to", required=True)
+    prepare_status.add_argument("--prepared-by", default="")
+
+    import_status = sub.add_parser("import-status-corporate")
+    import_status.add_argument("--workspace", type=Path, required=True)
+    import_status.add_argument(
+        "--official-foundation-root",
+        type=Path,
+        required=True,
+    )
+    import_status.add_argument("--output-root", type=Path, required=True)
+    return value
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -154,9 +169,24 @@ def main(argv: list[str] | None = None) -> int:
             calendar_year=args.calendar_year,
             prepared_by=args.prepared_by,
         )
-    else:
+    elif args.command == "import-official-foundation":
         report = import_official_foundation(
             config_dir=config_dir,
+            workspace=args.workspace,
+            output_root=args.output_root,
+        )
+    elif args.command == "prepare-status-corporate":
+        report = prepare_status_corporate_workspace(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            action_window_from=args.action_window_from,
+            action_window_to=args.action_window_to,
+            prepared_by=args.prepared_by,
+        )
+    else:
+        report = import_status_corporate(
+            config_dir=config_dir,
+            official_foundation_root=args.official_foundation_root,
             workspace=args.workspace,
             output_root=args.output_root,
         )
