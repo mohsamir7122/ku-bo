@@ -17,5 +17,9 @@
 - `vendor-symbol-mapping.schema.json`: عقد Vendor Mapping المنفصل صراحةً عن Official Security Identity.
 - `research-price-history.schema.json`: عقد صفوف OHLCV البحثية الثانوية التي لا تدّعي اكتمال `daily_eod`.
 - `data-quality-report.schema.json`: عقد تقرير جودة وتغطية Price History وحدود الادعاء المتبقية.
+- `official-foundation-manifest.schema.json`: عقد الخمسة Official Artifacts المطلوبة لبناء Current Identity وTrading Calendar، مع SHA-256 ووقت الجمع والمراجعة.
+- `official-identity-report.schema.json`: تقرير مصالحة Security Code وISIN وTicker عبر مصدرين رسميين مع إبقاء النطاق `CURRENT_SNAPSHOT_ONLY`.
+- `trading-calendar-report.schema.json`: تقرير تقويم سنة واحدة مبني على Official Holidays وTrading Weekdays وSession Regime.
+- `official-foundation-import-report.schema.json`: تقرير الحالة النهائية للمرحلة، مع منع مساواة Current Snapshot بالتاريخ الكامل أوالسماح بـBacktest.
 
-وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، بينما `kubo.research_price_history` يفحص Price History البحثية ويحجب أي ادعاء بأنها Official Complete EOD أوBacktest-ready.
+وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History البحثية، بينما `kubo.official_foundation_import` يفرض مصالحة Official Identity وتقويم سنة كاملة ويحجب أي ادعاء بـHistorical Universe أوBacktest readiness.
