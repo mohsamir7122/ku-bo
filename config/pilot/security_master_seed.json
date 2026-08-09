@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-08-08",
+  "scope": "FIVE_SECURITY_PILOT_CANDIDATES",
+  "claim_boundary": "SEED_IDENTITY_NOT_OFFICIAL_EVIDENCE",
+  "securities": [
+    {
+      "security_code": "101",
+      "ticker": "NBK",
+      "name_en": "National Bank of Kuwait",
+      "name_ar": "بنك الكويت الوطني",
+      "isin": "KW0EQ0100010",
+      "sector": "Banks",
+      "identity_state": "UNVERIFIED_SEED",
+      "official_artifact_sha256": null,
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "Pilot seed only. A preserved official artifact and effective dates are required before this row can establish identity."
+    },
+    {
+      "security_code": "108",
+      "ticker": "KFH",
+      "name_en": "Kuwait Finance House",
+      "name_ar": "بيت التمويل الكويتي",
+      "isin": "KW0EQ0100085",
+      "sector": "Banks",
+      "identity_state": "UNVERIFIED_SEED",
+      "official_artifact_sha256": null,
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "Pilot seed only. A preserved official artifact and effective dates are required before this row can establish identity."
+    },
+    {
+      "security_code": "413",
+      "ticker": "MABANEE",
+      "name_en": "Mabanee Company",
+      "name_ar": "المباني",
+      "isin": "KW0EQ0400725",
+      "sector": "Real Estate",
+      "identity_state": "UNVERIFIED_SEED",
+      "official_artifact_sha256": null,
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "Pilot seed only. A preserved official artifact and effective dates are required before this row can establish identity."
+    },
+    {
+      "security_code": "605",
+      "ticker": "ZAIN",
+      "name_en": "Mobile Telecommunications Company",
+      "name_ar": "زين",
+      "isin": "KW0EQ0601058",
+      "sector": "Telecommunications",
+      "identity_state": "UNVERIFIED_SEED",
+      "official_artifact_sha256": null,
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "Pilot seed only. A preserved official artifact and effective dates are required before this row can establish identity."
+    },
+    {
+      "security_code": "623",
+      "ticker": "HUMANSOFT",
+      "name_en": "Humansoft Holding Company",
+      "name_ar": "هيومن سوفت القابضة",
+      "isin": "KW0EQ0601694",
+      "sector": "Consumer Services",
+      "identity_state": "UNVERIFIED_SEED",
+      "official_artifact_sha256": null,
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "Pilot seed only. A preserved official artifact and effective dates are required before this row can establish identity."
+    }
+  ]
+}
