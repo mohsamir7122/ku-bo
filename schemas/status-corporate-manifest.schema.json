@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/status-corporate-manifest.schema.json",
+  "title": "KU-BO security status and corporate-action schedule manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "status_snapshot_effective_date",
+    "corporate_action_window_from",
+    "corporate_action_window_to",
+    "corporate_action_query",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "status_snapshot_effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "corporate_action_window_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "corporate_action_window_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "corporate_action_query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filter_applied",
+        "pages_declared",
+        "pages_received",
+        "result_count_declared",
+        "review_status",
+        "review_notes"
+      ],
+      "properties": {
+        "filter_applied": {"const": true},
+        "pages_declared": {"type": "integer", "minimum": 1},
+        "pages_received": {"type": "integer", "minimum": 1},
+        "result_count_declared": {"type": "integer", "minimum": 0},
+        "review_status": {"const": "ACCEPTED"},
+        "review_notes": {"type": "string"}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id",
+          "source_id",
+          "source_url",
+          "file_name",
+          "capture_mode",
+          "purpose",
+          "file_sha256",
+          "observed_at",
+          "captured_by",
+          "review_status",
+          "review_notes"
+        ],
+        "properties": {
+          "artifact_id": {
+            "enum": [
+              "suspended_companies",
+              "delisted_companies",
+              "corporate_actions"
+            ]
+          },
+          "source_id": {"const": "boursa_current"},
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "file_name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,255}\\.html$"
+          },
+          "capture_mode": {"const": "AUTHORIZED_BROWSER"},
+          "purpose": {"type": "string", "minLength": 1},
+          "file_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "captured_by": {"type": "string", "minLength": 1},
+          "review_status": {"const": "ACCEPTED"},
+          "review_notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}
