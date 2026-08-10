@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/status-intervals.schema.json",
+  "title": "KU-BO reconstructed security-status intervals",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "security_code",
+          "ticker",
+          "status",
+          "effective_from",
+          "effective_to",
+          "opening_evidence_sha256",
+          "start_notice_id",
+          "end_notice_id",
+          "evidence_hashes"
+        ],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "status": {"enum": ["TRADING", "SUSPENDED", "DELISTED"]},
+          "effective_from": {"type": "string", "format": "date"},
+          "effective_to": {"type": "string", "format": "date"},
+          "opening_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "start_notice_id": {"type": "string", "minLength": 1},
+          "end_notice_id": {"type": "string", "minLength": 1},
+          "evidence_hashes": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}(?:\\|[0-9a-f]{64})*$"
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "history_outside_declared_window_ready",
+        "status_history_ready_for_declared_window",
+        "backtest_ready"
+      ],
+      "properties": {
+        "history_outside_declared_window_ready": {"const": false},
+        "status_history_ready_for_declared_window": {"type": "boolean"},
+        "backtest_ready": {"const": false}
+      }
+    }
+  }
+}
