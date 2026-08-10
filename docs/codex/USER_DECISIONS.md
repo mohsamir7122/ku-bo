@@ -53,6 +53,30 @@ DECIDED_BY:
 IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 ```
 
+## Approved decisions
+
+```text
+DECISION_ID: KU-BO-MERGE-001
+STATUS: APPROVED
+DATE_RAISED: 2026-08-10
+TARGET: Stacked PR chain #4 -> #5 -> #6 -> #7 -> #8 -> #9
+CATEGORY: MERGE
+CURRENT_STATE: All six PRs are open Drafts, exactly stacked on their predecessor heads, mergeable, and green on their recorded head CI. PR #9 closes KU-BO-008 as a fail-closed contract stage while real Benchmark/EOD evidence and KU-BO-008-D01 remain blocked.
+WHY_A_DECISION_IS_REQUIRED: Repository rules prohibit any merge without explicit user approval and require stacked PRs to merge in dependency order.
+OPTIONS:
+1. Merge sequentially into main, retargeting each successor to main and requiring fresh green CI after every retarget.
+2. Leave the complete stack open as Draft.
+3. Retarget only PR #9 to main and collapse the whole stack into one oversized review.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: The reviewed engineering foundation enters main while all real-data, licensing, receipt, policy, backtest, forecast, and recommendation gates remain fail-closed.
+CONSEQUENCE_OF_REJECTION: The validated implementation remains available only on the stacked branches.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep all PRs open and Draft without merging.
+USER_DECISION: APPROVED in the active user session after review of the exact staged merge plan.
+DECIDED_AT: 2026-08-10
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2 / PR #9
+```
+
 ## Rules
 
 - Do not convert silence into approval.
