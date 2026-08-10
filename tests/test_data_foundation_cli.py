@@ -30,6 +30,28 @@ class DataFoundationCliTests(unittest.TestCase):
         self.assertEqual(report["identity_seed"]["security_count"], 5)
         self.assertFalse(report["identity_seed"]["official_identity_ready"])
 
+    def test_validate_ca_formulas_command(self) -> None:
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(
+                [
+                    "--project-root",
+                    str(ROOT),
+                    "validate-ca-formulas",
+                ]
+            )
+        self.assertEqual(code, 0)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["status"], "PASS")
+        self.assertFalse(
+            report["claim_boundaries"]["mechanical_factor_is_official_factor"]
+        )
+        self.assertFalse(
+            report["claim_boundaries"][
+                "reference_price_factor_is_return_engine_multiplier"
+            ]
+        )
+
     def test_prepare_price_collection_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = StringIO()

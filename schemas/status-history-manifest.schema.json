@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/status-history-manifest.schema.json",
+  "title": "KU-BO historical security-status notice manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "history_window_from",
+    "history_window_to",
+    "upstream",
+    "queries",
+    "opening_states",
+    "notices"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "history_window_from": {"type": "string", "format": "date"},
+    "history_window_to": {"type": "string", "format": "date"},
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_id",
+        "status_snapshot_effective_date",
+        "report_sha256",
+        "status_evidence_sha256"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "CURRENT_STATUS_AND_CA_SCHEDULE_READY",
+            "CURRENT_STATUS_AND_CA_ZERO_RESULT_READY"
+          ]
+        },
+        "run_id": {"type": ["string", "null"]},
+        "status_snapshot_effective_date": {"type": "string", "format": "date"},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query_id",
+          "security_code",
+          "ticker",
+          "source_url",
+          "raw_file_name",
+          "raw_sha256",
+          "pages_declared",
+          "pages_received",
+          "result_count_declared",
+          "rows_normalized",
+          "zero_result",
+          "observed_at",
+          "captured_by",
+          "review_status",
+          "review_notes"
+        ],
+        "properties": {
+          "query_id": {"type": "string", "minLength": 1},
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "source_url": {"type": "string"},
+          "raw_file_name": {"type": "string", "minLength": 1},
+          "raw_sha256": {"type": "string"},
+          "pages_declared": {"type": ["integer", "string"]},
+          "pages_received": {"type": ["integer", "string"]},
+          "result_count_declared": {"type": ["integer", "string"]},
+          "rows_normalized": {"type": ["integer", "string"]},
+          "zero_result": {"type": "boolean"},
+          "observed_at": {"type": "string"},
+          "captured_by": {"type": "string"},
+          "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+          "review_notes": {"type": "string"}
+        }
+      }
+    },
+    "opening_states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "security_code",
+          "ticker",
+          "status",
+          "effective_date",
+          "source_id",
+          "source_url",
+          "raw_file_name",
+          "raw_sha256",
+          "evidence_excerpt",
+          "observed_at",
+          "captured_by",
+          "review_status",
+          "review_notes"
+        ],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "status": {"enum": ["", "TRADING", "SUSPENDED", "DELISTED"]},
+          "effective_date": {"type": "string", "format": "date"},
+          "source_id": {
+            "enum": ["boursa_historical_disclosures", "cma_announcement"]
+          },
+          "source_url": {"type": "string"},
+          "raw_file_name": {"type": "string", "minLength": 1},
+          "raw_sha256": {"type": "string"},
+          "evidence_excerpt": {"type": "string"},
+          "observed_at": {"type": "string"},
+          "captured_by": {"type": "string"},
+          "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+          "review_notes": {"type": "string"}
+        }
+      }
+    },
+    "notices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "notice_id",
+          "security_code",
+          "ticker",
+          "event_type",
+          "effective_date",
+          "published_date",
+          "source_id",
+          "source_url",
+          "raw_file_name",
+          "raw_sha256",
+          "text_file_name",
+          "text_sha256",
+          "text_derivation",
+          "query_id",
+          "classification_phrase",
+          "captured_at",
+          "captured_by",
+          "review_status",
+          "review_notes"
+        ],
+        "properties": {
+          "notice_id": {"type": "string", "minLength": 1},
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "event_type": {"enum": ["SUSPEND", "RESUME", "DELIST", "RELIST"]},
+          "effective_date": {"type": "string", "format": "date"},
+          "published_date": {"type": "string", "format": "date"},
+          "source_id": {
+            "enum": ["boursa_historical_disclosures", "cma_announcement"]
+          },
+          "source_url": {"type": "string"},
+          "raw_file_name": {"type": "string", "minLength": 1},
+          "raw_sha256": {"type": "string"},
+          "text_file_name": {"type": "string", "minLength": 1},
+          "text_sha256": {"type": "string"},
+          "text_derivation": {
+            "enum": [
+              "OFFICIAL_HTML_VISIBLE_TEXT",
+              "REVIEWED_PDF_TEXT_EXPORT",
+              "OFFICIAL_XBRL_VISIBLE_TEXT"
+            ]
+          },
+          "query_id": {"type": "string", "minLength": 1},
+          "classification_phrase": {"type": "string", "minLength": 1},
+          "captured_at": {"type": "string"},
+          "captured_by": {"type": "string"},
+          "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+          "review_notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

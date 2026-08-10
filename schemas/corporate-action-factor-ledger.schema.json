@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/corporate-action-factor-ledger.schema.json",
+  "title": "KU-BO disclosure-backed corporate-action factor ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_id",
+          "security_code",
+          "ticker",
+          "isin",
+          "cum_date",
+          "ex_date",
+          "record_date",
+          "payment_date",
+          "action_type",
+          "formula_mode",
+          "factor_status",
+          "formula_id",
+          "return_engine_treatment",
+          "return_engine_ready",
+          "schedule_row_sha256",
+          "review_status"
+        ],
+        "properties": {
+          "action_id": {"type": "string", "pattern": "^ca-schedule-[0-9a-f]{24}$"},
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+          "cum_date": {"type": "string", "format": "date"},
+          "ex_date": {"type": "string", "format": "date"},
+          "record_date": {"type": "string", "format": "date"},
+          "payment_date": {"type": "string"},
+          "action_type": {
+            "enum": [
+              "CASH_DIVIDEND_NORMAL",
+              "CASH_DIVIDEND_SPECIAL",
+              "BONUS_SHARES",
+              "STOCK_SPLIT",
+              "REVERSE_SPLIT",
+              "RIGHTS_ISSUE",
+              "CAPITAL_REDUCTION",
+              "MERGER",
+              "PAR_VALUE_CHANGE",
+              "OTHER"
+            ]
+          },
+          "formula_mode": {
+            "enum": [
+              "OFFICIAL_FACTOR",
+              "OFFICIAL_REFERENCE_PRICE",
+              "REPRODUCIBLE_MECHANICAL",
+              "NO_AUTOMATIC_FORMULA"
+            ]
+          },
+          "factor_status": {"enum": ["official", "reproducible", "pending"]},
+          "formula_id": {"type": "string", "minLength": 1},
+          "previous_close_fils": {"type": "string"},
+          "theoretical_ex_price_fils": {"type": "string"},
+          "reference_price_factor": {"type": "string"},
+          "historical_continuity_factor": {"type": "string"},
+          "position_quantity_multiplier": {"type": "string"},
+          "return_price_multiplier": {"type": "string"},
+          "cash_distribution_per_pre_action_share_fils": {"type": "string"},
+          "rights_cash_contribution_per_pre_action_share_fils": {"type": "string"},
+          "return_engine_treatment": {"type": "string", "minLength": 1},
+          "return_engine_ready": {"enum": ["true", "false"]},
+          "reference_price_use": {"type": "string"},
+          "limitations": {"type": "string"},
+          "schedule_row_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "disclosure_raw_sha256": {"type": "string"},
+          "disclosure_text_sha256": {"type": "string"},
+          "price_reference_raw_sha256": {"type": "string"},
+          "disclosure_source_url": {"type": "string"},
+          "price_source_url": {"type": "string"},
+          "published_at": {"type": "string"},
+          "review_status": {"enum": ["PENDING", "ACCEPTED"]}
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanical_factor_is_official_factor",
+        "reference_price_factor_is_return_engine_multiplier",
+        "rights_terp_is_execution_receipt",
+        "backtest_ready"
+      ],
+      "properties": {
+        "mechanical_factor_is_official_factor": {"const": false},
+        "reference_price_factor_is_return_engine_multiplier": {"const": false},
+        "rights_terp_is_execution_receipt": {"const": false},
+        "backtest_ready": {"const": false}
+      }
+    }
+  }
+}

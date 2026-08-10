@@ -25,5 +25,11 @@
 - `security-status-evidence.schema.json`: عقد Current Status Snapshot؛ غياب السهم عن Suspended page لا يثبت أنه كان متداولًا تاريخيًا.
 - `corporate-action-schedule.schema.json`: عقد Official entitlement dates مع إبقاء Action Type وAmount وAdjustment Factor في حالة Pending.
 - `status-corporate-import-report.schema.json`: تقرير الحالة النهائية لمرحلة Current Status and Corporate Action Schedule مع بوابات التاريخ والعوامل والـBacktest.
+- `ca-enrichment-manifest.schema.json`: عقد ربط كل Schedule Row بإفصاح رسمي وReviewed Text Export وOfficial Price Evidence وشروط الحساب.
+- `corporate-action-factor-ledger.schema.json`: عقد يفصل Reference-price factor وHistorical-continuity factor وPosition multiplier وReturn-engine multiplier بدل وضع رقم Adjustment واحد غامض.
+- `ca-enrichment-import-report.schema.json`: تقرير جاهزية Corporate Action enrichment، مع Queue مستقلة لأي Rights أوComplex Action ما زالت Return-policy blocked.
+- `status-history-manifest.schema.json`: عقد البحث التاريخي لكل سهم، وOpening State Evidence، وSuspension/Resumption/Delisting/Relisting notices.
+- `status-intervals.schema.json`: عقد الفترات اليومية المتصلة داخل Window معلنة، مع Hashes افتتاحية وNotice boundaries.
+- `status-history-import-report.schema.json`: تقرير مصالحة التاريخ المعاد بناؤه مع Current Snapshot، مع منع تعميم النتيجة خارج النافذة.
 
-وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History البحثية، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، بينما `kubo.status_corporate_import` يفصل Current Status Snapshot عن Status History ويفصل Official Schedule Dates عن Corporate Action Type وAdjustment Factor.
+وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق.

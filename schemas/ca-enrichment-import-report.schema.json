@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/ca-enrichment-import-report.schema.json",
+  "title": "KU-BO corporate-action enrichment import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_id",
+    "output_root",
+    "action_count",
+    "accepted_action_count",
+    "reference_factor_ready_count",
+    "return_engine_ready_count",
+    "pending_actions",
+    "errors",
+    "corporate_action_factor_ledger",
+    "corporate_action_return_policy_queue",
+    "remaining_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "CA_ENRICHMENT_ZERO_RESULT_READY",
+        "CA_ENRICHMENT_READY",
+        "CA_REFERENCE_FACTORS_READY_RETURN_POLICY_PENDING",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "output_root": {"type": "string", "minLength": 1},
+    "action_count": {"type": "integer", "minimum": 0},
+    "accepted_action_count": {"type": "integer", "minimum": 0},
+    "reference_factor_ready_count": {"type": "integer", "minimum": 0},
+    "return_engine_ready_count": {"type": "integer", "minimum": 0},
+    "pending_actions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "corporate_action_factor_ledger": {"type": "string", "minLength": 1},
+    "corporate_action_return_policy_queue": {"type": "string", "minLength": 1},
+    "remaining_gates": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanical_factor_is_official_factor",
+        "reference_price_factor_is_return_engine_multiplier",
+        "reviewed_text_export_is_original_disclosure",
+        "rights_terp_is_execution_receipt",
+        "all_return_engine_policies_ready",
+        "data_foundation_ready",
+        "backtest_ready",
+        "forecast_generated",
+        "recommendation_generated"
+      ],
+      "properties": {
+        "mechanical_factor_is_official_factor": {"const": false},
+        "reference_price_factor_is_return_engine_multiplier": {"const": false},
+        "reviewed_text_export_is_original_disclosure": {"const": false},
+        "rights_terp_is_execution_receipt": {"const": false},
+        "all_return_engine_policies_ready": {"type": "boolean"},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  }
+}

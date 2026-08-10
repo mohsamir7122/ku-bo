@@ -5,12 +5,17 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .ca_adjustments import formula_self_check
+from .ca_enrichment_import import import_ca_enrichment
+from .ca_enrichment_workspace import prepare_ca_enrichment_workspace
 from .official_foundation_import import import_official_foundation
 from .official_foundation_workspace import prepare_official_foundation_workspace
 from .price_collection_workspace import prepare_price_collection_workspace
 from .research_price_history import read_research_price_history
 from .status_corporate_import import import_status_corporate
 from .status_corporate_workspace import prepare_status_corporate_workspace
+from .status_history_import import import_status_history
+from .status_history_workspace import prepare_status_history_workspace
 from .user_price_export import import_investing_user_exports
 from .vendor_symbol_mapping import (
     PilotIdentitySeedCatalog,
@@ -24,6 +29,7 @@ BLOCKING_STATUSES = frozenset(
         "PARTIAL",
         "BLOCKED_OFFICIAL_IDENTITY",
         "FULL_MARKET_IDENTITY_EVIDENCE_REQUIRED",
+        "FAIL",
     }
 )
 
@@ -52,9 +58,8 @@ def _manifest_hashes(path: Path | None) -> frozenset[str] | None:
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(
         description=(
-            "KU-BO Data Foundation Pilot — authorized price exports, current "
-            "official identity, trading-calendar snapshots, current security "
-            "status evidence, and corporate-action schedules without forecasts"
+            "KU-BO Data Foundation Pilot — auditable price, identity, calendar, "
+            "status history, and corporate-action evidence without forecasts"
         )
     )
     value.add_argument(
@@ -65,6 +70,7 @@ def parser() -> argparse.ArgumentParser:
     )
     sub = value.add_subparsers(dest="command", required=True)
     sub.add_parser("validate-pilot-config")
+    sub.add_parser("validate-ca-formulas")
 
     prepare = sub.add_parser("prepare-price-collection")
     prepare.add_argument("--output-root", type=Path, required=True)
@@ -112,6 +118,46 @@ def parser() -> argparse.ArgumentParser:
         required=True,
     )
     import_status.add_argument("--output-root", type=Path, required=True)
+
+    prepare_ca = sub.add_parser("prepare-ca-enrichment")
+    prepare_ca.add_argument(
+        "--status-corporate-root",
+        type=Path,
+        required=True,
+    )
+    prepare_ca.add_argument("--output-root", type=Path, required=True)
+    prepare_ca.add_argument("--run-id", required=True)
+    prepare_ca.add_argument("--prepared-by", default="")
+
+    import_ca = sub.add_parser("import-ca-enrichment")
+    import_ca.add_argument(
+        "--status-corporate-root",
+        type=Path,
+        required=True,
+    )
+    import_ca.add_argument("--workspace", type=Path, required=True)
+    import_ca.add_argument("--output-root", type=Path, required=True)
+
+    prepare_history = sub.add_parser("prepare-status-history")
+    prepare_history.add_argument(
+        "--status-corporate-root",
+        type=Path,
+        required=True,
+    )
+    prepare_history.add_argument("--output-root", type=Path, required=True)
+    prepare_history.add_argument("--run-id", required=True)
+    prepare_history.add_argument("--history-window-from", required=True)
+    prepare_history.add_argument("--history-window-to", required=True)
+    prepare_history.add_argument("--prepared-by", default="")
+
+    import_history = sub.add_parser("import-status-history")
+    import_history.add_argument(
+        "--status-corporate-root",
+        type=Path,
+        required=True,
+    )
+    import_history.add_argument("--workspace", type=Path, required=True)
+    import_history.add_argument("--output-root", type=Path, required=True)
     return value
 
 
@@ -139,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
                 "backtest_ready": False,
             },
         }
+    elif args.command == "validate-ca-formulas":
+        report = formula_self_check()
     elif args.command == "prepare-price-collection":
         report = prepare_price_collection_workspace(
             config_dir=config_dir,
@@ -183,10 +231,38 @@ def main(argv: list[str] | None = None) -> int:
             action_window_to=args.action_window_to,
             prepared_by=args.prepared_by,
         )
-    else:
+    elif args.command == "import-status-corporate":
         report = import_status_corporate(
             config_dir=config_dir,
             official_foundation_root=args.official_foundation_root,
+            workspace=args.workspace,
+            output_root=args.output_root,
+        )
+    elif args.command == "prepare-ca-enrichment":
+        report = prepare_ca_enrichment_workspace(
+            status_corporate_root=args.status_corporate_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            prepared_by=args.prepared_by,
+        )
+    elif args.command == "import-ca-enrichment":
+        report = import_ca_enrichment(
+            status_corporate_root=args.status_corporate_root,
+            workspace=args.workspace,
+            output_root=args.output_root,
+        )
+    elif args.command == "prepare-status-history":
+        report = prepare_status_history_workspace(
+            status_corporate_root=args.status_corporate_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            history_window_from=args.history_window_from,
+            history_window_to=args.history_window_to,
+            prepared_by=args.prepared_by,
+        )
+    else:
+        report = import_status_history(
+            status_corporate_root=args.status_corporate_root,
             workspace=args.workspace,
             output_root=args.output_root,
         )

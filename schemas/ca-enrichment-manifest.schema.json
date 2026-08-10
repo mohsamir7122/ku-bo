@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/ca-enrichment-manifest.schema.json",
+  "title": "KU-BO corporate-action disclosure enrichment manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "upstream", "actions"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_id",
+        "report_sha256",
+        "schedule_sha256",
+        "enrichment_queue_sha256"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "CURRENT_STATUS_AND_CA_SCHEDULE_READY",
+            "CURRENT_STATUS_AND_CA_ZERO_RESULT_READY"
+          ]
+        },
+        "run_id": {"type": ["string", "null"]},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schedule_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "enrichment_queue_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_id",
+          "security_code",
+          "ticker",
+          "isin",
+          "cum_date",
+          "ex_date",
+          "record_date",
+          "payment_date",
+          "schedule_row_sha256",
+          "required_enrichment",
+          "disclosure",
+          "price_reference",
+          "terms"
+        ],
+        "properties": {
+          "action_id": {"type": "string", "pattern": "^ca-schedule-[0-9a-f]{24}$"},
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+          "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+          "cum_date": {"type": "string", "format": "date"},
+          "ex_date": {"type": "string", "format": "date"},
+          "record_date": {"type": "string", "format": "date"},
+          "payment_date": {"type": "string"},
+          "schedule_row_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "required_enrichment": {"type": "string", "minLength": 1},
+          "disclosure": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_url",
+              "raw_file_name",
+              "raw_sha256",
+              "text_file_name",
+              "text_sha256",
+              "text_derivation",
+              "published_at",
+              "captured_at",
+              "captured_by",
+              "evidence_phrases",
+              "review_status",
+              "review_notes"
+            ],
+            "properties": {
+              "source_url": {"type": "string"},
+              "raw_file_name": {"type": "string", "minLength": 1},
+              "raw_sha256": {"type": "string"},
+              "text_file_name": {"type": "string", "minLength": 1},
+              "text_sha256": {"type": "string"},
+              "text_derivation": {
+                "enum": [
+                  "",
+                  "OFFICIAL_HTML_VISIBLE_TEXT",
+                  "REVIEWED_PDF_TEXT_EXPORT",
+                  "OFFICIAL_XBRL_VISIBLE_TEXT"
+                ]
+              },
+              "published_at": {"type": "string"},
+              "captured_at": {"type": "string"},
+              "captured_by": {"type": "string"},
+              "evidence_phrases": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {"type": "string"}
+              },
+              "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+              "review_notes": {"type": "string"}
+            }
+          },
+          "price_reference": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_url",
+              "raw_file_name",
+              "raw_sha256",
+              "trade_date",
+              "previous_close_fils",
+              "evidence_excerpt",
+              "captured_at",
+              "captured_by",
+              "review_status",
+              "review_notes"
+            ],
+            "properties": {
+              "source_url": {"type": "string"},
+              "raw_file_name": {"type": "string", "minLength": 1},
+              "raw_sha256": {"type": "string"},
+              "trade_date": {"type": "string"},
+              "previous_close_fils": {"type": "string"},
+              "evidence_excerpt": {"type": "string"},
+              "captured_at": {"type": "string"},
+              "captured_by": {"type": "string"},
+              "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+              "review_notes": {"type": "string"}
+            }
+          },
+          "terms": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "action_type",
+              "formula_mode",
+              "previous_close_fils",
+              "cash_per_share_fils",
+              "new_shares_per_old_share",
+              "rights_new_shares_per_old_share",
+              "subscription_price_fils",
+              "official_reference_price_fils",
+              "official_factor",
+              "official_position_quantity_multiplier",
+              "fractional_entitlement_policy",
+              "formula_notes"
+            ],
+            "properties": {
+              "action_type": {
+                "enum": [
+                  "CASH_DIVIDEND_NORMAL",
+                  "CASH_DIVIDEND_SPECIAL",
+                  "BONUS_SHARES",
+                  "STOCK_SPLIT",
+                  "REVERSE_SPLIT",
+                  "RIGHTS_ISSUE",
+                  "CAPITAL_REDUCTION",
+                  "MERGER",
+                  "PAR_VALUE_CHANGE",
+                  "OTHER"
+                ]
+              },
+              "formula_mode": {
+                "enum": [
+                  "OFFICIAL_FACTOR",
+                  "OFFICIAL_REFERENCE_PRICE",
+                  "REPRODUCIBLE_MECHANICAL",
+                  "NO_AUTOMATIC_FORMULA"
+                ]
+              },
+              "previous_close_fils": {"type": "string"},
+              "cash_per_share_fils": {"type": "string"},
+              "new_shares_per_old_share": {"type": "string"},
+              "rights_new_shares_per_old_share": {"type": "string"},
+              "subscription_price_fils": {"type": "string"},
+              "official_reference_price_fils": {"type": "string"},
+              "official_factor": {"type": "string"},
+              "official_position_quantity_multiplier": {"type": "string"},
+              "fractional_entitlement_policy": {
+                "enum": [
+                  "NOT_APPLICABLE",
+                  "UNKNOWN",
+                  "ROUND_DOWN",
+                  "CASH_IN_LIEU",
+                  "EXACT_FRACTIONAL_ENTITLEMENT"
+                ]
+              },
+              "formula_notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
