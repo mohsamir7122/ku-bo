@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/status-history-import-report.schema.json",
+  "title": "KU-BO historical status notice import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_id",
+    "output_root",
+    "history_window_from",
+    "history_window_to",
+    "security_count",
+    "query_count",
+    "notice_count",
+    "interval_count",
+    "errors",
+    "status_notice_ledger",
+    "status_intervals",
+    "status_query_ledger",
+    "opening_status_evidence",
+    "validation_report",
+    "remaining_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["HISTORICAL_STATUS_INTERVALS_READY", "BLOCKED"]},
+    "run_id": {"type": "string", "minLength": 1},
+    "output_root": {"type": "string", "minLength": 1},
+    "history_window_from": {"type": "string", "format": "date"},
+    "history_window_to": {"type": "string", "format": "date"},
+    "security_count": {"type": "integer", "minimum": 1},
+    "query_count": {"type": "integer", "minimum": 1},
+    "notice_count": {"type": "integer", "minimum": 0},
+    "interval_count": {"type": "integer", "minimum": 0},
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "status_notice_ledger": {"type": "string", "minLength": 1},
+    "status_intervals": {"type": "string", "minLength": 1},
+    "status_query_ledger": {"type": "string", "minLength": 1},
+    "opening_status_evidence": {"type": "string", "minLength": 1},
+    "validation_report": {"type": "string", "minLength": 1},
+    "remaining_gates": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "query_receipt_is_official_market_fact",
+        "reviewed_text_export_is_original_notice",
+        "history_outside_declared_window_ready",
+        "status_history_ready_for_declared_window",
+        "data_foundation_ready",
+        "backtest_ready",
+        "forecast_generated",
+        "recommendation_generated"
+      ],
+      "properties": {
+        "query_receipt_is_official_market_fact": {"const": false},
+        "reviewed_text_export_is_original_notice": {"const": false},
+        "history_outside_declared_window_ready": {"const": false},
+        "status_history_ready_for_declared_window": {"type": "boolean"},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  }
+}
