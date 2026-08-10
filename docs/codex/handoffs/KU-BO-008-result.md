@@ -6,13 +6,17 @@ REPOSITORY: https://github.com/mohsamir7122/ku-bo
 BASE_BRANCH: ops/codex-control-center-v0.1
 STARTING_SHA: cba8fc1c57365343f497e1859733e0ae03087bfe
 TASK_BRANCH: build/benchmark-official-eod-v0.2
-FINAL_SHA: PENDING_PUBLICATION
-DRAFT_PR: PENDING_PUBLICATION
+FINAL_SHA: dfbf0e35a063b5ac8ce69421b4dc87343b702cd7
+DRAFT_PR: https://github.com/mohsamir7122/ku-bo/pull/9
 PR_BASE: ops/codex-control-center-v0.1
-CI_RUN: PENDING_PUBLICATION
+CI_RUN: https://github.com/mohsamir7122/ku-bo/actions/runs/31374698712
 STARTED_AT: 2026-08-10 (Asia/Kuwait)
-COMPLETED_AT: PENDING_PUBLICATION
+COMPLETED_AT: 2026-08-10T12:30:52+03:00
 ```
+
+`FINAL_SHA` is the implementation/test commit verified by the cited four-version
+CI run. The following publication-only commit records these immutable links and
+does not change runtime, schema, test, or fixture bytes.
 
 ## User goal
 
@@ -121,7 +125,17 @@ RESULT: PASS
 DETAIL: No blocked secret pattern was found before publication.
 ```
 
-Full fresh-LF unit discovery and task-branch GitHub CI are recorded below after publication.
+```text
+COMMAND_OR_JOB: $env:PYTHONPATH='src;tests'; python -m unittest discover -s tests -q (fresh detached LF worktree at 658ffe85c2520861990478556b5ca41abb3a2aec)
+RESULT: ENVIRONMENT-LIMITED PASS
+DETAIL: Ran 513 tests: 504 passed, 7 skipped, and 2 errored only because this Windows host denied the tests permission to create symlinks (WinError 1314). There were zero assertion failures, and the nine CRLF/hash failures from the ordinary checkout were eliminated.
+```
+
+```text
+COMMAND_OR_JOB: GitHub Actions CI run 31374698712 at dfbf0e35a063b5ac8ce69421b4dc87343b702cd7
+RESULT: PASS
+DETAIL: All four contracts-and-tests jobs completed successfully on Python 3.11, 3.12, 3.13, and 3.14. Each job ran the full suite, specialized Benchmark/EOD/reconciliation/session gates, smoke and secret guards, and the repository-bound installed-wheel exercise.
+```
 
 ## Evidence and data status
 
