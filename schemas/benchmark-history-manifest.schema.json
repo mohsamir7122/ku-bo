@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/benchmark-history-manifest.schema.json",
+  "title": "KU-BO benchmark history collection manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "registry_id",
+    "registry_sha256",
+    "registry_date_basis",
+    "window_from",
+    "window_to",
+    "upstream",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "registry_id": {"type": "string", "minLength": 1},
+    "registry_sha256": {"$ref": "#/$defs/sha256"},
+    "registry_date_basis": {
+      "const": "KU_BO_REGISTRY_OBSERVATION_NOT_PROVIDER_LAUNCH_OR_SERIES_INCEPTION"
+    },
+    "window_from": {"type": "string", "format": "date"},
+    "window_to": {"type": "string", "format": "date"},
+    "upstream": {"$ref": "#/$defs/upstream"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_id",
+        "calendar_window_from",
+        "calendar_window_to",
+        "trading_date_count",
+        "official_foundation_report_sha256",
+        "trading_calendar_sha256",
+        "evidence_manifest_sha256"
+      ],
+      "properties": {
+        "status": {"const": "CURRENT_IDENTITY_AND_CALENDAR_READY"},
+        "run_id": {"type": "string", "minLength": 1},
+        "calendar_window_from": {"type": "string", "format": "date"},
+        "calendar_window_to": {"type": "string", "format": "date"},
+        "trading_date_count": {"type": "integer", "minimum": 1},
+        "official_foundation_report_sha256": {"$ref": "#/$defs/sha256"},
+        "trading_calendar_sha256": {"$ref": "#/$defs/sha256"},
+        "evidence_manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_code",
+        "source_id",
+        "source_url",
+        "provider",
+        "file_name",
+        "availability_status",
+        "file_sha256",
+        "observed_at",
+        "captured_by",
+        "capture_mode",
+        "rights_status",
+        "window_from",
+        "window_to",
+        "pages_declared",
+        "pages_received",
+        "result_count_declared",
+        "row_count",
+        "review_status",
+        "review_notes",
+        "unavailable_reason"
+      ],
+      "properties": {
+        "benchmark_code": {
+          "type": "string",
+          "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,127}$"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "provider": {"type": "string", "minLength": 1},
+        "file_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,255}$"
+        },
+        "availability_status": {
+          "enum": ["PENDING", "AVAILABLE", "ZERO_RESULT", "UNAVAILABLE"]
+        },
+        "file_sha256": {
+          "oneOf": [{"const": ""}, {"$ref": "#/$defs/sha256"}]
+        },
+        "observed_at": {
+          "oneOf": [
+            {"const": ""},
+            {"type": "string", "format": "date-time"}
+          ]
+        },
+        "captured_by": {"type": "string"},
+        "capture_mode": {
+          "enum": [
+            "",
+            "PUBLIC_OFFICIAL_EXPORT",
+            "USER_PROVIDED_OFFICIAL_EXPORT",
+            "LICENSED_VENDOR_EXPORT",
+            "RECORDED_AUTHORIZED_FIXTURE",
+            "SYNTHETIC_GENERATED",
+            "SOURCE_ACCESS_RECEIPT"
+          ]
+        },
+        "rights_status": {
+          "enum": [
+            "",
+            "RESEARCH_USE_AUTHORIZED",
+            "FIXTURE_ONLY",
+            "UNKNOWN",
+            "RESTRICTED"
+          ]
+        },
+        "window_from": {"type": "string", "format": "date"},
+        "window_to": {"type": "string", "format": "date"},
+        "pages_declared": {"$ref": "#/$defs/pendingCount"},
+        "pages_received": {"$ref": "#/$defs/pendingCount"},
+        "result_count_declared": {"$ref": "#/$defs/pendingCount"},
+        "row_count": {"$ref": "#/$defs/pendingCount"},
+        "review_status": {"enum": ["PENDING", "ACCEPTED"]},
+        "review_notes": {"type": "string"},
+        "unavailable_reason": {
+          "enum": [
+            "",
+            "LIVE_SOURCE_UNAVAILABLE",
+            "EXTERNAL_LICENSE_REQUIRED",
+            "AUTHORIZED_EXPORT_NOT_SUPPLIED"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"availability_status": {"const": "PENDING"}}
+          },
+          "then": {
+            "properties": {
+              "file_sha256": {"const": ""},
+              "observed_at": {"const": ""},
+              "capture_mode": {"const": ""},
+              "rights_status": {"const": ""},
+              "pages_declared": {"const": ""},
+              "pages_received": {"const": ""},
+              "result_count_declared": {"const": ""},
+              "row_count": {"const": ""},
+              "review_status": {"const": "PENDING"},
+              "unavailable_reason": {"const": ""}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"availability_status": {"const": "AVAILABLE"}}
+          },
+          "then": {
+            "properties": {
+              "file_name": {"pattern": "\\.csv$"},
+              "file_sha256": {"$ref": "#/$defs/sha256"},
+              "observed_at": {"type": "string", "format": "date-time"},
+              "captured_by": {"minLength": 1},
+              "capture_mode": {"not": {"const": "SOURCE_ACCESS_RECEIPT"}},
+              "pages_declared": {"type": "integer", "minimum": 1},
+              "pages_received": {"type": "integer", "minimum": 1},
+              "result_count_declared": {"type": "integer", "minimum": 1},
+              "row_count": {"type": "integer", "minimum": 1},
+              "review_status": {"const": "ACCEPTED"},
+              "unavailable_reason": {"const": ""}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"availability_status": {"const": "ZERO_RESULT"}}
+          },
+          "then": {
+            "properties": {
+              "file_name": {"pattern": "\\.csv$"},
+              "file_sha256": {"$ref": "#/$defs/sha256"},
+              "observed_at": {"type": "string", "format": "date-time"},
+              "captured_by": {"minLength": 1},
+              "capture_mode": {"not": {"const": "SOURCE_ACCESS_RECEIPT"}},
+              "pages_declared": {"type": "integer", "minimum": 1},
+              "pages_received": {"type": "integer", "minimum": 1},
+              "result_count_declared": {"const": 0},
+              "row_count": {"const": 0},
+              "review_status": {"const": "ACCEPTED"},
+              "unavailable_reason": {"const": ""}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"availability_status": {"const": "UNAVAILABLE"}}
+          },
+          "then": {
+            "properties": {
+              "file_sha256": {"$ref": "#/$defs/sha256"},
+              "observed_at": {"type": "string", "format": "date-time"},
+              "captured_by": {"minLength": 1},
+              "capture_mode": {"const": "SOURCE_ACCESS_RECEIPT"},
+              "pages_declared": {"type": "integer", "minimum": 0},
+              "pages_received": {"type": "integer", "minimum": 0},
+              "result_count_declared": {"const": 0},
+              "row_count": {"const": 0},
+              "review_status": {"const": "ACCEPTED"},
+              "unavailable_reason": {
+                "enum": [
+                  "LIVE_SOURCE_UNAVAILABLE",
+                  "EXTERNAL_LICENSE_REQUIRED",
+                  "AUTHORIZED_EXPORT_NOT_SUPPLIED"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {
+              "capture_mode": {
+                "enum": ["PUBLIC_OFFICIAL_EXPORT", "USER_PROVIDED_OFFICIAL_EXPORT"]
+              }
+            }
+          },
+          "then": {
+            "properties": {"rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}}
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "LICENSED_VENDOR_EXPORT"}}
+          },
+          "then": {
+            "properties": {"rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}}
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {
+              "capture_mode": {
+                "enum": ["RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_GENERATED"]
+              }
+            }
+          },
+          "then": {
+            "properties": {"rights_status": {"const": "FIXTURE_ONLY"}}
+          }
+        }
+      ]
+    },
+    "pendingCount": {
+      "oneOf": [
+        {"const": ""},
+        {"type": "integer", "minimum": 0}
+      ]
+    }
+  }
+}

@@ -15,6 +15,7 @@ CAPABILITY_VOCABULARY = frozenset(
         "trading_calendar",
         "daily_eod",
         "daily_market_totals",
+        "benchmark_history",
         "official_disclosures",
         "corporate_actions",
         "issuer_reports",
@@ -30,6 +31,13 @@ CAPABILITY_VOCABULARY = frozenset(
 
 SOURCE_ROLES = frozenset({"OFFICIAL_TRUTH", "AUTHORIZED_TAPE", "ISSUER_PRIMARY", "DISCOVERY", "CROSS_CHECK", "CONTEXT", "SENTIMENT", "STORAGE_ONLY"})
 METHOD_STATES = frozenset({"FROZEN_BASELINE", "CANDIDATE", "UNVALIDATED_RESEARCH", "BLOCKED_CAPABILITY", "RETIRED"})
+DAILY_BENCHMARK_RULES = frozenset(
+    {
+        "point_in_time_market_and_sector",
+        "point_in_time_market_and_sector_total_return",
+        "event_prevalence_and_market_context",
+    }
+)
 
 
 def _load(path: Path, key: str) -> list[dict[str, Any]]:
@@ -126,6 +134,13 @@ class ProductSpec:
             raise ValueError(f"execution product lacks required tape capabilities: {product.product_id}")
         if product.product_id == "opening_gap_or_limit" and "opening_auction" not in product.required_capabilities:
             raise ValueError("opening_gap_or_limit requires opening_auction")
+        if (
+            product.benchmark_rule in DAILY_BENCHMARK_RULES
+            and "benchmark_history" not in product.required_capabilities
+        ):
+            raise ValueError(
+                f"daily benchmark product lacks benchmark_history: {product.product_id}"
+            )
         return product
 
 
@@ -166,9 +181,10 @@ class MethodSpec:
 
 class Catalog:
     def __init__(self, config_dir: Path):
-        source_rows = _load(config_dir / "sources.json", "sources")
-        product_rows = _load(config_dir / "products.json", "products")
-        method_rows = _load(config_dir / "methods.json", "methods")
+        self.config_dir = Path(config_dir).resolve()
+        source_rows = _load(self.config_dir / "sources.json", "sources")
+        product_rows = _load(self.config_dir / "products.json", "products")
+        method_rows = _load(self.config_dir / "methods.json", "methods")
         self.sources = self._unique((SourceSpec.from_dict(row) for row in source_rows), "source_id")
         self.products = self._unique((ProductSpec.from_dict(row) for row in product_rows), "product_id")
         self.methods = self._unique((MethodSpec.from_dict(row) for row in method_rows), "method_id")
@@ -207,4 +223,11 @@ class Catalog:
         }
 
 
-__all__ = ["CAPABILITY_VOCABULARY", "Catalog", "MethodSpec", "ProductSpec", "SourceSpec"]
+__all__ = [
+    "CAPABILITY_VOCABULARY",
+    "DAILY_BENCHMARK_RULES",
+    "Catalog",
+    "MethodSpec",
+    "ProductSpec",
+    "SourceSpec",
+]

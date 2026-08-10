@@ -8,7 +8,7 @@ from kubo.catalog import Catalog
 from kubo.evaluation import evaluate_forecasts
 from kubo.stopgates import Gate, build_stop_gate_report
 
-from helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
+from tests.helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,7 +36,7 @@ class StopGateEvaluationTests(unittest.TestCase):
         report = gate_report(minimum_dates=40, independent_dates=1)
         self.assertEqual(report["verdict"], "STOP_INFERENCE")
 
-    def test_valid_one_decision_fixture_scores_when_minimum_is_one(self):
+    def test_synthetic_contract_fixture_never_exposes_performance_metrics(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = one_decision_evaluation_fixture(Path(directory), self.product)
             report = evaluate_forecasts(
@@ -44,12 +44,17 @@ class StopGateEvaluationTests(unittest.TestCase):
                 model_card=valid_model(self.product, probability_allowed=False), ledger_events=fixture["ledger"].events(),
                 gate_report=gate_report(1, 1), universe_by_decision={"d1": frozenset({"101"})},
                 resolved_artifact_hashes=frozenset(HASHES.values()), top_k=1,
+                evaluation_mode="SYNTHETIC_CONTRACT_ONLY",
             )
-            self.assertEqual(report["status"], "PASS", report)
-            self.assertEqual(report["metrics"]["coverage"], 1.0)
-            self.assertIsNotNone(report["metrics"]["mean_selected_executed_net_excess"])
+            self.assertEqual(report["status"], "SYNTHETIC_CONTRACT_ONLY", report)
+            self.assertIsNone(report["metrics"])
+            self.assertEqual(report["contract_validation"]["denominator_rows"], 1)
+            self.assertIn(
+                "PERFORMANCE_METRICS_WITHHELD_WITHOUT_FINAL_AUTHORITY",
+                report["claim_boundaries"],
+            )
 
-    def test_real_product_minimum_returns_stop_inference(self):
+    def test_legacy_gate_and_hashes_cannot_start_real_evaluation(self):
         product = self.catalog.products["next_session_rank"]
         with tempfile.TemporaryDirectory() as directory:
             fixture = one_decision_evaluation_fixture(Path(directory), product)
@@ -59,7 +64,9 @@ class StopGateEvaluationTests(unittest.TestCase):
                 gate_report=gate_report(40, 1), universe_by_decision={"d1": frozenset({"101"})},
                 resolved_artifact_hashes=frozenset(HASHES.values()), top_k=1,
             )
-            self.assertEqual(report["status"], "STOP_INFERENCE")
+            self.assertEqual(report["status"], "STOP_BACKTEST")
+            self.assertIsNone(report["metrics"])
+            self.assertIn("FINAL_DATA_FOUNDATION_AUTHORITY_RECEIPT_REQUIRED", report["errors"])
 
     def test_string_boolean_prediction_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -111,7 +118,7 @@ class StopGateEvaluationTests(unittest.TestCase):
             )
             self.assertEqual(report["status"], "STOP_BACKTEST")
 
-    def test_probability_is_scored_only_when_allowed(self):
+    def test_synthetic_label_cannot_expose_brier_score(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = one_decision_evaluation_fixture(Path(directory), self.product, probability=0.7)
             report = evaluate_forecasts(
@@ -119,10 +126,11 @@ class StopGateEvaluationTests(unittest.TestCase):
                 model_card=valid_model(self.product, probability_allowed=True), ledger_events=fixture["ledger"].events(),
                 gate_report=gate_report(1, 1), universe_by_decision={"d1": frozenset({"101"})},
                 resolved_artifact_hashes=frozenset(HASHES.values()), top_k=1,
+                evaluation_mode="SYNTHETIC_CONTRACT_ONLY",
             )
-            self.assertEqual(report["status"], "PASS", report)
-            self.assertEqual(report["metrics"]["probability_rows"], 1)
-            self.assertIsNotNone(report["metrics"]["brier_score"])
+            self.assertEqual(report["status"], "SYNTHETIC_CONTRACT_ONLY", report)
+            self.assertIsNone(report["metrics"])
+            self.assertNotIn("brier_score", report["contract_validation"])
 
 
 if __name__ == "__main__":

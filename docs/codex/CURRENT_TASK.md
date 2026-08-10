@@ -2,7 +2,7 @@
 
 ```text
 TASK_ID: KU-BO-008
-STATUS: READY
+STATUS: BLOCKED
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: ops/codex-control-center-v0.1
 EXPECTED_NEW_BRANCH: build/benchmark-official-eod-v0.2
@@ -14,7 +14,16 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
+RESULT_PR: https://github.com/mohsamir7122/ku-bo/pull/9
+RESULT_HANDOFF: docs/codex/handoffs/KU-BO-008-result.md
+BLOCKED_ON: AUTHENTICATED_BENCHMARK_AND_EOD_RECEIPTS; KU-BO-008-D01
 ```
+
+## Current result
+
+Implementation is complete on `build/benchmark-official-eod-v0.2` and published in Draft PR #9. The task is now blocked only at the declared real-evidence, licensing, authenticated-receipt, and `KU-BO-008-D01` policy boundaries. Do not recreate the task branch or repeat KU-BO-008. Resume only through a newly approved recovery task or an explicit user decision that supplies the missing authority.
+
+The implementation and validation record is `docs/codex/handoffs/KU-BO-008-result.md`.
 
 ## Mission
 

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/outcome-session-policy.schema.json",
+  "title": "KU-BO official-session outcome policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "status",
+    "timezone",
+    "horizon_basis",
+    "non_trading_day_rule",
+    "suspended_or_halted_rule",
+    "corporate_action_rule",
+    "adjusted_price_double_count_guard",
+    "rights_issue_policy",
+    "complex_action_policy",
+    "decision_id",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "KU_BO_PILOT_OUTCOME_SESSION_POLICY"},
+    "status": {"const": "UNFROZEN"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "horizon_basis": {"const": "OFFICIAL_TRADING_SESSIONS"},
+    "non_trading_day_rule": {"const": "ADVANCE_TO_NEXT_ELIGIBLE_OFFICIAL_SESSION"},
+    "suspended_or_halted_rule": {"const": "UNDECIDED"},
+    "corporate_action_rule": {"const": "RAW_PRICE_PLUS_SEPARATE_CASH_COMPONENT"},
+    "adjusted_price_double_count_guard": {"const": true},
+    "rights_issue_policy": {
+      "const": "BLOCK_UNTIL_EXERCISE_SALE_LAPSE_POLICY_FROZEN"
+    },
+    "complex_action_policy": {
+      "const": "BLOCK_UNTIL_RETURN_TREATMENT_FROZEN"
+    },
+    "decision_id": {"const": "KU-BO-008-D01"},
+    "claim_boundary": {"const": "OUTCOME_SESSION_POLICY_NOT_FROZEN"}
+  }
+}

@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-eod-import-report.schema.json",
+  "title": "KU-BO Official Complete Daily EOD import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "run_id", "imported_at", "output_root", "window_from",
+    "window_to", "security_codes", "official_session_count", "expected_pair_count",
+    "normalized_row_count", "missing_pair_count", "quarantine_count", "denominator_status",
+    "price_evidence_status", "market_totals_status", "query_and_pagination_status",
+    "evidence_classification", "rights_status", "official_daily_eod", "daily_market_totals",
+    "quarantine", "official_eod_manifest_sha256", "upstream", "providers",
+    "market_totals_receipt", "errors", "warnings", "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["OFFICIAL_COMPLETE_EOD_READY", "PARTIAL", "BLOCKED"]},
+    "run_id": {"type": "string", "minLength": 1},
+    "imported_at": {"type": "string", "format": "date-time"},
+    "output_root": {"type": "string", "minLength": 1},
+    "window_from": {"type": "string", "format": "date"},
+    "window_to": {"type": "string", "format": "date"},
+    "security_codes": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9]{1,12}$"}
+    },
+    "official_session_count": {"type": "integer", "minimum": 1},
+    "expected_pair_count": {"type": "integer", "minimum": 1},
+    "normalized_row_count": {"type": "integer", "minimum": 0},
+    "missing_pair_count": {"type": "integer", "minimum": 0},
+    "quarantine_count": {"type": "integer", "minimum": 0},
+    "denominator_status": {"enum": ["PASS", "PARTIAL", "BLOCKED"]},
+    "price_evidence_status": {"enum": ["PASS", "PARTIAL", "BLOCKED"]},
+    "market_totals_status": {"enum": ["PASS", "PARTIAL", "BLOCKED", "NOT_AVAILABLE_FROM_SOURCE"]},
+    "query_and_pagination_status": {"enum": ["PASS", "PARTIAL", "BLOCKED"]},
+    "evidence_classification": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_ONLY",
+        "PARTIAL", "BLOCKED", "LIVE_DEPENDENT", "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "rights_status": {"enum": ["RESEARCH_USE_AUTHORIZED", "FIXTURE_ONLY", "UNKNOWN", "RESTRICTED"]},
+    "official_daily_eod": {"$ref": "#/$defs/artifactReceipt"},
+    "daily_market_totals": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/artifactReceipt"}]},
+    "quarantine": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/artifactReceipt"}]},
+    "official_eod_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "upstream": {"$ref": "#/$defs/upstream"},
+    "providers": {"type": "array", "items": {"$ref": "#/$defs/providerReceipt"}},
+    "market_totals_receipt": {"$ref": "#/$defs/marketTotalsReceipt"},
+    "errors": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "warnings": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recorded_fixture_is_real_evidence", "synthetic_fixture_promotes_readiness",
+        "research_price_history_is_official_eod", "current_snapshot_backfills_history",
+        "official_complete_eod_ready", "data_foundation_ready", "backtest_ready",
+        "forecast_generated", "recommendation_generated"
+      ],
+      "properties": {
+        "recorded_fixture_is_real_evidence": {"const": false},
+        "synthetic_fixture_promotes_readiness": {"const": false},
+        "research_price_history_is_official_eod": {"const": false},
+        "current_snapshot_backfills_history": {"const": false},
+        "official_complete_eod_ready": {"type": "boolean"},
+        "artifact_bound_capture_authority_verified": {"type": "boolean"},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  },
+  "not": {
+    "required": ["status"],
+    "properties": {"status": {"const": "OFFICIAL_COMPLETE_EOD_READY"}}
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["status"],
+        "properties": {"status": {"const": "OFFICIAL_COMPLETE_EOD_READY"}}
+      },
+      "then": {
+        "properties": {
+          "denominator_status": {"const": "PASS"},
+          "price_evidence_status": {"const": "PASS"},
+          "market_totals_status": {"enum": ["PASS", "NOT_AVAILABLE_FROM_SOURCE"]},
+          "query_and_pagination_status": {"const": "PASS"},
+          "missing_pair_count": {"const": 0},
+          "quarantine_count": {"const": 0},
+          "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+          "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"},
+          "providers": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "availability_status": {"const": "AVAILABLE"},
+                "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+                "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"},
+                "complete": {"const": true}
+              }
+            }
+          },
+          "errors": {"maxItems": 0},
+          "claim_boundaries": {
+            "required": ["artifact_bound_capture_authority_verified"],
+            "properties": {
+              "official_complete_eod_ready": {"const": true},
+              "artifact_bound_capture_authority_verified": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["claim_boundaries"],
+        "properties": {
+          "claim_boundaries": {
+            "required": ["official_complete_eod_ready"],
+            "properties": {"official_complete_eod_ready": {"const": true}}
+          }
+        }
+      },
+      "then": {
+        "properties": {"status": {"const": "OFFICIAL_COMPLETE_EOD_READY"}}
+      }
+    },
+    {
+      "if": {
+        "required": ["market_totals_status"],
+        "properties": {"market_totals_status": {"const": "PASS"}}
+      },
+      "then": {
+        "properties": {
+          "market_totals_receipt": {
+            "properties": {
+              "availability_status": {"const": "AVAILABLE"},
+              "complete": {"const": true}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {
+      "oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]
+    },
+    "nullableCount": {
+      "oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0}]
+    },
+    "classification": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_ONLY",
+        "PARTIAL", "BLOCKED", "LIVE_DEPENDENT", "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "rights": {
+      "enum": ["RESEARCH_USE_AUTHORIZED", "FIXTURE_ONLY", "UNKNOWN", "RESTRICTED"]
+    },
+    "runtimeTrust": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registry_id", "registry_sha256", "authenticated_key_id"],
+          "properties": {
+            "registry_id": {"type": "string", "minLength": 1},
+            "registry_sha256": {"$ref": "#/$defs/sha256"},
+            "authenticated_key_id": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "officialReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "run_id", "report_sha256", "manifest_sha256",
+        "security_master_sha256", "trading_calendar_sha256", "calendar_window_from",
+        "calendar_window_to", "identity_snapshot_effective_date"
+      ],
+      "properties": {
+        "status": {"const": "CURRENT_IDENTITY_AND_CALENDAR_READY"},
+        "run_id": {"type": ["string", "null"]},
+        "report_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "security_master_sha256": {"$ref": "#/$defs/sha256"},
+        "trading_calendar_sha256": {"$ref": "#/$defs/sha256"},
+        "calendar_window_from": {"type": "string", "format": "date"},
+        "calendar_window_to": {"type": "string", "format": "date"},
+        "identity_snapshot_effective_date": {"type": "string", "format": "date"}
+      }
+    },
+    "statusReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "run_id", "report_sha256", "manifest_sha256",
+        "status_intervals_sha256", "status_query_ledger_sha256",
+        "history_window_from", "history_window_to"
+      ],
+      "properties": {
+        "status": {"const": "HISTORICAL_STATUS_INTERVALS_READY"},
+        "run_id": {"type": ["string", "null"]},
+        "report_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "status_intervals_sha256": {"$ref": "#/$defs/sha256"},
+        "status_query_ledger_sha256": {"$ref": "#/$defs/sha256"},
+        "history_window_from": {"type": "string", "format": "date"},
+        "history_window_to": {"type": "string", "format": "date"}
+      }
+    },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["official_foundation", "status_history"],
+      "properties": {
+        "official_foundation": {"$ref": "#/$defs/officialReceipt"},
+        "status_history": {"$ref": "#/$defs/statusReceipt"}
+      }
+    },
+    "providerReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id", "source_id", "source_url", "source_class", "capture_mode", "availability_status",
+        "artifact_path", "artifact_sha256", "observed_at", "supplied_fields", "field_origin",
+        "price_basis", "evidence_classification", "rights_status", "pages_declared",
+        "pages_received", "result_count_declared", "rows_normalized", "zero_result",
+        "complete", "runtime_trust"
+      ],
+      "properties": {
+        "provider_id": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "source_class": {"enum": ["OFFICIAL", "LICENSED"]},
+        "capture_mode": {
+          "enum": [
+            "", "PUBLIC_OFFICIAL_DOWNLOAD", "USER_PROVIDED_OFFICIAL_EXPORT",
+            "LICENSED_VENDOR_EXPORT", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_GENERATED"
+          ]
+        },
+        "availability_status": {"enum": ["AVAILABLE", "PARTIAL", "ZERO_RESULT", "UNAVAILABLE"]},
+        "artifact_path": {"type": ["string", "null"]},
+        "artifact_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "observed_at": {"type": ["string", "null"], "format": "date-time"},
+        "supplied_fields": {
+          "type": "array", "uniqueItems": true,
+          "items": {"enum": ["TRADING_STATE", "OHLC", "VOLUME", "VALUE_TRADED_KWD", "TRADE_COUNT", "REFERENCE_PRICE"]}
+        },
+        "field_origin": {"enum": ["OFFICIAL_SOURCE_FIELDS", "LICENSED_SOURCE_FIELDS"]},
+        "price_basis": {"enum": ["RAW_UNADJUSTED", "OFFICIALLY_ADJUSTED"]},
+        "evidence_classification": {"$ref": "#/$defs/classification"},
+        "rights_status": {"$ref": "#/$defs/rights"},
+        "pages_declared": {"$ref": "#/$defs/nullableCount"},
+        "pages_received": {"$ref": "#/$defs/nullableCount"},
+        "result_count_declared": {"$ref": "#/$defs/nullableCount"},
+        "rows_normalized": {"$ref": "#/$defs/nullableCount"},
+        "zero_result": {"type": "boolean"},
+        "complete": {"type": "boolean"},
+        "runtime_trust": {"$ref": "#/$defs/runtimeTrust"}
+      },
+      "allOf": [{"$ref": "#/$defs/captureEvidenceInvariants"}]
+    },
+    "marketTotalsReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id", "source_id", "source_url", "source_class", "capture_mode", "availability_status",
+        "scope", "board", "artifact_path", "artifact_sha256", "observed_at",
+        "evidence_classification", "rights_status", "pages_declared", "pages_received",
+        "result_count_declared", "rows_normalized", "zero_result", "complete", "runtime_trust"
+      ],
+      "properties": {
+        "provider_id": {"type": ["string", "null"]},
+        "source_id": {"type": ["string", "null"]},
+        "source_url": {"type": ["string", "null"], "format": "uri"},
+        "source_class": {"enum": ["OFFICIAL", "LICENSED"]},
+        "capture_mode": {
+          "enum": [
+            "", "PUBLIC_OFFICIAL_DOWNLOAD", "USER_PROVIDED_OFFICIAL_EXPORT",
+            "LICENSED_VENDOR_EXPORT", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_GENERATED"
+          ]
+        },
+        "availability_status": {"enum": ["AVAILABLE", "PARTIAL", "ZERO_RESULT", "NOT_AVAILABLE_FROM_SOURCE"]},
+        "scope": {"const": "DECLARED_PILOT"},
+        "board": {"const": "cash"},
+        "artifact_path": {"type": ["string", "null"]},
+        "artifact_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "observed_at": {"type": ["string", "null"], "format": "date-time"},
+        "evidence_classification": {"$ref": "#/$defs/classification"},
+        "rights_status": {"$ref": "#/$defs/rights"},
+        "pages_declared": {"$ref": "#/$defs/nullableCount"},
+        "pages_received": {"$ref": "#/$defs/nullableCount"},
+        "result_count_declared": {"$ref": "#/$defs/nullableCount"},
+        "rows_normalized": {"$ref": "#/$defs/nullableCount"},
+        "zero_result": {"type": "boolean"},
+        "complete": {"type": "boolean"},
+        "runtime_trust": {"$ref": "#/$defs/runtimeTrust"}
+      },
+      "allOf": [{"$ref": "#/$defs/captureEvidenceInvariants"}]
+    },
+    "captureEvidenceInvariants": {
+      "allOf": [
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "SYNTHETIC_GENERATED"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "SYNTHETIC_ONLY"},
+              "rights_status": {"const": "FIXTURE_ONLY"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "RECORDED_AUTHORIZED_FIXTURE"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "RECORDED_AUTHORIZED_FIXTURE"},
+              "rights_status": {"const": "FIXTURE_ONLY"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "LICENSED_VENDOR_EXPORT"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "LICENSED_FEED_DEPENDENT"},
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {
+              "capture_mode": {
+                "enum": ["PUBLIC_OFFICIAL_DOWNLOAD", "USER_PROVIDED_OFFICIAL_EXPORT"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {
+                "enum": ["PROVEN_REAL_EVIDENCE", "LIVE_DEPENDENT"]
+              },
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["evidence_classification"],
+            "properties": {
+              "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"}
+            }
+          },
+          "then": {
+            "properties": {
+              "capture_mode": {
+                "enum": ["PUBLIC_OFFICIAL_DOWNLOAD", "USER_PROVIDED_OFFICIAL_EXPORT"]
+              },
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        }
+      ]
+    },
+    "artifactReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "rows"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "rows": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

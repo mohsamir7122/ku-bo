@@ -9,7 +9,7 @@
       "source_family": "boursa_official",
       "urls": ["https://www.boursakuwait.com.kw/"],
       "access_modes": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD", "USER_PROVIDED_OFFICIAL_EXPORT"],
-      "capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"],
+      "capabilities": ["security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "benchmark_history", "official_disclosures", "corporate_actions"],
       "delay_class": "public_trading_pages_delayed_15_minutes",
       "market_evidence_allowed": true,
       "notes": "Official facts and completed-session evidence. A successful page request is not proof of stable automated access; public trading pages are not execution-grade."
@@ -48,7 +48,7 @@
       "source_family": "authorized_market_feed",
       "urls": [],
       "access_modes": ["LICENSED_VENDOR_EXPORT", "BROKER_AUTHENTICATED_EXPORT", "DIRECT_MARKET_FEED"],
-      "capabilities": ["daily_eod", "daily_market_totals", "intraday_bars", "opening_auction", "l1_quotes", "l2_order_book", "execution_fields"],
+      "capabilities": ["daily_eod", "daily_market_totals", "benchmark_history", "intraday_bars", "opening_auction", "l1_quotes", "l2_order_book", "execution_fields"],
       "delay_class": "contract_specific",
       "market_evidence_allowed": false,
       "notes": "Template only. Configure the actual vendor domain and entitlement before any capability can pass."

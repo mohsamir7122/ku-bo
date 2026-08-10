@@ -6,9 +6,16 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from .benchmark_history import (
+    BENCHMARK_HISTORY_HEADERS,
+    BenchmarkEvidenceBinding,
+    validate_benchmark_history_rows,
+)
+from .benchmark_registry import load_benchmark_registry
 from .capabilities import CapabilityAttestation, CapabilityReport
 from .catalog import Catalog
 from .evidence import EvidenceManifest, ManifestResult
+from .foundation_io import read_csv_bytes, safe_regular_file
 from .hashing import sha256_file
 from .identity import IdentityRecord, StatusRecord, read_csv_rows, validate_security_master, validate_status_history
 from .market import (
@@ -33,6 +40,7 @@ class CollectionContract:
     timezone: str
     included_boards: tuple[str, ...]
     run_status: str
+    synthetic: bool
 
 
 @dataclass(frozen=True)
@@ -96,6 +104,9 @@ def _load_collection_contract(pack_root: Path) -> tuple[CollectionContract | Non
         run_status = str(payload.get("run_status", ""))
         if run_status not in {"QUALIFIED", "INCOMPLETE", "BLOCKED", "BUDGET_EXHAUSTED"}:
             raise ValueError("invalid run_status")
+        synthetic = payload.get("synthetic", False)
+        if not isinstance(synthetic, bool):
+            raise ValueError("synthetic must be a boolean")
         budget = payload.get("budget")
         usage = payload.get("usage")
         if not isinstance(budget, dict) or not isinstance(usage, dict):
@@ -109,7 +120,16 @@ def _load_collection_contract(pack_root: Path) -> tuple[CollectionContract | Non
         if int(usage["requests"]) > int(budget["max_requests"]) or int(usage["raw_bytes"]) > int(budget["max_raw_bytes"]) or int(usage["wall_seconds"]) > int(budget["max_wall_seconds"]):
             if run_status != "BUDGET_EXHAUSTED":
                 raise ValueError("budget exceeded without BUDGET_EXHAUSTED status")
-        return CollectionContract(pack_id, as_of.isoformat(), window_from, window_to, timezone, boards, run_status), []
+        return CollectionContract(
+            pack_id,
+            as_of.isoformat(),
+            window_from,
+            window_to,
+            timezone,
+            boards,
+            run_status,
+            synthetic,
+        ), []
     except (TypeError, ValueError) as exc:
         errors.append(str(exc))
     return None, errors
@@ -212,6 +232,118 @@ def _generic_normalized(path: Path, *, manifest_hashes: frozenset[str], capabili
     return ValidationResult("PASS" if not errors else "BLOCKED", len(rows), tuple(errors), {"capability": capability})
 
 
+def _validate_benchmark_history_capability(
+    path: Path,
+    *,
+    manifest_hashes: frozenset[str],
+    manifest_hashes_by_source: dict[str, frozenset[str]],
+    calendar: dict[date, dict[str, Any]],
+    collection: CollectionContract,
+    catalog: Catalog,
+) -> ValidationResult:
+    try:
+        content = safe_regular_file(path, field="benchmark_history capability")
+        _, rows = read_csv_bytes(
+            content,
+            field="benchmark_history capability",
+            exact_headers=BENCHMARK_HISTORY_HEADERS,
+        )
+        registry = load_benchmark_registry(catalog.config_dir)
+    except (OSError, ValueError) as exc:
+        return ValidationResult(
+            "BLOCKED",
+            0,
+            (f"BENCHMARK_HISTORY_READ:{exc}",),
+            {},
+        )
+
+    errors: list[str] = []
+    bindings: dict[str, BenchmarkEvidenceBinding] = {}
+    for index, row in enumerate(rows):
+        try:
+            code = str(row["benchmark_code"])
+            binding = BenchmarkEvidenceBinding(
+                benchmark_code=code,
+                source_url=str(row["source_url"]),
+                raw_sha256=require_sha256(row["raw_sha256"], "raw_sha256"),
+                observed_at=parse_aware(row["observed_at"], "observed_at").isoformat(),
+                capture_mode=str(row["capture_mode"]),
+                rights_status=str(row["rights_status"]),
+                evidence_classification=str(row["evidence_classification"]),
+            )
+            previous = bindings.get(code)
+            if previous is not None and previous != binding:
+                raise ValueError("series rows have conflicting evidence bindings")
+            definition = registry.by_code.get(code)
+            if definition is None:
+                raise ValueError("benchmark_code is absent from the registry")
+            if binding.raw_sha256 not in manifest_hashes_by_source.get(
+                definition.source_id,
+                frozenset(),
+            ):
+                raise ValueError(
+                    "raw_sha256 is not bound to the benchmark registry source_id"
+                )
+            bindings[code] = binding
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"benchmark_binding_row_{index}:{exc}")
+    binding_hashes = [item.raw_sha256 for item in bindings.values()]
+    if len(binding_hashes) != len(set(binding_hashes)):
+        errors.append("BENCHMARK_SERIES_EVIDENCE_HASHES_MUST_BE_DISTINCT")
+    if errors:
+        return ValidationResult("BLOCKED", len(rows), tuple(sorted(set(errors))), {})
+
+    trading_dates = frozenset(
+        day for day, row in calendar.items() if row.get("is_trading_day") is True
+    )
+    _, validation = validate_benchmark_history_rows(
+        rows,
+        registry=registry,
+        bindings=bindings,
+        manifest_hashes=manifest_hashes,
+        trading_dates=trading_dates,
+        window_from=collection.window_from,
+        window_to=collection.window_to,
+        expected_codes=registry.required_codes,
+    )
+    classifications = sorted(
+        {
+            str(item.get("evidence_classification", ""))
+            for item in validation.coverage.values()
+        }
+        - {""}
+    )
+    definitions_verified = bool(bindings) and all(
+        registry.by_code[code].registry_state == "VERIFIED_DEFINITION"
+        for code in bindings
+    )
+    readiness_eligible = (
+        classifications == ["PROVEN_REAL_EVIDENCE"] and definitions_verified
+    )
+    result_errors = list(validation.errors)
+    if validation.status == "PASS" and not definitions_verified:
+        result_errors.append("BENCHMARK_REGISTRY_DEFINITION_NOT_VERIFIED")
+    if (
+        validation.status == "PASS"
+        and definitions_verified
+        and not readiness_eligible
+    ):
+        result_errors.append("BENCHMARK_EVIDENCE_NOT_PROVEN_REAL")
+    return ValidationResult(
+        "PASS" if validation.status == "PASS" and readiness_eligible else "BLOCKED",
+        validation.rows,
+        tuple(sorted(set(result_errors))),
+        {
+            "benchmarks": validation.benchmarks,
+            "coverage": validation.coverage,
+            "claim_boundaries": validation.claim_boundaries,
+            "evidence_classifications": classifications,
+            "definitions_verified": definitions_verified,
+            "readiness_eligible": readiness_eligible,
+        },
+    )
+
+
 class PackValidator:
     def __init__(self, pack_root: Path, catalog: Catalog):
         self.pack_root = pack_root.resolve()
@@ -228,6 +360,14 @@ class PackValidator:
             cutoff=cutoff,
         ).validate()
         errors: list[str] = list(collection_errors) + list(capability_result.errors)
+        if collection is not None:
+            synthetic_attestation = any(
+                "SYNTHETIC" in limitation.upper()
+                for attestation in capability_result.attestations
+                for limitation in attestation.limitations
+            )
+            if synthetic_attestation != collection.synthetic:
+                errors.append("COLLECTION_SYNTHETIC_ATTESTATION_MISMATCH")
         results: dict[str, ValidationResult] = {}
         if manifest.status != "PASS" or collection is None or capability_result.status != "PASS":
             errors.extend(manifest.errors)
@@ -336,6 +476,23 @@ class PackValidator:
                     manifest_hashes=capability_hashes["daily_market_totals"],
                     eod_rows=eod_rows,
                 )
+        if "benchmark_history" in paths:
+            if not calendar:
+                results["benchmark_history"] = ValidationResult(
+                    "BLOCKED",
+                    0,
+                    ("VALID_TRADING_CALENDAR_REQUIRED",),
+                    {},
+                )
+            else:
+                results["benchmark_history"] = _validate_benchmark_history_capability(
+                    paths["benchmark_history"],
+                    manifest_hashes=capability_hashes["benchmark_history"],
+                    manifest_hashes_by_source=manifest.hashes_by_source,
+                    calendar=calendar,
+                    collection=collection,
+                    catalog=self.catalog,
+                )
         if "official_disclosures" in paths:
             results["official_disclosures"] = validate_event_table(
                 paths["official_disclosures"],
@@ -353,7 +510,16 @@ class PackValidator:
                 required_columns=CORPORATE_ACTION_COLUMNS,
             )
 
-        handled = {"security_master", "security_status_history", "trading_calendar", "daily_eod", "daily_market_totals", "official_disclosures", "corporate_actions"}
+        handled = {
+            "security_master",
+            "security_status_history",
+            "trading_calendar",
+            "daily_eod",
+            "daily_market_totals",
+            "benchmark_history",
+            "official_disclosures",
+            "corporate_actions",
+        }
         for capability, path in paths.items():
             if capability not in handled:
                 results[capability] = _generic_normalized(

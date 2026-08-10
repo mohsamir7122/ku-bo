@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/daily-market-totals.schema.json",
+  "title": "KU-BO same-scope daily market totals contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "trade_date", "board", "scope", "currency", "value_unit",
+          "traded_security_count", "total_volume", "total_value_kwd",
+          "total_trade_count", "provider_id", "source_id", "source_url",
+          "observed_at", "raw_sha256", "evidence_classification", "rights_status"
+        ],
+        "properties": {
+          "trade_date": {"type": "string", "format": "date"},
+          "board": {"const": "cash"},
+          "scope": {"const": "DECLARED_PILOT"},
+          "currency": {"const": "KWD"},
+          "value_unit": {"const": "KWD"},
+          "traded_security_count": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+          "total_volume": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+          "total_value_kwd": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"},
+          "total_trade_count": {"type": "string", "pattern": "^(?:0|[1-9][0-9]*)$"},
+          "provider_id": {"type": "string", "minLength": 1},
+          "source_id": {"type": "string", "minLength": 1},
+          "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "evidence_classification": {
+            "enum": [
+              "PROVEN_REAL_EVIDENCE", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_ONLY",
+              "PARTIAL", "BLOCKED", "LIVE_DEPENDENT", "LICENSED_FEED_DEPENDENT"
+            ]
+          },
+          "rights_status": {
+            "enum": ["RESEARCH_USE_AUTHORIZED", "FIXTURE_ONLY", "UNKNOWN", "RESTRICTED"]
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pilot_total_is_full_market_total", "missing_total_is_zero_total"],
+      "properties": {
+        "pilot_total_is_full_market_total": {"const": false},
+        "missing_total_is_zero_total": {"const": false}
+      }
+    }
+  }
+}

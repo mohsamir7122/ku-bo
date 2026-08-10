@@ -47,7 +47,7 @@
 - Full historical backtest يظل محجوبًا حتى Point-in-Time Universe وCorporate Actions وExecution data وSealed prospective denominator.
 - لا توجد خدمة Production منشورة، أوScheduler تشغيلي، أومراقبة توافر مستمرة، أوضمان لاستقرار أي مصدر خارجي.
 - لا توجد Captures حية مسجلة ومصرح بها تثبت قبول المحللين على الصفحات الخارجية الحالية. المحللان المنفذان مختبران على Fixtures تعاقدية مولدة فقط، وبقية المصادر بلا Parsers عاملة. التشغيل الحقيقي يحتاج تفويض الوصول وFixtures مصرح بها وQA ومراقبة Drift.
-- CI الحالي Linux فقط. يحتاج التشغيل على Windows أوContainer مصغر لا يملك System IANA tzdb إلى توفير حزمة `tzdata` خارجيًا قبل حل `Asia/Kuwait`؛ دعم منصة إضافية لا يُدّعى بلا CI خاص بها.
+- CI الحالي Linux فقط. حزمة `tzdata` أصبحت Runtime dependency مثبتة تلقائيًا كي يعمل `Asia/Kuwait` على Windows أوContainer مصغر بلا System IANA tzdb؛ ولا يزال دعم منصة إضافية خارج اختبارات الـwheel المعزولة غير مُدّعى بلا CI خاص بها.
 
 ## معيار التسليم
 

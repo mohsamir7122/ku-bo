@@ -72,7 +72,7 @@ research_run/
 
 ## البدء
 
-يتطلب Python 3.11 أو أحدث ولا توجد تبعيات Python خارجية في النواة. ويحتاج Runtime إلى قاعدة مناطق IANA تتضمن `Asia/Kuwait`؛ توفرها بيئات Linux المدعومة وCI عادةً. في بيئة Windows أوContainer مصغرة بلا System tzdb، ثبّت حزمة `tzdata` في بيئة التشغيل قبل استخدام العقود الزمنية.
+يتطلب Python 3.11 أو أحدث. تعتمد النواة على حزمة `tzdata` المثبتة تلقائيًا مع المشروع لضمان توفر قاعدة مناطق IANA و`Asia/Kuwait` حتى على Windows أوContainer مصغرة بلا System tzdb.
 
 ```bash
 python3 -m pip install -e .
@@ -113,6 +113,16 @@ kubo run-request \
 ```
 
 `examples/analysis_request.json` اصطناعي. يمكن اختيار `json` أو`markdown` وتحديد Scope والأسهم وعمق التقرير، لكن الوضع `research_network` يرفض صراحة طلب Probability أوBuy Recommendation أوEntry/Exit Price.
+
+## Data Foundation Pilot
+
+توفّر واجهة `kubo-data-foundation` مسارات منفصلة للهوية والتقويم والحالة والإجراءات، و`Benchmark History`، و`Official Complete Daily EOD`، ثم مصالحة نهائية من اثنتي عشرة بوابة. يمكن التحقق من سجل المؤشرات المثبت في المشروع عبر:
+
+```bash
+kubo-data-foundation --project-root . validate-benchmark-registry
+```
+
+قوالب الجمع والـfixtures تثبت العقود فقط. لا يحتوي المستودع على بيانات Benchmark أوEOD حقيقية، ولا يثبت Runtime Trust Registry بايتات الالتقاط وحده؛ يلزم إيصال خارجي مصادق عليه يربط الـartifact نفسه بالمصدر. كما تبقى READY النهائية ممنوعة حتى يوجد إيصال نهائي مستقل يربط التقرير والحزمة والمكونات والسياسة وفحص المستودع. ولا يُسمح بحالة `DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST` إلا عند نجاح كل البوابات على Evidence حقيقية وحقوق متوافقة وسياسة outcome product-specific بقرار مصادق عليه؛ عقد v1 الحالي لا يسمح بـ`FROZEN`. دليل التشغيل والعقود موجود في `docs/BENCHMARK_OFFICIAL_EOD_V0_2_AR.md`، والحالة الحالية في `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`.
 
 ## الجمع والموصلات
 
@@ -229,7 +239,23 @@ kubo verify-research-ledger \
 PYTHONPATH=src python3 scripts/smoke_check.py
 ```
 
-المثال الاصطناعي ليس بيانات بورصة ولا توقعًا.
+المثال الاصطناعي ليس بيانات بورصة ولا توقعًا. وفي مسار
+`validated_forecast` قد ينجح في فحص العقد، لكنه يبقى
+`SYNTHETIC_CONTRACT_ONLY` ولا يتحول إلى `DATA_READY_MODEL_UNBOUND` أوأي
+حالة جاهزية حقيقية. وحتى إن أُعيدت تسمية قيود Packet محليًا، يبقى نجاح العقد
+`EVIDENCE_CONTRACT_VALIDATED_MODEL_UNBOUND` إلى أن ينجح تقرير المصالحة النهائي
+على Evidence حقيقية؛ فـPack ذاتي الادعاء ليست جذر ثقة. وحتى بطاقة Model
+مصنفة `PROSPECTIVE_VALIDATED` لا تتجاوز `EVIDENCE_AND_MODEL_CONTRACT_VALIDATED`
+من دون تلك البوابة النهائية.
+
+ولمنتجات `horizon_sessions` لا تكفي مقارنة `outcome_due_at > decision_at`:
+السجل الحقيقي يرفض Civil Days أوتواريخ يحددها المستدعي، والتقييم الافتراضي
+يعيد `STOP_BACKTEST` بلا Metrics إلى أن توجد Policy product-specific بقرار
+موافق عليه (Schema v1 يرفض FROZEN وخيار 1 العالمي)، وجلسات
+وحالات رسمية مربوطة بالبايتات، وFinal Data-Foundation Authority Receipt مستقل.
+وضع `SYNTHETIC_CONTRACT_ONLY` اختياري وصريح لتمرين العقد فقط؛ يعيد
+`metrics=null` ولا يكشف IC أوReturn أوBrier، ولا ينتج PASS أوclaim أداء أو
+Ledger Seal صالحًا.
 
 ## التحقق
 
@@ -253,6 +279,9 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 - `src/kubo/source_parsers.py`: المحللان المحدودان لبورصة الكويت وInvesting مع فشل Parser Drift مغلقًا.
 - `src/kubo/parser_materialization.py`: مصالحة الهوية وتحويل البايتات الملتقطة إلى حزمة قابلة للتحقق.
 - `src/kubo/runtime_trust.py`: مصادقة سجل الثقة الخارجي وربط التفويض الحساس Fail-closed.
+- `src/kubo/benchmark_*`: سجل ومساحة عمل وعقد واستيراد Benchmark History مع فصل Price/Total Return وBroad/Sector.
+- `src/kubo/official_eod_*`: مساحة عمل واستيراد وتحقق مستقل لـOfficial Complete Daily EOD ومقام الجلسات.
+- `src/kubo/data_foundation_reconciliation.py`: إعادة فحص المكونات وإصدار تقرير البوابات الاثنتي عشرة.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
 - `src/kubo/reporting.py`: مخرجات JSON وMarkdown حسب الطلب.
@@ -267,6 +296,8 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 - `docs/SOURCE_NETWORK_REPLACEMENT_AR.md`: تقرير تاريخي لمرحلة استبدال الشبكة قبل إصدار `0.1.0` الحالي.
 - `docs/V3_1_HARDENING_AR.md`: لقطة تاريخية لتدقيق V3.1؛ الأرقام النهائية الحالية موثقة في `docs/BUILD_STATUS_AR.md`.
 - `docs/OPERATIONS_AR.md`: طريقة بناء تشغيل حقيقي.
+- `docs/BENCHMARK_OFFICIAL_EOD_V0_2_AR.md`: تشغيل Benchmark وOfficial EOD والمصالحة النهائية وحدود الأدلة.
+- `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`: الحالة المتراكمة الحالية والبوابات الخارجية المتبقية.
 - `docs/legacy_v2/`: وثائق V2 التاريخية للرجوع، وليست مسار التشغيل الافتراضي.
 
 ## الحد الفاصل المهم

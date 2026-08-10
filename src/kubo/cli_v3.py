@@ -12,6 +12,7 @@ from . import __version__
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .ledger import ForecastLedger
+from .outcome_sessions import OutcomeSessionAuthority
 from .pack import PackValidator
 from .parser_materialization import materialize_parser_run
 from .pipeline import ResearchPipeline
@@ -38,6 +39,9 @@ BLOCKING_STATUSES = {
     "EVIDENCE_REQUIRED",
     "CAPABILITY_BLOCKED",
     "DATA_READY_MODEL_UNBOUND",
+    "EVIDENCE_CONTRACT_VALIDATED_MODEL_UNBOUND",
+    "EVIDENCE_AND_MODEL_CONTRACT_VALIDATED",
+    "SYNTHETIC_CONTRACT_ONLY",
     "MODEL_CARD_BLOCKED",
     "UNVALIDATED_RESEARCH_ONLY",
 }
@@ -417,7 +421,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         report = {"status": "PASS", "event": event}
     else:
-        ledger = ForecastLedger(args.ledger, args.ledger_id)
+        ledger = ForecastLedger(
+            args.ledger,
+            args.ledger_id,
+            outcome_session_authority=OutcomeSessionAuthority.from_structural_files(
+                project_root=project_root
+            ),
+        )
         report = ledger.verify_seal(args.seal) if args.seal else ledger.verify()
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True, default=str))

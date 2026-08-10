@@ -18,6 +18,7 @@ CAPABILITY_ALLOWED_ROLES: dict[str, frozenset[str]] = {
     "trading_calendar": frozenset({"OFFICIAL_TRUTH"}),
     "daily_eod": frozenset({"OFFICIAL_TRUTH", "AUTHORIZED_TAPE"}),
     "daily_market_totals": frozenset({"OFFICIAL_TRUTH", "AUTHORIZED_TAPE"}),
+    "benchmark_history": frozenset({"OFFICIAL_TRUTH", "AUTHORIZED_TAPE"}),
     "official_disclosures": frozenset({"OFFICIAL_TRUTH", "ISSUER_PRIMARY"}),
     "corporate_actions": frozenset({"OFFICIAL_TRUTH", "ISSUER_PRIMARY"}),
     "issuer_reports": frozenset({"ISSUER_PRIMARY"}),

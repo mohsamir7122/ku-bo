@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "KU_BO_PILOT_OUTCOME_SESSION_POLICY",
+  "status": "UNFROZEN",
+  "timezone": "Asia/Kuwait",
+  "horizon_basis": "OFFICIAL_TRADING_SESSIONS",
+  "non_trading_day_rule": "ADVANCE_TO_NEXT_ELIGIBLE_OFFICIAL_SESSION",
+  "suspended_or_halted_rule": "UNDECIDED",
+  "corporate_action_rule": "RAW_PRICE_PLUS_SEPARATE_CASH_COMPONENT",
+  "adjusted_price_double_count_guard": true,
+  "rights_issue_policy": "BLOCK_UNTIL_EXERCISE_SALE_LAPSE_POLICY_FROZEN",
+  "complex_action_policy": "BLOCK_UNTIL_RETURN_TREATMENT_FROZEN",
+  "decision_id": "KU-BO-008-D01",
+  "claim_boundary": "OUTCOME_SESSION_POLICY_NOT_FROZEN"
+}

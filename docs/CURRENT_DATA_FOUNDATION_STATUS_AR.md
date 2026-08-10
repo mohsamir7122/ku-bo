@@ -1,6 +1,6 @@
 # الحالة الحالية لـData Foundation Pilot
 
-تاريخ اللقطة: `2026-08-09`
+تاريخ اللقطة: `2026-08-10`
 
 سلسلة الفروع المتراكمة:
 
@@ -9,12 +9,14 @@ build/data-foundation-v0.2
   └── build/official-identity-calendar-v0.2
         └── build/security-status-corporate-actions-v0.2
               └── build/ca-enrichment-status-history-v0.2
+                    └── ops/codex-control-center-v0.1
+                          └── build/benchmark-official-eod-v0.2
 ```
 
 قاعدة المرحلة الحالية:
 
 ```text
-build/security-status-corporate-actions-v0.2@e624c7f847b93192596fe31532efee7842d537d6
+ops/codex-control-center-v0.1@cba8fc1c57365343f497e1859733e0ae03087bfe
 ```
 
 ## طبقة Price History
@@ -82,6 +84,38 @@ RELIST
 - إنشاء Daily Inclusive Status Intervals داخل Window المعلنة.
 - الحالة النهائية المعاد بناؤها يجب أن تطابق Current Snapshot عند نهاية النافذة.
 
+### Benchmark History
+
+- Registry يميز `BROAD_MARKET` عن `SECTOR` و`PRICE_INDEX` عن `TOTAL_RETURN_INDEX`.
+- Workspace وmanifest منفصلان لكل سلسلة مع SHA-256 وWindow وPagination وRights.
+- التطبيع يطابق الجلسات الرسمية ولا يستخدم Forward Fill أوBenchmark بديل.
+- أكواد Registry الحالية داخلية و`UNVERIFIED_SEED`؛ لذلك لا تثبت وحدها Provider History حقيقية.
+
+### Official Complete Daily EOD
+
+- Pipeline مستقلة عن `research_price_history`.
+- Denominator هو كل `security_code × official trading session` داخل النافذة.
+- كل زوج له صف واحد وحالة صريحة، بما فيها `NO_TRADE` و`SUSPENDED` و`HALTED`.
+- Provider conflicts تدخل Quarantine، وغياب حقل رسمي لا يُعوّض باشتقاق ثانوي.
+- Licensed imports تحتاج Runtime Trust Registry خارج Evidence Packet لإثبات authority/entitlement، لكنه شرط لازم غير كافٍ: لا تصبح البايتات Real Evidence من دون إيصال التقاط خارجي مصادق عليه يربط SHA-256 والنافذة والاستعلام والمصدر.
+
+### Final Data Foundation Reconciliation
+
+- أمر واحد يعيد قراءة البايتات واحتساب Hashes ولا يثق في Status محفوظ وحده.
+- التقرير يخرج البوابات الاثنتي عشرة المطلوبة بترتيب ثابت.
+- Upstream manifests القديمة لا تحتوي Evidence Classification وRights hash-bound؛ لا يجوز استنتاج Real Evidence من `source_id` أو`review_status`.
+- `KU-BO-008-D01` ما زال مفتوحًا، ولذلك `outcome_session_policy` متعمد أن يبقى `UNFROZEN`.
+- بوابة `PRICE_CORPORATE_ACTION_QA` تربط factor/policy بالهوية الفعالة والتقويم والحالة وEOD داخل النافذة، وتفصل معاملة السهم عن Basis الـBenchmark؛ أي Security Code مجهول أوتعارض فعلي يحجب البوابة.
+- Schema v1 يمنع `FROZEN` بالكامل؛ commit لخيار 1 العالمي لا يحسم القرار،
+  والمسار المستقبلي يحتاج عقدًا product-specific وإيصال قرار موافقًا عليه.
+- لذلك يرفض `ForecastLedger` تسجيل due date ذاتي حتى لو كان بعد `decision_at`،
+  ويرفض التقييم الحقيقي legacy gates أوcaller hash sets وحدها. لا توجد Metrics
+  حقيقية قبل Policy product-specific موافق عليها، وحل جلسات رسمي مربوط بالحالة، وFinal Authority Receipt مستقل.
+- الاختبارات التركيبية فقط تستطيع استخدام `SYNTHETIC_CONTRACT_ONLY` صراحة؛
+  نتيجتها non-claim و`metrics=null` دائمًا، وسجلها لا يمر `PASS` ولا يقبل seal.
+- لا توجد بيانات Benchmark أوEOD حقيقية داخل Git؛ العقود والـfixtures لا ترفع الحالة إلى Backtest Ready.
+- لا يوجد بعد Final Authority Receipt مستقل مصادق عليه؛ لذلك يرفض runtime والـschemas أي READY محفوظ أوذاتي الهاش حتى يُنفّذ هذا الجذر الخارجي ويُتحقق منه.
+
 ## الحالات القصوى الممكنة
 
 ### Corporate Action
@@ -120,9 +154,9 @@ HISTORICAL_STATUS_INTERVALS_READY
 - Rights TERP أصبح Execution Receipt.
 - Status History خارج النافذة مكتملة.
 - Historical Point-in-Time Universe كامل للسوق.
-- Benchmark جاهز.
-- Official Complete EOD جاهز.
-- Data Foundation كاملة.
+- Benchmark real-evidence جاهز؛ الموجود Contract وWorkspace فقط.
+- Official Complete EOD real-evidence جاهز؛ الموجود Contract وWorkspace فقط.
+- Data Foundation مكتملة أوBaseline Backtest مسموح.
 - Backtest أوForecast أوProbability أوRecommendation أوAccuracy مسموح.
 
 ## البيانات غير المرفوعة إلى GitHub
@@ -141,11 +175,12 @@ HISTORICAL_STATUS_INTERVALS_READY
 ## البوابات التالية
 
 ```text
-RETURN_POLICY_FOR_RIGHTS_AND_COMPLEX_ACTIONS
-BENCHMARK_HISTORY
-OFFICIAL_COMPLETE_DAILY_EOD
-FULL_DATA_FOUNDATION_RECONCILIATION
-REAL_BASELINE_BACKTEST
+FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
+VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS
+IMPORT_REAL_RIGHTS_COMPATIBLE_BENCHMARK_HISTORY
+IMPORT_REAL_COMPLETE_OFFICIAL_OR_LICENSED_DAILY_EOD
+UPGRADE_LEGACY_UPSTREAM_EVIDENCE_CLASSIFICATION_AND_RIGHTS
+PASS_FINAL_REAL_DATA_FOUNDATION_RECONCILIATION
 ```
 
 ## معيار القبول
@@ -160,6 +195,9 @@ Official Identity and Calendar Gates
 Current Status and Corporate Action Schedule Gates
 Corporate Action Formula and Enrichment Gates
 Historical Status Notice and Interval Gates
+Benchmark Registry, History, Basis, and Calendar Gates
+Official Daily EOD Denominator, Status, Evidence, and Totals Gates
+Final Twelve-Gate Data Foundation Reconciliation
 Synthetic Smoke Check
 Secret Guard
 Wheel Build and Reinstallation

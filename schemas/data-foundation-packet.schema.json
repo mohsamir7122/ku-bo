@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/data-foundation-packet.schema.json",
+  "title": "KU-BO final data-foundation component packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "evidence_classification",
+    "rights_compatible",
+    "outcome_session_policy_status",
+    "components",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST",
+        "DATA_FOUNDATION_PARTIAL",
+        "DATA_FOUNDATION_BLOCKED"
+      ]
+    },
+    "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
+    "rights_compatible": {"type": "boolean"},
+    "outcome_session_policy_status": {
+      "enum": ["MISSING", "UNFROZEN", "INVALID", "FROZEN"]
+    },
+    "components": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        {"$ref": "#/$defs/officialFoundation"},
+        {"$ref": "#/$defs/statusHistory"},
+        {"$ref": "#/$defs/caEnrichment"},
+        {"$ref": "#/$defs/researchPriceHistory"},
+        {"$ref": "#/$defs/benchmark"},
+        {"$ref": "#/$defs/officialEod"}
+      ],
+      "items": false
+    },
+    "claim_boundaries": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "not": {
+    "required": ["status"],
+    "properties": {
+      "status": {"const": "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["status"],
+        "properties": {
+          "status": {"const": "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST"}
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+          "rights_compatible": {"const": true},
+          "outcome_session_policy_status": {"const": "FROZEN"},
+          "components": {
+            "contains": {
+              "required": [
+                "evidence_classification",
+                "rights_compatible",
+                "structural_errors"
+              ],
+              "properties": {
+                "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+                "rights_compatible": {"const": true},
+                "rights_statuses": {
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "RESEARCH_USE_AUTHORIZED",
+                      "PUBLIC_RESEARCH_ALLOWED",
+                      "RESEARCH_USE_ALLOWED"
+                    ]
+                  }
+                },
+                "structural_errors": {"maxItems": 0}
+              }
+            },
+            "minContains": 6,
+            "maxContains": 6
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "evidenceClassification": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE",
+        "RECORDED_AUTHORIZED_FIXTURE",
+        "SYNTHETIC_ONLY",
+        "PARTIAL",
+        "BLOCKED",
+        "LIVE_DEPENDENT",
+        "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "hashReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component", "path", "sha256"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "evidence_classification",
+        "rights_compatible",
+        "rights_statuses",
+        "structural_errors",
+        "limitations",
+        "file_hashes"
+      ],
+      "properties": {
+        "component": {"type": "string"},
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
+        "rights_compatible": {"type": "boolean"},
+        "rights_statuses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "structural_errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "limitations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "file_hashes": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/hashReceipt"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "officialFoundation": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "OFFICIAL_FOUNDATION"}}}
+      ]
+    },
+    "statusHistory": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "STATUS_HISTORY"}}}
+      ]
+    },
+    "caEnrichment": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "CA_ENRICHMENT"}}}
+      ]
+    },
+    "researchPriceHistory": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "RESEARCH_PRICE_HISTORY"}}}
+      ]
+    },
+    "benchmark": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "BENCHMARK"}}}
+      ]
+    },
+    "officialEod": {
+      "allOf": [
+        {"$ref": "#/$defs/component"},
+        {"properties": {"component": {"const": "OFFICIAL_EOD"}}}
+      ]
+    }
+  }
+}

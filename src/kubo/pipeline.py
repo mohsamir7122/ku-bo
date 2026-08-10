@@ -62,9 +62,17 @@ class ResearchPipeline:
         elif missing:
             status = "EXECUTION_BLOCKED" if product.execution_grade_required else "CAPABILITY_BLOCKED"
             reasons.append("MISSING_CAPABILITIES:" + ",".join(missing))
+        elif pack.collection is not None and pack.collection.synthetic:
+            status = "SYNTHETIC_CONTRACT_ONLY"
+            reasons.append("SYNTHETIC_PACK_CANNOT_PROMOTE_READINESS")
         elif model is None:
-            status = "DATA_READY_MODEL_UNBOUND"
-            reasons.append("NO_BOUND_MODEL_CARD")
+            status = "EVIDENCE_CONTRACT_VALIDATED_MODEL_UNBOUND"
+            reasons.extend(
+                [
+                    "NO_BOUND_MODEL_CARD",
+                    "FINAL_DATA_FOUNDATION_GATE_REQUIRED_FOR_DATA_READINESS",
+                ]
+            )
         elif model.status != "PASS":
             status = "MODEL_CARD_BLOCKED"
             reasons.extend(model.errors)
@@ -72,7 +80,8 @@ class ResearchPipeline:
             status = "UNVALIDATED_RESEARCH_ONLY"
             reasons.append("MODEL_NOT_PROSPECTIVELY_VALIDATED")
         else:
-            status = "FORECAST_POLICY_READY"
+            status = "EVIDENCE_AND_MODEL_CONTRACT_VALIDATED"
+            reasons.append("FINAL_DATA_FOUNDATION_GATE_REQUIRED_FOR_FORECAST_READINESS")
 
         if access.status == "UNTESTED":
             reasons.append("CURRENT_SOURCE_ACCESS_UNTESTED")
@@ -103,6 +112,8 @@ class ResearchPipeline:
                 "test_pass_is_not_source_availability": True,
                 "score_is_not_probability": True,
                 "detection_is_not_execution": True,
+                "structural_pack_pass_is_real_data_readiness": False,
+                "final_data_foundation_gate_required_for_real_readiness": True,
             },
         }
 

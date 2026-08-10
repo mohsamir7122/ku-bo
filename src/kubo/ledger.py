@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .hashing import canonical_json_bytes, sha256_bytes, sha256_file
+from .outcome_sessions import OutcomeSessionAuthority, validate_session_horizon_due_at
 from .strict import finite_number, parse_aware, require_sha256, strict_bool
 
 
@@ -151,7 +152,7 @@ def _forbidden_key(value: Any) -> str | None:
     return None
 
 
-def validate_forecast_payload(payload: dict[str, Any]) -> list[str]:
+def _validate_forecast_payload_structure(payload: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     forbidden = _forbidden_key(payload)
     if forbidden:
@@ -208,12 +209,62 @@ def validate_forecast_payload(payload: dict[str, Any]) -> list[str]:
     return sorted(set(errors))
 
 
+def validate_forecast_payload(
+    payload: dict[str, Any],
+    *,
+    outcome_session_authority: OutcomeSessionAuthority | None = None,
+    policy_hash: Any = None,
+    trading_calendar_hash: Any = None,
+    security_status_hash: Any = None,
+) -> list[str]:
+    """Validate a real forecast; public callers cannot disable session authority."""
+
+    errors = _validate_forecast_payload_structure(payload)
+    errors.extend(
+        validate_session_horizon_due_at(
+            authority=outcome_session_authority,
+            security_code=payload.get("security_code"),
+            decision_at=payload.get("decision_at"),
+            outcome_due_at=payload.get("outcome_due_at"),
+            horizon_sessions=payload.get("horizon_sessions"),
+            policy_hash=policy_hash,
+            trading_calendar_hash=trading_calendar_hash,
+            security_status_hash=security_status_hash,
+        )
+    )
+    return sorted(set(errors))
+
+
+def _validate_non_forecast_metadata(payload: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    forbidden = _forbidden_key(payload)
+    if forbidden:
+        errors.append(f"FORBIDDEN_OUTCOME_FIELD:{forbidden}")
+    if set(payload) != {"reason"}:
+        errors.append("NON_FORECAST_METADATA_FIELDS_MUST_BE_EXACT_REASON")
+    reason = payload.get("reason")
+    if (
+        not isinstance(reason, str)
+        or not reason.strip()
+        or reason != reason.strip()
+    ):
+        errors.append("NON_FORECAST_METADATA_REASON_INVALID")
+    return sorted(set(errors))
+
+
 class ForecastLedger:
-    def __init__(self, path: Path, ledger_id: str):
+    def __init__(
+        self,
+        path: Path,
+        ledger_id: str,
+        *,
+        outcome_session_authority: OutcomeSessionAuthority | None = None,
+    ):
         if not ledger_id.strip():
             raise ValueError("ledger_id is required")
         self.path = Path(path)
         self.ledger_id = ledger_id
+        self.outcome_session_authority = outcome_session_authority
 
     def events(self) -> list[dict[str, Any]]:
         with _exclusive_lock(self.path):
@@ -234,22 +285,38 @@ class ForecastLedger:
         universe_hash: str,
         trading_calendar_hash: str,
         payload: dict[str, Any],
+        security_status_hash: str | None = None,
+        forecast_evidence_mode: str = "REAL_EVIDENCE",
         recorded_at: str | None = None,
         test_mode: bool = False,
     ) -> dict[str, Any]:
         event_type = event_type.upper()
         if event_type not in EVENT_TYPES:
             raise ValueError("unsupported event_type")
+        forecast_evidence_mode = str(forecast_evidence_mode).upper()
+        if forecast_evidence_mode not in {
+            "REAL_EVIDENCE",
+            "SYNTHETIC_CONTRACT_ONLY",
+        }:
+            raise ValueError("unsupported forecast_evidence_mode")
         if event_type in {"CREATE", "AMEND"}:
-            payload_errors = validate_forecast_payload(payload)
+            payload_errors = (
+                validate_forecast_payload(
+                    payload,
+                    outcome_session_authority=self.outcome_session_authority,
+                    policy_hash=policy_hash,
+                    trading_calendar_hash=trading_calendar_hash,
+                    security_status_hash=security_status_hash,
+                )
+                if forecast_evidence_mode == "REAL_EVIDENCE"
+                else _validate_forecast_payload_structure(payload)
+            )
             if payload_errors:
                 raise ValueError(";".join(payload_errors))
         else:
-            forbidden = _forbidden_key(payload)
-            if forbidden:
-                raise ValueError(f"forbidden outcome field: {forbidden}")
-            if not str(payload.get("reason", "")).strip():
-                raise ValueError("withdraw/expire/import metadata requires reason")
+            metadata_errors = _validate_non_forecast_metadata(payload)
+            if metadata_errors:
+                raise ValueError(";".join(metadata_errors))
         issued = parse_aware(issued_at, "issued_at")
         effective = parse_aware(effective_at, "effective_at")
         if effective < issued:
@@ -269,6 +336,8 @@ class ForecastLedger:
             "trading_calendar_hash": trading_calendar_hash,
         }.items():
             require_sha256(value, field)
+        if event_type in {"CREATE", "AMEND"}:
+            require_sha256(security_status_hash, "security_status_hash")
 
         with _exclusive_lock(self.path):
             # Runtime time is sampled after acquiring the lock so queued
@@ -286,6 +355,10 @@ class ForecastLedger:
             prior_claim_events = [event for event in events if event.get("claim_id") == claim_id]
             if event_type in {"AMEND", "WITHDRAW", "EXPIRE"} and not prior_claim_events:
                 raise ValueError("amendment/withdrawal/expiry requires a prior claim")
+            if event_type == "AMEND" and str(
+                prior_claim_events[-1].get("forecast_evidence_mode", "REAL_EVIDENCE")
+            ).upper() != forecast_evidence_mode:
+                raise ValueError("amendment cannot change forecast_evidence_mode")
             if recorded < issued:
                 raise ValueError("recorded_at cannot precede issued_at")
             if events and recorded < parse_aware(events[-1]["recorded_at"], "recorded_at"):
@@ -308,6 +381,14 @@ class ForecastLedger:
                 "feature_snapshot_hash": feature_snapshot_hash,
                 "universe_hash": universe_hash,
                 "trading_calendar_hash": trading_calendar_hash,
+                "security_status_hash": (
+                    security_status_hash if event_type in {"CREATE", "AMEND"} else None
+                ),
+                "forecast_evidence_mode": (
+                    forecast_evidence_mode
+                    if event_type in {"CREATE", "AMEND"}
+                    else None
+                ),
                 "payload": payload,
                 "event_seq": len(events) + 1,
                 "previous_event_hash": events[-1]["event_hash"] if events else None,
@@ -329,6 +410,7 @@ class ForecastLedger:
         previous: str | None = None
         last_recorded = None
         claims: dict[str, list[dict[str, Any]]] = {}
+        synthetic_forecast_events = 0
         for expected_seq, event in enumerate(events, start=1):
             prefix = f"event_{expected_seq}"
             if event.get("ledger_id") != self.ledger_id:
@@ -366,7 +448,40 @@ class ForecastLedger:
             if event_type not in EVENT_TYPES:
                 errors.append(prefix + ":EVENT_TYPE")
             if event_type in {"CREATE", "AMEND"}:
-                errors.extend(prefix + ":" + item for item in validate_forecast_payload(payload))
+                forecast_mode = str(
+                    event.get("forecast_evidence_mode", "REAL_EVIDENCE")
+                ).upper()
+                if forecast_mode not in {
+                    "REAL_EVIDENCE",
+                    "SYNTHETIC_CONTRACT_ONLY",
+                }:
+                    errors.append(prefix + ":FORECAST_EVIDENCE_MODE")
+                    forecast_mode = "REAL_EVIDENCE"
+                if forecast_mode == "SYNTHETIC_CONTRACT_ONLY":
+                    synthetic_forecast_events += 1
+                try:
+                    require_sha256(
+                        event.get("security_status_hash"), "security_status_hash"
+                    )
+                except ValueError:
+                    errors.append(prefix + ":SECURITY_STATUS_HASH")
+                payload_errors = (
+                    validate_forecast_payload(
+                        payload,
+                        outcome_session_authority=self.outcome_session_authority,
+                        policy_hash=event.get("policy_hash"),
+                        trading_calendar_hash=event.get("trading_calendar_hash"),
+                        security_status_hash=event.get("security_status_hash"),
+                    )
+                    if forecast_mode == "REAL_EVIDENCE"
+                    else _validate_forecast_payload_structure(payload)
+                )
+                errors.extend(prefix + ":" + item for item in payload_errors)
+            elif event_type in {"IMPORTED", "WITHDRAW", "EXPIRE"}:
+                errors.extend(
+                    prefix + ":" + item
+                    for item in _validate_non_forecast_metadata(payload)
+                )
             claim_id = str(event.get("claim_id", ""))
             claim_events = claims.setdefault(claim_id, [])
             if int(event.get("revision", 0)) != len(claim_events) + 1:
@@ -374,6 +489,12 @@ class ForecastLedger:
             if event_type in {"AMEND", "WITHDRAW", "EXPIRE"}:
                 if not claim_events or event.get("supersedes_event_hash") != claim_events[-1].get("event_hash"):
                     errors.append(prefix + ":SUPERSEDES")
+                if event_type == "AMEND" and claim_events and str(
+                    claim_events[-1].get("forecast_evidence_mode", "REAL_EVIDENCE")
+                ).upper() != str(
+                    event.get("forecast_evidence_mode", "REAL_EVIDENCE")
+                ).upper():
+                    errors.append(prefix + ":FORECAST_EVIDENCE_MODE_CHANGED")
                 try:
                     if parse_aware(event.get("effective_at"), "effective_at") < parse_aware(event.get("recorded_at"), "recorded_at"):
                         errors.append(prefix + ":BACKDATED_LATER_EVENT")
@@ -383,7 +504,14 @@ class ForecastLedger:
                 errors.append(prefix + ":DUPLICATE_ORIGIN")
             claim_events.append(event)
             previous = expected_event_hash
-        return {"status": "PASS" if events and not errors else "BLOCKED", "events": len(events), "errors": sorted(set(errors)), "last_event_hash": previous}
+        status = "BLOCKED"
+        if events and not errors:
+            status = (
+                "SYNTHETIC_CONTRACT_ONLY"
+                if synthetic_forecast_events
+                else "PASS"
+            )
+        return {"status": status, "events": len(events), "errors": sorted(set(errors)), "last_event_hash": previous}
 
     def seal(self, path: Path, *, sealed_at: str | None = None, test_mode: bool = False) -> dict[str, Any]:
         verification = self.verify()
