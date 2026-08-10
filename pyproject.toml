@@ -30,6 +30,7 @@ Issues = "https://github.com/mohsamir7122/ku-bo/issues"
 
 [project.scripts]
 kubo = "kubo.cli_v3:main"
+kubo-data-foundation = "kubo.data_foundation_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

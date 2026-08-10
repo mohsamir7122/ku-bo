@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-08-08",
+  "scope": "FIVE_SECURITY_PILOT_VENDOR_MAPPINGS",
+  "claim_boundary": "VENDOR_MAPPING_IS_NOT_OFFICIAL_SECURITY_IDENTITY",
+  "mappings": [
+    {
+      "security_code": "101",
+      "ticker": "NBK",
+      "isin": "KW0EQ0100010",
+      "provider": "investing",
+      "provider_symbol": "national-bank-kt",
+      "provider_url": "https://www.investing.com/equities/national-bank-kt-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Provider route observed during pilot preparation. Raw provider bytes are required before promotion."
+    },
+    {
+      "security_code": "108",
+      "ticker": "KFH",
+      "isin": "KW0EQ0100085",
+      "provider": "investing",
+      "provider_symbol": "kwt-fin-house",
+      "provider_url": "https://www.investing.com/equities/kwt-fin-house-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Provider route observed during pilot preparation. Raw provider bytes are required before promotion."
+    },
+    {
+      "security_code": "413",
+      "ticker": "MABANEE",
+      "isin": "KW0EQ0400725",
+      "provider": "investing",
+      "provider_symbol": "mabanee-co",
+      "provider_url": "https://www.investing.com/equities/mabanee-co-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Provider route observed during pilot preparation. Raw provider bytes are required before promotion."
+    },
+    {
+      "security_code": "605",
+      "ticker": "ZAIN",
+      "isin": "KW0EQ0601058",
+      "provider": "investing",
+      "provider_symbol": "mobile-telecom",
+      "provider_url": "https://www.investing.com/equities/mobile-telecom-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Provider route observed during pilot preparation. Raw provider bytes are required before promotion."
+    },
+    {
+      "security_code": "623",
+      "ticker": "HUMANSOFT",
+      "isin": "KW0EQ0601694",
+      "provider": "investing",
+      "provider_symbol": "human-soft-hldng",
+      "provider_url": "https://www.investing.com/equities/human-soft-hldng-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Provider route observed during pilot preparation. Raw provider bytes are required before promotion."
+    }
+  ]
+}

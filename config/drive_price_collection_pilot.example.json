@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "workspace_root": "runtime/price_collection/<run_id>",
+  "drive_folder_url": "",
+  "source_name": "investing",
+  "expected_scope": "mapped",
+  "notes": "Example only. Do not commit Drive identifiers, OAuth tokens, provider sessions, or raw market exports. Google Drive is storage, never market evidence."
+}

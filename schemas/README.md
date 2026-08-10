@@ -14,5 +14,8 @@
 - `finding.schema.json`: عقد السطر الواحد داخل `findings.jsonl`.
 - `runtime-trust-registry.schema.json`: سجل التفويض الخارجي المصادق عليه للمصادر الحساسة.
 - `outcome-evidence-manifest.schema.json`: Manifest لأدلة النتيجة المحققة، مربوط بالقرار والسهم والتوقيت والبايتات الخام.
+- `vendor-symbol-mapping.schema.json`: عقد Vendor Mapping المنفصل صراحةً عن Official Security Identity.
+- `research-price-history.schema.json`: عقد صفوف OHLCV البحثية الثانوية التي لا تدّعي اكتمال `daily_eod`.
+- `data-quality-report.schema.json`: عقد تقرير جودة وتغطية Price History وحدود الادعاء المتبقية.
 
-وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر؛ المدققات الدلالية داخل `kubo.source_network` هي التي تفحص التوقيت وHash وهوية المصدر والنصاب وحدود الادعاء.
+وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، بينما `kubo.research_price_history` يفحص Price History البحثية ويحجب أي ادعاء بأنها Official Complete EOD أوBacktest-ready.
