@@ -8,7 +8,7 @@ from kubo.catalog import Catalog
 from kubo.evaluation import evaluate_forecasts
 from kubo.stopgates import Gate, build_stop_gate_report
 
-from helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
+from tests.helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
 
 
 ROOT = Path(__file__).resolve().parents[1]

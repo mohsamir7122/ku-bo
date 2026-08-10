@@ -20,7 +20,7 @@ from kubo.pack import (
 )
 from kubo.pipeline import ResearchPipeline
 
-from helpers import synthetic_pack
+from tests.helpers import synthetic_pack
 from tests.test_rank_execution_decision_model import (
     write_prospectively_validated_card,
 )

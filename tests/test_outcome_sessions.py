@@ -16,8 +16,8 @@ from kubo.hashing import canonical_json_bytes, sha256_bytes
 from kubo.ledger import ForecastLedger, validate_forecast_payload
 from kubo.outcome_sessions import OutcomeSessionAuthority
 
-from helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
-from outcome_session_helpers import build_test_outcome_authority
+from tests.helpers import HASHES, gate_report, one_decision_evaluation_fixture, product_with_minimum, valid_model
+from tests.outcome_session_helpers import build_test_outcome_authority
 
 
 ROOT = Path(__file__).resolve().parents[1]

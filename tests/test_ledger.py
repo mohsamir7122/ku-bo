@@ -12,7 +12,7 @@ from unittest import mock
 from kubo.ledger import ForecastLedger
 from kubo.hashing import canonical_json_bytes, sha256_bytes
 
-from helpers import HASHES
+from tests.helpers import HASHES
 
 
 def payload() -> dict:
