@@ -2,6 +2,17 @@
 
 Open this directory as the project root.
 
+## Codex control entrypoint
+
+- In every new Codex session, read `CODEX_START_HERE.md` and the files under `docs/codex/` in the declared order before changing code.
+- `docs/codex/CURRENT_TASK.md` is the single active task. Old conversations, archived prompts, and prior handoffs are historical context only.
+- Continue through implementation, test, inspect, fix, and rerun cycles until the active acceptance gates pass or a genuine external/user-decision blocker is recorded.
+- Never merge, force-push, permanently delete files/branches/conversations, or weaken a gate without explicit user authorization recorded in `docs/codex/USER_DECISIONS.md`.
+- Raw private conversations stay outside Git. Only sanitized, non-personal technical summaries may enter the repository under `docs/codex/CONVERSATION_IMPORT_POLICY.md`.
+- When a task ends, write a handoff using `docs/codex/HANDOFF_TEMPLATE.md` and distinguish `PROVEN`, `PARTIAL`, `BLOCKED`, `SYNTHETIC_ONLY`, `RECORDED_FIXTURE_ONLY`, and external-data dependencies.
+
+## Research-engine rules
+
 - Treat this checkout as version `0.1.0`: an auditable, non-production research foundation, not a live recommendation or execution service.
 - Read `README.md` and the relevant contract in `docs/` before changing code.
 - Keep raw evidence, normalized observations, features, forecasts, process assessments, and outcomes in separate artifacts.
