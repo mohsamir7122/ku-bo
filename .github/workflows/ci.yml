@@ -10,7 +10,7 @@ permissions:
 jobs:
   contracts-and-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -36,12 +36,26 @@ jobs:
             tests.test_official_foundation_workspace \
             tests.test_official_foundation_import \
             -v
-      - name: Security status and corporate-action contract gates
+      - name: Security status and corporate-action schedule gates
         run: |
           python -m unittest \
             tests.test_status_corporate_parsers \
             tests.test_status_corporate_workspace \
             tests.test_status_corporate_import \
+            -v
+      - name: Corporate-action enrichment gates
+        run: |
+          python -m unittest \
+            tests.test_ca_adjustments \
+            tests.test_ca_enrichment_workspace \
+            tests.test_ca_enrichment_import \
+            -v
+      - name: Historical status notice and interval gates
+        run: |
+          python -m unittest \
+            tests.test_status_history \
+            tests.test_status_history_workspace \
+            tests.test_status_history_import \
             -v
       - name: Synthetic smoke check
         run: python scripts/smoke_check.py
@@ -53,6 +67,7 @@ jobs:
           python -m pip install --force-reinstall dist/*.whl
           kubo --project-root "$GITHUB_WORKSPACE" validate-source-network
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-pilot-config
+          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
             --output-root "$RUNNER_TEMP/kubo-official-workspace" \
             --run-id ci-official-workspace \
