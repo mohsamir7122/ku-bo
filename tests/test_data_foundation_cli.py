@@ -53,6 +53,37 @@ class DataFoundationCliTests(unittest.TestCase):
                 (workspace / "manifests" / "price_collection_manifest.csv").is_file()
             )
 
+    def test_prepare_official_foundation_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = StringIO()
+            workspace = Path(directory) / "official"
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--project-root",
+                        str(ROOT),
+                        "prepare-official-foundation",
+                        "--output-root",
+                        str(workspace),
+                        "--run-id",
+                        "official-pilot-001",
+                        "--calendar-year",
+                        "2026",
+                        "--prepared-by",
+                        "unit-test",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            report = json.loads(output.getvalue())
+            self.assertEqual(report["status"], "PASS")
+            self.assertEqual(report["artifact_count"], 5)
+            self.assertTrue(
+                (workspace / "manifests" / "official_foundation_manifest.json").is_file()
+            )
+            self.assertFalse(
+                report["claim_boundaries"]["workspace_contains_official_evidence"]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

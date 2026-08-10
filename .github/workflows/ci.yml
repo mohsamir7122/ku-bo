@@ -29,6 +29,13 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Source parser and fresh-probe contract gates
         run: python -m unittest tests.test_source_parsers tests.test_live_probe -v
+      - name: Official identity and calendar contract gates
+        run: |
+          python -m unittest \
+            tests.test_official_parsers \
+            tests.test_official_foundation_workspace \
+            tests.test_official_foundation_import \
+            -v
       - name: Synthetic smoke check
         run: python scripts/smoke_check.py
       - name: Secret-pattern guard
@@ -39,3 +46,8 @@ jobs:
           python -m pip install --force-reinstall dist/*.whl
           kubo --project-root "$GITHUB_WORKSPACE" validate-source-network
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-pilot-config
+          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
+            --output-root "$RUNNER_TEMP/kubo-official-workspace" \
+            --run-id ci-official-workspace \
+            --calendar-year 2026 \
+            --prepared-by github-actions

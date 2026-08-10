@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-foundation-import-report.schema.json",
+  "title": "KU-BO official identity and calendar import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_id",
+    "output_root",
+    "identity_snapshot_effective_date",
+    "calendar_window_from",
+    "calendar_window_to",
+    "security_master",
+    "trading_calendar",
+    "official_identity_report",
+    "trading_calendar_report",
+    "identity_status",
+    "calendar_status",
+    "remaining_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "CURRENT_IDENTITY_AND_CALENDAR_READY",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "output_root": {"type": "string", "minLength": 1},
+    "identity_snapshot_effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "calendar_window_from": {"type": "string", "format": "date"},
+    "calendar_window_to": {"type": "string", "format": "date"},
+    "security_master": {"type": "string", "minLength": 1},
+    "trading_calendar": {"type": "string", "minLength": 1},
+    "official_identity_report": {"type": "string", "minLength": 1},
+    "trading_calendar_report": {"type": "string", "minLength": 1},
+    "identity_status": {"enum": ["PASS", "BLOCKED"]},
+    "calendar_status": {"enum": ["PASS", "BLOCKED"]},
+    "remaining_gates": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_identity_is_historical_identity",
+        "listed_snapshot_proves_past_membership",
+        "holiday_snapshot_is_immutable",
+        "security_status_history_ready",
+        "data_foundation_ready",
+        "backtest_ready",
+        "forecast_generated",
+        "recommendation_generated"
+      ],
+      "properties": {
+        "current_identity_is_historical_identity": {"const": false},
+        "listed_snapshot_proves_past_membership": {"const": false},
+        "holiday_snapshot_is_immutable": {"const": false},
+        "security_status_history_ready": {"const": false},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  }
+}
