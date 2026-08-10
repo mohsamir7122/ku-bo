@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/benchmark-history.schema.json",
+  "title": "KU-BO normalized benchmark history contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/row"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "price_index_used_as_total_return_index",
+        "broad_market_used_as_sector_benchmark",
+        "fallback_benchmark_substitution_used",
+        "forward_fill_used",
+        "synthetic_benchmark_rows_created",
+        "registry_effective_from_used_as_series_inception",
+        "backtest_ready"
+      ],
+      "properties": {
+        "price_index_used_as_total_return_index": {"const": false},
+        "broad_market_used_as_sector_benchmark": {"const": false},
+        "fallback_benchmark_substitution_used": {"const": false},
+        "forward_fill_used": {"const": false},
+        "synthetic_benchmark_rows_created": {"type": "boolean"},
+        "registry_effective_from_used_as_series_inception": {"const": false},
+        "backtest_ready": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trade_date",
+        "benchmark_code",
+        "benchmark_name",
+        "market_scope",
+        "sector",
+        "calculation_basis",
+        "benchmark_value",
+        "currency",
+        "unit",
+        "provider",
+        "source_id",
+        "source_url",
+        "raw_sha256",
+        "observed_at",
+        "capture_mode",
+        "rights_status",
+        "evidence_classification"
+      ],
+      "properties": {
+        "trade_date": {"type": "string", "format": "date"},
+        "benchmark_code": {
+          "type": "string",
+          "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"
+        },
+        "benchmark_name": {"type": "string", "minLength": 1},
+        "market_scope": {"enum": ["BROAD_MARKET", "SECTOR"]},
+        "sector": {"type": "string"},
+        "calculation_basis": {
+          "enum": ["PRICE_INDEX", "TOTAL_RETURN_INDEX"]
+        },
+        "benchmark_value": {
+          "oneOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000000000
+            },
+            {
+              "type": "string",
+              "pattern": "^(?=.*[1-9])(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
+            }
+          ]
+        },
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "unit": {"const": "INDEX_POINTS"},
+        "provider": {"type": "string", "minLength": 1},
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,127}$"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "observed_at": {"type": "string", "format": "date-time"},
+        "capture_mode": {
+          "enum": [
+            "PUBLIC_OFFICIAL_EXPORT",
+            "USER_PROVIDED_OFFICIAL_EXPORT",
+            "LICENSED_VENDOR_EXPORT",
+            "RECORDED_AUTHORIZED_FIXTURE",
+            "SYNTHETIC_GENERATED"
+          ]
+        },
+        "rights_status": {
+          "enum": [
+            "RESEARCH_USE_AUTHORIZED",
+            "FIXTURE_ONLY",
+            "UNKNOWN",
+            "RESTRICTED"
+          ]
+        },
+        "evidence_classification": {
+          "enum": [
+            "PROVEN_REAL_EVIDENCE",
+            "RECORDED_AUTHORIZED_FIXTURE",
+            "SYNTHETIC_ONLY",
+            "LICENSED_FEED_DEPENDENT",
+            "LIVE_DEPENDENT"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"market_scope": {"const": "BROAD_MARKET"}}},
+          "then": {"properties": {"sector": {"const": ""}}}
+        },
+        {
+          "if": {"properties": {"market_scope": {"const": "SECTOR"}}},
+          "then": {"properties": {"sector": {"minLength": 1}}}
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "SYNTHETIC_GENERATED"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "SYNTHETIC_ONLY"},
+              "rights_status": {"const": "FIXTURE_ONLY"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "RECORDED_AUTHORIZED_FIXTURE"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "RECORDED_AUTHORIZED_FIXTURE"},
+              "rights_status": {"const": "FIXTURE_ONLY"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {"capture_mode": {"const": "LICENSED_VENDOR_EXPORT"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "LICENSED_FEED_DEPENDENT"},
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["capture_mode"],
+            "properties": {
+              "capture_mode": {
+                "enum": ["PUBLIC_OFFICIAL_EXPORT", "USER_PROVIDED_OFFICIAL_EXPORT"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {
+                "enum": ["PROVEN_REAL_EVIDENCE", "LIVE_DEPENDENT"]
+              },
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["evidence_classification"],
+            "properties": {
+              "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"}
+            }
+          },
+          "then": {
+            "properties": {
+              "capture_mode": {
+                "enum": ["PUBLIC_OFFICIAL_EXPORT", "USER_PROVIDED_OFFICIAL_EXPORT"]
+              },
+              "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

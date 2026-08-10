@@ -11,7 +11,6 @@ from kubo.modelcard import ModelCardResult
 from kubo.stopgates import Gate, build_stop_gate_report
 from kubo.synthetic import build_synthetic_valid_pack
 
-
 HASHES = {char: char * 64 for char in "abcdef"}
 
 
@@ -89,6 +88,8 @@ def one_decision_evaluation_fixture(directory: Path, product: ProductSpec, *, pr
         feature_snapshot_hash=HASHES["c"],
         universe_hash=HASHES["d"],
         trading_calendar_hash=HASHES["e"],
+        security_status_hash=HASHES["f"],
+        forecast_evidence_mode="SYNTHETIC_CONTRACT_ONLY",
         payload=payload,
     )
     prediction = {
@@ -96,6 +97,7 @@ def one_decision_evaluation_fixture(directory: Path, product: ProductSpec, *, pr
         "feature_snapshot_hash": HASHES["c"],
         "universe_hash": HASHES["d"],
         "trading_calendar_hash": HASHES["e"],
+        "security_status_hash": HASHES["f"],
         "policy_hash": HASHES["a"],
         "code_hash": HASHES["b"],
         "ledger_event_hash": event["event_hash"],

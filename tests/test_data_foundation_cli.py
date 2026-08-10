@@ -7,13 +7,50 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from kubo.data_foundation_cli import main
+from kubo.data_foundation_cli import _report_is_blocking, main
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class DataFoundationCliTests(unittest.TestCase):
+    def test_independent_validation_blocker_controls_exit_status(self) -> None:
+        self.assertTrue(
+            _report_is_blocking(
+                {
+                    "status": "OFFICIAL_COMPLETE_EOD_READY",
+                    "validation_status": "BLOCKED",
+                }
+            )
+        )
+        self.assertFalse(
+            _report_is_blocking(
+                {
+                    "status": "OFFICIAL_COMPLETE_EOD_READY",
+                    "validation_status": "PASS",
+                }
+            )
+        )
+
+    def test_validate_benchmark_registry_command(self) -> None:
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(
+                [
+                    "--project-root",
+                    str(ROOT),
+                    "validate-benchmark-registry",
+                ]
+            )
+        self.assertEqual(code, 0)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report["status"], "PASS")
+        self.assertGreater(report["benchmark_count"], 1)
+        self.assertEqual(
+            report["benchmark_count"], report["required_benchmark_count"]
+        )
+        self.assertEqual(len(report["registry_sha256"]), 64)
+
     def test_validate_pilot_config_command(self) -> None:
         output = StringIO()
         with redirect_stdout(output):

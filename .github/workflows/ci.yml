@@ -21,8 +21,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install package
-        run: python -m pip install --disable-pip-version-check -e .
+      - name: Install package and test contracts
+        run: python -m pip install --disable-pip-version-check -e ".[test]"
       - name: Compile
         run: python -m compileall -q src tests scripts
       - name: Codex control integrity
@@ -59,6 +59,29 @@ jobs:
             tests.test_status_history_workspace \
             tests.test_status_history_import \
             -v
+      - name: Benchmark registry history and comparison gates
+        run: |
+          python -m unittest \
+            tests.test_catalog_pack_pipeline \
+            tests.test_benchmark_capability_catalog \
+            tests.test_benchmark_registry \
+            tests.test_benchmark_workspace \
+            tests.test_benchmark_history \
+            tests.test_benchmark_import \
+            -v
+      - name: Official complete daily EOD gates
+        run: python -m unittest tests.test_official_eod_pipeline -v
+      - name: Final data foundation reconciliation gates
+        run: |
+          python -m unittest \
+            tests.test_foundation_io \
+            tests.test_outcome_session_policy \
+            tests.test_outcome_sessions \
+            tests.test_ledger \
+            tests.test_stopgates_evaluation \
+            tests.test_data_foundation_reconciliation \
+            tests.test_data_foundation_cli \
+            -v
       - name: Synthetic smoke check
         run: python scripts/smoke_check.py
       - name: Secret-pattern guard
@@ -70,6 +93,11 @@ jobs:
           kubo --project-root "$GITHUB_WORKSPACE" validate-source-network
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-pilot-config
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
+          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry
+          kubo-data-foundation --help | grep -q "prepare-benchmark-history"
+          kubo-data-foundation --help | grep -q "prepare-official-eod"
+          kubo-data-foundation --help | grep -q "build-data-foundation-packet"
+          kubo-data-foundation --help | grep -q "print-data-foundation-gate-report"
           kubo-data-foundation --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
             --output-root "$RUNNER_TEMP/kubo-official-workspace" \
             --run-id ci-official-workspace \
@@ -81,3 +109,6 @@ jobs:
             --action-window-from 2021-01-01 \
             --action-window-to 2026-08-09 \
             --prepared-by github-actions
+          python scripts/installed_data_foundation_check.py \
+            --project-root "$GITHUB_WORKSPACE" \
+            --work-root "$RUNNER_TEMP/kubo-installed-data-foundation-check"

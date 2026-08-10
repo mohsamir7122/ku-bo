@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-daily-eod.schema.json",
+  "title": "KU-BO Official Complete Daily EOD normalized contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "rows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/row"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_rows_are_official_states",
+        "non_traded_ohlc_may_be_synthesized",
+        "current_snapshot_backfills_history"
+      ],
+      "properties": {
+        "missing_rows_are_official_states": {"const": false},
+        "non_traded_ohlc_may_be_synthesized": {"const": false},
+        "current_snapshot_backfills_history": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidenceClassification": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE",
+        "RECORDED_AUTHORIZED_FIXTURE",
+        "SYNTHETIC_ONLY",
+        "PARTIAL",
+        "BLOCKED",
+        "LIVE_DEPENDENT",
+        "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "rightsStatus": {
+      "enum": ["RESEARCH_USE_AUTHORIZED", "FIXTURE_ONLY", "UNKNOWN", "RESTRICTED"]
+    },
+    "optionalPositiveInteger": {
+      "type": "string",
+      "pattern": "^(?:|[1-9][0-9]*)$"
+    },
+    "optionalNonnegativeInteger": {
+      "type": "string",
+      "pattern": "^(?:|0|[1-9][0-9]*)$"
+    },
+    "optionalPositiveDecimal": {
+      "type": "string",
+      "pattern": "^(?:|(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)$"
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trade_date", "security_code", "ticker", "board", "currency",
+        "price_unit", "value_unit", "price_basis", "trading_state",
+        "open_fils", "high_fils", "low_fils", "close_fils", "volume",
+        "value_traded_kwd", "trade_count", "reference_price_fils",
+        "available_official_fields", "field_origin", "provider_id", "source_id",
+        "source_url", "observed_at", "raw_sha256", "supporting_raw_sha256s",
+        "evidence_classification", "rights_status"
+      ],
+      "properties": {
+        "trade_date": {"type": "string", "format": "date"},
+        "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+        "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{0,31}$"},
+        "board": {"const": "cash"},
+        "currency": {"const": "KWD"},
+        "price_unit": {"const": "FILS"},
+        "value_unit": {"const": "KWD"},
+        "price_basis": {"enum": ["RAW_UNADJUSTED", "OFFICIALLY_ADJUSTED"]},
+        "trading_state": {
+          "enum": [
+            "TRADED", "NO_TRADE", "SUSPENDED", "HALTED",
+            "TRADED_THEN_SUSPENDED", "NOT_LISTED_OR_NOT_ELIGIBLE"
+          ]
+        },
+        "open_fils": {"$ref": "#/$defs/optionalPositiveInteger"},
+        "high_fils": {"$ref": "#/$defs/optionalPositiveInteger"},
+        "low_fils": {"$ref": "#/$defs/optionalPositiveInteger"},
+        "close_fils": {"$ref": "#/$defs/optionalPositiveInteger"},
+        "volume": {"$ref": "#/$defs/optionalNonnegativeInteger"},
+        "value_traded_kwd": {"$ref": "#/$defs/optionalPositiveDecimal"},
+        "trade_count": {"$ref": "#/$defs/optionalNonnegativeInteger"},
+        "reference_price_fils": {"$ref": "#/$defs/optionalPositiveInteger"},
+        "available_official_fields": {
+          "type": "string",
+          "pattern": "^TRADING_STATE(?:\\|(OHLC|VOLUME|VALUE_TRADED_KWD|TRADE_COUNT|REFERENCE_PRICE))*$"
+        },
+        "field_origin": {"enum": ["OFFICIAL_SOURCE_FIELDS", "LICENSED_SOURCE_FIELDS"]},
+        "provider_id": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "supporting_raw_sha256s": {
+          "type": "string",
+          "pattern": "^(?:|[0-9a-f]{64}(?:\\|[0-9a-f]{64})*)$"
+        },
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
+        "rights_status": {"$ref": "#/$defs/rightsStatus"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "trading_state": {
+                "enum": ["NO_TRADE", "SUSPENDED", "HALTED", "NOT_LISTED_OR_NOT_ELIGIBLE"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "open_fils": {"const": ""},
+              "high_fils": {"const": ""},
+              "low_fils": {"const": ""},
+              "close_fils": {"const": ""},
+              "volume": {"enum": ["", "0"]},
+              "value_traded_kwd": {"enum": ["", "0", "0.0", "0.00", "0.000"]},
+              "trade_count": {"enum": ["", "0"]}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

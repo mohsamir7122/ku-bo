@@ -1,0 +1,26 @@
+* text=auto
+
+# Evidence contracts and recorded fixtures are hashed as exact LF bytes.
+*.csv text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Preserve opaque and packaged artifacts byte-for-byte.
+*.gif binary
+*.gz binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.tar binary
+*.whl binary
+*.zip binary

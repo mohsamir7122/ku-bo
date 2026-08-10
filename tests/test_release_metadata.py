@@ -15,12 +15,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReleaseMetadataTests(unittest.TestCase):
+    def test_hash_bound_text_formats_are_forced_to_lf(self) -> None:
+        attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+        for extension in ("csv", "html", "json", "jsonl"):
+            with self.subTest(extension=extension):
+                self.assertIn(f"*.{extension} text eol=lf", attributes)
+
     def test_package_runtime_and_actor_versions_match(self) -> None:
         project_file = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         metadata = project_file["project"]
         self.assertEqual(project_file["build-system"]["requires"], ["setuptools==83.0.0"])
         self.assertEqual(metadata["version"], __version__)
         self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(metadata["dependencies"], ["tzdata==2026.3"])
+        self.assertEqual(
+            project_file["project"]["optional-dependencies"]["test"],
+            ["jsonschema==4.25.1"],
+        )
         self.assertIn(f"/{__version__}", DEFAULT_USER_AGENT)
 
         args = parser().parse_args(

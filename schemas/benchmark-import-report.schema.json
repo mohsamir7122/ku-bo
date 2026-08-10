@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/benchmark-import-report.schema.json",
+  "title": "KU-BO benchmark history import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "contract_status",
+    "run_id",
+    "imported_at",
+    "output_root",
+    "window_from",
+    "window_to",
+    "registry_id",
+    "registry_sha256",
+    "registry_date_basis",
+    "upstream_calendar_receipt",
+    "normalized_benchmark_history",
+    "evidence_manifest",
+    "benchmark_count",
+    "available_benchmark_count",
+    "row_count",
+    "query_and_pagination_status",
+    "evidence_classification",
+    "benchmark_entries",
+    "comparisons",
+    "errors",
+    "remaining_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["BENCHMARK_HISTORY_READY", "PARTIAL", "BLOCKED"]},
+    "contract_status": {"enum": ["PASS", "BLOCKED"]},
+    "run_id": {"type": "string", "minLength": 1},
+    "imported_at": {"type": "string", "format": "date-time"},
+    "output_root": {"type": "string", "minLength": 1},
+    "window_from": {"type": "string", "format": "date"},
+    "window_to": {"type": "string", "format": "date"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "registry_sha256": {"$ref": "#/$defs/sha256"},
+    "registry_date_basis": {
+      "const": "KU_BO_REGISTRY_OBSERVATION_NOT_PROVIDER_LAUNCH_OR_SERIES_INCEPTION"
+    },
+    "upstream_calendar_receipt": {"type": "string", "minLength": 1},
+    "normalized_benchmark_history": {"type": "string", "minLength": 1},
+    "evidence_manifest": {"type": "string", "minLength": 1},
+    "benchmark_count": {"type": "integer", "minimum": 1},
+    "available_benchmark_count": {"type": "integer", "minimum": 0},
+    "row_count": {"type": "integer", "minimum": 0},
+    "query_and_pagination_status": {"const": "PASS"},
+    "evidence_classification": {"$ref": "#/$defs/reportEvidence"},
+    "benchmark_entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "comparisons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["series", "product_rules"],
+      "properties": {
+        "series": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/comparisonSeries"}
+        },
+        "product_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/productRule"}
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "remaining_gates": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "not": {
+    "required": ["status"],
+    "properties": {"status": {"const": "BENCHMARK_HISTORY_READY"}}
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["status"],
+        "properties": {"status": {"const": "BENCHMARK_HISTORY_READY"}}
+      },
+      "then": {
+        "properties": {
+          "contract_status": {"const": "PASS"},
+          "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+          "errors": {"maxItems": 0},
+          "benchmark_entries": {
+            "items": {
+              "properties": {
+                "availability_status": {"const": "AVAILABLE"},
+                "validation_status": {"const": "PASS"},
+                "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+                "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"},
+                "errors": {"maxItems": 0}
+              }
+            }
+          },
+          "comparisons": {
+            "properties": {
+              "series": {
+                "items": {
+                  "properties": {
+                    "contract_comparison_possible": {"const": true},
+                    "real_evidence_comparison_possible": {"const": true},
+                    "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"}
+                  }
+                }
+              }
+            }
+          },
+          "claim_boundaries": {
+            "required": ["artifact_bound_capture_authority_verified"],
+            "properties": {
+              "benchmark_history_ready_for_declared_window": {"const": true},
+              "synthetic_benchmark_rows_created": {"const": false},
+              "artifact_bound_capture_authority_verified": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["claim_boundaries"],
+        "properties": {
+          "claim_boundaries": {
+            "required": ["benchmark_history_ready_for_declared_window"],
+            "properties": {
+              "benchmark_history_ready_for_declared_window": {"const": true}
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {"status": {"const": "BENCHMARK_HISTORY_READY"}}
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "dateList": {
+      "type": "array",
+      "items": {"type": "string", "format": "date"},
+      "uniqueItems": true
+    },
+    "reportEvidence": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE",
+        "RECORDED_AUTHORIZED_FIXTURE",
+        "SYNTHETIC_ONLY",
+        "PARTIAL",
+        "BLOCKED",
+        "LIVE_DEPENDENT",
+        "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "rowEvidence": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE",
+        "RECORDED_AUTHORIZED_FIXTURE",
+        "SYNTHETIC_ONLY",
+        "LICENSED_FEED_DEPENDENT",
+        "LIVE_DEPENDENT"
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_code",
+        "availability_status",
+        "validation_status",
+        "row_count",
+        "expected_trading_dates",
+        "missing_trading_dates",
+        "extra_trading_dates",
+        "pages_declared",
+        "pages_received",
+        "result_count_declared",
+        "evidence_classification",
+        "rights_status",
+        "errors"
+      ],
+      "properties": {
+        "benchmark_code": {
+          "type": "string",
+          "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"
+        },
+        "availability_status": {
+          "enum": ["AVAILABLE", "ZERO_RESULT", "UNAVAILABLE"]
+        },
+        "validation_status": {"enum": ["PASS", "BLOCKED"]},
+        "row_count": {"type": "integer", "minimum": 0},
+        "expected_trading_dates": {"type": "integer", "minimum": 1},
+        "missing_trading_dates": {"$ref": "#/$defs/dateList"},
+        "extra_trading_dates": {"$ref": "#/$defs/dateList"},
+        "pages_declared": {"type": "integer", "minimum": 0},
+        "pages_received": {"type": "integer", "minimum": 0},
+        "result_count_declared": {"type": "integer", "minimum": 0},
+        "evidence_classification": {"$ref": "#/$defs/rowEvidence"},
+        "rights_status": {
+          "enum": [
+            "RESEARCH_USE_AUTHORIZED",
+            "FIXTURE_ONLY",
+            "UNKNOWN",
+            "RESTRICTED"
+          ]
+        },
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "comparisonSeries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_code",
+        "role_key",
+        "market_scope",
+        "sector",
+        "calculation_basis",
+        "frequency",
+        "contract_comparison_possible",
+        "real_evidence_comparison_possible",
+        "evidence_classification",
+        "no_substitution_used"
+      ],
+      "properties": {
+        "benchmark_code": {
+          "type": "string",
+          "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"
+        },
+        "role_key": {"type": "string", "minLength": 1},
+        "market_scope": {"enum": ["BROAD_MARKET", "SECTOR"]},
+        "sector": {"type": "string"},
+        "calculation_basis": {
+          "enum": ["PRICE_INDEX", "TOTAL_RETURN_INDEX"]
+        },
+        "frequency": {"const": "DAILY_CLOSE"},
+        "contract_comparison_possible": {"type": "boolean"},
+        "real_evidence_comparison_possible": {"type": "boolean"},
+        "evidence_classification": {"$ref": "#/$defs/rowEvidence"},
+        "no_substitution_used": {"const": true}
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["real_evidence_comparison_possible"],
+            "properties": {"real_evidence_comparison_possible": {"const": true}}
+          },
+          "then": {
+            "properties": {
+              "contract_comparison_possible": {"const": true},
+              "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"}
+            }
+          }
+        }
+      ]
+    },
+    "productRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_rule",
+        "comparison_kind",
+        "required_roles",
+        "contract_comparison_possible",
+        "real_evidence_comparison_possible",
+        "status"
+      ],
+      "properties": {
+        "benchmark_rule": {"type": "string", "minLength": 1},
+        "comparison_kind": {"type": "string", "minLength": 1},
+        "required_roles": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "contract_comparison_possible": {"type": "boolean"},
+        "real_evidence_comparison_possible": {"type": "boolean"},
+        "status": {
+          "enum": [
+            "READY",
+            "CONTRACT_ONLY",
+            "BLOCKED",
+            "NOT_APPLICABLE",
+            "BLOCKED_FREQUENCY_MISMATCH"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["status"],
+            "properties": {"status": {"const": "READY"}}
+          },
+          "then": {
+            "properties": {
+              "contract_comparison_possible": {"const": true},
+              "real_evidence_comparison_possible": {"const": true}
+            }
+          }
+        }
+      ]
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_history_ready_for_declared_window",
+        "price_index_used_as_total_return_index",
+        "broad_market_used_as_sector_benchmark",
+        "fallback_benchmark_substitution_used",
+        "forward_fill_used",
+        "synthetic_benchmark_rows_created",
+        "internal_code_is_official_provider_code",
+        "registry_effective_from_is_series_inception",
+        "licensed_manifest_claim_is_external_authenticated_trust",
+        "artifact_bound_capture_authority_verified",
+        "recorded_fixture_is_real_evidence",
+        "synthetic_fixture_is_real_evidence",
+        "data_foundation_ready",
+        "backtest_ready",
+        "forecast_generated",
+        "recommendation_generated"
+      ],
+      "properties": {
+        "benchmark_history_ready_for_declared_window": {"type": "boolean"},
+        "price_index_used_as_total_return_index": {"const": false},
+        "broad_market_used_as_sector_benchmark": {"const": false},
+        "fallback_benchmark_substitution_used": {"const": false},
+        "forward_fill_used": {"const": false},
+        "synthetic_benchmark_rows_created": {"type": "boolean"},
+        "internal_code_is_official_provider_code": {"const": false},
+        "registry_effective_from_is_series_inception": {"const": false},
+        "licensed_manifest_claim_is_external_authenticated_trust": {"const": false},
+        "artifact_bound_capture_authority_verified": {"type": "boolean"},
+        "recorded_fixture_is_real_evidence": {"const": false},
+        "synthetic_fixture_is_real_evidence": {"const": false},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/benchmark-registry.schema.json",
+  "title": "KU-BO benchmark requirement registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_id",
+    "registry_observed_on",
+    "registry_date_basis",
+    "claim_boundary",
+    "benchmarks"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "registry_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "registry_observed_on": {"type": "string", "format": "date"},
+    "registry_date_basis": {
+      "const": "KU_BO_REGISTRY_OBSERVATION_NOT_PROVIDER_LAUNCH_OR_SERIES_INCEPTION"
+    },
+    "claim_boundary": {
+      "const": "INTERNAL_REQUIREMENT_CODES_ONLY_PROVIDER_CODES_AND_SERIES_INCEPTION_UNVERIFIED"
+    },
+    "benchmarks": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/benchmark"}
+    }
+  },
+  "$defs": {
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_code",
+        "benchmark_code_namespace",
+        "benchmark_name",
+        "provider",
+        "source_id",
+        "source_url",
+        "currency",
+        "unit",
+        "market_scope",
+        "sector",
+        "calculation_basis",
+        "frequency",
+        "effective_from",
+        "effective_to",
+        "source_access",
+        "rights_requirement",
+        "registry_state",
+        "required_for_pilot"
+      ],
+      "properties": {
+        "benchmark_code": {
+          "type": "string",
+          "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"
+        },
+        "benchmark_code_namespace": {"const": "KU_BO_INTERNAL"},
+        "benchmark_name": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,127}$"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "unit": {"const": "INDEX_POINTS"},
+        "market_scope": {"enum": ["BROAD_MARKET", "SECTOR"]},
+        "sector": {"type": "string"},
+        "calculation_basis": {
+          "enum": ["PRICE_INDEX", "TOTAL_RETURN_INDEX"]
+        },
+        "frequency": {"const": "DAILY_CLOSE"},
+        "effective_from": {"type": "string", "format": "date"},
+        "effective_to": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
+        "source_access": {
+          "enum": [
+            "PUBLIC_OFFICIAL_EXPORT",
+            "LICENSED_EXPORT",
+            "RECORDED_AUTHORIZED_FIXTURE"
+          ]
+        },
+        "rights_requirement": {
+          "enum": [
+            "PUBLIC_RESEARCH_ALLOWED",
+            "EXTERNAL_LICENSE_REQUIRED",
+            "RECORDED_FIXTURE_ONLY"
+          ]
+        },
+        "registry_state": {
+          "enum": ["UNVERIFIED_SEED", "VERIFIED_DEFINITION"]
+        },
+        "required_for_pilot": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"market_scope": {"const": "BROAD_MARKET"}}},
+          "then": {"properties": {"sector": {"const": ""}}}
+        },
+        {
+          "if": {"properties": {"market_scope": {"const": "SECTOR"}}},
+          "then": {"properties": {"sector": {"minLength": 1}}}
+        }
+      ]
+    }
+  }
+}

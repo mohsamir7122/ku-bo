@@ -31,6 +31,11 @@ def main() -> int:
         pack_path = build_synthetic_valid_pack(temporary / "legacy_pack")
         pack = PackValidator(pack_path, catalog).validate()
         legacy_daily = pipeline.plan("next_session_rank", pack_root=pack_path, mode="validated_forecast")
+        legacy_contract_only = pipeline.plan(
+            "next_session_plus_10_event",
+            pack_root=pack_path,
+            mode="validated_forecast",
+        )
         legacy_opening = pipeline.plan("opening_gap_or_limit", pack_root=pack_path, mode="validated_forecast")
 
     ranked_rows = research["ranked_candidates"]
@@ -48,7 +53,9 @@ def main() -> int:
         and all(row["probability"] is None and row["recommendation"] is None for row in ranked_rows)
         and no_run["status"] == "SOURCE_NETWORK_REQUIRED"
         and pack.status == "PASS"
-        and legacy_daily["status"] == "DATA_READY_MODEL_UNBOUND"
+        and legacy_daily["status"] == "CAPABILITY_BLOCKED"
+        and "benchmark_history" in legacy_daily["missing_capabilities"]
+        and legacy_contract_only["status"] == "SYNTHETIC_CONTRACT_ONLY"
         and legacy_opening["status"] == "EXECUTION_BLOCKED"
     )
     result = {
@@ -63,6 +70,7 @@ def main() -> int:
         "legacy_validated_forecast_mode": {
             "synthetic_pack": pack.status,
             "daily_without_model": legacy_daily["status"],
+            "synthetic_contract_only": legacy_contract_only["status"],
             "opening_without_authorized_feed": legacy_opening["status"],
         },
         "note": "Synthetic contract tests only; the live access probe is separate and no market prediction was performed.",

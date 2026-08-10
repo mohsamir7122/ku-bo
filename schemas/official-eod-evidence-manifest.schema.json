@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/official-eod-evidence-manifest.schema.json",
+  "title": "KU-BO Official Complete Daily EOD preserved evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "3.0"},
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "sha256", "size_bytes", "source_id", "source_url",
+        "observed_at", "capture_kind", "artifact_role", "provider_id",
+        "evidence_classification", "rights_status"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^raw/(?:providers|market_totals)/[A-Za-z0-9][A-Za-z0-9._-]{0,254}\\.csv$"
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "source_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "capture_kind": {
+          "enum": [
+            "RAW_DOWNLOAD", "USER_EXPORT", "RECORDED_AUTHORIZED_FIXTURE",
+            "SYNTHETIC_GENERATED"
+          ]
+        },
+        "artifact_role": {
+          "enum": ["OFFICIAL_DAILY_EOD_PROVIDER_EXPORT", "DAILY_MARKET_TOTALS_EXPORT"]
+        },
+        "provider_id": {"type": "string", "minLength": 1},
+        "evidence_classification": {
+          "enum": [
+            "PROVEN_REAL_EVIDENCE", "RECORDED_AUTHORIZED_FIXTURE", "SYNTHETIC_ONLY",
+            "PARTIAL", "BLOCKED", "LIVE_DEPENDENT", "LICENSED_FEED_DEPENDENT"
+          ]
+        },
+        "rights_status": {
+          "enum": ["RESEARCH_USE_AUTHORIZED", "FIXTURE_ONLY", "UNKNOWN", "RESTRICTED"]
+        }
+      }
+    }
+  }
+}

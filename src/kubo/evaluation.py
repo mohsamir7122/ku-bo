@@ -8,11 +8,20 @@ from zoneinfo import ZoneInfo
 
 from .catalog import ProductSpec
 from .modelcard import ModelCardResult
+from .outcome_sessions import OutcomeSessionAuthority, validate_session_horizon_due_at
 from .strict import finite_number, parse_aware, require_sha256, strict_bool
 
 
 KUWAIT = ZoneInfo("Asia/Kuwait")
-PREDICTION_HASH_FIELDS = ("feature_snapshot_hash", "universe_hash", "trading_calendar_hash", "policy_hash", "code_hash", "ledger_event_hash")
+PREDICTION_HASH_FIELDS = (
+    "feature_snapshot_hash",
+    "universe_hash",
+    "trading_calendar_hash",
+    "security_status_hash",
+    "policy_hash",
+    "code_hash",
+    "ledger_event_hash",
+)
 
 
 def _rank(values: list[float]) -> list[float]:
@@ -85,10 +94,21 @@ def evaluate_forecasts(
     universe_by_decision: dict[str, frozenset[str]],
     resolved_artifact_hashes: frozenset[str],
     top_k: int = 5,
+    outcome_session_authority: OutcomeSessionAuthority | None = None,
+    evaluation_mode: str = "REAL_EVIDENCE",
 ) -> dict[str, Any]:
     predictions = list(predictions)
     outcomes = list(outcomes)
     errors: list[str] = []
+    evaluation_mode = str(evaluation_mode).upper()
+    if evaluation_mode not in {"REAL_EVIDENCE", "SYNTHETIC_CONTRACT_ONLY"}:
+        errors.append("UNSUPPORTED_EVALUATION_MODE")
+    if evaluation_mode == "REAL_EVIDENCE":
+        # A legacy stop-gate report and caller-provided hash set are not final
+        # evidence authority.  The repository intentionally has no independently
+        # authenticated final READY receipt yet, so real performance evaluation
+        # remains unreachable rather than self-attested.
+        errors.append("FINAL_DATA_FOUNDATION_AUTHORITY_RECEIPT_REQUIRED")
     if top_k <= 0:
         errors.append("TOP_K_NOT_POSITIVE")
     if gate_report.get("verdict") == "STOP_BACKTEST":
@@ -157,9 +177,27 @@ def evaluate_forecasts(
             for field in ("decision_id", "security_code", "product_id", "target_rule", "decision_at", "outcome_due_at", "horizon_sessions", "model_version", "eligible", "selected", "abstained", "score", "probability", "rank"):
                 if payload.get(field) != row.get(field):
                     raise ValueError(f"ledger payload mismatch: {field}")
-            for field in ("feature_snapshot_hash", "universe_hash", "trading_calendar_hash", "policy_hash", "code_hash"):
+            for field in ("feature_snapshot_hash", "universe_hash", "trading_calendar_hash", "security_status_hash", "policy_hash", "code_hash"):
                 if ledger_event.get(field) != row.get(field):
                     raise ValueError(f"ledger evidence mismatch: {field}")
+            if evaluation_mode == "REAL_EVIDENCE":
+                due_errors = validate_session_horizon_due_at(
+                    authority=outcome_session_authority,
+                    security_code=code,
+                    decision_at=decision_at,
+                    outcome_due_at=due,
+                    horizon_sessions=product.horizon_sessions,
+                    policy_hash=row.get("policy_hash"),
+                    trading_calendar_hash=row.get("trading_calendar_hash"),
+                    security_status_hash=row.get("security_status_hash"),
+                )
+                if due_errors:
+                    raise ValueError(";".join(due_errors))
+            ledger_mode = str(
+                ledger_event.get("forecast_evidence_mode", "REAL_EVIDENCE")
+            ).upper()
+            if ledger_mode != evaluation_mode:
+                raise ValueError("ledger forecast_evidence_mode mismatch")
             normalized_predictions.append({**row, "score": score, "probability": probability, "rank": rank, "eligible": eligible, "selected": selected, "abstained": abstained})
         except (TypeError, ValueError) as exc:
             errors.append(f"{prefix}:{exc}")
@@ -250,6 +288,29 @@ def evaluate_forecasts(
             "metrics": None,
         }
 
+    if evaluation_mode == "SYNTHETIC_CONTRACT_ONLY":
+        return {
+            "status": "SYNTHETIC_CONTRACT_ONLY",
+            "reason": (
+                "synthetic contract validation only; performance metrics require "
+                "independently authenticated final data-foundation authority"
+            ),
+            "errors": [],
+            "prediction_rows": len(predictions),
+            "outcome_rows": len(outcomes),
+            "metrics": None,
+            "contract_validation": {
+                "decision_dates": len(decision_dates),
+                "denominator_rows": len(normalized_predictions),
+                "outcome_rows": len(normalized_outcomes),
+            },
+            "claim_boundaries": [
+                "SYNTHETIC_INPUTS_ARE_NOT_REAL_EVIDENCE",
+                "NO_PERFORMANCE_ACCURACY_OR_READINESS_CLAIM",
+                "PERFORMANCE_METRICS_WITHHELD_WITHOUT_FINAL_AUTHORITY",
+            ],
+        }
+
     by_decision: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for prediction in normalized_predictions:
         key = (str(prediction["decision_id"]), str(prediction["security_code"]))
@@ -303,10 +364,19 @@ def evaluate_forecasts(
     }
     status = "PASS"
     reason = None
-    if len(decision_dates) < product.minimum_independent_dates or gate_report.get("verdict") == "STOP_INFERENCE":
+    if (
+        len(decision_dates) < product.minimum_independent_dates
+        or gate_report.get("verdict") == "STOP_INFERENCE"
+    ):
         status = "STOP_INFERENCE"
         reason = "insufficient independent decision dates or preregistered power"
-    return {"status": status, "reason": reason, "errors": [], "metrics": metrics}
+    return {
+        "status": status,
+        "reason": reason,
+        "errors": [],
+        "metrics": metrics,
+        "claim_boundaries": [],
+    }
 
 
 __all__ = ["evaluate_forecasts"]

@@ -1,5 +1,22 @@
 # KU-BO machine-readable contracts
 
+## Readiness invariants
+
+عقود الجاهزية لا تكتفي بصحة شكل JSON. حالات `READY` النهائية مرتبطة شرطيًا
+بأدلة `PROVEN_REAL_EVIDENCE`، وحقوق متوافقة، وبوابات حرجة ناجحة، وسياسة جلسة
+نتيجة product-specific مع قرار مصادق عليه عند الحاجة، وحقول claim-boundary
+المطابقة. عقد outcome v1 نفسه لا يسمح بـ`FROZEN` ما دام D01 مفتوحًا. كما تربط عقود
+Benchmark طريقة الالتقاط بتصنيف الدليل والحقوق لمنع إعادة تسمية Fixture أو
+Synthetic كدليل حقيقي. ويحتوي عقد التحقق المستقل لـOfficial EOD تعريفاته
+الفرعية محليًا، لذلك يتحقق اختبار `jsonschema` الإلزامي من كل المراجع دون وصول
+شبكي.
+
+قيم `READY` باقية في الـenums لتوثيق الحالة المستقبلية فقط، لكنها ممنوعة حاليًا
+في عقود Final Data Foundation وBenchmark وOfficial EOD. سبب ذلك أن boolean أو
+تصنيفًا داخل الحزمة نفسها لا يثبت مصدر البايتات. لن تُفتح هذه الحالات في
+الـschemas إلا بعد إضافة receipt مستقل ومصادق عليه يربط البصمات بسلطة الالتقاط
+أو المصالحة النهائية، ثم ربط التحقق منه في runtime.
+
 هذه الملفات توثّق حدود المدخلات بصيغة JSON Schema 2020-12. التحقق الصارم في وقت التشغيل موجود أيضًا داخل كود Python ولا يعتمد على تثبيت `jsonschema`، حتى يبقى Core بلا تبعيات خارجية.
 
 - `analysis-request.schema.json`: عقد الطلب المرن.
@@ -31,5 +48,19 @@
 - `status-history-manifest.schema.json`: عقد البحث التاريخي لكل سهم، وOpening State Evidence، وSuspension/Resumption/Delisting/Relisting notices.
 - `status-intervals.schema.json`: عقد الفترات اليومية المتصلة داخل Window معلنة، مع Hashes افتتاحية وNotice boundaries.
 - `status-history-import-report.schema.json`: تقرير مصالحة التاريخ المعاد بناؤه مع Current Snapshot، مع منع تعميم النتيجة خارج النافذة.
+- `benchmark-registry.schema.json`: تعريف effective-dated لسلاسل Broad/Sector وPrice/Total Return مع مصدر وحقوق وحالة تحقق واضحة.
+- `benchmark-history-manifest.schema.json`: عقد exports لكل Benchmark مع النافذة والصفحات والعدد وSHA-256 وحالة التوفر والمراجعة.
+- `benchmark-history.schema.json`: عقد الصف الطبيعي اليومي المرتبط بالسجل والتقويم والـraw evidence.
+- `benchmark-import-report.schema.json`: تقرير التغطية والفجوات والتوفر ومصفوفة المقارنات الممكنة دون substitution.
+- `benchmark-evidence-manifest.schema.json`: فهرس الأدلة المحفوظة بعد الاستيراد مع بصمة وطريقة التقاط صريحة لا تطمس Fixture أوSynthetic كـUser Export.
+- `official-eod-manifest.schema.json`: عقد مزودي Official أوLicensed EOD ومقام الأسهم والجلسات والحقول المتاحة.
+- `official-daily-eod.schema.json`: عقد صف واحد لكل Security Code وجلسة مع Trading State ووحدة وبنية سعر صريحة.
+- `daily-market-totals.schema.json`: عقد الإجماليات الرسمية اليومية الاختيارية ومجالها.
+- `official-eod-import-report.schema.json`: تقرير المقام والأدلة والاختلافات وMarket Totals وحدود Complete-EOD claim.
+- `official-eod-evidence-manifest.schema.json`: فهرس الأدلة الناتج بعد الاستيراد، مع مسارات وبصمات وأدوار وطرق التقاط صريحة لكل artifact.
+- `official-eod-validation-report.schema.json`: عقد إعادة التحقق المستقلة، بما في ذلك مطابقة التقرير المحفوظ وإعادة حساب المقام والإجماليات.
+- `outcome-session-policy.schema.json`: سياسة جلسات النتيجة؛ تبقى UNFROZEN حتى حسم القرار المسجل بدل استخدام Civil Days.
+- `data-foundation-packet.schema.json`: ملخص مكونات الحزمة بعد إعادة قراءة البايتات والـhashes.
+- `data-foundation-gate-report.schema.json`: التقرير النهائي للبوابات الاثنتي عشرة وتصنيف الأدلة والحقوق والحدود.
 
-وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق.
+وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق. ويفرض `kubo.benchmark_import` Basis/Scope والتقويم من دون Forward Fill، ويعيد `kubo.official_eod_import` حساب مقام الأسهم والجلسات، ثم يعيد `kubo.data_foundation_reconciliation` فحص كل bytes وhashes ولا يثق بحالة محفوظة وحدها.

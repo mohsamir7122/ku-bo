@@ -1,17 +1,34 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import json
+import os
 from pathlib import Path
 from typing import Any
 
+from .benchmark_import import import_benchmark_history
+from .benchmark_registry import load_benchmark_registry
+from .benchmark_workspace import prepare_benchmark_workspace
 from .ca_adjustments import formula_self_check
 from .ca_enrichment_import import import_ca_enrichment
 from .ca_enrichment_workspace import prepare_ca_enrichment_workspace
+from .data_foundation_reconciliation import (
+    build_data_foundation_packet,
+    print_data_foundation_gate_report,
+)
+from .foundation_io import load_strict_json_object
+from .official_eod_import import (
+    import_official_daily_eod,
+    validate_official_eod_output,
+)
+from .official_eod_workspace import prepare_official_eod_workspace
 from .official_foundation_import import import_official_foundation
 from .official_foundation_workspace import prepare_official_foundation_workspace
 from .price_collection_workspace import prepare_price_collection_workspace
 from .research_price_history import read_research_price_history
+from .runtime_trust import RuntimeTrustRegistry, load_runtime_trust_registry
 from .status_corporate_import import import_status_corporate
 from .status_corporate_workspace import prepare_status_corporate_workspace
 from .status_history_import import import_status_history
@@ -29,6 +46,8 @@ BLOCKING_STATUSES = frozenset(
         "PARTIAL",
         "BLOCKED_OFFICIAL_IDENTITY",
         "FULL_MARKET_IDENTITY_EVIDENCE_REQUIRED",
+        "DATA_FOUNDATION_PARTIAL",
+        "DATA_FOUNDATION_BLOCKED",
         "FAIL",
     }
 )
@@ -53,6 +72,61 @@ def _manifest_hashes(path: Path | None) -> frozenset[str] | None:
             raise ValueError(f"manifest artifact {index} lacks sha256")
         hashes.add(row["sha256"])
     return frozenset(hashes)
+
+
+def _runtime_trust_hmac_key() -> bytes:
+    value = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY", "")
+    if not value:
+        raise ValueError(
+            "KUBO_RUNTIME_TRUST_HMAC_KEY is required with --runtime-trust-registry"
+        )
+    try:
+        if value.startswith("hex:"):
+            return bytes.fromhex(value[4:])
+        if value.startswith("base64:"):
+            return base64.b64decode(value[7:], validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError(
+            "KUBO_RUNTIME_TRUST_HMAC_KEY is not valid encoded bytes"
+        ) from exc
+    raise ValueError("KUBO_RUNTIME_TRUST_HMAC_KEY must start with hex: or base64:")
+
+
+def _load_eod_runtime_trust_registry(
+    registry_path: Path | None,
+    *,
+    workspace_root: Path,
+    output_root: Path,
+    decision_at: str,
+) -> RuntimeTrustRegistry | None:
+    if registry_path is None:
+        return None
+    resolved_registry = registry_path.resolve()
+    for packet_root in (workspace_root.resolve(), output_root.resolve()):
+        if resolved_registry == packet_root or packet_root in resolved_registry.parents:
+            raise ValueError(
+                "runtime trust registry must remain outside EOD workspaces and outputs"
+            )
+    key_id = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY_ID", "").strip()
+    if not key_id:
+        raise ValueError(
+            "KUBO_RUNTIME_TRUST_HMAC_KEY_ID is required with --runtime-trust-registry"
+        )
+    return load_runtime_trust_registry(
+        resolved_registry,
+        key=_runtime_trust_hmac_key(),
+        expected_key_id=key_id,
+        decision_at=decision_at,
+    )
+
+
+def _report_is_blocking(report: dict[str, Any]) -> bool:
+    """Honor independent validation results, not only a saved stage status."""
+
+    return any(
+        report.get(field) in BLOCKING_STATUSES
+        for field in ("status", "validation_status", "contract_status")
+    )
 
 
 def parser() -> argparse.ArgumentParser:
@@ -158,6 +232,67 @@ def parser() -> argparse.ArgumentParser:
     )
     import_history.add_argument("--workspace", type=Path, required=True)
     import_history.add_argument("--output-root", type=Path, required=True)
+
+    sub.add_parser("validate-benchmark-registry")
+
+    prepare_benchmark = sub.add_parser("prepare-benchmark-history")
+    prepare_benchmark.add_argument(
+        "--official-foundation-root", type=Path, required=True
+    )
+    prepare_benchmark.add_argument("--output-root", type=Path, required=True)
+    prepare_benchmark.add_argument("--run-id", required=True)
+    prepare_benchmark.add_argument("--window-from", required=True)
+    prepare_benchmark.add_argument("--window-to", required=True)
+    prepare_benchmark.add_argument("--prepared-by", default="")
+
+    import_benchmark = sub.add_parser("import-benchmark-history")
+    import_benchmark.add_argument(
+        "--official-foundation-root", type=Path, required=True
+    )
+    import_benchmark.add_argument("--workspace", type=Path, required=True)
+    import_benchmark.add_argument("--output-root", type=Path, required=True)
+    import_benchmark.add_argument("--imported-at", required=True)
+
+    prepare_eod = sub.add_parser("prepare-official-eod")
+    prepare_eod.add_argument("--official-foundation-root", type=Path, required=True)
+    prepare_eod.add_argument("--status-history-root", type=Path, required=True)
+    prepare_eod.add_argument("--output-root", type=Path, required=True)
+    prepare_eod.add_argument("--run-id", required=True)
+    prepare_eod.add_argument("--window-from", required=True)
+    prepare_eod.add_argument("--window-to", required=True)
+    prepare_eod.add_argument("--prepared-by", default="")
+
+    import_eod = sub.add_parser("import-official-eod")
+    import_eod.add_argument("--workspace", type=Path, required=True)
+    import_eod.add_argument("--official-foundation-root", type=Path, required=True)
+    import_eod.add_argument("--status-history-root", type=Path, required=True)
+    import_eod.add_argument("--output-root", type=Path, required=True)
+    import_eod.add_argument("--run-id", required=True)
+    import_eod.add_argument("--imported-at", required=True)
+    import_eod.add_argument("--runtime-trust-registry", type=Path)
+
+    validate_eod = sub.add_parser("validate-official-eod")
+    validate_eod.add_argument("--official-eod-root", type=Path, required=True)
+    validate_eod.add_argument(
+        "--official-foundation-root", type=Path, required=True
+    )
+    validate_eod.add_argument("--status-history-root", type=Path, required=True)
+    validate_eod.add_argument("--runtime-trust-registry", type=Path)
+
+    build_packet = sub.add_parser("build-data-foundation-packet")
+    build_packet.add_argument("--official-foundation-root", type=Path, required=True)
+    build_packet.add_argument("--status-history-root", type=Path, required=True)
+    build_packet.add_argument("--ca-enrichment-root", type=Path, required=True)
+    build_packet.add_argument(
+        "--research-price-history-root", type=Path, required=True
+    )
+    build_packet.add_argument("--benchmark-root", type=Path, required=True)
+    build_packet.add_argument("--official-eod-root", type=Path, required=True)
+    build_packet.add_argument("--output-root", type=Path, required=True)
+    build_packet.add_argument("--outcome-session-policy", type=Path)
+
+    print_report = sub.add_parser("print-data-foundation-gate-report")
+    print_report.add_argument("--path", type=Path, required=True)
     return value
 
 
@@ -260,15 +395,118 @@ def main(argv: list[str] | None = None) -> int:
             history_window_to=args.history_window_to,
             prepared_by=args.prepared_by,
         )
-    else:
+    elif args.command == "import-status-history":
         report = import_status_history(
             status_corporate_root=args.status_corporate_root,
             workspace=args.workspace,
             output_root=args.output_root,
+            imported_at=args.imported_at,
         )
+    elif args.command == "validate-benchmark-registry":
+        registry = load_benchmark_registry(config_dir)
+        report = {
+            "status": "PASS",
+            "registry_id": registry.registry_id,
+            "registry_sha256": registry.sha256,
+            "benchmark_count": len(registry.benchmarks),
+            "required_benchmark_count": len(registry.required_codes),
+            "claim_boundaries": [registry.claim_boundary],
+        }
+    elif args.command == "prepare-benchmark-history":
+        report = prepare_benchmark_workspace(
+            config_dir=config_dir,
+            official_foundation_root=args.official_foundation_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            window_from=args.window_from,
+            window_to=args.window_to,
+            prepared_by=args.prepared_by,
+        )
+    elif args.command == "import-benchmark-history":
+        report = import_benchmark_history(
+            config_dir=config_dir,
+            official_foundation_root=args.official_foundation_root,
+            workspace=args.workspace,
+            output_root=args.output_root,
+            imported_at=args.imported_at,
+        )
+    elif args.command == "prepare-official-eod":
+        report = prepare_official_eod_workspace(
+            official_foundation_root=args.official_foundation_root,
+            status_history_root=args.status_history_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            window_from=args.window_from,
+            window_to=args.window_to,
+            prepared_by=args.prepared_by,
+        )
+    elif args.command == "import-official-eod":
+        registry = _load_eod_runtime_trust_registry(
+            args.runtime_trust_registry,
+            workspace_root=args.workspace,
+            output_root=args.output_root,
+            decision_at=args.imported_at,
+        )
+        report = import_official_daily_eod(
+            workspace_root=args.workspace,
+            official_foundation_root=args.official_foundation_root,
+            status_history_root=args.status_history_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            imported_at=args.imported_at,
+            runtime_trust_registry=registry,
+        )
+    elif args.command == "validate-official-eod":
+        registry = None
+        if args.runtime_trust_registry is not None:
+            saved_report, _ = load_strict_json_object(
+                args.official_eod_root
+                / "reports"
+                / "official_eod_import_report.json",
+                field="official EOD import report",
+            )
+            imported_at = saved_report.get("imported_at")
+            if not isinstance(imported_at, str) or not imported_at:
+                raise ValueError(
+                    "official EOD import report lacks imported_at for trust validation"
+                )
+            registry = _load_eod_runtime_trust_registry(
+                args.runtime_trust_registry,
+                workspace_root=args.official_eod_root,
+                output_root=args.official_eod_root,
+                decision_at=imported_at,
+            )
+        report = validate_official_eod_output(
+            official_eod_root=args.official_eod_root,
+            official_foundation_root=args.official_foundation_root,
+            status_history_root=args.status_history_root,
+            runtime_trust_registry=registry,
+        )
+    elif args.command == "build-data-foundation-packet":
+        policy_path = (
+            args.outcome_session_policy
+            if args.outcome_session_policy is not None
+            else config_dir / "pilot" / "outcome_session_policy.json"
+        )
+        report = build_data_foundation_packet(
+            official_foundation_root=args.official_foundation_root,
+            status_history_root=args.status_history_root,
+            ca_enrichment_root=args.ca_enrichment_root,
+            research_price_history_root=args.research_price_history_root,
+            benchmark_root=args.benchmark_root,
+            official_eod_root=args.official_eod_root,
+            project_root=project_root,
+            output_root=args.output_root,
+            outcome_session_policy_path=policy_path,
+        )
+    elif args.command == "print-data-foundation-gate-report":
+        report = print_data_foundation_gate_report(args.path)
+        return 1 if _report_is_blocking(report) else 0
+    else:  # pragma: no cover - argparse constrains this branch
+        raise AssertionError(f"unhandled command: {args.command}")
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
-    return 1 if report.get("status") in BLOCKING_STATUSES else 0
+    return 1 if _report_is_blocking(report) else 0
 
 
 if __name__ == "__main__":

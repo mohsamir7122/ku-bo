@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/data-foundation-gate-report.schema.json",
+  "title": "KU-BO final data-foundation gate report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "evidence_classification",
+    "rights_compatible",
+    "gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST",
+        "DATA_FOUNDATION_PARTIAL",
+        "DATA_FOUNDATION_BLOCKED"
+      ]
+    },
+    "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
+    "rights_compatible": {"type": "boolean"},
+    "gates": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "prefixItems": [
+        {"$ref": "#/$defs/pointInTimeIdentity"},
+        {"$ref": "#/$defs/tradingCalendar"},
+        {"$ref": "#/$defs/securityStatusHistory"},
+        {"$ref": "#/$defs/priceDenominator"},
+        {"$ref": "#/$defs/priceEvidence"},
+        {"$ref": "#/$defs/priceCorporateActionQa"},
+        {"$ref": "#/$defs/benchmarkHistory"},
+        {"$ref": "#/$defs/benchmarkEvidence"},
+        {"$ref": "#/$defs/marketTotalReconciliation"},
+        {"$ref": "#/$defs/queryAndPaginationCompleteness"},
+        {"$ref": "#/$defs/runtimeSecretGuard"},
+        {"$ref": "#/$defs/claimBoundariesGate"}
+      ],
+      "items": false
+    },
+    "claim_boundaries": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "not": {
+    "required": ["status"],
+    "properties": {
+      "status": {"const": "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["status"],
+        "properties": {
+          "status": {"const": "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST"}
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+          "rights_compatible": {"const": true},
+          "gates": {
+            "contains": {
+              "required": ["status"],
+              "properties": {"status": {"const": "PASS"}}
+            },
+            "minContains": 12,
+            "maxContains": 12
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "evidenceClassification": {
+      "enum": [
+        "PROVEN_REAL_EVIDENCE",
+        "RECORDED_AUTHORIZED_FIXTURE",
+        "SYNTHETIC_ONLY",
+        "PARTIAL",
+        "BLOCKED",
+        "LIVE_DEPENDENT",
+        "LICENSED_FEED_DEPENDENT"
+      ]
+    },
+    "hashReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component", "path", "sha256"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["components", "checks", "metrics", "concepts"],
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "OFFICIAL_FOUNDATION",
+              "STATUS_HISTORY",
+              "CA_ENRICHMENT",
+              "RESEARCH_PRICE_HISTORY",
+              "BENCHMARK",
+              "OFFICIAL_EOD"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {"enum": ["PASS", "PARTIAL", "BLOCKED"]}
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "integer", "boolean", "null"]
+          }
+        },
+        "concepts": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate",
+        "critical",
+        "status",
+        "evidence_classification",
+        "rights_compatible",
+        "errors",
+        "hashes",
+        "details"
+      ],
+      "properties": {
+        "gate": {"type": "string"},
+        "critical": {"const": true},
+        "status": {"enum": ["PASS", "PARTIAL", "BLOCKED"]},
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
+        "rights_compatible": {"type": "boolean"},
+        "errors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "hashes": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/hashReceipt"},
+          "uniqueItems": true
+        },
+        "details": {"$ref": "#/$defs/details"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["status"],
+            "properties": {"status": {"const": "PASS"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+              "rights_compatible": {"const": true},
+              "errors": {"maxItems": 0},
+              "details": {
+                "properties": {
+                  "checks": {"additionalProperties": {"const": "PASS"}}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["status"],
+            "properties": {"status": {"const": "BLOCKED"}}
+          },
+          "then": {
+            "properties": {
+              "evidence_classification": {"const": "BLOCKED"}
+            }
+          }
+        }
+      ]
+    },
+    "pointInTimeIdentity": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "POINT_IN_TIME_IDENTITY"}}}
+      ]
+    },
+    "tradingCalendar": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "TRADING_CALENDAR"}}}
+      ]
+    },
+    "securityStatusHistory": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "SECURITY_STATUS_HISTORY"}}}
+      ]
+    },
+    "priceDenominator": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "PRICE_DENOMINATOR"}}}
+      ]
+    },
+    "priceEvidence": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "PRICE_EVIDENCE"}}}
+      ]
+    },
+    "priceCorporateActionQa": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "PRICE_CORPORATE_ACTION_QA"}}}
+      ]
+    },
+    "benchmarkHistory": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "BENCHMARK_HISTORY"}}}
+      ]
+    },
+    "benchmarkEvidence": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "BENCHMARK_EVIDENCE"}}}
+      ]
+    },
+    "marketTotalReconciliation": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "MARKET_TOTAL_RECONCILIATION"}}}
+      ]
+    },
+    "queryAndPaginationCompleteness": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "QUERY_AND_PAGINATION_COMPLETENESS"}}}
+      ]
+    },
+    "runtimeSecretGuard": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "RUNTIME_SECRET_GUARD"}}}
+      ]
+    },
+    "claimBoundariesGate": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {"properties": {"gate": {"const": "CLAIM_BOUNDARIES"}}}
+      ]
+    }
+  }
+}
