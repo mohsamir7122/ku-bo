@@ -20,6 +20,10 @@
 - `official-foundation-manifest.schema.json`: عقد الخمسة Official Artifacts المطلوبة لبناء Current Identity وTrading Calendar، مع SHA-256 ووقت الجمع والمراجعة.
 - `official-identity-report.schema.json`: تقرير مصالحة Security Code وISIN وTicker عبر مصدرين رسميين مع إبقاء النطاق `CURRENT_SNAPSHOT_ONLY`.
 - `trading-calendar-report.schema.json`: تقرير تقويم سنة واحدة مبني على Official Holidays وTrading Weekdays وSession Regime.
-- `official-foundation-import-report.schema.json`: تقرير الحالة النهائية للمرحلة، مع منع مساواة Current Snapshot بالتاريخ الكامل أوالسماح بـBacktest.
+- `official-foundation-import-report.schema.json`: تقرير الحالة النهائية لمرحلة Current Identity and Calendar، مع منع مساواة Current Snapshot بالتاريخ الكامل أوالسماح بـBacktest.
+- `status-corporate-manifest.schema.json`: عقد Suspended وDelisted وCorporate Actions rendered captures، مع Snapshot date وFilter/Pagination receipt.
+- `security-status-evidence.schema.json`: عقد Current Status Snapshot؛ غياب السهم عن Suspended page لا يثبت أنه كان متداولًا تاريخيًا.
+- `corporate-action-schedule.schema.json`: عقد Official entitlement dates مع إبقاء Action Type وAmount وAdjustment Factor في حالة Pending.
+- `status-corporate-import-report.schema.json`: تقرير الحالة النهائية لمرحلة Current Status and Corporate Action Schedule مع بوابات التاريخ والعوامل والـBacktest.
 
-وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History البحثية، بينما `kubo.official_foundation_import` يفرض مصالحة Official Identity وتقويم سنة كاملة ويحجب أي ادعاء بـHistorical Universe أوBacktest readiness.
+وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History البحثية، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، بينما `kubo.status_corporate_import` يفصل Current Status Snapshot عن Status History ويفصل Official Schedule Dates عن Corporate Action Type وAdjustment Factor.

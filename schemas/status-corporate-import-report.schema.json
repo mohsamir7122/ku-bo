@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/status-corporate-import-report.schema.json",
+  "title": "KU-BO security status and corporate-action schedule import report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_id",
+    "output_root",
+    "status_snapshot_effective_date",
+    "corporate_action_window_from",
+    "corporate_action_window_to",
+    "upstream_identity_receipt",
+    "security_status_evidence",
+    "delisting_archive",
+    "corporate_action_market_rows",
+    "corporate_action_schedule",
+    "corporate_action_enrichment_queue",
+    "query_ledger",
+    "security_status_report",
+    "delisting_archive_report",
+    "corporate_action_schedule_report",
+    "security_status",
+    "corporate_action_schedule_status",
+    "pilot_corporate_action_rows",
+    "pending_corporate_action_factor_rows",
+    "remaining_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "CURRENT_STATUS_AND_CA_SCHEDULE_READY",
+        "CURRENT_STATUS_AND_CA_ZERO_RESULT_READY",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "output_root": {"type": "string", "minLength": 1},
+    "status_snapshot_effective_date": {"type": "string", "format": "date"},
+    "corporate_action_window_from": {"type": "string", "format": "date"},
+    "corporate_action_window_to": {"type": "string", "format": "date"},
+    "upstream_identity_receipt": {"type": "string", "minLength": 1},
+    "security_status_evidence": {"type": "string", "minLength": 1},
+    "delisting_archive": {"type": "string", "minLength": 1},
+    "corporate_action_market_rows": {"type": "string", "minLength": 1},
+    "corporate_action_schedule": {"type": "string", "minLength": 1},
+    "corporate_action_enrichment_queue": {"type": "string", "minLength": 1},
+    "query_ledger": {"type": "string", "minLength": 1},
+    "security_status_report": {"type": "string", "minLength": 1},
+    "delisting_archive_report": {"type": "string", "minLength": 1},
+    "corporate_action_schedule_report": {"type": "string", "minLength": 1},
+    "security_status": {"enum": ["PASS", "BLOCKED"]},
+    "corporate_action_schedule_status": {"enum": ["PASS", "BLOCKED"]},
+    "pilot_corporate_action_rows": {"type": "integer", "minimum": 0},
+    "pending_corporate_action_factor_rows": {"type": "integer", "minimum": 0},
+    "remaining_gates": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_status_is_status_history",
+        "absence_from_suspended_snapshot_proves_past_trading",
+        "delisting_archive_proves_all_suspension_intervals",
+        "corporate_action_schedule_contains_action_type",
+        "corporate_action_schedule_contains_amount",
+        "corporate_action_factor_ledger_ready",
+        "query_receipt_is_official_market_fact",
+        "security_status_history_ready",
+        "data_foundation_ready",
+        "backtest_ready",
+        "forecast_generated",
+        "recommendation_generated"
+      ],
+      "properties": {
+        "current_status_is_status_history": {"const": false},
+        "absence_from_suspended_snapshot_proves_past_trading": {"const": false},
+        "delisting_archive_proves_all_suspension_intervals": {"const": false},
+        "corporate_action_schedule_contains_action_type": {"const": false},
+        "corporate_action_schedule_contains_amount": {"const": false},
+        "corporate_action_factor_ledger_ready": {"type": "boolean"},
+        "query_receipt_is_official_market_fact": {"const": false},
+        "security_status_history_ready": {"const": false},
+        "data_foundation_ready": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  }
+}
