@@ -266,6 +266,32 @@ PYTHONPATH=src python3 scripts/smoke_check.py
 PYTHONPATH=src python3 scripts/secret_guard.py
 ```
 
+## تأهيل البيانات على دفعات من ثلاثة أسهم
+
+يحتوي الإصدار الحالي على مسار مستقل يجهز الاختبار تدريجيًا بثلاثة أسهم في
+كل دفعة، بدءًا بـ`KFH` و`SHIP` و`AZNOULA`. يتحقق المسار من الهوية المرشحة
+والترتيب والحجم والفرادة، ثم ينشئ Workspace مقفلة الادعاء بلا جمع بيانات أو
+Backtest:
+
+```bash
+kubo-data-foundation validate-tri-security-pilot
+kubo-data-foundation prepare-tri-security-batch \
+  --batch-id tri-001-kfh-ship-aznoula \
+  --run-id tri-001-qualification \
+  --window-from 2026-01-01 \
+  --window-to 2026-08-12 \
+  --output-root /safe/runtime/tri-001
+```
+
+نجاح الأمرين يعني صحة الإعداد وتجهيز مساحة العمل فقط؛ تظل الهوية
+`UNVERIFIED_SEED` وجميع بوابات الأدلة الخارجية معلقة. راجع
+`docs/TRI_SECURITY_PILOT_V0_3_AR.md` للتسلسل وحدود الادعاء.
+
+تحتوي Workspace على `scoped_config/` لتمرير مقام الأسهم الثلاثة نفسه إلى
+الأوامر القائمة بواسطة `--pilot-config-dir /safe/runtime/tri-001/scoped_config`.
+مرر كذلك البصمة الصادرة في `scoped_config_manifest_sha256` باستخدام
+`--expected-pilot-config-manifest-sha256` لربط التشغيل بالنسخة المقصودة.
+
 تشغّل GitHub Actions هذه البوابات على Python `3.11` و`3.12` و`3.13` و`3.14`. لا تثبت الوثائق عدد اختبارات ثابتًا؛ نتيجة CI الخاصة بالـCommit هي المرجع.
 
 تغطي الاختبارات حالات غياب بورصة الكويت، فتح قناة رسمية بلا Finding، المجتمع وحده، Finding مستقبلي، Hash تابع لمصدر آخر، Artifact جُمع بعد القرار، Access Receipt أوSearch Snippet كدليل، تضارب مستقل، إعادة النشر، Counts بلا Universe Receipt، Probability غير مدعومة، السيولة الصفرية، التعليق، Limit Queue، وPartial Fill.
@@ -282,6 +308,7 @@ PYTHONPATH=src python3 scripts/secret_guard.py
 - `src/kubo/benchmark_*`: سجل ومساحة عمل وعقد واستيراد Benchmark History مع فصل Price/Total Return وBroad/Sector.
 - `src/kubo/official_eod_*`: مساحة عمل واستيراد وتحقق مستقل لـOfficial Complete Daily EOD ومقام الجلسات.
 - `src/kubo/data_foundation_reconciliation.py`: إعادة فحص المكونات وإصدار تقرير البوابات الاثنتي عشرة.
+- `src/kubo/tri_security_pilot.py`: سجل الدفعات الثلاثية وتجهيز Workspace لتأهيل البيانات بلا Forecast.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
 - `src/kubo/reporting.py`: مخرجات JSON وMarkdown حسب الطلب.

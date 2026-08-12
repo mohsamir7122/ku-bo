@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "ku-bo-tri-security-pilot-v1",
+  "as_of": "2026-08-12",
+  "scope": "TRI_SECURITY_PILOT_VENDOR_MAPPINGS",
+  "claim_boundary": "VENDOR_MAPPING_IS_NOT_OFFICIAL_SECURITY_IDENTITY",
+  "mappings": [
+    {
+      "security_code": "108",
+      "ticker": "KFH",
+      "isin": "KW0EQ0100085",
+      "provider": "investing",
+      "provider_symbol": "kwt-fin-house",
+      "provider_url": "https://www.investing.com/equities/kwt-fin-house-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "506",
+      "ticker": "SHIP",
+      "isin": "KW0EQ0500888",
+      "provider": "investing",
+      "provider_symbol": "heavy-eng---ship",
+      "provider_url": "https://www.investing.com/equities/heavy-eng---ship-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "826",
+      "ticker": "AZNOULA",
+      "isin": "KW0EQ0504799",
+      "provider": "investing",
+      "provider_symbol": "shamal-azzour-aloula-power-water-co",
+      "provider_url": "https://www.investing.com/equities/shamal-azzour-aloula-power-water-co-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "101",
+      "ticker": "NBK",
+      "isin": "KW0EQ0100010",
+      "provider": "investing",
+      "provider_symbol": "national-bank-kt",
+      "provider_url": "https://www.investing.com/equities/national-bank-kt-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "413",
+      "ticker": "MABANEE",
+      "isin": "KW0EQ0400725",
+      "provider": "investing",
+      "provider_symbol": "mabanee-co",
+      "provider_url": "https://www.investing.com/equities/mabanee-co-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "605",
+      "ticker": "ZAIN",
+      "isin": "KW0EQ0601058",
+      "provider": "investing",
+      "provider_symbol": "mobile-telecom",
+      "provider_url": "https://www.investing.com/equities/mobile-telecom-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "623",
+      "ticker": "HUMANSOFT",
+      "isin": "KW0EQ0601694",
+      "provider": "investing",
+      "provider_symbol": "human-soft-hldng",
+      "provider_url": "https://www.investing.com/equities/human-soft-hldng-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "603",
+      "ticker": "AGLTY",
+      "isin": "KW0EQ0601041",
+      "provider": "investing",
+      "provider_symbol": "agility-public-warehousing",
+      "provider_url": "https://www.investing.com/equities/agility-public-warehousing-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    },
+    {
+      "security_code": "109",
+      "ticker": "BOUBYAN",
+      "isin": "KW0EQ0102065",
+      "provider": "investing",
+      "provider_symbol": "boubyan-bank",
+      "provider_url": "https://www.investing.com/equities/boubyan-bank-historical-data",
+      "mapping_state": "CANDIDATE_URL_OBSERVED",
+      "evidence_notes": "Candidate provider route for scoped collection. Exact provider bytes and identity reconciliation remain required."
+    }
+  ]
+}

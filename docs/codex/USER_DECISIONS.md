@@ -61,7 +61,7 @@ STATUS: APPROVED
 DATE_RAISED: 2026-08-10
 TARGET: Stacked PR chain #4 -> #5 -> #6 -> #7 -> #8 -> #9
 CATEGORY: MERGE
-CURRENT_STATE: All six PRs are open Drafts, exactly stacked on their predecessor heads, mergeable, and green on their recorded head CI. PR #9 closes KU-BO-008 as a fail-closed contract stage while real Benchmark/EOD evidence and KU-BO-008-D01 remain blocked.
+CURRENT_STATE: The approved sequence was completed on 2026-08-12: PRs #4 through #9 are merged into main. The older PRs #2 and #3 remain open and stale on pre-stack bases. PR #9 closed KU-BO-008 as a fail-closed contract stage while real Benchmark/EOD evidence and KU-BO-008-D01 remain blocked.
 WHY_A_DECISION_IS_REQUIRED: Repository rules prohibit any merge without explicit user approval and require stacked PRs to merge in dependency order.
 OPTIONS:
 1. Merge sequentially into main, retargeting each successor to main and requiring fresh green CI after every retarget.

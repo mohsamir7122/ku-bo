@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-batch-plan.schema.json",
+  "title": "KU-BO tri-security data-qualification batch plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "run_id",
+    "prepared_by",
+    "registry",
+    "batch",
+    "batch_sha256",
+    "qualification_window",
+    "scoped_configuration",
+    "execution",
+    "gates",
+    "allowed_output",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "mode": {"const": "DATA_QUALIFICATION_ONLY"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "prepared_by": {"type": "string", "maxLength": 128},
+    "registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registry_id", "registry_sha256", "as_of"],
+      "properties": {
+        "registry_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "registry_sha256": {"$ref": "#/$defs/sha256"},
+        "as_of": {"type": "string", "format": "date"}
+      }
+    },
+    "batch": {
+      "$ref": "tri-security-pilot-registry.schema.json#/$defs/batch",
+      "properties": {"sequence": {"const": 1}}
+    },
+    "batch_sha256": {"$ref": "#/$defs/sha256"},
+    "qualification_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_from", "window_to", "timezone", "date_basis"],
+      "properties": {
+        "window_from": {"type": "string", "format": "date"},
+        "window_to": {"type": "string", "format": "date"},
+        "timezone": {"const": "Asia/Kuwait"},
+        "date_basis": {"const": "DECLARED_DATA_QUALIFICATION_WINDOW"}
+      }
+    },
+    "scoped_configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "manifest_path", "manifest_sha256", "security_count"],
+      "properties": {
+        "root": {"const": "scoped_config"},
+        "manifest_path": {"const": "scoped_config/manifest.json"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "security_count": {"const": 3}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "predecessor_batch_id",
+        "predecessor_qualification_required"
+      ],
+      "properties": {
+        "sequence": {"const": 1},
+        "predecessor_batch_id": {"type": "null"},
+        "predecessor_qualification_required": {"const": false}
+      }
+    },
+    "gates": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/pointInTimeIdentityGate"},
+        {"$ref": "#/$defs/tradingCalendarGate"},
+        {"$ref": "#/$defs/securityStatusHistoryGate"},
+        {"$ref": "#/$defs/priceDenominatorGate"},
+        {"$ref": "#/$defs/priceEvidenceGate"},
+        {"$ref": "#/$defs/priceCorporateActionGate"},
+        {"$ref": "#/$defs/benchmarkHistoryGate"},
+        {"$ref": "#/$defs/benchmarkEvidenceGate"},
+        {"$ref": "#/$defs/marketTotalsGate"},
+        {"$ref": "#/$defs/queryPaginationGate"},
+        {"$ref": "#/$defs/runtimeSecretGate"},
+        {"$ref": "#/$defs/claimBoundariesGate"}
+      ],
+      "items": false,
+      "minItems": 12,
+      "maxItems": 12
+    },
+    "allowed_output": {"const": "DATA_QUALIFICATION_REPORT_ONLY"},
+    "claim_boundary": {"const": "CONFIGURATION_ONLY_NOT_MARKET_EVIDENCE"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gateBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "status", "required_evidence"],
+      "properties": {
+        "gate": {"type": "string"},
+        "status": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "pointInTimeIdentityGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "POINT_IN_TIME_IDENTITY"}}},
+    "tradingCalendarGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "TRADING_CALENDAR"}}},
+    "securityStatusHistoryGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "SECURITY_STATUS_HISTORY"}}},
+    "priceDenominatorGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "PRICE_DENOMINATOR"}}},
+    "priceEvidenceGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "PRICE_EVIDENCE"}}},
+    "priceCorporateActionGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "PRICE_CORPORATE_ACTION_QA"}}},
+    "benchmarkHistoryGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "BENCHMARK_HISTORY"}}},
+    "benchmarkEvidenceGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "BENCHMARK_EVIDENCE"}}},
+    "marketTotalsGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "MARKET_TOTAL_RECONCILIATION"}}},
+    "queryPaginationGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "QUERY_AND_PAGINATION_COMPLETENESS"}}},
+    "runtimeSecretGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "RUNTIME_SECRET_GUARD"}}},
+    "claimBoundariesGate": {"$ref": "#/$defs/gateBase", "properties": {"gate": {"const": "CLAIM_BOUNDARIES"}}}
+  }
+}

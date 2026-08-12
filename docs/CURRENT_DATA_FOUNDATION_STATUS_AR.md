@@ -1,8 +1,8 @@
 # الحالة الحالية لـData Foundation Pilot
 
-تاريخ اللقطة: `2026-08-10`
+تاريخ اللقطة: `2026-08-12`
 
-سلسلة الفروع المتراكمة:
+السلسلة التاريخية التي أصبحت مدمجة في `main`:
 
 ```text
 build/data-foundation-v0.2
@@ -13,10 +13,17 @@ build/data-foundation-v0.2
                           └── build/benchmark-official-eod-v0.2
 ```
 
+الفرع النشط غير المدمج:
+
+```text
+main@be5fe3883016dedf07fa680905f7199f3906b4d8
+  └── build/tri-security-pilot-v0.3
+```
+
 قاعدة المرحلة الحالية:
 
 ```text
-ops/codex-control-center-v0.1@cba8fc1c57365343f497e1859733e0ae03087bfe
+main@be5fe3883016dedf07fa680905f7199f3906b4d8
 ```
 
 ## طبقة Price History
@@ -26,6 +33,21 @@ ops/codex-control-center-v0.1@cba8fc1c57365343f497e1859733e0ae03087bfe
 - Authorized User Export مرتبط بـCollection Manifest وSHA-256.
 - `research_price_history.csv` منفصلة عن Official Complete `daily_eod`.
 - لا Synthetic Prices ولاForward Fill ولاحقول سوقية مخترعة.
+
+## طبقة الدفعات الثلاثية
+
+- سجل صارم لثلاث دفعات، كل واحدة ثلاثة أسهم بالضبط.
+- نقطة البدء: `KFH` و`SHIP` و`AZNOULA`.
+- الدفعتان اللاحقتان توسعان فئات المصدر من دون تغيير المقام الثلاثي.
+- كل الهويات في السجل `UNVERIFIED_SEED` ولا تصبح رسمية من دون بايتات
+  رسمية مؤرخة ومربوطة بـSHA-256.
+- إنشاء Workspace لا يجمع بيانات، ولا يجيز الانتقال إلى الدفعة التالية، ولا
+  يثبت Backtest readiness.
+- CLI تعيد حساب Manifest Hashes عند استخدام `--pilot-config-dir`، لكن Window
+  وBatch-plan receipt لم تُربطا بعد بكل مخرج Downstream؛ المرحلة Preparation
+  وليست Qualification end-to-end.
+- كل دفعة تحمل البوابات النهائية الاثنتي عشرة بالحالة
+  `PENDING_EXTERNAL_EVIDENCE`.
 
 ## Current Official Identity and Calendar
 

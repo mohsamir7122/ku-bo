@@ -85,7 +85,10 @@ def main(argv: list[str] | None = None) -> int:
         if sys.platform == "win32"
         else "kubo-data-foundation"
     )
-    sibling_executable = Path(sys.executable).resolve().parent / installed_name
+    # Entry-point scripts are siblings of the invoked virtual-environment
+    # interpreter. Resolving the interpreter symlink would incorrectly jump
+    # to the base interpreter and lose the installed wheel's scripts.
+    sibling_executable = Path(sys.executable).parent / installed_name
     executable = (
         str(sibling_executable)
         if sibling_executable.is_file()
@@ -107,6 +110,98 @@ def main(argv: list[str] | None = None) -> int:
     from tests.foundation_fixture_helpers import build_official_foundation_output
     from tests.official_eod_fixture_helpers import add_provider, build_eod_upstreams
     from tests.test_data_foundation_reconciliation import _component_roots
+    from tests.test_status_history_import import StatusHistoryImportTests
+
+    report = _command(
+        executable,
+        project_root,
+        ["validate-tri-security-pilot"],
+        expected_exit=0,
+    )
+    _expect(report, "status", "PASS")
+    _expect(report, "batch_size", 3)
+    _expect(report, "security_count", 9)
+
+    tri_workspace = work_root / "tri-security-workspace"
+    report = _command(
+        executable,
+        project_root,
+        [
+            "prepare-tri-security-batch",
+            "--output-root",
+            str(tri_workspace),
+            "--batch-id",
+            "tri-001-kfh-ship-aznoula",
+            "--run-id",
+            "installed-tri-security-check",
+            "--window-from",
+            "2026-08-02",
+            "--window-to",
+            "2026-08-12",
+            "--prepared-by",
+            "installed-wheel-check",
+        ],
+        expected_exit=0,
+    )
+    _expect(report, "status", "PASS")
+    _expect(report, "batch_size", 3)
+    scoped_report = _command(
+        executable,
+        project_root,
+        [
+            "--pilot-config-dir",
+            str(tri_workspace / "scoped_config"),
+            "--expected-pilot-config-manifest-sha256",
+            report["scoped_config_manifest_sha256"],
+            "validate-pilot-config",
+        ],
+        expected_exit=0,
+    )
+    _expect(scoped_report["identity_seed"], "security_count", 3)
+    tri_price_workspace = work_root / "tri-price-workspace"
+    report = _command(
+        executable,
+        project_root,
+        [
+            "--pilot-config-dir",
+            str(tri_workspace / "scoped_config"),
+            "--expected-pilot-config-manifest-sha256",
+            report["scoped_config_manifest_sha256"],
+            "prepare-price-collection",
+            "--output-root",
+            str(tri_price_workspace),
+            "--downloaded-by",
+            "installed-wheel-check",
+        ],
+        expected_exit=0,
+    )
+    _expect(report, "status", "PASS")
+    _expect(report, "symbol_count", 3)
+
+    status_fixture_root = work_root / "status-history-fixture"
+    status_fixture_root.mkdir()
+    status_upstream, status_workspace = StatusHistoryImportTests()._workspace(
+        status_fixture_root
+    )
+    status_output = work_root / "status-history-output"
+    report = _command(
+        executable,
+        project_root,
+        [
+            "import-status-history",
+            "--status-corporate-root",
+            str(status_upstream),
+            "--workspace",
+            str(status_workspace),
+            "--output-root",
+            str(status_output),
+        ],
+        expected_exit=0,
+    )
+    _expect(report, "status", "HISTORICAL_STATUS_INTERVALS_READY")
+    _expect(report, "security_count", 5)
+    _expect(report, "notice_count", 1)
+    _expect(report, "interval_count", 6)
 
     benchmark_fixture_root = work_root / "benchmark-fixture"
     benchmark_fixture_root.mkdir()
@@ -271,6 +366,11 @@ def main(argv: list[str] | None = None) -> int:
             {
                 "status": "PASS",
                 "installed_handlers_exercised": [
+                    "validate-tri-security-pilot",
+                    "prepare-tri-security-batch",
+                    "validate-pilot-config-scoped",
+                    "prepare-price-collection-scoped",
+                    "import-status-history",
                     "prepare-benchmark-history",
                     "import-benchmark-history",
                     "prepare-official-eod",

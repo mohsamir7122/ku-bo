@@ -25,7 +25,7 @@ _SECURITY_CODE_RE = re.compile(r"^[0-9]{1,12}$")
 _TICKER_RE = re.compile(r"^[A-Z][A-Z0-9]{0,31}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 _PROVIDER_RE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
-_PROVIDER_SYMBOL_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+_PROVIDER_SYMBOL_RE = re.compile(r"^[a-z0-9]+(?:-+[a-z0-9]+)*$")
 _INVESTING_HOSTS = frozenset(
     {"investing.com", "www.investing.com", "sa.investing.com"}
 )

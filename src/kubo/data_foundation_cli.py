@@ -18,7 +18,7 @@ from .data_foundation_reconciliation import (
     build_data_foundation_packet,
     print_data_foundation_gate_report,
 )
-from .foundation_io import load_strict_json_object
+from .foundation_io import load_strict_json_object, require_real_directory
 from .official_eod_import import (
     import_official_daily_eod,
     validate_official_eod_output,
@@ -33,6 +33,12 @@ from .status_corporate_import import import_status_corporate
 from .status_corporate_workspace import prepare_status_corporate_workspace
 from .status_history_import import import_status_history
 from .status_history_workspace import prepare_status_history_workspace
+from .tri_security_pilot import (
+    load_tri_security_registry,
+    load_tri_security_vendor_mappings,
+    prepare_tri_security_batch_workspace,
+    verify_tri_security_scoped_config,
+)
 from .user_price_export import import_investing_user_exports
 from .vendor_symbol_mapping import (
     PilotIdentitySeedCatalog,
@@ -142,9 +148,34 @@ def parser() -> argparse.ArgumentParser:
         default=_root(),
         help="KU-BO checkout containing config/pilot",
     )
+    value.add_argument(
+        "--pilot-config-dir",
+        type=Path,
+        help=(
+            "Optional scoped configuration directory containing pilot/. "
+            "Use the tri-security workspace scoped_config directory to keep "
+            "identity and price denominators at exactly three securities."
+        ),
+    )
+    value.add_argument(
+        "--expected-pilot-config-manifest-sha256",
+        help=(
+            "Required with --pilot-config-dir: expected SHA-256 for the scoped "
+            "tri-security manifest."
+        ),
+    )
     sub = value.add_subparsers(dest="command", required=True)
     sub.add_parser("validate-pilot-config")
+    sub.add_parser("validate-tri-security-pilot")
     sub.add_parser("validate-ca-formulas")
+
+    prepare_tri = sub.add_parser("prepare-tri-security-batch")
+    prepare_tri.add_argument("--output-root", type=Path, required=True)
+    prepare_tri.add_argument("--batch-id", required=True)
+    prepare_tri.add_argument("--run-id", required=True)
+    prepare_tri.add_argument("--window-from", required=True)
+    prepare_tri.add_argument("--window-to", required=True)
+    prepare_tri.add_argument("--prepared-by", default="")
 
     prepare = sub.add_parser("prepare-price-collection")
     prepare.add_argument("--output-root", type=Path, required=True)
@@ -299,7 +330,30 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     project_root = args.project_root.resolve()
-    config_dir = project_root / "config"
+    config_dir = (
+        require_real_directory(
+            args.pilot_config_dir,
+            field="pilot_config_dir",
+        )
+        if args.pilot_config_dir is not None
+        else project_root / "config"
+    )
+    scoped_config_report = None
+    if args.pilot_config_dir is not None:
+        if args.expected_pilot_config_manifest_sha256 is None:
+            raise ValueError(
+                "--pilot-config-dir requires "
+                "--expected-pilot-config-manifest-sha256 to anchor the scoped "
+                "configuration outside its self-authored manifest"
+            )
+        scoped_config_report = verify_tri_security_scoped_config(
+            config_dir,
+            expected_manifest_sha256=args.expected_pilot_config_manifest_sha256,
+        )
+    elif args.expected_pilot_config_manifest_sha256 is not None:
+        raise ValueError(
+            "--expected-pilot-config-manifest-sha256 requires --pilot-config-dir"
+        )
     if not (config_dir / "pilot" / "security_master_seed.json").is_file():
         raise SystemExit(
             "invalid KU-BO project root: config/pilot/security_master_seed.json is missing"
@@ -320,6 +374,27 @@ def main(argv: list[str] | None = None) -> int:
                 "backtest_ready": False,
             },
         }
+    elif args.command == "validate-tri-security-pilot":
+        registry = load_tri_security_registry(config_dir)
+        mappings = load_tri_security_vendor_mappings(config_dir, registry)
+        report = registry.report()
+        report["vendor_mappings"] = {
+            "status": "PASS",
+            "schema_version": "1.0",
+            "mapping_count": len(mappings.mappings),
+            "mappings_sha256": mappings.sha256,
+            "claim_boundary": "VENDOR_MAPPING_IS_NOT_OFFICIAL_SECURITY_IDENTITY",
+        }
+    elif args.command == "prepare-tri-security-batch":
+        report = prepare_tri_security_batch_workspace(
+            config_dir=config_dir,
+            output_root=args.output_root,
+            batch_id=args.batch_id,
+            run_id=args.run_id,
+            window_from=args.window_from,
+            window_to=args.window_to,
+            prepared_by=args.prepared_by,
+        )
     elif args.command == "validate-ca-formulas":
         report = formula_self_check()
     elif args.command == "prepare-price-collection":
@@ -400,7 +475,6 @@ def main(argv: list[str] | None = None) -> int:
             status_corporate_root=args.status_corporate_root,
             workspace=args.workspace,
             output_root=args.output_root,
-            imported_at=args.imported_at,
         )
     elif args.command == "validate-benchmark-registry":
         registry = load_benchmark_registry(config_dir)
@@ -504,6 +578,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if _report_is_blocking(report) else 0
     else:  # pragma: no cover - argparse constrains this branch
         raise AssertionError(f"unhandled command: {args.command}")
+
+    if scoped_config_report is not None:
+        report["scoped_configuration"] = scoped_config_report
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 1 if _report_is_blocking(report) else 0
