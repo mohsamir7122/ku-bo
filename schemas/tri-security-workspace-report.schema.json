@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-workspace-report.schema.json",
+  "title": "KU-BO tri-security workspace preparation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "readiness_status",
+    "workspace_kind",
+    "mode",
+    "run_id",
+    "batch_id",
+    "batch_sequence",
+    "batch_size",
+    "qualification_window",
+    "securities",
+    "registry_id",
+    "registry_sha256",
+    "batch_sha256",
+    "batch_plan_path",
+    "batch_plan_sha256",
+    "scoped_config_root",
+    "scoped_config_manifest_path",
+    "scoped_config_manifest_sha256",
+    "checklist_path",
+    "predecessor_batch_id",
+    "predecessor_qualification_required",
+    "required_gates",
+    "gate_states",
+    "remaining_external_blockers",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "PASS"},
+    "readiness_status": {
+      "const": "CONFIG_VALID_EXTERNAL_EVIDENCE_REQUIRED"
+    },
+    "workspace_kind": {"const": "TRI_SECURITY_DATA_QUALIFICATION"},
+    "mode": {"const": "DATA_QUALIFICATION_ONLY"},
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "batch_sequence": {"const": 1},
+    "batch_size": {"const": 3},
+    "qualification_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_from", "window_to", "timezone"],
+      "properties": {
+        "window_from": {"type": "string", "format": "date"},
+        "window_to": {"type": "string", "format": "date"},
+        "timezone": {"const": "Asia/Kuwait"}
+      }
+    },
+    "securities": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["security_code", "ticker", "isin", "identity_state"],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+          "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9]{0,31}$"},
+          "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+          "identity_state": {"const": "UNVERIFIED_SEED"}
+        }
+      }
+    },
+    "registry_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "registry_sha256": {"$ref": "#/$defs/sha256"},
+    "batch_sha256": {"$ref": "#/$defs/sha256"},
+    "batch_plan_path": {"const": "plan/tri_security_batch_plan.json"},
+    "batch_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "scoped_config_root": {"const": "scoped_config"},
+    "scoped_config_manifest_path": {"const": "scoped_config/manifest.json"},
+    "scoped_config_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "checklist_path": {"const": "reports/tri_security_batch_checklist_ar.md"},
+    "predecessor_batch_id": {"type": "null"},
+    "predecessor_qualification_required": {"const": false},
+    "required_gates": {
+      "const": [
+        "POINT_IN_TIME_IDENTITY",
+        "TRADING_CALENDAR",
+        "SECURITY_STATUS_HISTORY",
+        "PRICE_DENOMINATOR",
+        "PRICE_EVIDENCE",
+        "PRICE_CORPORATE_ACTION_QA",
+        "BENCHMARK_HISTORY",
+        "BENCHMARK_EVIDENCE",
+        "MARKET_TOTAL_RECONCILIATION",
+        "QUERY_AND_PAGINATION_COMPLETENESS",
+        "RUNTIME_SECRET_GUARD",
+        "CLAIM_BOUNDARIES"
+      ]
+    },
+    "gate_states": {
+      "const": [
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE",
+        "PENDING_EXTERNAL_EVIDENCE"
+      ]
+    },
+    "remaining_external_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "OFFICIAL_EFFECTIVE_DATED_IDENTITY",
+          "RIGHTS_COMPATIBLE_MARKET_EVIDENCE",
+          "AUTHENTICATED_CAPTURE_RECEIPTS",
+          "KU-BO-008-D01_OUTCOME_SESSION_POLICY",
+          "INDEPENDENT_FINAL_GATE_REPORT"
+        ]
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_contains_market_evidence",
+        "seed_identity_is_official_evidence",
+        "batch_passed_data_qualification",
+        "three_security_batch_validates_full_market",
+        "backtest_ready",
+        "forecast_generated",
+        "probability_generated",
+        "recommendation_generated",
+        "next_batch_authorized"
+      ],
+      "properties": {
+        "workspace_contains_market_evidence": {"const": false},
+        "seed_identity_is_official_evidence": {"const": false},
+        "batch_passed_data_qualification": {"const": false},
+        "three_security_batch_validates_full_market": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_generated": {"const": false},
+        "probability_generated": {"const": false},
+        "recommendation_generated": {"const": false},
+        "next_batch_authorized": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

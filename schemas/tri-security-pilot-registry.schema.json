@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-pilot-registry.schema.json",
+  "title": "KU-BO staged tri-security data-qualification registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_id",
+    "as_of",
+    "scope",
+    "batch_size",
+    "execution_order",
+    "claim_boundary",
+    "required_gates",
+    "batches"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "registry_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "as_of": {"type": "string", "format": "date"},
+    "scope": {"const": "STAGED_TRI_SECURITY_DATA_QUALIFICATION"},
+    "batch_size": {"const": 3},
+    "execution_order": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+      }
+    },
+    "claim_boundary": {"const": "CONFIGURATION_ONLY_NOT_MARKET_EVIDENCE"},
+    "required_gates": {"$ref": "#/$defs/requiredGates"},
+    "batches": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/batch"}
+    }
+  },
+  "$defs": {
+    "requiredGates": {
+      "const": [
+        "POINT_IN_TIME_IDENTITY",
+        "TRADING_CALENDAR",
+        "SECURITY_STATUS_HISTORY",
+        "PRICE_DENOMINATOR",
+        "PRICE_EVIDENCE",
+        "PRICE_CORPORATE_ACTION_QA",
+        "BENCHMARK_HISTORY",
+        "BENCHMARK_EVIDENCE",
+        "MARKET_TOTAL_RECONCILIATION",
+        "QUERY_AND_PAGINATION_COMPLETENESS",
+        "RUNTIME_SECRET_GUARD",
+        "CLAIM_BOUNDARIES"
+      ]
+    },
+    "batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "sequence",
+        "status",
+        "purpose",
+        "allowed_output",
+        "securities"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "sequence": {"type": "integer", "minimum": 1},
+        "status": {"const": "CONFIGURED_FOR_WORKSPACE_PREPARATION"},
+        "purpose": {"type": "string", "minLength": 1},
+        "allowed_output": {"const": "DATA_QUALIFICATION_REPORT_ONLY"},
+        "securities": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/security"}
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "security_code",
+        "ticker",
+        "name_en",
+        "name_ar",
+        "isin",
+        "sector",
+        "identity_state",
+        "case_tags"
+      ],
+      "properties": {
+        "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+        "ticker": {"type": "string", "pattern": "^[A-Z][A-Z0-9]{0,31}$"},
+        "name_en": {"type": "string", "minLength": 1},
+        "name_ar": {"type": "string", "minLength": 1},
+        "isin": {"type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+        "sector": {"type": "string", "minLength": 1},
+        "identity_state": {"const": "UNVERIFIED_SEED"},
+        "case_tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+          }
+        }
+      }
+    }
+  }
+}

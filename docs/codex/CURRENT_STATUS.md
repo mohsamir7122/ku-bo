@@ -1,6 +1,6 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-10
+Status date: 2026-08-12
 
 Repository:
 
@@ -8,108 +8,84 @@ Repository:
 mohsamir7122/ku-bo
 ```
 
-## Verified development chain when this file was created
+## Verified live base
 
 ```text
-PR #4
-build/data-foundation-v0.2
-Research Price History
-
-PR #5
-build/official-identity-calendar-v0.2
-Current Official Identity + 2026 Trading Calendar
-
-PR #6
-build/security-status-corporate-actions-v0.2
-Current Security Status + Corporate Action Schedule
-
-PR #7
-build/ca-enrichment-status-history-v0.2
-Corporate Action Disclosure Enrichment + Historical Status Intervals
+branch: main
+head: be5fe3883016dedf07fa680905f7199f3906b4d8
+latest merged task: PR #9 / KU-BO-008
+GitHub Actions: run 31402435102 / PASS
+starting local suite: 513 tests / PASS
 ```
 
-PR #7 metadata at control-layer creation:
+PRs #4 through #9 are now merged into `main`; the old stacked-PR snapshot is
+historical. Open Draft PRs #2 and #3 branch from an older base, are not mergeable
+with the current head, and must not be used as the KU-BO-009 base.
+
+## Proven on main before KU-BO-009
+
+- strict source, identity, time, evidence, rights, and claim-boundary contracts;
+- research-price, official-identity/calendar, status/corporate-action,
+  status-history, Benchmark, and Official Complete EOD workspaces/importers;
+- final twelve-gate Data Foundation reconciliation;
+- append-only research and outcome ledgers;
+- broad unit/adversarial coverage, smoke checks, secret guard, and wheel tests.
+
+## Material audit defect found on main
+
+`kubo-data-foundation import-status-history` passed an undefined
+`args.imported_at` to a function that has no such parameter. The complete suite
+did not exercise this installed CLI dispatch. KU-BO-009 removes the invalid
+argument and adds a regression test against the actual function contract.
+
+## KU-BO-009 published for review
+
+Task branch:
 
 ```text
-state: OPEN
-mode: DRAFT
-mergeable: true
-merged: false
-head SHA: 570cfda44eedfea91220a500c494f493eed49763
-CI run: 31356885100
-Python 3.11–3.14: PASS
-full unit/adversarial tests inspected: 376 PASS
+build/tri-security-pilot-v0.3
+implementation head: 0c4d5a6b71137ec5719195ea749ed9bedf863a72
+Draft PR: https://github.com/mohsamir7122/ku-bo/pull/10
+GitHub Actions: run 31571590903 / PASS (Python 3.11-3.14)
+final local suite: 528 tests / PASS
+isolated installed-wheel exercise: PASS / 12 handlers
 ```
 
-This status is a handoff snapshot, not a substitute for live verification.
+The branch adds a staged `DATA_QUALIFICATION_ONLY` registry and workspace. Each
+batch has exactly three unique `security_code`/Ticker/ISIN candidates. Batch one
+is KFH, SHIP, and AZNOULA. Every identity remains `UNVERIFIED_SEED`; preparation
+creates no real evidence and all twelve gates remain
+`PENDING_EXTERNAL_EVIDENCE`.
 
-## Proven in code and CI
+The related repository audit has established that `mohsamir7122/Research` is
+not a valid source for scores, forecasts, recommendations, or backtest results.
+Its open Factor9 implementation contains look-ahead bias, missingness/confidence
+errors, and fabricated fundamentals. Only bounded engineering test ideas may be
+rewritten against KU-BO contracts.
 
-- strict source/evidence and claim-boundary framework;
-- research price-history import contracts for the five-security pilot;
-- separation of vendor mapping from official identity;
-- current official identity and 2026 calendar framework;
-- current security-status and delisting/corporate-action schedule framework;
-- disclosure-backed corporate-action enrichment framework;
-- separation of reference-price, continuity, quantity, and return treatments;
-- historical status-notice and interval reconstruction framework;
-- secret guard, wheel build, installed CLI checks, and broad adversarial testing.
+KU-BO-009 is complete as an engineering and preparation stage. It did not
+collect real market bytes or qualify the first batch. The smallest next stage
+is a plan/window/cohort receipt binding every downstream component; no later
+batch is authorized by this result.
 
-## Not proven by real market evidence
+## Still not proven
 
-- complete real price files for the full requested period;
-- complete historical point-in-time universe;
-- complete official daily EOD for every eligible security-session;
-- complete benchmark history;
-- complete corporate-action factors and return policies for every real event;
-- complete historical suspension/resumption evidence for every pilot security;
-- final data-foundation reconciliation on real evidence;
-- real backtest performance;
-- forecasting skill or prospective validation;
-- any trading recommendation.
+- complete effective-dated historical market universe;
+- real rights-compatible Benchmark and Official Complete EOD packets;
+- complete historical Corporate Actions and suspension/resumption evidence;
+- authenticated capture receipts and an independent final authority receipt;
+- an approved product-specific outcome-session policy for `KU-BO-008-D01`;
+- real baseline-backtest readiness;
+- forecast skill, probability calibration, or prospective accuracy;
+- any trading recommendation or production execution readiness.
 
-## Active control branch
+## Active instruction
 
-```text
-ops/codex-control-center-v0.1
-```
-
-The control branch is stacked on PR #7 and adds only operating instructions, handoff policy, and the active Codex task. It does not itself complete a market-data stage.
-
-## KU-BO-008 task-branch result
-
-The task branch is:
-
-```text
-build/benchmark-official-eod-v0.2
-```
-
-It starts at the verified control head `cba8fc1c57365343f497e1859733e0ae03087bfe` and adds strict Benchmark History, Official Complete Daily EOD, and final twelve-gate reconciliation contracts. Recorded fixtures exercise code paths only; no real Benchmark or EOD export is committed.
-
-Real baseline-backtest readiness remains unavailable because:
-
-- the configured Benchmark codes are internal unverified requirements and full history needs authorized official or licensed exports;
-- legacy upstream manifests do not contain hash-bound evidence classification and rights metadata, so the reconciler refuses to infer real evidence;
-- caller-authored `PROVEN_REAL_EVIDENCE` labels are not authority roots: the external runtime registry proves source/entitlement authority only, not capture bytes; Benchmark and EOD remain `LIVE_DEPENDENT` or `LICENSED_FEED_DEPENDENT` until an independently authenticated receipt binds the exact artifact SHA-256, capture event, window/query counts, source, and rights;
-- `KU-BO-008-D01` is open and `outcome_session_policy` remains `UNFROZEN`;
-- schema v1 rejects every FROZEN value; committing global Option 1 cannot approve
-  D01, whose future implementation requires a product-specific extension/terminal
-  contract and an approved decision receipt;
-- session-horizon forecasts therefore fail closed at ledger append/verify and at
-  evaluation; civil-day due dates, legacy stop gates, and caller hash sets cannot
-  produce a real evaluation or metrics without approved product-specific policy, official
-  calendar/status resolution, artifact-bound capture authority, and an independent
-  final data-foundation receipt;
-- no rights-compatible real pilot Benchmark/EOD packet was supplied to this repository task.
-
-These are evidence and user-policy blockers, not code-test substitutions. Exact branch tests, CI, Draft PR, and publication metadata belong in `docs/codex/handoffs/KU-BO-008-result.md`.
-
-## Next engineering stage
-
-The active task is defined only in:
+The only active task is:
 
 ```text
 docs/codex/CURRENT_TASK.md
 ```
 
-Do not infer a new task from this status file or from old chat summaries.
+Historic handoffs and repository audits are context, not authority to weaken
+the current gates.

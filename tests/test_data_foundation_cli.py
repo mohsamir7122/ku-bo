@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from kubo.data_foundation_cli import _report_is_blocking, main
 
@@ -14,6 +15,41 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DataFoundationCliTests(unittest.TestCase):
+    @patch("kubo.data_foundation_cli.import_status_history")
+    def test_import_status_history_command_uses_declared_contract(
+        self,
+        importer,
+    ) -> None:
+        importer.return_value = {
+            "status": "HISTORICAL_STATUS_INTERVALS_READY",
+        }
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(
+                [
+                    "--project-root",
+                    str(ROOT),
+                    "import-status-history",
+                    "--status-corporate-root",
+                    "status-root",
+                    "--workspace",
+                    "status-workspace",
+                    "--output-root",
+                    "status-output",
+                ]
+            )
+
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            json.loads(output.getvalue())["status"],
+            "HISTORICAL_STATUS_INTERVALS_READY",
+        )
+        importer.assert_called_once_with(
+            status_corporate_root=Path("status-root"),
+            workspace=Path("status-workspace"),
+            output_root=Path("status-output"),
+        )
+
     def test_independent_validation_blocker_controls_exit_status(self) -> None:
         self.assertTrue(
             _report_is_blocking(

@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "ku-bo-tri-security-pilot-v1",
+  "as_of": "2026-08-12",
+  "scope": "STAGED_TRI_SECURITY_DATA_QUALIFICATION",
+  "batch_size": 3,
+  "execution_order": [
+    "tri-001-kfh-ship-aznoula",
+    "tri-002-nbk-mabanee-zain",
+    "tri-003-humansoft-aglty-boubyan"
+  ],
+  "claim_boundary": "CONFIGURATION_ONLY_NOT_MARKET_EVIDENCE",
+  "required_gates": [
+    "POINT_IN_TIME_IDENTITY",
+    "TRADING_CALENDAR",
+    "SECURITY_STATUS_HISTORY",
+    "PRICE_DENOMINATOR",
+    "PRICE_EVIDENCE",
+    "PRICE_CORPORATE_ACTION_QA",
+    "BENCHMARK_HISTORY",
+    "BENCHMARK_EVIDENCE",
+    "MARKET_TOTAL_RECONCILIATION",
+    "QUERY_AND_PAGINATION_COMPLETENESS",
+    "RUNTIME_SECRET_GUARD",
+    "CLAIM_BOUNDARIES"
+  ],
+  "batches": [
+    {
+      "batch_id": "tri-001-kfh-ship-aznoula",
+      "sequence": 1,
+      "status": "CONFIGURED_FOR_WORKSPACE_PREPARATION",
+      "purpose": "Exercise bank, industrial, and utility identity and evidence contracts before any market-wide expansion.",
+      "allowed_output": "DATA_QUALIFICATION_REPORT_ONLY",
+      "securities": [
+        {
+          "security_code": "108",
+          "ticker": "KFH",
+          "name_en": "Kuwait Finance House",
+          "name_ar": "بيت التمويل الكويتي",
+          "isin": "KW0EQ0100085",
+          "sector": "Banks",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "BANK_ACCOUNTING",
+            "IDENTITY_VALIDATION",
+            "CORPORATE_ACTION_POLICY"
+          ]
+        },
+        {
+          "security_code": "506",
+          "ticker": "SHIP",
+          "name_en": "Heavy Engineering Industries and Shipbuilding Company",
+          "name_ar": "شركة الصناعات الهندسية الثقيلة وبناء السفن",
+          "isin": "KW0EQ0500888",
+          "sector": "Industrials",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "INDUSTRIAL_ISSUER",
+            "IDENTITY_VALIDATION",
+            "PRICE_DENOMINATOR"
+          ]
+        },
+        {
+          "security_code": "826",
+          "ticker": "AZNOULA",
+          "name_en": "Shamal Az-Zour Al-Oula Power and Water Company",
+          "name_ar": "شركة شمال الزور الأولى للطاقة والمياه",
+          "isin": "KW0EQ0504799",
+          "sector": "Utilities",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "UTILITY_ISSUER",
+            "IDENTITY_VALIDATION",
+            "CASH_DIVIDEND_POLICY"
+          ]
+        }
+      ]
+    },
+    {
+      "batch_id": "tri-002-nbk-mabanee-zain",
+      "sequence": 2,
+      "status": "CONFIGURED_FOR_WORKSPACE_PREPARATION",
+      "purpose": "Re-run the same contracts across bank, real-estate, and telecommunications issuers after batch one qualifies.",
+      "allowed_output": "DATA_QUALIFICATION_REPORT_ONLY",
+      "securities": [
+        {
+          "security_code": "101",
+          "ticker": "NBK",
+          "name_en": "National Bank of Kuwait",
+          "name_ar": "بنك الكويت الوطني",
+          "isin": "KW0EQ0100010",
+          "sector": "Banks",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "BANK_ACCOUNTING",
+            "IDENTITY_VALIDATION",
+            "BENCHMARK_COMPARISON"
+          ]
+        },
+        {
+          "security_code": "413",
+          "ticker": "MABANEE",
+          "name_en": "Mabanee Company",
+          "name_ar": "شركة المباني",
+          "isin": "KW0EQ0400725",
+          "sector": "Real Estate",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "REAL_ESTATE_ISSUER",
+            "IDENTITY_VALIDATION",
+            "CORPORATE_ACTION_POLICY"
+          ]
+        },
+        {
+          "security_code": "605",
+          "ticker": "ZAIN",
+          "name_en": "Mobile Telecommunications Company",
+          "name_ar": "شركة الاتصالات المتنقلة",
+          "isin": "KW0EQ0601058",
+          "sector": "Telecommunications",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "TELECOM_ISSUER",
+            "IDENTITY_VALIDATION",
+            "PRICE_DENOMINATOR"
+          ]
+        }
+      ]
+    },
+    {
+      "batch_id": "tri-003-humansoft-aglty-boubyan",
+      "sequence": 3,
+      "status": "CONFIGURED_FOR_WORKSPACE_PREPARATION",
+      "purpose": "Add education-services, logistics, and a second banking case without changing the three-security denominator.",
+      "allowed_output": "DATA_QUALIFICATION_REPORT_ONLY",
+      "securities": [
+        {
+          "security_code": "623",
+          "ticker": "HUMANSOFT",
+          "name_en": "Humansoft Holding Company",
+          "name_ar": "شركة هيومن سوفت القابضة",
+          "isin": "KW0EQ0601694",
+          "sector": "Consumer Services",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "SERVICES_ISSUER",
+            "IDENTITY_VALIDATION",
+            "CORPORATE_ACTION_POLICY"
+          ]
+        },
+        {
+          "security_code": "603",
+          "ticker": "AGLTY",
+          "name_en": "Agility Public Warehousing Company",
+          "name_ar": "شركة أجيليتي للمخازن العمومية",
+          "isin": "KW0EQ0601041",
+          "sector": "Industrials",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "LOGISTICS_ISSUER",
+            "IDENTITY_VALIDATION",
+            "CORPORATE_ACTION_POLICY"
+          ]
+        },
+        {
+          "security_code": "109",
+          "ticker": "BOUBYAN",
+          "name_en": "Boubyan Bank",
+          "name_ar": "بنك بوبيان",
+          "isin": "KW0EQ0102065",
+          "sector": "Banks",
+          "identity_state": "UNVERIFIED_SEED",
+          "case_tags": [
+            "BANK_ACCOUNTING",
+            "IDENTITY_VALIDATION",
+            "CROSS_BATCH_CONSISTENCY"
+          ]
+        }
+      ]
+    }
+  ]
+}

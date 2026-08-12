@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-scoped-config-manifest.schema.json",
+  "title": "KU-BO tri-security scoped configuration manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scope",
+    "batch_id",
+    "batch_sha256",
+    "security_count",
+    "files",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scope": {"const": "TRI_SECURITY_BATCH_SCOPED_CONFIGURATION"},
+    "batch_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "batch_sha256": {"$ref": "#/$defs/sha256"},
+    "security_count": {"const": 3},
+    "files": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {
+            "enum": [
+              "pilot/benchmark_registry.json",
+              "pilot/outcome_session_policy.json",
+              "pilot/security_master_seed.json",
+              "pilot/tri_security_batches.json",
+              "pilot/tri_security_vendor_mappings.json",
+              "pilot/vendor_symbol_mappings.json"
+            ]
+          },
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "claim_boundary": {"const": "CONFIGURATION_ONLY_NOT_MARKET_EVIDENCE"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -41,7 +41,7 @@
           "provider": {"const": "investing"},
           "provider_symbol": {
             "type": "string",
-            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            "pattern": "^[a-z0-9]+(?:-+[a-z0-9]+)*$"
           },
           "provider_url": {"type": "string", "format": "uri", "pattern": "^https://"},
           "mapping_state": {
