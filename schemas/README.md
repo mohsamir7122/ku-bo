@@ -15,7 +15,9 @@ Synthetic كدليل حقيقي. ويحتوي عقد التحقق المستقل
 في عقود Final Data Foundation وBenchmark وOfficial EOD. سبب ذلك أن boolean أو
 تصنيفًا داخل الحزمة نفسها لا يثبت مصدر البايتات. لن تُفتح هذه الحالات في
 الـschemas إلا بعد إضافة receipt مستقل ومصادق عليه يربط البصمات بسلطة الالتقاط
-أو المصالحة النهائية، ثم ربط التحقق منه في runtime.
+أو المصالحة النهائية، ثم ربط التحقق منه في runtime. عقد Run Receipt في
+`KU-BO-010` يثبت سلامة Plan/Cohort/Window وربط شجرة المرحلة فقط؛ ليس Capture
+Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي قيمة `READY`.
 
 هذه الملفات توثّق حدود المدخلات بصيغة JSON Schema 2020-12. التحقق الصارم في وقت التشغيل موجود أيضًا داخل كود Python ولا يعتمد على تثبيت `jsonschema`، حتى يبقى Core بلا تبعيات خارجية.
 
@@ -62,5 +64,7 @@ Synthetic كدليل حقيقي. ويحتوي عقد التحقق المستقل
 - `outcome-session-policy.schema.json`: سياسة جلسات النتيجة؛ تبقى UNFROZEN حتى حسم القرار المسجل بدل استخدام Civil Days.
 - `data-foundation-packet.schema.json`: ملخص مكونات الحزمة بعد إعادة قراءة البايتات والـhashes.
 - `data-foundation-gate-report.schema.json`: التقرير النهائي للبوابات الاثنتي عشرة وتصنيف الأدلة والحقوق والحدود.
+- `tri-security-run-receipt.schema.json`: إيصال HMAC خارجي يربط خطة الدفعة الأولى وScoped Config والمقام الثلاثي والنافذة من دون ترقية Evidence أوQualification.
+- `tri-security-stage-binding.schema.json`: ربط HMAC مستقل لمحتوى Run Receipt وManifest والجرد الكامل لشجرة مرحلة واحدة، مع منع خلط التشغيل أوالمقام.
 
 وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق. ويفرض `kubo.benchmark_import` Basis/Scope والتقويم من دون Forward Fill، ويعيد `kubo.official_eod_import` حساب مقام الأسهم والجلسات، ثم يعيد `kubo.data_foundation_reconciliation` فحص كل bytes وhashes ولا يثق بحالة محفوظة وحدها.

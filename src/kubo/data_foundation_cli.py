@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import base64
 import binascii
+import hmac
 import json
 import os
 from pathlib import Path
@@ -39,6 +40,13 @@ from .tri_security_pilot import (
     prepare_tri_security_batch_workspace,
     verify_tri_security_scoped_config,
 )
+from .tri_security_receipts import (
+    STAGE_IDS,
+    issue_tri_security_run_receipt,
+    issue_tri_security_stage_binding,
+    verify_tri_security_run_receipt,
+    verify_tri_security_stage_binding,
+)
 from .user_price_export import import_investing_user_exports
 from .vendor_symbol_mapping import (
     PilotIdentitySeedCatalog,
@@ -55,6 +63,15 @@ BLOCKING_STATUSES = frozenset(
         "DATA_FOUNDATION_PARTIAL",
         "DATA_FOUNDATION_BLOCKED",
         "FAIL",
+    }
+)
+
+TRI_SECURITY_RECEIPT_COMMANDS = frozenset(
+    {
+        "issue-tri-security-run-receipt",
+        "verify-tri-security-run-receipt",
+        "issue-tri-security-stage-binding",
+        "verify-tri-security-stage-binding",
     }
 )
 
@@ -98,6 +115,58 @@ def _runtime_trust_hmac_key() -> bytes:
     raise ValueError("KUBO_RUNTIME_TRUST_HMAC_KEY must start with hex: or base64:")
 
 
+def _runtime_encoded_hmac_key(variable: str) -> bytes:
+    value = os.environ.get(variable, "")
+    if not value:
+        raise ValueError(f"{variable} is required")
+    if value.startswith("hex:"):
+        encoded = value[4:]
+        decoder = bytes.fromhex
+    elif value.startswith("base64:"):
+        encoded = value[7:]
+        decoder = lambda item: base64.b64decode(item, validate=True)
+    else:
+        raise ValueError(f"{variable} must start with hex: or base64:")
+    try:
+        key = decoder(encoded)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError(f"{variable} is not valid encoded bytes") from exc
+    if len(key) < 32:
+        raise ValueError(f"{variable} must decode to at least 32 bytes")
+    return key
+
+
+def _runtime_hmac_key_id(variable: str) -> str:
+    key_id = os.environ.get(variable, "").strip()
+    if not key_id:
+        raise ValueError(f"{variable} is required")
+    return key_id
+
+
+def _runtime_tri_run_hmac() -> tuple[bytes, str]:
+    return (
+        _runtime_encoded_hmac_key("KUBO_TRI_RUN_HMAC_KEY"),
+        _runtime_hmac_key_id("KUBO_TRI_RUN_HMAC_KEY_ID"),
+    )
+
+
+def _runtime_tri_stage_hmac() -> tuple[bytes, str]:
+    return (
+        _runtime_encoded_hmac_key("KUBO_TRI_STAGE_HMAC_KEY"),
+        _runtime_hmac_key_id("KUBO_TRI_STAGE_HMAC_KEY_ID"),
+    )
+
+
+def _runtime_independent_tri_hmacs() -> tuple[bytes, str, bytes, str]:
+    run_key, run_key_id = _runtime_tri_run_hmac()
+    stage_key, stage_key_id = _runtime_tri_stage_hmac()
+    if run_key_id == stage_key_id:
+        raise ValueError("tri-security run and stage HMAC key IDs must be independent")
+    if hmac.compare_digest(run_key, stage_key):
+        raise ValueError("tri-security run and stage HMAC keys must be independent")
+    return run_key, run_key_id, stage_key, stage_key_id
+
+
 def _load_eod_runtime_trust_registry(
     registry_path: Path | None,
     *,
@@ -133,6 +202,28 @@ def _report_is_blocking(report: dict[str, Any]) -> bool:
         report.get(field) in BLOCKING_STATUSES
         for field in ("status", "validation_status", "contract_status")
     )
+
+
+def _sanitized_receipt_report(value: Any) -> Any:
+    """Remove authentication material and absolute paths from CLI output."""
+
+    if isinstance(value, dict):
+        sanitized: dict[str, Any] = {}
+        for field, item in value.items():
+            if field in {"authentication", "key", "tag"}:
+                continue
+            if field.endswith("_path") and isinstance(item, str):
+                path = Path(item)
+                sanitized[field] = path.name if path.is_absolute() else item
+            else:
+                sanitized[field] = _sanitized_receipt_report(item)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitized_receipt_report(item) for item in value]
+    if isinstance(value, str):
+        path = Path(value)
+        return path.name if path.is_absolute() else value
+    return value
 
 
 def parser() -> argparse.ArgumentParser:
@@ -324,43 +415,290 @@ def parser() -> argparse.ArgumentParser:
 
     print_report = sub.add_parser("print-data-foundation-gate-report")
     print_report.add_argument("--path", type=Path, required=True)
+
+    issue_run_receipt = sub.add_parser(
+        "issue-tri-security-run-receipt",
+        help=(
+            "Issue an external authenticated receipt for one prepared "
+            "tri-security batch workspace"
+        ),
+        description=(
+            "Requires runtime-only KUBO_TRI_RUN_HMAC_KEY and "
+            "KUBO_TRI_RUN_HMAC_KEY_ID environment variables."
+        ),
+    )
+    issue_run_receipt.add_argument(
+        "--workspace-root",
+        "--workspace",
+        dest="workspace_root",
+        type=Path,
+        required=True,
+    )
+    issue_run_receipt.add_argument("--output-root", type=Path, required=True)
+    issue_run_receipt.add_argument("--expected-batch-plan-sha256", required=True)
+    issue_run_receipt.add_argument(
+        "--expected-scoped-config-manifest-sha256", required=True
+    )
+    issue_run_receipt.add_argument("--receipt-id", required=True)
+    issue_run_receipt.add_argument("--issuer-id", required=True)
+    issue_run_receipt.add_argument("--issued-at", required=True)
+    issue_run_receipt.add_argument("--expires-at", required=True)
+
+    verify_run_receipt = sub.add_parser(
+        "verify-tri-security-run-receipt",
+        help=(
+            "Authenticate an external run receipt and revalidate its exact "
+            "tri-security workspace binding"
+        ),
+        description=(
+            "Requires runtime-only KUBO_TRI_RUN_HMAC_KEY and "
+            "KUBO_TRI_RUN_HMAC_KEY_ID environment variables."
+        ),
+    )
+    verify_run_receipt.add_argument(
+        "--receipt-path",
+        "--receipt",
+        dest="receipt_path",
+        type=Path,
+        required=True,
+    )
+    verify_run_receipt.add_argument(
+        "--workspace-root",
+        "--workspace",
+        dest="workspace_root",
+        type=Path,
+        required=True,
+    )
+    verify_run_receipt.add_argument("--expected-batch-plan-sha256", required=True)
+    verify_run_receipt.add_argument(
+        "--expected-scoped-config-manifest-sha256", required=True
+    )
+    verify_run_receipt.add_argument("--decision-at", required=True)
+    verify_run_receipt.add_argument("--expected-run-id", required=True)
+    verify_run_receipt.add_argument("--expected-batch-id", required=True)
+
+    issue_stage_binding = sub.add_parser(
+        "issue-tri-security-stage-binding",
+        help=(
+            "Bind an immutable stage artifact manifest to an independently "
+            "authenticated tri-security run receipt"
+        ),
+        description=(
+            "Requires independent runtime-only KUBO_TRI_RUN_HMAC_KEY, "
+            "KUBO_TRI_RUN_HMAC_KEY_ID, KUBO_TRI_STAGE_HMAC_KEY, and "
+            "KUBO_TRI_STAGE_HMAC_KEY_ID credentials."
+        ),
+    )
+    issue_stage_binding.add_argument(
+        "--receipt-path",
+        "--receipt",
+        dest="receipt_path",
+        type=Path,
+        required=True,
+    )
+    issue_stage_binding.add_argument(
+        "--workspace-root",
+        "--workspace",
+        dest="workspace_root",
+        type=Path,
+        required=True,
+    )
+    issue_stage_binding.add_argument("--stage-root", type=Path, required=True)
+    issue_stage_binding.add_argument("--output-root", type=Path, required=True)
+    issue_stage_binding.add_argument("--expected-batch-plan-sha256", required=True)
+    issue_stage_binding.add_argument(
+        "--expected-scoped-config-manifest-sha256", required=True
+    )
+    issue_stage_binding.add_argument("--expected-stage-manifest-sha256", required=True)
+    issue_stage_binding.add_argument("--expected-run-id", required=True)
+    issue_stage_binding.add_argument("--expected-batch-id", required=True)
+    issue_stage_binding.add_argument("--binding-id", required=True)
+    issue_stage_binding.add_argument("--stage-id", choices=STAGE_IDS, required=True)
+    issue_stage_binding.add_argument("--bound-at", required=True)
+
+    verify_stage_binding = sub.add_parser(
+        "verify-tri-security-stage-binding",
+        help=(
+            "Authenticate independent run and stage credentials and revalidate "
+            "the current stage artifacts"
+        ),
+        description=(
+            "Requires independent runtime-only KUBO_TRI_RUN_HMAC_KEY, "
+            "KUBO_TRI_RUN_HMAC_KEY_ID, KUBO_TRI_STAGE_HMAC_KEY, and "
+            "KUBO_TRI_STAGE_HMAC_KEY_ID credentials."
+        ),
+    )
+    verify_stage_binding.add_argument(
+        "--binding-path",
+        "--binding",
+        dest="binding_path",
+        type=Path,
+        required=True,
+    )
+    verify_stage_binding.add_argument(
+        "--receipt-path",
+        "--receipt",
+        dest="receipt_path",
+        type=Path,
+        required=True,
+    )
+    verify_stage_binding.add_argument(
+        "--workspace-root",
+        "--workspace",
+        dest="workspace_root",
+        type=Path,
+        required=True,
+    )
+    verify_stage_binding.add_argument("--stage-root", type=Path, required=True)
+    verify_stage_binding.add_argument("--expected-batch-plan-sha256", required=True)
+    verify_stage_binding.add_argument(
+        "--expected-scoped-config-manifest-sha256", required=True
+    )
+    verify_stage_binding.add_argument("--expected-stage-manifest-sha256", required=True)
+    verify_stage_binding.add_argument("--decision-at", required=True)
+    verify_stage_binding.add_argument(
+        "--expected-stage-id", choices=STAGE_IDS, required=True
+    )
+    verify_stage_binding.add_argument("--expected-run-id", required=True)
+    verify_stage_binding.add_argument("--expected-batch-id", required=True)
     return value
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     project_root = args.project_root.resolve()
-    config_dir = (
-        require_real_directory(
-            args.pilot_config_dir,
-            field="pilot_config_dir",
-        )
-        if args.pilot_config_dir is not None
-        else project_root / "config"
-    )
+    receipt_command = args.command in TRI_SECURITY_RECEIPT_COMMANDS
     scoped_config_report = None
-    if args.pilot_config_dir is not None:
-        if args.expected_pilot_config_manifest_sha256 is None:
+    if receipt_command:
+        if (
+            args.pilot_config_dir is not None
+            or args.expected_pilot_config_manifest_sha256 is not None
+        ):
             raise ValueError(
-                "--pilot-config-dir requires "
-                "--expected-pilot-config-manifest-sha256 to anchor the scoped "
-                "configuration outside its self-authored manifest"
+                "receipt commands derive scoped configuration only from the "
+                "prepared workspace; omit global --pilot-config-dir options"
             )
-        scoped_config_report = verify_tri_security_scoped_config(
-            config_dir,
-            expected_manifest_sha256=args.expected_pilot_config_manifest_sha256,
+        config_dir = project_root / "config"
+    else:
+        config_dir = (
+            require_real_directory(
+                args.pilot_config_dir,
+                field="pilot_config_dir",
+            )
+            if args.pilot_config_dir is not None
+            else project_root / "config"
         )
-    elif args.expected_pilot_config_manifest_sha256 is not None:
-        raise ValueError(
-            "--expected-pilot-config-manifest-sha256 requires --pilot-config-dir"
-        )
-    if not (config_dir / "pilot" / "security_master_seed.json").is_file():
-        raise SystemExit(
-            "invalid KU-BO project root: config/pilot/security_master_seed.json is missing"
-        )
+        if args.pilot_config_dir is not None:
+            if args.expected_pilot_config_manifest_sha256 is None:
+                raise ValueError(
+                    "--pilot-config-dir requires "
+                    "--expected-pilot-config-manifest-sha256 to anchor the scoped "
+                    "configuration outside its self-authored manifest"
+                )
+            scoped_config_report = verify_tri_security_scoped_config(
+                config_dir,
+                expected_manifest_sha256=args.expected_pilot_config_manifest_sha256,
+            )
+        elif args.expected_pilot_config_manifest_sha256 is not None:
+            raise ValueError(
+                "--expected-pilot-config-manifest-sha256 requires --pilot-config-dir"
+            )
+        if not (config_dir / "pilot" / "security_master_seed.json").is_file():
+            raise SystemExit(
+                "invalid KU-BO project root: "
+                "config/pilot/security_master_seed.json is missing"
+            )
 
     report: dict[str, Any]
-    if args.command == "validate-pilot-config":
+    if args.command == "issue-tri-security-run-receipt":
+        run_key, run_key_id = _runtime_tri_run_hmac()
+        report = issue_tri_security_run_receipt(
+            workspace_root=args.workspace_root,
+            output_root=args.output_root,
+            expected_batch_plan_sha256=args.expected_batch_plan_sha256,
+            expected_scoped_config_manifest_sha256=(
+                args.expected_scoped_config_manifest_sha256
+            ),
+            receipt_id=args.receipt_id,
+            issuer_id=args.issuer_id,
+            issued_at=args.issued_at,
+            expires_at=args.expires_at,
+            key=run_key,
+            key_id=run_key_id,
+        )
+        report = _sanitized_receipt_report(report)
+    elif args.command == "verify-tri-security-run-receipt":
+        run_key, run_key_id = _runtime_tri_run_hmac()
+        verified_receipt = verify_tri_security_run_receipt(
+            receipt_path=args.receipt_path,
+            workspace_root=args.workspace_root,
+            expected_batch_plan_sha256=args.expected_batch_plan_sha256,
+            expected_scoped_config_manifest_sha256=(
+                args.expected_scoped_config_manifest_sha256
+            ),
+            decision_at=args.decision_at,
+            key=run_key,
+            expected_key_id=run_key_id,
+            expected_run_id=args.expected_run_id,
+            expected_batch_id=args.expected_batch_id,
+        )
+        report = _sanitized_receipt_report(verified_receipt.report())
+    elif args.command == "issue-tri-security-stage-binding":
+        run_key, run_key_id, stage_key, stage_key_id = (
+            _runtime_independent_tri_hmacs()
+        )
+        verified_receipt = verify_tri_security_run_receipt(
+            receipt_path=args.receipt_path,
+            workspace_root=args.workspace_root,
+            expected_batch_plan_sha256=args.expected_batch_plan_sha256,
+            expected_scoped_config_manifest_sha256=(
+                args.expected_scoped_config_manifest_sha256
+            ),
+            decision_at=args.bound_at,
+            key=run_key,
+            expected_key_id=run_key_id,
+            expected_run_id=args.expected_run_id,
+            expected_batch_id=args.expected_batch_id,
+        )
+        report = issue_tri_security_stage_binding(
+            verified_receipt=verified_receipt,
+            workspace_root=args.workspace_root,
+            stage_root=args.stage_root,
+            output_root=args.output_root,
+            expected_stage_manifest_sha256=args.expected_stage_manifest_sha256,
+            binding_id=args.binding_id,
+            stage_id=args.stage_id,
+            bound_at=args.bound_at,
+            key=stage_key,
+            key_id=stage_key_id,
+        )
+        report = _sanitized_receipt_report(report)
+    elif args.command == "verify-tri-security-stage-binding":
+        run_key, run_key_id, stage_key, stage_key_id = (
+            _runtime_independent_tri_hmacs()
+        )
+        verified_stage = verify_tri_security_stage_binding(
+            binding_path=args.binding_path,
+            receipt_path=args.receipt_path,
+            workspace_root=args.workspace_root,
+            stage_root=args.stage_root,
+            expected_batch_plan_sha256=args.expected_batch_plan_sha256,
+            expected_scoped_config_manifest_sha256=(
+                args.expected_scoped_config_manifest_sha256
+            ),
+            expected_stage_manifest_sha256=args.expected_stage_manifest_sha256,
+            decision_at=args.decision_at,
+            key=stage_key,
+            expected_key_id=stage_key_id,
+            receipt_key=run_key,
+            expected_receipt_key_id=run_key_id,
+            expected_stage_id=args.expected_stage_id,
+            expected_run_id=args.expected_run_id,
+            expected_batch_id=args.expected_batch_id,
+        )
+        report = verified_stage.report()
+        report = _sanitized_receipt_report(report)
+    elif args.command == "validate-pilot-config":
         identities = PilotIdentitySeedCatalog(config_dir)
         mappings = VendorSymbolMappingCatalog(config_dir, identities)
         report = {
