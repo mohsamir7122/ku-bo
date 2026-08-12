@@ -159,7 +159,7 @@ DETAIL: 548 tests ran in 208.016 seconds with no assertion failure. Ten tests sk
 ```text
 COMMAND_OR_JOB: isolated wheel build, forced reinstall, and installed_data_foundation_check.py
 RESULT: PASS
-DETAIL: A fresh Python 3.13 environment installed the 337439-byte wheel (SHA-256 3adf9c611fc8c83d0a654b6d42f34743bc209b1362d8dc34a69334401af6a730) and exercised all 17 installed handlers, including the four receipt/binding commands.
+DETAIL: A fresh Python 3.13 environment installed the 337439-byte wheel (SHA-256 3adf9c611fc8c83d0a654b6d42f34743bc209b1362d8dc34a69334401af6a730) and exercised 16 selected distinct installed CLI flows, including the four receipt/binding commands. The installed CLI exposes additional commands that this fixture-driven wheel check does not claim to exercise.
 ```
 
 ```text
