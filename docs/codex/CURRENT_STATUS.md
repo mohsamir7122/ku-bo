@@ -38,12 +38,17 @@ with the current head, and must not be used as the KU-BO-009 base.
 did not exercise this installed CLI dispatch. KU-BO-009 removes the invalid
 argument and adds a regression test against the actual function contract.
 
-## KU-BO-009 work in progress
+## KU-BO-009 published for review
 
 Task branch:
 
 ```text
 build/tri-security-pilot-v0.3
+implementation head: 0c4d5a6b71137ec5719195ea749ed9bedf863a72
+Draft PR: https://github.com/mohsamir7122/ku-bo/pull/10
+GitHub Actions: run 31571590903 / PASS (Python 3.11-3.14)
+final local suite: 528 tests / PASS
+isolated installed-wheel exercise: PASS / 12 handlers
 ```
 
 The branch adds a staged `DATA_QUALIFICATION_ONLY` registry and workspace. Each
@@ -57,6 +62,11 @@ not a valid source for scores, forecasts, recommendations, or backtest results.
 Its open Factor9 implementation contains look-ahead bias, missingness/confidence
 errors, and fabricated fundamentals. Only bounded engineering test ideas may be
 rewritten against KU-BO contracts.
+
+KU-BO-009 is complete as an engineering and preparation stage. It did not
+collect real market bytes or qualify the first batch. The smallest next stage
+is a plan/window/cohort receipt binding every downstream component; no later
+batch is authorized by this result.
 
 ## Still not proven
 

@@ -17,7 +17,8 @@ build/data-foundation-v0.2
 
 ```text
 main@be5fe3883016dedf07fa680905f7199f3906b4d8
-  └── build/tri-security-pilot-v0.3
+  └── build/tri-security-pilot-v0.3@0c4d5a6b71137ec5719195ea749ed9bedf863a72
+        └── Draft PR #10 / CI 31571590903 PASS
 ```
 
 قاعدة المرحلة الحالية:

@@ -2,7 +2,7 @@
 
 ```text
 TASK_ID: KU-BO-009
-STATUS: IN_PROGRESS
+STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: main
 EXPECTED_NEW_BRANCH: build/tri-security-pilot-v0.3
@@ -14,7 +14,7 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-RESULT_PR: PENDING
+RESULT_PR: https://github.com/mohsamir7122/ku-bo/pull/10
 RESULT_HANDOFF: docs/codex/handoffs/KU-BO-009-result.md
 BLOCKED_ON: REAL_MARKET_EVIDENCE; AUTHENTICATED_CAPTURE_RECEIPTS; KU-BO-008-D01
 ```
@@ -97,3 +97,11 @@ git diff inspection
 Use `docs/codex/HANDOFF_TEMPLATE.md` for the final handoff. Record any future
 destructive or policy choice in `docs/codex/USER_DECISIONS.md`; this task grants
 none.
+
+## Completion record
+
+The exact implementation tree was published as commit
+`0c4d5a6b71137ec5719195ea749ed9bedf863a72` in Draft PR #10. GitHub Actions
+run `31571590903` passed all four Python jobs. The engineering task is complete;
+the real-evidence, policy, backtest, forecast, and recommendation blockers above
+remain in force.
