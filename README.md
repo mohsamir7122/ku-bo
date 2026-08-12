@@ -292,6 +292,19 @@ kubo-data-foundation prepare-tri-security-batch \
 مرر كذلك البصمة الصادرة في `scoped_config_manifest_sha256` باستخدام
 `--expected-pilot-config-manifest-sha256` لربط التشغيل بالنسخة المقصودة.
 
+يضيف `KU-BO-010` عقدًا مستقلًا لإصدار Run Receipt خارجي مصادق عليه يربط
+خطة الدفعة وScoped Config وWorkspace Report والمقام الثلاثي والنافذة نفسها.
+ويربط Stage Binding مستقل المفتاح شجرة مخرجات المرحلة كاملة، بما فيها الملفات
+غير المعلنة في Manifest. مفاتيح HMAC ومعرّفاتها Runtime-only، ويُرفض تطابق
+مفتاح التشغيل مع مفتاح المرحلة. إعداد Benchmark الخماسي الحالي غير متوافق مع
+قطاعي Industrials وUtilities في الدفعة الثلاثية؛ لذلك يظل
+`benchmark_qualification_allowed=false` ويفشل أي إخفاء لعدم التوافق مغلقًا.
+
+هذه الطبقة تثبت المصادقة وسلامة الربط فقط. لا تزال أوامر الاستيراد والمصالحة
+لا تفرض الإيصال end-to-end حتى `KU-BO-011`، ولا ينتج عنها Market Evidence أو
+Qualification أوتفويض للدفعة التالية أوBacktest أوForecast. دليل التشغيل
+الكامل في `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`.
+
 تشغّل GitHub Actions هذه البوابات على Python `3.11` و`3.12` و`3.13` و`3.14`. لا تثبت الوثائق عدد اختبارات ثابتًا؛ نتيجة CI الخاصة بالـCommit هي المرجع.
 
 تغطي الاختبارات حالات غياب بورصة الكويت، فتح قناة رسمية بلا Finding، المجتمع وحده، Finding مستقبلي، Hash تابع لمصدر آخر، Artifact جُمع بعد القرار، Access Receipt أوSearch Snippet كدليل، تضارب مستقل، إعادة النشر، Counts بلا Universe Receipt، Probability غير مدعومة، السيولة الصفرية، التعليق، Limit Queue، وPartial Fill.
@@ -309,6 +322,7 @@ kubo-data-foundation prepare-tri-security-batch \
 - `src/kubo/official_eod_*`: مساحة عمل واستيراد وتحقق مستقل لـOfficial Complete Daily EOD ومقام الجلسات.
 - `src/kubo/data_foundation_reconciliation.py`: إعادة فحص المكونات وإصدار تقرير البوابات الاثنتي عشرة.
 - `src/kubo/tri_security_pilot.py`: سجل الدفعات الثلاثية وتجهيز Workspace لتأهيل البيانات بلا Forecast.
+- `src/kubo/tri_security_receipts.py`: إيصال تشغيل وربط مرحلة خارجيان، بمفتاحين مستقلين وحدود ادعاء مغلقة.
 - `src/kubo/research_rank.py`: ترتيب الأدلة مع Dedup وتعارض المصادر.
 - `src/kubo/request_contracts.py`: عقد الطلب المرن وحدود الحقول.
 - `src/kubo/reporting.py`: مخرجات JSON وMarkdown حسب الطلب.
@@ -324,6 +338,7 @@ kubo-data-foundation prepare-tri-security-batch \
 - `docs/V3_1_HARDENING_AR.md`: لقطة تاريخية لتدقيق V3.1؛ الأرقام النهائية الحالية موثقة في `docs/BUILD_STATUS_AR.md`.
 - `docs/OPERATIONS_AR.md`: طريقة بناء تشغيل حقيقي.
 - `docs/BENCHMARK_OFFICIAL_EOD_V0_2_AR.md`: تشغيل Benchmark وOfficial EOD والمصالحة النهائية وحدود الأدلة.
+- `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`: عقد المصادقة وربط الخطة والمقام والنافذة وشجرة المرحلة.
 - `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`: الحالة المتراكمة الحالية والبوابات الخارجية المتبقية.
 - `docs/legacy_v2/`: وثائق V2 التاريخية للرجوع، وليست مسار التشغيل الافتراضي.
 

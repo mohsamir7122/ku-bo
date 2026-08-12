@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -65,6 +66,12 @@ def _rendered_command(
             f"{expected_exit}: {completed.stderr.strip()}"
         )
     return completed.stdout
+
+
+def _manifest_sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -158,6 +165,63 @@ def main(argv: list[str] | None = None) -> int:
         expected_exit=0,
     )
     _expect(scoped_report["identity_seed"], "security_count", 3)
+
+    run_key = b"installed-run-receipt-key-material-32-bytes"
+    stage_key = b"installed-stage-binding-key-material-32b"
+    os.environ["KUBO_TRI_RUN_HMAC_KEY"] = "hex:" + run_key.hex()
+    os.environ["KUBO_TRI_RUN_HMAC_KEY_ID"] = "installed-run-key-v1"
+    os.environ["KUBO_TRI_STAGE_HMAC_KEY"] = "hex:" + stage_key.hex()
+    os.environ["KUBO_TRI_STAGE_HMAC_KEY_ID"] = "installed-stage-key-v1"
+    run_receipt_root = work_root / "tri-run-receipt"
+    receipt_issue = _command(
+        executable,
+        project_root,
+        [
+            "issue-tri-security-run-receipt",
+            "--workspace-root",
+            str(tri_workspace),
+            "--output-root",
+            str(run_receipt_root),
+            "--expected-batch-plan-sha256",
+            report["batch_plan_sha256"],
+            "--expected-scoped-config-manifest-sha256",
+            report["scoped_config_manifest_sha256"],
+            "--receipt-id",
+            "installed-receipt-v1",
+            "--issuer-id",
+            "installed-wheel-check",
+            "--issued-at",
+            "2026-08-12T12:00:00+03:00",
+            "--expires-at",
+            "2026-08-14T12:00:00+03:00",
+        ],
+        expected_exit=0,
+    )
+    _expect(receipt_issue, "status", "PASS")
+    receipt_path = run_receipt_root / "tri_security_run_receipt.json"
+    receipt_verify = _command(
+        executable,
+        project_root,
+        [
+            "verify-tri-security-run-receipt",
+            "--receipt-path",
+            str(receipt_path),
+            "--workspace-root",
+            str(tri_workspace),
+            "--expected-batch-plan-sha256",
+            report["batch_plan_sha256"],
+            "--expected-scoped-config-manifest-sha256",
+            report["scoped_config_manifest_sha256"],
+            "--decision-at",
+            "2026-08-13T09:00:00+03:00",
+            "--expected-run-id",
+            "installed-tri-security-check",
+            "--expected-batch-id",
+            "tri-001-kfh-ship-aznoula",
+        ],
+        expected_exit=0,
+    )
+    _expect(receipt_verify, "status", "PASS")
     tri_price_workspace = work_root / "tri-price-workspace"
     report = _command(
         executable,
@@ -202,6 +266,99 @@ def main(argv: list[str] | None = None) -> int:
     _expect(report, "security_count", 5)
     _expect(report, "notice_count", 1)
     _expect(report, "interval_count", 6)
+    synthetic_stage = work_root / "receipt-contract-stage"
+    (synthetic_stage / "reports").mkdir(parents=True)
+    synthetic_content = b'{"contract":"standalone-stage-integrity-only"}\n'
+    synthetic_path = synthetic_stage / "reports" / "contract.json"
+    synthetic_path.write_bytes(synthetic_content)
+    import hashlib
+
+    synthetic_manifest = {
+        "schema_version": "3.0",
+        "artifacts": [
+            {
+                "path": "reports/contract.json",
+                "sha256": hashlib.sha256(synthetic_content).hexdigest(),
+                "size_bytes": len(synthetic_content),
+            }
+        ],
+    }
+    (synthetic_stage / "manifest.json").write_bytes(
+        (
+            json.dumps(
+                synthetic_manifest,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        ).encode("utf-8")
+    )
+    status_binding_root = work_root / "receipt-contract-binding"
+    binding_issue = _command(
+        executable,
+        project_root,
+        [
+            "issue-tri-security-stage-binding",
+            "--receipt-path",
+            str(receipt_path),
+            "--workspace-root",
+            str(tri_workspace),
+            "--stage-root",
+            str(synthetic_stage),
+            "--output-root",
+            str(status_binding_root),
+            "--expected-batch-plan-sha256",
+            receipt_verify["batch_plan_sha256"],
+            "--expected-scoped-config-manifest-sha256",
+            receipt_verify["scoped_config_manifest_sha256"],
+            "--expected-stage-manifest-sha256",
+            _manifest_sha256(synthetic_stage / "manifest.json"),
+            "--expected-run-id",
+            "installed-tri-security-check",
+            "--expected-batch-id",
+            "tri-001-kfh-ship-aznoula",
+            "--binding-id",
+            "installed-status-binding-v1",
+            "--stage-id",
+            "OFFICIAL_FOUNDATION",
+            "--bound-at",
+            "2026-08-13T09:05:00+03:00",
+        ],
+        expected_exit=0,
+    )
+    _expect(binding_issue, "status", "PASS")
+    binding_verify = _command(
+        executable,
+        project_root,
+        [
+            "verify-tri-security-stage-binding",
+            "--binding-path",
+            str(status_binding_root / "tri_security_stage_binding.json"),
+            "--receipt-path",
+            str(receipt_path),
+            "--workspace-root",
+            str(tri_workspace),
+            "--stage-root",
+            str(synthetic_stage),
+            "--expected-batch-plan-sha256",
+            receipt_verify["batch_plan_sha256"],
+            "--expected-scoped-config-manifest-sha256",
+            receipt_verify["scoped_config_manifest_sha256"],
+            "--expected-stage-manifest-sha256",
+            _manifest_sha256(synthetic_stage / "manifest.json"),
+            "--decision-at",
+            "2026-08-13T09:10:00+03:00",
+            "--expected-stage-id",
+            "OFFICIAL_FOUNDATION",
+            "--expected-run-id",
+            "installed-tri-security-check",
+            "--expected-batch-id",
+            "tri-001-kfh-ship-aznoula",
+        ],
+        expected_exit=0,
+    )
+    _expect(binding_verify, "status", "PASS")
 
     benchmark_fixture_root = work_root / "benchmark-fixture"
     benchmark_fixture_root.mkdir()
@@ -368,6 +525,10 @@ def main(argv: list[str] | None = None) -> int:
                 "installed_handlers_exercised": [
                     "validate-tri-security-pilot",
                     "prepare-tri-security-batch",
+                    "issue-tri-security-run-receipt",
+                    "verify-tri-security-run-receipt",
+                    "issue-tri-security-stage-binding",
+                    "verify-tri-security-stage-binding",
                     "validate-pilot-config-scoped",
                     "prepare-price-collection-scoped",
                     "import-status-history",

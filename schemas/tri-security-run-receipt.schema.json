@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json",
+  "title": "KU-BO authenticated tri-security run receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "receipt_id",
+    "issuer_id",
+    "issued_at",
+    "expires_at",
+    "run_date",
+    "binding",
+    "claim_boundary",
+    "claim_boundaries",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "audience": {"const": "kubo-tri-security-run"},
+    "receipt_id": {"$ref": "#/$defs/identifier"},
+    "issuer_id": {"$ref": "#/$defs/identifier"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "run_date": {"type": "string", "format": "date"},
+    "binding": {"$ref": "#/$defs/runBinding"},
+    "claim_boundary": {"const": "AUTHENTICATED_BINDING_NOT_MARKET_EVIDENCE"},
+    "claim_boundaries": {"$ref": "#/$defs/runClaimBoundaries"},
+    "authentication": {"$ref": "#/$defs/authentication"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "batchId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "securityCode": {
+      "type": "string",
+      "pattern": "^[0-9]{1,12}$"
+    },
+    "ticker": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]{0,31}$"
+    },
+    "isin": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"
+    },
+    "byteBoundFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {"const": "plan/tri_security_batch_plan.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "scopedConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_path", "manifest_sha256", "manifest_size_bytes"],
+      "properties": {
+        "manifest_path": {"const": "scoped_config/manifest.json"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_size_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "workspaceReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {"const": "reports/tri_security_workspace_report.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "qualificationWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_from", "window_to", "timezone", "date_basis"],
+      "properties": {
+        "window_from": {"type": "string", "format": "date"},
+        "window_to": {"type": "string", "format": "date"},
+        "timezone": {"const": "Asia/Kuwait"},
+        "date_basis": {"const": "DECLARED_DATA_QUALIFICATION_WINDOW"}
+      }
+    },
+    "cohortSecurity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "security_code",
+        "ticker",
+        "isin",
+        "sector",
+        "identity_state"
+      ],
+      "properties": {
+        "security_code": {"$ref": "#/$defs/securityCode"},
+        "ticker": {"$ref": "#/$defs/ticker"},
+        "isin": {"$ref": "#/$defs/isin"},
+        "sector": {"type": "string", "minLength": 1},
+        "identity_state": {"const": "UNVERIFIED_SEED"}
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["security_count", "securities", "cohort_sha256"],
+      "properties": {
+        "security_count": {"const": 3},
+        "securities": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/cohortSecurity"}
+        },
+        "cohort_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "benchmarkScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_state",
+        "comparison_scope",
+        "comparison_security_count",
+        "comparison_security_codes",
+        "comparison_sectors",
+        "series_registry_id",
+        "series_registry_sha256",
+        "required_benchmark_codes",
+        "configured_sector_series",
+        "missing_cohort_sector_series",
+        "five_security_scope_allowed",
+        "full_market_scope_allowed",
+        "benchmark_qualification_allowed"
+      ],
+      "properties": {
+        "scope_state": {"const": "CONFIGURED_SERIES_INCOMPATIBLE_WITH_TRI_COHORT"},
+        "comparison_scope": {"const": "NAMED_TRI_SECURITY_COHORT"},
+        "comparison_security_count": {"const": 3},
+        "comparison_security_codes": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/securityCode"}
+        },
+        "comparison_sectors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "series_registry_id": {"type": "string", "minLength": 1},
+        "series_registry_sha256": {"$ref": "#/$defs/sha256"},
+        "required_benchmark_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^KU_BO_[A-Z0-9_]{1,58}$"}
+        },
+        "configured_sector_series": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "missing_cohort_sector_series": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "five_security_scope_allowed": {"const": false},
+        "full_market_scope_allowed": {"const": false},
+        "benchmark_qualification_allowed": {"const": false}
+      }
+    },
+    "runBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_kind",
+        "run_id",
+        "batch_id",
+        "batch_sequence",
+        "registry_id",
+        "registry_sha256",
+        "batch_sha256",
+        "batch_plan",
+        "scoped_configuration",
+        "workspace_report",
+        "qualification_window",
+        "cohort",
+        "benchmark_scope"
+      ],
+      "properties": {
+        "workspace_kind": {"const": "TRI_SECURITY_DATA_QUALIFICATION"},
+        "run_id": {"$ref": "#/$defs/runId"},
+        "batch_id": {"$ref": "#/$defs/batchId"},
+        "batch_sequence": {"const": 1},
+        "registry_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "registry_sha256": {"$ref": "#/$defs/sha256"},
+        "batch_sha256": {"$ref": "#/$defs/sha256"},
+        "batch_plan": {"$ref": "#/$defs/byteBoundFile"},
+        "scoped_configuration": {"$ref": "#/$defs/scopedConfiguration"},
+        "workspace_report": {"$ref": "#/$defs/workspaceReport"},
+        "qualification_window": {"$ref": "#/$defs/qualificationWindow"},
+        "cohort": {"$ref": "#/$defs/cohort"},
+        "benchmark_scope": {"$ref": "#/$defs/benchmarkScope"}
+      }
+    },
+    "runClaimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_is_market_evidence",
+        "receipt_proves_data_qualification",
+        "receipt_authorizes_next_batch",
+        "three_security_cohort",
+        "five_security_claim_allowed",
+        "full_market_claim_allowed",
+        "backtest_ready",
+        "forecast_allowed"
+      ],
+      "properties": {
+        "receipt_is_market_evidence": {"const": false},
+        "receipt_proves_data_qualification": {"const": false},
+        "receipt_authorizes_next_batch": {"const": false},
+        "three_security_cohort": {"const": true},
+        "five_security_claim_allowed": {"const": false},
+        "full_market_claim_allowed": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_allowed": {"const": false}
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

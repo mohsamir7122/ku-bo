@@ -8,6 +8,7 @@ from kubo.foundation_io import (
     prepare_output_root,
     read_csv_bytes,
     safe_regular_file,
+    snapshot_regular_tree,
     strict_json_object,
     write_csv,
 )
@@ -74,6 +75,33 @@ class FoundationIoTests(unittest.TestCase):
                 self.skipTest(f"symlink creation is unavailable: {exc}")
             with self.assertRaisesRegex(ValueError, "symlink"):
                 safe_regular_file(link, field="manifest")
+
+    def test_safe_reader_preserves_exact_crlf_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            expected = b'{"schema_version":"3.0"}\r\n'
+            path.write_bytes(expected)
+            self.assertEqual(
+                safe_regular_file(path, field="manifest"),
+                expected,
+            )
+
+    def test_tree_snapshot_bounds_empty_entries_and_depth(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("one", "two", "three"):
+                (root / name).mkdir()
+            with self.assertRaisesRegex(ValueError, "exceeds 2 entries"):
+                snapshot_regular_tree(root, field="tree", max_entries=2)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            nested = root
+            for name in ("one", "two", "three"):
+                nested /= name
+                nested.mkdir()
+            with self.assertRaisesRegex(ValueError, "maximum depth 2"):
+                snapshot_regular_tree(root, field="tree", max_depth=2)
 
 
 if __name__ == "__main__":

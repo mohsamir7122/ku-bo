@@ -17,8 +17,10 @@ build/data-foundation-v0.2
 
 ```text
 main@be5fe3883016dedf07fa680905f7199f3906b4d8
-  └── build/tri-security-pilot-v0.3@0c4d5a6b71137ec5719195ea749ed9bedf863a72
-        └── Draft PR #10 / CI 31571590903 PASS
+  └── build/tri-security-pilot-v0.3@7d032c98b0ef9f27e913199487ad4577119c2631
+        └── Draft PR #10 / CI 31571987659 PASS
+              └── build/tri-security-run-receipt-v0.1
+                    └── KU-BO-010 / Draft publication pending
 ```
 
 قاعدة المرحلة الحالية:
@@ -44,9 +46,16 @@ main@be5fe3883016dedf07fa680905f7199f3906b4d8
   رسمية مؤرخة ومربوطة بـSHA-256.
 - إنشاء Workspace لا يجمع بيانات، ولا يجيز الانتقال إلى الدفعة التالية، ولا
   يثبت Backtest readiness.
-- CLI تعيد حساب Manifest Hashes عند استخدام `--pilot-config-dir`، لكن Window
-  وBatch-plan receipt لم تُربطا بعد بكل مخرج Downstream؛ المرحلة Preparation
-  وليست Qualification end-to-end.
+- عقد KU-BO-010 يعيد حساب Batch Plan وScoped Config Manifest وWorkspace
+  Report، ثم يربط Run/Batch/Cohort/Window في Run Receipt خارجي مصادق عليه.
+- Stage Binding بمفتاح مستقل يربط Manifest والجرد المعلن وشجرة ملفات المرحلة
+  كاملة، ويكشف الإضافة أوالحذف أوالتغيير أوخلط تشغيل آخر.
+- إعداد Benchmark الموروث غير متوافق مع قطاعي Industrials وUtilities في
+  الدفعة الثلاثية، لذلك يبقى Qualification محجوبًا صراحة ولا يجوز إعادة
+  استخدام مقام Pilot الخماسي.
+- هذه عقود Standalone فقط؛ لم تُفرض بعد كمدخل إلزامي لكل Importer أوفي
+  Final Reconciliation. ذلك هو حد `KU-BO-011`، ولذلك المرحلة ليست
+  Qualification end-to-end.
 - كل دفعة تحمل البوابات النهائية الاثنتي عشرة بالحالة
   `PENDING_EXTERNAL_EVIDENCE`.
 
@@ -192,6 +201,7 @@ HISTORICAL_STATUS_INTERVALS_READY
 - Browser sessions أوCookies.
 - Credentials أوTokens.
 - Drive identifiers.
+- Run أوStage HMAC keys؛ المفاتيح Runtime-only وخارج Git.
 
 جميع ملفات Runtime وRaw Evidence تبقى خارج Git.
 
@@ -199,6 +209,7 @@ HISTORICAL_STATUS_INTERVALS_READY
 
 ```text
 FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
+ENFORCE_TRI_SECURITY_RECEIPT_AND_STAGE_BINDING_END_TO_END
 VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS
 IMPORT_REAL_RIGHTS_COMPATIBLE_BENCHMARK_HISTORY
 IMPORT_REAL_COMPLETE_OFFICIAL_OR_LICENSED_DAILY_EOD

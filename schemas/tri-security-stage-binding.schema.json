@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-stage-binding.schema.json",
+  "title": "KU-BO authenticated tri-security stage binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "binding_id",
+    "stage_id",
+    "bound_at",
+    "expires_at",
+    "run_date",
+    "run_receipt",
+    "run_binding",
+    "stage_artifact",
+    "claim_boundary",
+    "claim_boundaries",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "audience": {"const": "kubo-tri-security-stage"},
+    "binding_id": {"$ref": "#/$defs/identifier"},
+    "stage_id": {
+      "enum": [
+        "OFFICIAL_FOUNDATION",
+        "STATUS_CORPORATE",
+        "CA_ENRICHMENT",
+        "STATUS_HISTORY",
+        "RESEARCH_PRICE_HISTORY",
+        "BENCHMARK_HISTORY",
+        "OFFICIAL_EOD",
+        "FINAL_DATA_FOUNDATION_RECONCILIATION"
+      ]
+    },
+    "bound_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "run_date": {"type": "string", "format": "date"},
+    "run_receipt": {"$ref": "#/$defs/runReceiptReference"},
+    "run_binding": {
+      "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/runBinding"
+    },
+    "stage_artifact": {"$ref": "#/$defs/stageArtifact"},
+    "claim_boundary": {"const": "AUTHENTICATED_BINDING_NOT_MARKET_EVIDENCE"},
+    "claim_boundaries": {"$ref": "#/$defs/stageClaimBoundaries"},
+    "authentication": {"$ref": "#/$defs/authentication"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "runReceiptReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_sha256",
+        "content_sha256",
+        "issuer_id",
+        "authenticated_run_key_id"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/identifier"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "issuer_id": {"$ref": "#/$defs/identifier"},
+        "authenticated_run_key_id": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "stageArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_path",
+        "manifest_sha256",
+        "manifest_size_bytes",
+        "declared_artifact_count",
+        "declared_artifact_inventory_sha256",
+        "complete_file_count",
+        "complete_size_bytes",
+        "complete_inventory_sha256"
+      ],
+      "properties": {
+        "manifest_path": {"const": "manifest.json"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_size_bytes": {"type": "integer", "minimum": 1},
+        "declared_artifact_count": {"type": "integer", "minimum": 0},
+        "declared_artifact_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "complete_file_count": {"type": "integer", "minimum": 1},
+        "complete_size_bytes": {"type": "integer", "minimum": 1},
+        "complete_inventory_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "stageClaimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_is_market_evidence",
+        "binding_proves_data_qualification",
+        "binding_authorizes_next_batch",
+        "binding_proves_stage_matches_run_scope",
+        "five_security_claim_allowed",
+        "full_market_claim_allowed",
+        "backtest_ready",
+        "forecast_allowed"
+      ],
+      "properties": {
+        "binding_is_market_evidence": {"const": false},
+        "binding_proves_data_qualification": {"const": false},
+        "binding_authorizes_next_batch": {"const": false},
+        "binding_proves_stage_matches_run_scope": {"const": false},
+        "five_security_claim_allowed": {"const": false},
+        "full_market_claim_allowed": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_allowed": {"const": false}
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

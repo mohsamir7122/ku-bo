@@ -1,11 +1,11 @@
-# CURRENT TASK — KU-BO-009
+# CURRENT TASK — KU-BO-010
 
 ```text
-TASK_ID: KU-BO-009
-STATUS: COMPLETED
+TASK_ID: KU-BO-010
+STATUS: IN_PROGRESS
 REPOSITORY: mohsamir7122/ku-bo
-CONTROL_BASE_BRANCH: main
-EXPECTED_NEW_BRANCH: build/tri-security-pilot-v0.3
+CONTROL_BASE_BRANCH: build/tri-security-pilot-v0.3
+EXPECTED_NEW_BRANCH: build/tri-security-run-receipt-v0.1
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -14,94 +14,111 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-RESULT_PR: https://github.com/mohsamir7122/ku-bo/pull/10
-RESULT_HANDOFF: docs/codex/handoffs/KU-BO-009-result.md
-BLOCKED_ON: REAL_MARKET_EVIDENCE; AUTHENTICATED_CAPTURE_RECEIPTS; KU-BO-008-D01
+RESULT_HANDOFF: docs/codex/handoffs/KU-BO-010-result.md
+BLOCKED_ON: DOWNSTREAM_RECEIPT_ENFORCEMENT; REAL_MARKET_EVIDENCE; AUTHENTICATED_CAPTURE_AUTHORITY; KU-BO-008-D01
 ```
 
 ## Mission
 
-Audit the live `ku-bo` state and the related Research/legacy repositories, then
-implement a fail-closed staged pilot that prepares data qualification three
-securities at a time. The first batch is:
+Implement and publish a standalone, fail-closed authenticated contract that
+binds the exact first tri-security batch plan, scoped configuration, cohort,
+qualification window, and complete stage artifact tree. Use independently
+keyed runtime-only Run Receipt and Stage Binding HMAC authorities. Preserve the
+known Benchmark scope incompatibility and every non-claim boundary.
+
+This task defines issuance and verification primitives only. Mandatory checks
+inside all downstream importers and final reconciliation belong to KU-BO-011.
+
+## Verified dependency base
 
 ```text
-KFH / SHIP / AZNOULA
+build/tri-security-pilot-v0.3@7d032c98b0ef9f27e913199487ad4577119c2631
+Draft PR #10
+GitHub Actions run 31571987659 / PASS
 ```
 
-The implementation may validate configuration and prepare an empty evidence
-workspace. It must not collect or commit real market data, run a real backtest,
-train a model, issue a probability, or produce a trading recommendation.
+The branch is based on the exact head of the open KU-BO-009 Draft PR, not on
+stale PR #2 or #3 and not on a reconstructed legacy workspace. KU-BO-009 keeps
+KFH/SHIP/AZNOULA as `UNVERIFIED_SEED`, all twelve gates pending, and later
+batches locked.
 
-## Verified base
+## Completed deliverables
 
-```text
-main@be5fe3883016dedf07fa680905f7199f3906b4d8
-```
-
-The starting full local suite passed `513` tests after installing the declared
-test dependency. GitHub Actions run `31402435102` passed on the same main head.
-Open Draft PRs #2 and #3 predate the merged implementation chain and are not a
-safe base for this task.
-
-## Required deliverables
-
-1. Record an evidence-backed audit of `ku-bo`, `Research`, and relevant legacy
-   Kuwait repositories, including KEEP/REFACTOR/ARCHIVE/NO-SALVAGE decisions.
-2. Add a strict machine-readable registry whose batches contain exactly three
-   unique identities and whose execution order is deterministic.
-3. Begin with KFH, SHIP, and AZNOULA, while keeping every configured identity
-   `UNVERIFIED_SEED` until raw official evidence is imported.
-4. Add a safe non-overwriting workspace generator with one evidence directory
-   per security, a hash-bound batch plan, and explicit pending gates.
-5. Reuse the final twelve Data Foundation gates; do not create a weaker parallel
-   readiness definition.
-6. Make later batches declare their predecessor requirement and keep
-   `next_batch_authorized=false` during workspace preparation.
-7. Add strict JSON Schemas, adversarial tests, CLI commands, and Arabic operating
-   documentation.
-8. Fix only material defects discovered during the audit when the correction is
-   bounded, regression-tested, and does not expand external authority.
-9. Publish the result as a Draft PR against `main`; do not merge it.
+1. Add strict Canonical JSON contracts and Draft 2020-12 schemas for a Run
+   Receipt and Stage Binding with no unknown fields.
+2. Require externally supplied expected batch-plan and scoped-manifest hashes;
+   rehash the plan, manifest, scoped files, workspace report, registry, cohort,
+   window, and pending gate state before signing or accepting a receipt.
+3. Lock the receipt to batch one and exactly three unique Security Code/Ticker/
+   ISIN rows without promoting `UNVERIFIED_SEED` identity.
+4. Derive `run_date` from the aware issue instant in `Asia/Kuwait`, cap validity
+   at seven days, and reject stale, future, forged, wrong-audience, wrong-key,
+   wrong-key-id, or cross-run receipts.
+5. Require independent runtime-only HMAC keys and key IDs for run and stage
+   authentication; never persist or print the key or authentication tag.
+6. Bind the stage Manifest, declared artifacts, and complete file-tree
+   inventory so additions, deletions, byte changes, symlinks, special files,
+   traversal, or time-of-check/time-of-use drift fail closed.
+7. Keep receipt and binding roots disjoint from the prepared workspace and
+   stage output, with safe non-overwriting creation.
+8. Preserve the explicit
+   `CONFIGURED_SERIES_INCOMPATIBLE_WITH_TRI_COHORT` Benchmark state. Missing
+   Industrials and Utilities sector series block Benchmark qualification and
+   prohibit reuse of the five-security or full-market denominator.
+9. Add four installed CLI commands, adversarial tests, wheel coverage, and an
+   Arabic operating contract.
+10. Publish only as a Draft PR against the exact dependency branch. Do not
+    merge, auto-merge, force-push, or rewrite history.
 
 ## Required safety boundaries
 
-- A valid registry is not official identity evidence.
-- A prepared workspace contains no market evidence.
-- Three qualified securities do not prove full-market coverage.
-- Synthetic or recorded fixtures do not prove real-data readiness.
-- Scores are not probabilities.
-- No Forecast, Accuracy, Buy/Sell, Entry/Exit, or Backtest claim is allowed.
-- `KU-BO-008-D01` remains open and must not be silently resolved.
-- Do not copy scores, backtests, fabricated fundamentals, or recommendations
-  from `mohsamir7122/Research` or archived projects.
-- Do not merge, force-push, permanently delete, or rewrite repository history.
+- `AUTHENTICATED_BINDING_NOT_MARKET_EVIDENCE` is the only receipt claim.
+- A valid Run Receipt does not prove official identity or data qualification.
+- A valid Stage Binding does not prove that its bytes are official, licensed,
+  complete, or suitable for a real backtest.
+- Three bound securities do not prove the five-security Pilot or full market.
+- Benchmark registry incompatibility must remain visible and fail closed.
+- No later batch is authorized.
+- No real market bytes, licensed artifacts, credentials, HMAC keys, Drive IDs,
+  browser sessions, or raw conversations may enter Git.
+- July legacy prediction/results claims remain quarantined and cannot support
+  truth, training, backtest, accuracy, or recommendation claims.
+- No Forecast, Accuracy, Probability, Buy/Sell, Entry/Exit, Backtest, or
+  production-execution claim is allowed.
+- `KU-BO-008-D01` remains OPEN and must not be silently selected or frozen.
+- Do not merge this Draft PR without a new explicit user decision.
 
-## Validation loop
+## Validation and publication loop
 
-Before handoff, run:
+Before final handoff, run and record:
 
 ```text
 compileall
-targeted tri-security and schema tests
+targeted receipt, stage-binding, CLI, and schema tests
 complete unit and adversarial suite
+Codex control check
 synthetic smoke check
 secret_guard
 wheel build
 wheel reinstall in an isolated environment
 installed kubo commands
-installed kubo-data-foundation commands
-git diff inspection
+installed kubo-data-foundation receipt commands
+git diff and committed-tree inspection
+exact-head GitHub Actions on Python 3.11 through 3.14
 ```
 
-Use `docs/codex/HANDOFF_TEMPLATE.md` for the final handoff. Record any future
-destructive or policy choice in `docs/codex/USER_DECISIONS.md`; this task grants
-none.
+Use `docs/codex/HANDOFF_TEMPLATE.md` for the result and preserve all policy
+choices in `docs/codex/USER_DECISIONS.md`. This task grants no deletion,
+licensing, credential, data-source, merge, policy, or financial decision.
 
-## Completion record
+## Publication gate
 
-The exact implementation tree was published as commit
-`0c4d5a6b71137ec5719195ea749ed9bedf863a72` in Draft PR #10. GitHub Actions
-run `31571590903` passed all four Python jobs. The engineering task is complete;
-the real-evidence, policy, backtest, forecast, and recommendation blockers above
-remain in force.
+The standalone Run Receipt and Stage Binding contract is implemented in the
+task branch. The task remains `IN_PROGRESS` until its implementation commit is
+published to a Draft PR against the exact dependency branch and passes the
+exact-head CI matrix. Only then may the sanitized result handoff mark the task
+complete.
+
+KU-BO-011 is not included in this completion. It must make these authenticated
+bindings mandatory at the pre-write boundary of every relevant importer and
+carry the same run/stage chain into final Data Foundation reconciliation.
