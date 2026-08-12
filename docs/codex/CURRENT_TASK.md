@@ -2,7 +2,7 @@
 
 ```text
 TASK_ID: KU-BO-010
-STATUS: IN_PROGRESS
+STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: build/tri-security-pilot-v0.3
 EXPECTED_NEW_BRANCH: build/tri-security-run-receipt-v0.1
@@ -14,6 +14,7 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
+RESULT_PR: https://github.com/mohsamir7122/ku-bo/pull/11
 RESULT_HANDOFF: docs/codex/handoffs/KU-BO-010-result.md
 BLOCKED_ON: DOWNSTREAM_RECEIPT_ENFORCEMENT; REAL_MARKET_EVIDENCE; AUTHENTICATED_CAPTURE_AUTHORITY; KU-BO-008-D01
 ```
@@ -111,13 +112,13 @@ Use `docs/codex/HANDOFF_TEMPLATE.md` for the result and preserve all policy
 choices in `docs/codex/USER_DECISIONS.md`. This task grants no deletion,
 licensing, credential, data-source, merge, policy, or financial decision.
 
-## Publication gate
+## Completion record
 
-The standalone Run Receipt and Stage Binding contract is implemented in the
-task branch. The task remains `IN_PROGRESS` until its implementation commit is
-published to a Draft PR against the exact dependency branch and passes the
-exact-head CI matrix. Only then may the sanitized result handoff mark the task
-complete.
+The standalone Run Receipt and Stage Binding implementation is published at
+`9c72e0d89f46ee846cb453087b00f7e6b64ace7a` in Draft PR #11 against the exact
+dependency branch. GitHub Actions run `31626453749` passed Python 3.11 through
+3.14 for that implementation commit. The sanitized result handoff records the
+complete validation and non-claim boundary.
 
 KU-BO-011 is not included in this completion. It must make these authenticated
 bindings mandatory at the pre-write boundary of every relevant importer and

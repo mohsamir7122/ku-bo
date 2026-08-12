@@ -20,7 +20,7 @@ main@be5fe3883016dedf07fa680905f7199f3906b4d8
   └── build/tri-security-pilot-v0.3@7d032c98b0ef9f27e913199487ad4577119c2631
         └── Draft PR #10 / CI 31571987659 PASS
               └── build/tri-security-run-receipt-v0.1
-                    └── KU-BO-010 / Draft publication pending
+                    └── Draft PR #11 / implementation CI 31626453749 PASS
 ```
 
 قاعدة المرحلة الحالية:

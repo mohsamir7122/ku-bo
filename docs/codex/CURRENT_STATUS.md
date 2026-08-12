@@ -14,10 +14,11 @@ mohsamir7122/ku-bo
 main@be5fe3883016dedf07fa680905f7199f3906b4d8
   └── build/tri-security-pilot-v0.3@7d032c98b0ef9f27e913199487ad4577119c2631
         └── Draft PR #10 / GitHub Actions 31571987659 PASS
-              └── build/tri-security-run-receipt-v0.1 / KU-BO-010
+              └── build/tri-security-run-receipt-v0.1@9c72e0d89f46ee846cb453087b00f7e6b64ace7a
+                    └── Draft PR #11 / GitHub Actions 31626453749 PASS
 ```
 
-PRs #4 through #9 are merged into `main`. PR #10 is the reviewed dependency
+PRs #4 through #9 are merged into `main`. PR #10 is the verified dependency
 candidate for the tri-security preparation layer and remains Draft. Open PRs
 #2 and #3 are stale, conflicting, and based on pre-stack history; they are not
 an authority or safe base for current work. No merge, force push, auto-merge,
@@ -32,7 +33,7 @@ PR closure, or destructive cleanup is authorized by the current task.
 - later batches remain locked and preparation does not collect market bytes;
 - exact-head Linux CI passed on Python 3.11 through 3.14.
 
-## KU-BO-010 contract implemented; publication in progress
+## KU-BO-010 contract published as a green Draft
 
 The task adds a standalone authenticated Run Receipt and Stage Binding layer:
 
@@ -58,9 +59,10 @@ not yet force existing identity, status, price, Benchmark, EOD, or final
 reconciliation commands to consume these receipts. That mandatory downstream
 enforcement is the sole boundary of KU-BO-011.
 
-The implementation must still be published to its stacked Draft PR and pass
-the exact-head GitHub Actions matrix before the repository handoff can mark
-KU-BO-010 complete.
+The implementation is published in stacked Draft PR #11. Exact-head GitHub
+Actions run `31626453749` passed Python 3.11 through 3.14; no merge or
+auto-merge was requested. The sanitized result is
+`docs/codex/handoffs/KU-BO-010-result.md`.
 
 ## External and legacy evidence status
 
