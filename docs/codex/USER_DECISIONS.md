@@ -61,7 +61,7 @@ STATUS: APPROVED
 DATE_RAISED: 2026-08-13
 TARGET: PR #12 followed by the KU-BO-011 implementation PR
 CATEGORY: MERGE
-CURRENT_STATE: main is 6bcfbabf840e6876a878dfd692afbf746780d731 with post-merge CI run 31629909113 PASS. Draft PR #12 is clean and mergeable at 3d773448b78ca99f6761a43b852f53967fdbb095 with exact-head CI run 31631077911 PASS, but it contains only the deterministic acceptance-spec corpus and no KU-BO-011 runtime enforcement. The implementation branch build/tri-security-receipt-enforcement-v0.2 starts at that exact Test Spec head and remains IN_PROGRESS.
+CURRENT_STATE: The first ordered action is complete. PR #12 merged into main as c621fcf88034c4571aa08aee2e54e2e026a4f651 with its historical TEST_SPEC_ONLY non-claim intact, and post-merge CI run 31684299396 passed. The implementation is published as Draft PR #13 at remote head 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc. Exact-head GitHub Actions run 31695010037 completed successfully, including Python 3.11, 3.12, 3.13, and 3.14. Local validation passed 1,916 tests, strict source-tree and clean-installed-wheel Adapter runs at 1,280/1,280 each, and an installed authenticated eight-boundary DAG with eight semantic admissions and eight lineages. This proves CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY, not market evidence. KU-BO-011 remains IN_PROGRESS and MERGE_ALLOWED remains NO because this control-record update creates a later head that requires exact-head CI and an ordered merge-boundary recheck.
 WHY_A_DECISION_IS_REQUIRED: Repository rules prohibit any merge without an explicit user decision. The Test Spec and implementation must enter main in dependency order, and each changed or retargeted exact head must pass its applicable acceptance and CI gates before merge.
 OPTIONS:
 1. Update the control records, run fresh CI, merge PR #12 as TEST_SPEC_ONLY, create or retarget the implementation PR to updated main, prove production-path enforcement, rerun exact-head CI, then merge the implementation PR.
@@ -69,13 +69,13 @@ OPTIONS:
 3. Merge both without production-path Adapter proof or fresh post-retarget CI.
 CODEX_RECOMMENDATION: Option 1.
 CONSEQUENCE_OF_APPROVAL: The locked synthetic Test Specification and the separately reviewed runtime implementation may enter main in dependency order while every real-data, rights, outcome-policy, Benchmark, backtest, forecast, probability, accuracy, recommendation, and production gate remains fail-closed.
-CONSEQUENCE_OF_REJECTION: Both stages remain available only on their task branches.
+CONSEQUENCE_OF_REJECTION: PR #12 remains merged as TEST_SPEC_ONLY; the separate implementation remains available only on its task branch and is not merged.
 SAFER_REVERSIBLE_ALTERNATIVE: Keep PR #12 and the implementation PR open as Drafts without merging.
 USER_DECISION: APPROVED in the active user session with the instruction "قم بعمل التعديل والدمج اللازم" after receiving the repository audit, non-merged-item reasons, and ordered development plan.
 DECIDED_AT: 2026-08-13
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: This approval is limited to PR #12 and the KU-BO-011 implementation PR, in that order, after their applicable exact-head gates pass. It does not authorize PR #2, PR #3, force-push, auto-merge, deletion, gate weakening, credentials, real-data publication, a later batch, model training, real backtest, forecast, probability, accuracy, recommendation, or production execution. CURRENT_TASK remains conservatively MERGE_ALLOWED: NO during implementation; the approval is rechecked only at the ordered merge boundary.
-IMPLEMENTED_IN_BRANCH_OR_PR: PENDING
+IMPLEMENTED_IN_BRANCH_OR_PR: PR #12 merge portion completed at c621fcf88034c4571aa08aee2e54e2e026a4f651. KU-BO-011 implementation is published as Draft PR #13 at 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc with exact-head run 31695010037 PASS; its merge portion remains PENDING until this control-record head passes CI and the ordered merge boundary is rechecked.
 ```
 
 ```text

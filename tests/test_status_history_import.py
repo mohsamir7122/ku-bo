@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from kubo.status_history_import import import_status_history
+from kubo.status_history_import import _import_status_history_unchecked
 from kubo.status_history_workspace import prepare_status_history_workspace
 from tests.foundation_fixture_helpers import build_status_corporate_output
 
@@ -149,7 +149,7 @@ class StatusHistoryImportTests(unittest.TestCase):
             root = Path(directory)
             upstream, workspace = self._workspace(root)
             output = root / "history-output"
-            report = import_status_history(
+            report = _import_status_history_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=output,
@@ -187,7 +187,7 @@ class StatusHistoryImportTests(unittest.TestCase):
                 zero_suspended_upstream=True,
                 include_kfh_suspend=False,
             )
-            report = import_status_history(
+            report = _import_status_history_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "history-output",
@@ -203,7 +203,7 @@ class StatusHistoryImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             upstream, workspace = self._workspace(root, missing_phrase=True)
-            report = import_status_history(
+            report = _import_status_history_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "history-output",
@@ -217,7 +217,7 @@ class StatusHistoryImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             upstream, workspace = self._workspace(root, bad_query_count=True)
-            report = import_status_history(
+            report = _import_status_history_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "history-output",
@@ -235,7 +235,7 @@ class StatusHistoryImportTests(unittest.TestCase):
                 zero_suspended_upstream=True,
                 include_kfh_suspend=True,
             )
-            report = import_status_history(
+            report = _import_status_history_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "history-output",

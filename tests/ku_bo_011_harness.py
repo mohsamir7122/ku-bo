@@ -20,9 +20,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from tests.ku_bo_011_mutators import (  # noqa: E402
-    ATTACK_PROFILES,
     BOUNDARIES,
     CLAIM_BOUNDARY,
+    EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT,
+    EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_RULE_COUNT,
     MUTATIONS,
     TOTAL_CASES,
     UNSAFE_ENTRY_VARIANTS,
@@ -41,7 +44,62 @@ CASE_ID_PATTERN = re.compile(
     r"V(?P<variant>[0-9]{2})$"
 )
 RESULT_KEYS = frozenset(
-    {"case_id", "decision", "failure_code", "failure_phase", "output_writes"}
+    {
+        "case_id",
+        "decision",
+        "failure_code",
+        "failure_phase",
+        "output_writes",
+        "dispatch_proof",
+    }
+)
+DISPATCH_PROOF_KEYS = frozenset(
+    {
+        "schema_version",
+        "boundary_id",
+        "input_channel",
+        "mutation_id",
+        "public_boundary",
+        "rejection_type",
+        "authority_key_sha256",
+        "events",
+        "events_sha256",
+    }
+)
+DISPATCH_EVENT_KEYS = frozenset(
+    {"event", "boundary_id", "input_channel", "implementation"}
+)
+PUBLIC_BOUNDARIES = {
+    "import_user_price_exports": (
+        "kubo.user_price_export.import_investing_user_exports"
+    ),
+    "import_official_foundation": (
+        "kubo.official_foundation_import.import_official_foundation"
+    ),
+    "import_status_corporate": (
+        "kubo.status_corporate_import.import_status_corporate"
+    ),
+    "import_ca_enrichment": "kubo.ca_enrichment_import.import_ca_enrichment",
+    "import_status_history": "kubo.status_history_import.import_status_history",
+    "import_benchmark_history": (
+        "kubo.benchmark_import.import_benchmark_history"
+    ),
+    "import_official_eod": "kubo.official_eod_import.import_official_daily_eod",
+    "build_data_foundation_packet": (
+        "kubo.data_foundation_reconciliation.build_data_foundation_packet"
+    ),
+}
+CHANNEL_GATES = {
+    "CLI_ARGUMENT": "data_foundation_cli.parser+public_boundary",
+    "DIRECT_API_OBJECT": "public_boundary+admit_boundary",
+    "SERIALIZED_ARTIFACT": "public_boundary+admit_serialized_boundary",
+    "FILESYSTEM_RACE": "public_boundary+admit_boundary",
+}
+STRUCTURED_REJECTION_TYPES = frozenset(
+    {
+        "kubo.atomic_output.AtomicOutputError",
+        "kubo.tri_security_admission.BoundaryAdmissionError",
+    }
 )
 REQUIRED_SEMANTIC_GATES = frozenset(
     {
@@ -236,13 +294,7 @@ def validate_case_semantics(case: Mapping[str, Any]) -> None:
     elif context["binding_run_id"] != context["target_run_id"]:
         raise CorpusValidationError("non-cross-run case changed binding_run_id")
 
-    if case["expected"] != {
-        "decision": "REJECT",
-        "failure_code": MUTATIONS[mutation_index].failure_code,
-        "failure_phase": ATTACK_PROFILES[variant_index].failure_phase,
-        "maximum_output_writes": 0,
-        "market_evidence_claim": "NOT_EVALUATED",
-    }:
+    if case["expected"] != expected["expected"]:
         raise CorpusValidationError("case weakens its fail-closed zero-write expectation")
     if case["claim_boundary"] != CLAIM_BOUNDARY:
         raise CorpusValidationError("case overstates KU-BO-011 runtime enforcement")
@@ -312,6 +364,18 @@ def audit_cases(cases: list[dict[str, Any]]) -> dict[str, Any]:
         "mutation_family_count": len(mutation_counts),
         "boundary_mutation_pair_count": len(pair_counts),
         "variants_per_pair": VARIANTS_PER_PAIR,
+        "expected_rejection_override_rule_count": (
+            EXPECTED_REJECTION_OVERRIDE_RULE_COUNT
+        ),
+        "expected_rejection_override_case_count": (
+            EXPECTED_REJECTION_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_code_override_case_count": (
+            EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_phase_override_case_count": (
+            EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT
+        ),
     }
 
 
@@ -336,8 +400,22 @@ def verify_manifest(cases: list[dict[str, Any]]) -> dict[str, Any]:
         for case in cases
     )
     expected_scalars = {
-        "schema_version": "ku-bo-011-adversarial-corpus-manifest-v1",
-        "generator_version": "1.0",
+        "schema_version": "ku-bo-011-adversarial-corpus-manifest-v3",
+        "generator_version": "3.0",
+        "expectation_model": "PRODUCTION_DETECTION_ORDER_V3_MATERIALIZED",
+        "materialization_model": "PRODUCTION_HANDLER_DESCRIPTOR_V1",
+        "expected_rejection_override_rule_count": (
+            EXPECTED_REJECTION_OVERRIDE_RULE_COUNT
+        ),
+        "expected_rejection_override_case_count": (
+            EXPECTED_REJECTION_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_code_override_case_count": (
+            EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_phase_override_case_count": (
+            EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT
+        ),
         "case_count": TOTAL_CASES,
         "unittest_case_method_count": TOTAL_CASES,
         "corpus_sha256": sha256_bytes(corpus_bytes),
@@ -415,6 +493,107 @@ def _snapshot_output_tree(root: Path) -> tuple[tuple[str, str, int], ...]:
     return (("<root>", "directory", 0), *rows)
 
 
+def _adapter_case(case: Mapping[str, Any]) -> dict[str, Any]:
+    """Return only attack inputs; expected results stay in the harness.
+
+    A target adapter must derive its rejection from the implementation under
+    test.  Supplying the locked oracle alongside the attack description would
+    allow an adapter to echo the answer without exercising production code.
+    """
+
+    supplied = copy.deepcopy(dict(case))
+    supplied.pop("expected", None)
+    supplied.pop("claim_boundary", None)
+    supplied.pop("implementation_adapter_required", None)
+    return supplied
+
+
+def _validate_dispatch_proof(
+    case: Mapping[str, Any],
+    proof: Any,
+) -> None:
+    if not isinstance(proof, Mapping) or set(proof) != DISPATCH_PROOF_KEYS:
+        raise TargetAdapterFailure(
+            f"adapter dispatch proof must contain exactly "
+            f"{sorted(DISPATCH_PROOF_KEYS)}"
+        )
+    boundary_id = case["boundary"]["id"]
+    mutation_id = case["mutation"]["id"]
+    input_channel = case["mutation"]["input_channel"]
+    exact = {
+        "schema_version": "ku-bo-011-dispatch-proof-v1",
+        "boundary_id": boundary_id,
+        "input_channel": input_channel,
+        "mutation_id": mutation_id,
+        "public_boundary": PUBLIC_BOUNDARIES[boundary_id],
+    }
+    for key, expected in exact.items():
+        if proof.get(key) != expected:
+            raise TargetAdapterFailure(
+                f"adapter dispatch proof mismatch for {key}: "
+                f"{proof.get(key)!r} != {expected!r}"
+            )
+    if proof.get("rejection_type") not in STRUCTURED_REJECTION_TYPES:
+        raise TargetAdapterFailure(
+            "adapter rejection did not originate from a structured production error"
+        )
+    authority_digests = proof.get("authority_key_sha256")
+    if (
+        not isinstance(authority_digests, (list, tuple))
+        or len(authority_digests) != 3
+        or len(set(authority_digests)) != 3
+        or any(
+            not isinstance(value, str)
+            or re.fullmatch(r"[0-9a-f]{64}", value) is None
+            for value in authority_digests
+        )
+    ):
+        raise TargetAdapterFailure(
+            "adapter must prove three distinct ephemeral authority keys"
+        )
+    events = proof.get("events")
+    if not isinstance(events, (list, tuple)) or len(events) != 3:
+        raise TargetAdapterFailure(
+            "adapter dispatch proof must contain exactly three production events"
+        )
+    normalized_events: list[dict[str, str]] = []
+    for event in events:
+        if not isinstance(event, Mapping) or set(event) != DISPATCH_EVENT_KEYS:
+            raise TargetAdapterFailure("adapter dispatch event has an invalid shape")
+        row = dict(event)
+        if (
+            row["boundary_id"] != boundary_id
+            or row["input_channel"] != input_channel
+        ):
+            raise TargetAdapterFailure("adapter dispatch event names a different case")
+        normalized_events.append(row)
+    post_gate_mutation = (
+        input_channel == "FILESYSTEM_RACE"
+        or mutation_id
+        in {"output_commit_toc_tou", "partial_output_on_rejection"}
+    )
+    expected_event_order = (
+        ["channel_gate", "public_boundary", "mutation"]
+        if post_gate_mutation
+        else ["mutation", "channel_gate", "public_boundary"]
+    )
+    if [row["event"] for row in normalized_events] != expected_event_order:
+        raise TargetAdapterFailure("adapter production event order is invalid")
+    by_event = {row["event"]: row for row in normalized_events}
+    if by_event["channel_gate"]["implementation"] != CHANNEL_GATES[input_channel]:
+        raise TargetAdapterFailure("adapter did not use the required channel gate")
+    if by_event["public_boundary"]["implementation"] != PUBLIC_BOUNDARIES[boundary_id]:
+        raise TargetAdapterFailure("adapter did not dispatch the public boundary")
+    expected_handler = f"_{mutation_id}"
+    if by_event["mutation"]["implementation"] != expected_handler:
+        raise TargetAdapterFailure("adapter did not materialize the named mutation")
+    digest = sha256_bytes(
+        (canonical_json(normalized_events) + "\n").encode("utf-8")
+    )
+    if proof.get("events_sha256") != digest:
+        raise TargetAdapterFailure("adapter dispatch event digest mismatch")
+
+
 def execute_strict_case(
     case: Mapping[str, Any],
     adapter: Callable[..., Mapping[str, Any]],
@@ -433,10 +612,11 @@ def execute_strict_case(
             "failure_phase": expected["failure_phase"],
             "output_writes": [],
         }
-        before = _snapshot_output_tree(output_root)
+        before_output = _snapshot_output_tree(output_root)
+        before_surface = _snapshot_output_tree(case_root)
         try:
             result = adapter(
-                case=copy.deepcopy(original_case),
+                case=_adapter_case(original_case),
                 case_root=case_root,
                 input_root=input_root,
                 output_root=output_root,
@@ -445,7 +625,8 @@ def execute_strict_case(
             raise TargetAdapterFailure(
                 f"adapter raised for {case.get('case_id')}: {type(exc).__name__}: {exc}"
             ) from exc
-        after = _snapshot_output_tree(output_root)
+        after_output = _snapshot_output_tree(output_root)
+        after_surface = _snapshot_output_tree(case_root)
 
     if dict(case) != original_case:
         raise TargetAdapterFailure(
@@ -467,10 +648,18 @@ def execute_strict_case(
                 f"adapter result mismatch for {case.get('case_id')} field {key}: "
                 f"{result[key]!r} != {expected_value!r}"
             )
-    if before != after:
+    _validate_dispatch_proof(original_case, result["dispatch_proof"])
+    if before_output != after_output:
         raise TargetAdapterFailure(
             f"adapter wrote to the protected output root before rejecting "
-            f"{case.get('case_id')}: before={before!r}, after={after!r}"
+            f"{case.get('case_id')}: before={before_output!r}, "
+            f"after={after_output!r}"
+        )
+    if before_surface != after_surface:
+        raise TargetAdapterFailure(
+            f"adapter left a write on the protected case surface before rejecting "
+            f"{case.get('case_id')}: before={before_surface!r}, "
+            f"after={after_surface!r}"
         )
 
 

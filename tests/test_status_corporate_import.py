@@ -7,9 +7,9 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from kubo.official_foundation_import import import_official_foundation
+from kubo.official_foundation_import import _import_official_foundation_unchecked
 from kubo.official_foundation_workspace import prepare_official_foundation_workspace
-from kubo.status_corporate_import import import_status_corporate
+from kubo.status_corporate_import import _import_status_corporate_unchecked
 from kubo.status_corporate_workspace import prepare_status_corporate_workspace
 from tests.test_official_foundation_import import (
     CONTACT_HTML,
@@ -97,7 +97,7 @@ class StatusCorporateImportTests(unittest.TestCase):
             encoding="utf-8",
         )
         output = root / "official-output"
-        report = import_official_foundation(
+        report = _import_official_foundation_unchecked(
             config_dir=ROOT / "config",
             workspace=workspace,
             output_root=output,
@@ -167,7 +167,7 @@ class StatusCorporateImportTests(unittest.TestCase):
             official = self._official_foundation(root)
             workspace = self._status_workspace(root)
             output = root / "status-output"
-            report = import_status_corporate(
+            report = _import_status_corporate_unchecked(
                 config_dir=ROOT / "config",
                 official_foundation_root=official,
                 workspace=workspace,
@@ -217,7 +217,7 @@ class StatusCorporateImportTests(unittest.TestCase):
                 corporate_html=EMPTY_CORPORATE_ACTIONS_HTML,
                 result_count=0,
             )
-            report = import_status_corporate(
+            report = _import_status_corporate_unchecked(
                 config_dir=ROOT / "config",
                 official_foundation_root=official,
                 workspace=workspace,
@@ -235,7 +235,7 @@ class StatusCorporateImportTests(unittest.TestCase):
             root = Path(directory)
             official = self._official_foundation(root)
             workspace = self._status_workspace(root, delisted_html=DELISTED_KFH_HTML)
-            report = import_status_corporate(
+            report = _import_status_corporate_unchecked(
                 config_dir=ROOT / "config",
                 official_foundation_root=official,
                 workspace=workspace,
@@ -256,7 +256,7 @@ class StatusCorporateImportTests(unittest.TestCase):
             root = Path(directory)
             official = self._official_foundation(root)
             workspace = self._status_workspace(root, result_count=3)
-            report = import_status_corporate(
+            report = _import_status_corporate_unchecked(
                 config_dir=ROOT / "config",
                 official_foundation_root=official,
                 workspace=workspace,
@@ -275,7 +275,7 @@ class StatusCorporateImportTests(unittest.TestCase):
                 ValueError,
                 "artifact hash mismatch: corporate_actions",
             ):
-                import_status_corporate(
+                _import_status_corporate_unchecked(
                     config_dir=ROOT / "config",
                     official_foundation_root=official,
                     workspace=workspace,
@@ -288,7 +288,7 @@ class StatusCorporateImportTests(unittest.TestCase):
             official = self._official_foundation(root)
             workspace = self._status_workspace(root, observed_date="2026-08-08")
             with self.assertRaisesRegex(ValueError, "precedes the upstream identity snapshot"):
-                import_status_corporate(
+                _import_status_corporate_unchecked(
                     config_dir=ROOT / "config",
                     official_foundation_root=official,
                     workspace=workspace,

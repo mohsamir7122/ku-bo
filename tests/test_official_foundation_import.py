@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from kubo.official_foundation_import import import_official_foundation
+from kubo.official_foundation_import import _import_official_foundation_unchecked
 from kubo.official_foundation_workspace import prepare_official_foundation_workspace
 
 
@@ -127,7 +127,7 @@ class OfficialFoundationImportTests(unittest.TestCase):
             root = Path(directory)
             workspace = self._accepted_workspace(root)
             output = root / "output"
-            report = import_official_foundation(
+            report = _import_official_foundation_unchecked(
                 config_dir=ROOT / "config",
                 workspace=workspace,
                 output_root=output,
@@ -180,7 +180,7 @@ class OfficialFoundationImportTests(unittest.TestCase):
                 workspace = self._accepted_workspace(root)
             finally:
                 ARTIFACT_CONTENT["short_sell_identity"] = original
-            report = import_official_foundation(
+            report = _import_official_foundation_unchecked(
                 config_dir=ROOT / "config",
                 workspace=workspace,
                 output_root=root / "output",
@@ -202,7 +202,7 @@ class OfficialFoundationImportTests(unittest.TestCase):
             root = Path(directory)
             workspace = self._accepted_workspace(root, corrupt_hash="market_holidays")
             with self.assertRaisesRegex(ValueError, "hash mismatch: market_holidays"):
-                import_official_foundation(
+                _import_official_foundation_unchecked(
                     config_dir=ROOT / "config",
                     workspace=workspace,
                     output_root=root / "output",
@@ -219,7 +219,7 @@ class OfficialFoundationImportTests(unittest.TestCase):
                 ),
             )
             with self.assertRaisesRegex(ValueError, "one Kuwait civil date"):
-                import_official_foundation(
+                _import_official_foundation_unchecked(
                     config_dir=ROOT / "config",
                     workspace=workspace,
                     output_root=root / "output",
@@ -236,7 +236,7 @@ class OfficialFoundationImportTests(unittest.TestCase):
                 ValueError,
                 "REQUIRED_OFFICIAL_TABLE_HEADERS_NOT_FOUND",
             ):
-                import_official_foundation(
+                _import_official_foundation_unchecked(
                     config_dir=ROOT / "config",
                     workspace=workspace,
                     output_root=root / "output",

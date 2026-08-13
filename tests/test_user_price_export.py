@@ -8,7 +8,10 @@ import tempfile
 import unittest
 
 from kubo.price_collection_workspace import MANIFEST_HEADERS, prepare_price_collection_workspace
-from kubo.user_price_export import INVESTING_EXPORT_HEADERS, import_investing_user_exports
+from kubo.user_price_export import (
+    INVESTING_EXPORT_HEADERS,
+    _import_investing_user_exports_unchecked,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,7 +114,7 @@ class UserPriceExportTests(unittest.TestCase):
             workspace = self._workspace(root)
             self._accept_exports(workspace)
             output = root / "output"
-            report = import_investing_user_exports(
+            report = _import_investing_user_exports_unchecked(
                 config_dir=ROOT / "config",
                 input_dir=workspace / "raw_exports" / "investing",
                 output_root=output,
@@ -146,7 +149,7 @@ class UserPriceExportTests(unittest.TestCase):
             workspace = self._workspace(root)
             self._accept_exports(workspace, tickers={"NBK"})
             output = root / "output"
-            report = import_investing_user_exports(
+            report = _import_investing_user_exports_unchecked(
                 config_dir=ROOT / "config",
                 input_dir=workspace / "raw_exports" / "investing",
                 output_root=output,
@@ -167,7 +170,7 @@ class UserPriceExportTests(unittest.TestCase):
                 tickers={"NBK"},
                 corrupt_hash_for="NBK",
             )
-            report = import_investing_user_exports(
+            report = _import_investing_user_exports_unchecked(
                 config_dir=ROOT / "config",
                 input_dir=workspace / "raw_exports" / "investing",
                 output_root=root / "output",
@@ -185,7 +188,7 @@ class UserPriceExportTests(unittest.TestCase):
             output.mkdir()
             (output / "existing.txt").write_text("keep", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "must be empty"):
-                import_investing_user_exports(
+                _import_investing_user_exports_unchecked(
                     config_dir=ROOT / "config",
                     input_dir=workspace / "raw_exports" / "investing",
                     output_root=output,

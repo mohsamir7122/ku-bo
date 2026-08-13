@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .atomic_output import run_atomic_output
 from .evidence_hashes import format_supporting_hashes, parse_supporting_hashes
 from .hashing import canonical_json_bytes, sha256_bytes
 from .identity import validate_security_master
@@ -27,6 +28,11 @@ from .official_parsers import (
 )
 from .source_parsers import parse_boursa_identity_html
 from .strict import https_url, parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 from .vendor_symbol_mapping import PilotIdentitySeedCatalog
 
 
@@ -474,16 +480,22 @@ def _calendar_rows(
 
 
 
-def import_official_foundation(
+def _import_official_foundation_unchecked(
     *,
     config_dir: Path,
     workspace: Path,
     output_root: Path,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     workspace = Path(workspace)
     if not workspace.is_dir() or workspace.is_symlink():
         raise ValueError("workspace must be a real directory")
     output = _prepare_output_root(Path(output_root))
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output
+    )
     raw_output = output / "raw"
     normalized_output = output / "normalized"
     report_output = output / "reports"
@@ -610,19 +622,23 @@ def import_official_foundation(
         "schema_version": "1.0",
         "status": status,
         "run_id": manifest["run_id"],
-        "output_root": str(output),
+        "output_root": str(logical_output),
         "identity_snapshot_effective_date": manifest[
             "identity_snapshot_effective_date"
         ].isoformat(),
         "calendar_window_from": manifest["calendar_window_from"].isoformat(),
         "calendar_window_to": manifest["calendar_window_to"].isoformat(),
-        "security_master": str(security_path),
-        "trading_calendar": str(calendar_path),
+        "security_master": str(
+            logical_output / "normalized" / "security_master.csv"
+        ),
+        "trading_calendar": str(
+            logical_output / "normalized" / "trading_calendar.csv"
+        ),
         "official_identity_report": str(
-            report_output / "official_identity_report.json"
+            logical_output / "reports" / "official_identity_report.json"
         ),
         "trading_calendar_report": str(
-            report_output / "trading_calendar_report.json"
+            logical_output / "reports" / "trading_calendar_report.json"
         ),
         "identity_status": identity_report["status"],
         "calendar_status": calendar_report["status"],
@@ -647,6 +663,47 @@ def import_official_foundation(
     report_path = report_output / "official_foundation_import_report.json"
     report_path.write_bytes(canonical_json_bytes(report))
     return report
+
+
+def import_official_foundation(
+    *,
+    config_dir: Path,
+    workspace: Path,
+    output_root: Path,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    target = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_official_foundation",
+        decision_at=admission_request.decision_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_official_foundation",
+        output_root=target,
+        boundary_inputs={
+            "config_dir": config_dir,
+            "workspace": workspace,
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_official_foundation_unchecked(
+            config_dir=config_dir,
+            workspace=workspace,
+            output_root=staging,
+            logical_output_root=target,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        target,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
 
 
 __all__ = [

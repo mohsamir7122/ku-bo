@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-output-lineage.schema.json",
+  "title": "KU-BO authenticated tri-security output lineage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "boundary_id",
+    "stage_id",
+    "run_id",
+    "batch_id",
+    "semantic_admission",
+    "predecessor_bindings",
+    "claim_boundary",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "audience": {"const": "kubo-tri-security-output-lineage"},
+    "boundary_id": {
+      "enum": [
+        "import_user_price_exports",
+        "import_official_foundation",
+        "import_status_corporate",
+        "import_ca_enrichment",
+        "import_status_history",
+        "import_benchmark_history",
+        "import_official_eod",
+        "build_data_foundation_packet"
+      ]
+    },
+    "stage_id": {
+      "enum": [
+        "RESEARCH_PRICE_HISTORY",
+        "OFFICIAL_FOUNDATION",
+        "STATUS_CORPORATE",
+        "CA_ENRICHMENT",
+        "STATUS_HISTORY",
+        "BENCHMARK_HISTORY",
+        "OFFICIAL_EOD",
+        "FINAL_DATA_FOUNDATION_RECONCILIATION"
+      ]
+    },
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "batch_id": {"$ref": "#/$defs/identifier"},
+    "semantic_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {"const": "tri_security_semantic_admission.json"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "predecessor_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/predecessor"}
+    },
+    "claim_boundary": {
+      "const": "AUTHENTICATED_OUTPUT_LINEAGE_NOT_MARKET_EVIDENCE"
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_user_price_exports"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "RESEARCH_PRICE_HISTORY"}, "predecessor_bindings": {"$ref": "#/$defs/rootPredecessor"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_official_foundation"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}, "predecessor_bindings": {"$ref": "#/$defs/rootPredecessor"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_status_corporate"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "STATUS_CORPORATE"}, "predecessor_bindings": {"$ref": "#/$defs/oneOfficialFoundation"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_ca_enrichment"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "CA_ENRICHMENT"}, "predecessor_bindings": {"$ref": "#/$defs/oneStatusCorporate"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_status_history"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "STATUS_HISTORY"}, "predecessor_bindings": {"$ref": "#/$defs/oneStatusCorporate"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_benchmark_history"}}, "required": ["boundary_id"]},
+      "then": {"properties": {"stage_id": {"const": "BENCHMARK_HISTORY"}, "predecessor_bindings": {"$ref": "#/$defs/oneOfficialFoundation"}}}
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_official_eod"}}, "required": ["boundary_id"]},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "OFFICIAL_EOD"},
+          "predecessor_bindings": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {"$ref": "#/$defs/officialFoundationPredecessor"},
+              {"$ref": "#/$defs/statusHistoryPredecessor"}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "build_data_foundation_packet"}}, "required": ["boundary_id"]},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "FINAL_DATA_FOUNDATION_RECONCILIATION"},
+          "predecessor_bindings": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "prefixItems": [
+              {"$ref": "#/$defs/officialFoundationPredecessor"},
+              {"$ref": "#/$defs/statusHistoryPredecessor"},
+              {"$ref": "#/$defs/caEnrichmentPredecessor"},
+              {"$ref": "#/$defs/researchPriceHistoryPredecessor"},
+              {"$ref": "#/$defs/benchmarkHistoryPredecessor"},
+              {"$ref": "#/$defs/officialEodPredecessor"}
+            ],
+            "items": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "predecessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "run_id", "admission_sha256"],
+      "properties": {
+        "stage_id": {
+          "enum": [
+            "RUN_AUTHORITY_ROOT",
+            "OFFICIAL_FOUNDATION",
+            "STATUS_CORPORATE",
+            "CA_ENRICHMENT",
+            "STATUS_HISTORY",
+            "RESEARCH_PRICE_HISTORY",
+            "BENCHMARK_HISTORY",
+            "OFFICIAL_EOD"
+          ]
+        },
+        "run_id": {"$ref": "#/$defs/identifier"},
+        "admission_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "stageConst": {
+      "type": "object",
+      "properties": {"stage_id": {"type": "string"}}
+    },
+    "rootPredecessor": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [{"$ref": "#/$defs/runAuthorityPredecessor"}],
+      "items": false
+    },
+    "oneOfficialFoundation": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [{"$ref": "#/$defs/officialFoundationPredecessor"}],
+      "items": false
+    },
+    "oneStatusCorporate": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [{"$ref": "#/$defs/statusCorporatePredecessor"}],
+      "items": false
+    },
+    "runAuthorityPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "RUN_AUTHORITY_ROOT"}}}]},
+    "officialFoundationPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}}}]},
+    "statusCorporatePredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "STATUS_CORPORATE"}}}]},
+    "caEnrichmentPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "CA_ENRICHMENT"}}}]},
+    "statusHistoryPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "STATUS_HISTORY"}}}]},
+    "researchPriceHistoryPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "RESEARCH_PRICE_HISTORY"}}}]},
+    "benchmarkHistoryPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "BENCHMARK_HISTORY"}}}]},
+    "officialEodPredecessor": {"allOf": [{"$ref": "#/$defs/predecessor"}, {"properties": {"stage_id": {"const": "OFFICIAL_EOD"}}}]}
+  }
+}

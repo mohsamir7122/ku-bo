@@ -17,6 +17,10 @@ if str(PROJECT_ROOT) not in sys.path:
 from tests.ku_bo_011_mutators import (  # noqa: E402
     BOUNDARIES,
     CLAIM_BOUNDARY,
+    EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT,
+    EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_RULE_COUNT,
     MUTATIONS,
     TOTAL_CASES,
     VARIANTS_PER_PAIR,
@@ -57,14 +61,32 @@ def render_manifest(cases: list[dict[str, Any]], corpus_bytes: bytes) -> bytes:
     mutation_counts = Counter(case["mutation"]["id"] for case in cases)
     decision_counts = Counter(case["expected"]["decision"] for case in cases)
     phase_counts = Counter(case["expected"]["failure_phase"] for case in cases)
+    ingress_counts = Counter(case["materialization"]["ingress"] for case in cases)
+    resign_counts = Counter(
+        case["materialization"]["resign_policy"] for case in cases
+    )
     semantic_fingerprints = sorted(
         sha256_bytes(canonical_json(semantic_projection(case)).encode("utf-8"))
         for case in cases
     )
     schema_bytes = SCHEMA_PATH.read_bytes()
     manifest = {
-        "schema_version": "ku-bo-011-adversarial-corpus-manifest-v1",
-        "generator_version": "1.0",
+        "schema_version": "ku-bo-011-adversarial-corpus-manifest-v3",
+        "generator_version": "3.0",
+        "expectation_model": "PRODUCTION_DETECTION_ORDER_V3_MATERIALIZED",
+        "materialization_model": "PRODUCTION_HANDLER_DESCRIPTOR_V1",
+        "expected_rejection_override_rule_count": (
+            EXPECTED_REJECTION_OVERRIDE_RULE_COUNT
+        ),
+        "expected_rejection_override_case_count": (
+            EXPECTED_REJECTION_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_code_override_case_count": (
+            EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT
+        ),
+        "expected_failure_phase_override_case_count": (
+            EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT
+        ),
         "corpus_path": CORPUS_PATH.relative_to(PROJECT_ROOT).as_posix(),
         "case_schema_path": SCHEMA_PATH.relative_to(PROJECT_ROOT).as_posix(),
         "generator_path": GENERATOR_PATH.relative_to(PROJECT_ROOT).as_posix(),
@@ -95,6 +117,8 @@ def render_manifest(cases: list[dict[str, Any]], corpus_bytes: bytes) -> bytes:
         "mutation_counts": dict(sorted(mutation_counts.items())),
         "expected_decision_counts": dict(sorted(decision_counts.items())),
         "expected_failure_phase_counts": dict(sorted(phase_counts.items())),
+        "materialization_ingress_counts": dict(sorted(ingress_counts.items())),
+        "materialization_resign_policy_counts": dict(sorted(resign_counts.items())),
         "first_case_id": cases[0]["case_id"],
         "last_case_id": cases[-1]["case_id"],
         "claim_boundary": CLAIM_BOUNDARY,

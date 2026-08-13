@@ -93,26 +93,60 @@ jobs:
       - name: Build and exercise the repository-bound wheel
         run: |
           python -m pip wheel --no-deps --wheel-dir dist .
-          python -m pip install --force-reinstall dist/*.whl
-          kubo --project-root "$GITHUB_WORKSPACE" validate-source-network
-          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-pilot-config
-          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
-          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry
-          kubo-data-foundation --help | grep -q "prepare-benchmark-history"
-          kubo-data-foundation --help | grep -q "prepare-official-eod"
-          kubo-data-foundation --help | grep -q "build-data-foundation-packet"
-          kubo-data-foundation --help | grep -q "print-data-foundation-gate-report"
-          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
+          installed_venv="$RUNNER_TEMP/kubo-installed-wheel-venv"
+          python -m venv "$installed_venv"
+          "$installed_venv/bin/python" -m pip install \
+            --disable-pip-version-check \
+            dist/*.whl \
+            jsonschema==4.25.1
+          installed_python="$installed_venv/bin/python"
+          installed_kubo="$installed_venv/bin/kubo"
+          installed_foundation="$installed_venv/bin/kubo-data-foundation"
+          "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-source-network
+          "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-pilot-config
+          "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
+          "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry
+          "$installed_foundation" --help | grep -q "prepare-benchmark-history"
+          "$installed_foundation" --help | grep -q "prepare-official-eod"
+          "$installed_foundation" --help | grep -q "build-data-foundation-packet"
+          "$installed_foundation" --help | grep -q "print-data-foundation-gate-report"
+          "$installed_foundation" --help | grep -q "issue-tri-security-semantic-admission"
+          "$installed_foundation" issue-tri-security-semantic-admission --help \
+            | grep -q -- "--operation-decision-at"
+          "$installed_python" - <<'PY'
+          from kubo.tri_security_lineage import (
+              LINEAGE_FILE,
+              materialize_boundary_lineage,
+              verify_boundary_lineage,
+              verify_final_predecessor_lineages,
+          )
+
+          assert LINEAGE_FILE == "reports/tri_security_lineage.json"
+          assert callable(materialize_boundary_lineage)
+          assert callable(verify_boundary_lineage)
+          assert callable(verify_final_predecessor_lineages)
+          PY
+          "$installed_foundation" --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
             --output-root "$RUNNER_TEMP/kubo-official-workspace" \
             --run-id ci-official-workspace \
             --calendar-year 2026 \
             --prepared-by github-actions
-          kubo-data-foundation --project-root "$GITHUB_WORKSPACE" prepare-status-corporate \
+          "$installed_foundation" --project-root "$GITHUB_WORKSPACE" prepare-status-corporate \
             --output-root "$RUNNER_TEMP/kubo-status-corporate-workspace" \
             --run-id ci-status-corporate-workspace \
             --action-window-from 2021-01-01 \
             --action-window-to 2026-08-09 \
             --prepared-by github-actions
-          python scripts/installed_data_foundation_check.py \
+          "$installed_python" scripts/installed_data_foundation_check.py \
             --project-root "$GITHUB_WORKSPACE" \
             --work-root "$RUNNER_TEMP/kubo-installed-data-foundation-check"
+          if "$installed_python" -c \
+            'import importlib.util; raise SystemExit(0 if importlib.util.find_spec("kubo.ku_bo_011_adapter") else 1)'
+          then
+            "$installed_python" -m tests.ku_bo_011_harness --help \
+              | grep -q -- "--strict-target-adapter"
+            KUBO_KU_BO_011_CONFIG_DIR="$GITHUB_WORKSPACE/config" \
+              "$installed_python" -m tests.ku_bo_011_harness \
+              --strict-target-adapter \
+              --adapter kubo.ku_bo_011_adapter:production_adapter
+          fi

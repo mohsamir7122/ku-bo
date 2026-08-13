@@ -190,6 +190,150 @@
     "implementation_adapter_required": {
       "const": true
     },
+    "materialization": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "APPEND_COPY_OF_FIRST_ROW",
+            "CREATE_OUTPUT_ROOT_WITH_RACER_FILE",
+            "CREATE_SYMLINK_WITH_FIFO_FALLBACK",
+            "DELETE_FILE",
+            "DELETE_STAGING_DIRECTORY",
+            "FLIP_FIRST_TAG_NIBBLE",
+            "FLIP_LAST_TAG_NIBBLE",
+            "INCREMENT_INTEGER",
+            "INJECT_FILE_AFTER_FIRST_TREE_SCAN",
+            "OVERWRITE_FILE_BYTES",
+            "REMOVE_FIRST_GATE",
+            "REPLACE_QUALIFICATION_WINDOW",
+            "REPLACE_WITH_EMPTY_LIST",
+            "REPLACE_WITH_EMPTY_ZERO_HASH_COHORT",
+            "REUSE_RUN_SECRET_AS_STAGE_SECRET",
+            "SET_CLAIM_VALUE",
+            "SET_EXPIRY_BEFORE_DECISION",
+            "SET_FOREIGN_AUDIENCE",
+            "SET_FOREIGN_BATCH_ID",
+            "SET_FOREIGN_RUN_ID",
+            "SET_ISSUANCE_AFTER_DECISION",
+            "SET_OTHER_STAGE_ID",
+            "SET_OUTPUT_ROOT_INSIDE_STAGE",
+            "SET_REQUEST_PATH_NONE",
+            "SET_UNKNOWN_KEY_ID",
+            "SET_WRONG_PREDECESSOR_STAGE",
+            "SET_ZERO_SHA256",
+            "WRITE_STAGED_FILE_THEN_RAISE",
+            "WRITE_TRUNCATED_JSON",
+            "WRITE_UNBOUND_FILE"
+          ]
+        },
+        "artifact": {
+          "enum": [
+            "ATOMIC_OUTPUT_TRANSACTION",
+            "ATOMIC_STAGING_DIRECTORY",
+            "BOUNDARY_ADMISSION_REQUEST",
+            "RUN_RECEIPT_FILE",
+            "SEMANTIC_ADMISSION_FILE",
+            "STAGE_BINDING_FILE",
+            "STAGE_INPUT_TREE",
+            "VERIFIED_OUTPUT_BINDING"
+          ]
+        },
+        "field": {
+          "minLength": 1,
+          "pattern": "^/",
+          "type": "string"
+        },
+        "handler_id": {
+          "enum": [
+            "missing_run_receipt",
+            "malformed_run_receipt",
+            "forged_run_authentication_tag",
+            "wrong_run_key_id",
+            "non_independent_authority",
+            "expired_run_receipt",
+            "future_run_receipt",
+            "cross_run_receipt",
+            "wrong_receipt_audience",
+            "wrong_batch_binding",
+            "batch_plan_hash_mismatch",
+            "qualification_window_mismatch",
+            "cohort_mismatch",
+            "scoped_manifest_hash_mismatch",
+            "pending_gate_state_mismatch",
+            "missing_stage_binding",
+            "malformed_stage_binding",
+            "forged_stage_authentication_tag",
+            "wrong_stage_key_id",
+            "cross_run_stage_binding",
+            "wrong_stage_id",
+            "stage_manifest_hash_mismatch",
+            "stage_tree_addition",
+            "stage_tree_deletion",
+            "stage_tree_byte_drift",
+            "unsafe_stage_entry",
+            "stage_tree_toc_tou",
+            "stage_root_overlap_or_alias",
+            "stage_artifact_inventory_mismatch",
+            "predecessor_binding_omission",
+            "predecessor_binding_replay",
+            "predecessor_binding_wrong_stage",
+            "five_security_denominator_promotion",
+            "full_market_claim_promotion",
+            "benchmark_fallback_promotion",
+            "d01_policy_promotion",
+            "untrusted_legacy_claim_promotion",
+            "output_root_preexists",
+            "partial_output_on_rejection",
+            "output_commit_toc_tou"
+          ]
+        },
+        "ingress": {
+          "enum": [
+            "CLI_PARSER_TO_PUBLIC_BOUNDARY",
+            "DIRECT_PUBLIC_BOUNDARY",
+            "SERIALIZED_ADMISSION_TO_PUBLIC_BOUNDARY",
+            "PUBLIC_BOUNDARY_PRE_COMMIT_HOOK"
+          ]
+        },
+        "resign_policy": {
+          "enum": [
+            "NOT_APPLICABLE",
+            "PRESERVE_STALE_AUTHENTICATION",
+            "RESIGN_WITH_RUN_AUTHORITY",
+            "RESIGN_WITH_SEMANTIC_AUTHORITY",
+            "RESIGN_WITH_STAGE_AUTHORITY"
+          ]
+        },
+        "timing": {
+          "enum": [
+            "BEFORE_CLI_PARSE_AND_PUBLIC_BOUNDARY",
+            "BEFORE_DIRECT_PUBLIC_BOUNDARY",
+            "BEFORE_SERIALIZED_ARTIFACT_ADMISSION",
+            "DURING_PRODUCTION_TREE_DOUBLE_SNAPSHOT",
+            "INSIDE_ATOMIC_OUTPUT_WORKER_AFTER_ADMISSION",
+            "PUBLIC_BOUNDARY_PRE_COMMIT_RECHECK"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "handler_id",
+        "ingress",
+        "artifact",
+        "field",
+        "action",
+        "timing",
+        "resign_policy",
+        "value"
+      ],
+      "type": "object"
+    },
     "mutation": {
       "additionalProperties": false,
       "properties": {
@@ -296,10 +440,7 @@
         "unsafe_entry_kind": {
           "enum": [
             null,
-            "parent_traversal",
-            "absolute_path",
-            "symlink",
-            "special_file"
+            "symlink_with_fifo_fallback"
           ]
         },
         "value": {
@@ -339,7 +480,7 @@
       "type": "object"
     },
     "schema_version": {
-      "const": "ku-bo-011-adversarial-case-v1"
+      "const": "ku-bo-011-adversarial-case-v3"
     }
   },
   "required": [
@@ -347,6 +488,7 @@
     "case_id",
     "boundary",
     "mutation",
+    "materialization",
     "context",
     "expected",
     "implementation_adapter_required",

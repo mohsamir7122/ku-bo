@@ -11,7 +11,7 @@ import unittest
 
 from kubo.data_foundation_reconciliation import (
     GATE_ORDER,
-    build_data_foundation_packet,
+    _build_data_foundation_packet_unchecked,
     print_data_foundation_gate_report,
     read_data_foundation_gate_report,
     render_data_foundation_gate_report,
@@ -717,7 +717,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             source_url=source_url,
         )
         output = root / "output"
-        report = build_data_foundation_packet(
+        report = _build_data_foundation_packet_unchecked(
             **inputs,
             project_root=ROOT,
             output_root=output,
@@ -861,7 +861,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             )
             raw = inputs["benchmark_root"] / "raw" / "evidence.bin"
             raw.write_bytes(b"tampered after manifest\n")
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -884,7 +884,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                 / "trading_calendar.csv"
             )
             calendar.write_bytes(calendar.read_bytes() + b"\n")
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -908,7 +908,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                 artifact.pop("evidence_classification")
                 artifact.pop("rights_status")
             _write_json(manifest_path, manifest)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -937,7 +937,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                 project_root / "config" / "pilot" / "outcome_session_policy.json"
             )
             _write_json(authoritative, policy)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=project_root,
                 output_root=root / "output",
@@ -965,7 +965,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                     project_root / "config" / "pilot" / "outcome_session_policy.json"
                 )
                 _write_json(authoritative, policy)
-                report = build_data_foundation_packet(
+                report = _build_data_foundation_packet_unchecked(
                     **inputs,
                     project_root=project_root,
                     output_root=root / "output",
@@ -984,7 +984,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             root = Path(directory)
             inputs = _component_roots(root / "inputs")
             external = _policy(root / "external-frozen-policy.json", frozen=True)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1009,7 +1009,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             policy["suspended_or_halted_rule"] = "UNDECIDED"
             policy["claim_boundary"] = "OUTCOME_SESSION_POLICY_NOT_FROZEN"
             _write_json(authoritative, policy)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=project_root,
                 output_root=root / "output",
@@ -1030,7 +1030,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                 project_root / "config" / "pilot" / "outcome_session_policy.json",
                 frozen=True,
             )
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=project_root,
                 output_root=root / "output",
@@ -1053,7 +1053,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             )
             _git(project_root, "add", "config/pilot/outcome_session_policy.json")
             _git(project_root, "commit", "-q", "-m", "attempt global option one")
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=project_root,
                 output_root=root / "output",
@@ -1109,7 +1109,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             eod_rows = list(csv.DictReader(eod_path.read_text(encoding="utf-8").splitlines()))
             eod_rows[0]["price_basis"] = "OFFICIALLY_ADJUSTED"
             _write_csv(eod_path, tuple(eod_rows[0]), eod_rows)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1142,7 +1142,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             rows[0]["security_code"] = "999"
             _write_csv(factor_path, tuple(rows[0]), rows)
 
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1178,7 +1178,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             )
             _write_full_factor_contract(inputs)
             _write_full_benchmark_contract(inputs)
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1233,7 +1233,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             _write_full_factor_contract(inputs, ex_date="2026-08-10")
             _write_full_benchmark_contract(inputs)
 
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1277,7 +1277,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             _write_csv(eod_path, tuple(eod_rows[0]), eod_rows)
             _refresh_eod_normalized_receipt(inputs)
 
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1320,7 +1320,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             rows[0]["corporate_action_multiplier"] = "0.95"
             _write_csv(benchmark_path, tuple(rows[0]), rows)
 
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1376,7 +1376,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                 rows[0][field] = value
                 _write_csv(factor_path, tuple(rows[0]), rows)
 
-                report = build_data_foundation_packet(
+                report = _build_data_foundation_packet_unchecked(
                     **inputs,
                     project_root=ROOT,
                     output_root=root / "output",
@@ -1432,7 +1432,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
                     }
                 ],
             )
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=ROOT,
                 output_root=root / "output",
@@ -1580,7 +1580,7 @@ class DataFoundationReconciliationTests(unittest.TestCase):
             project_root = root / "project"
             project_root.mkdir()
             (project_root / "README.md").write_text("curated subset\n", encoding="utf-8")
-            report = build_data_foundation_packet(
+            report = _build_data_foundation_packet_unchecked(
                 **inputs,
                 project_root=project_root,
                 output_root=root / "output",

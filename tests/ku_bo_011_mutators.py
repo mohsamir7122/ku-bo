@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
-from typing import Any, Iterator
+from types import MappingProxyType
+from typing import Any, Iterator, Mapping
 
 
-SCHEMA_VERSION = "ku-bo-011-adversarial-case-v1"
+SCHEMA_VERSION = "ku-bo-011-adversarial-case-v3"
 CLAIM_BOUNDARY = "TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM"
 VARIANTS_PER_PAIR = 4
 
@@ -34,6 +35,25 @@ class AttackProfile:
     input_channel: str
     timing: str
     failure_phase: str
+
+
+@dataclass(frozen=True)
+class MaterializationSpec:
+    artifact: str
+    field: str
+    action: str
+    resign_policy: str
+    value: str | None
+
+
+MATERIALIZATION_INGRESS_BY_CHANNEL: Mapping[str, str] = MappingProxyType(
+    {
+        "CLI_ARGUMENT": "CLI_PARSER_TO_PUBLIC_BOUNDARY",
+        "DIRECT_API_OBJECT": "DIRECT_PUBLIC_BOUNDARY",
+        "SERIALIZED_ARTIFACT": "SERIALIZED_ADMISSION_TO_PUBLIC_BOUNDARY",
+        "FILESYSTEM_RACE": "PUBLIC_BOUNDARY_PRE_COMMIT_HOOK",
+    }
+)
 
 
 ATTACK_PROFILES = (
@@ -161,250 +181,172 @@ MUTATIONS = (
 
 
 UNSAFE_ENTRY_VARIANTS = (
-    ("parent_traversal", "../escape.bin"),
-    ("absolute_path", "/tmp/escape.bin"),
-    ("symlink", "raw/symlink.bin"),
-    ("special_file", "raw/service.sock"),
+    ("symlink_with_fifo_fallback", "raw/unsafe-link.bin"),
 )
 
 
-_VALUE_PROFILES: dict[str, tuple[str | None, ...]] = {
-    "missing_run_receipt": (
-        "CLI_OPTION_ABSENT",
-        "API_ARGUMENT_NONE",
-        "RECEIPT_FILE_ABSENT",
-        "VALID_RECEIPT_REMOVED_AFTER_CHECK",
-    ),
-    "malformed_run_receipt": (
-        "CLI_PATH_POINTS_TO_ZERO_BYTE_FILE",
-        "API_ARGUMENT_IS_NON_OBJECT",
-        "SERIALIZED_RECEIPT_HAS_UNKNOWN_FIELD",
-        "VALID_RECEIPT_SWAPPED_FOR_TRUNCATED_JSON",
-    ),
-    "forged_run_authentication_tag": (
-        "SINGLE_HEX_NIBBLE_CHANGED",
-        "AUTHENTICATION_TAG_TRUNCATED",
-        "VALID_TAG_FROM_FOREIGN_PAYLOAD",
-        "TAG_SWAPPED_AFTER_SCHEMA_VALIDATION",
-    ),
-    "wrong_run_key_id": (
-        "UNKNOWN_KEY_ID",
-        "STAGE_KEY_ID_USED_AS_RUN_KEY_ID",
-        "RETIRED_RUN_KEY_ID",
-        "KEY_ID_SWAPPED_AFTER_LOOKUP",
-    ),
-    "non_independent_authority": (
-        "SAME_KEY_ID_FOR_RUN_AND_STAGE",
-        "SAME_SECRET_BYTES_UNDER_TWO_KEY_IDS",
-        "RUN_AUTHORITY_OBJECT_REUSED_FOR_STAGE",
-        "STAGE_AUTHORITY_SWAPPED_TO_RUN_AUTHORITY",
-    ),
-    "expired_run_receipt": (
-        "EXPIRES_ONE_SECOND_BEFORE_EVALUATION",
-        "EXPIRES_ONE_DAY_BEFORE_EVALUATION",
-        "EXPIRES_AT_EVALUATION_BOUNDARY",
-        "CLOCK_ADVANCED_PAST_EXPIRY_AFTER_CHECK",
-    ),
-    "future_run_receipt": (
-        "ISSUED_ONE_SECOND_AFTER_EVALUATION",
-        "ISSUED_ONE_DAY_AFTER_EVALUATION",
-        "VALID_FROM_AFTER_EVALUATION",
-        "CLOCK_REWOUND_BEFORE_ISSUANCE_AFTER_CHECK",
-    ),
-    "cross_run_receipt": (
-        "RECEIPT_FROM_PRIOR_RUN",
-        "RECEIPT_FROM_LATER_RUN",
-        "RECEIPT_FROM_SIBLING_BATCH_RUN",
-        "RUN_ID_SWAPPED_AFTER_AUTHENTICATION",
-    ),
-    "wrong_receipt_audience": (
-        "AUDIENCE_IS_DIAGNOSTIC_TOOL",
-        "AUDIENCE_IS_DIFFERENT_IMPORTER",
-        "AUDIENCE_IS_WILDCARD",
-        "AUDIENCE_SWAPPED_AFTER_AUTHENTICATION",
-    ),
-    "wrong_batch_binding": (
-        "BATCH_NUMBER_ZERO",
-        "BATCH_NUMBER_TWO",
-        "BATCH_NUMBER_FIVE_SECURITY_LEGACY",
-        "BATCH_NUMBER_SWAPPED_AFTER_AUTHENTICATION",
-    ),
-    "batch_plan_hash_mismatch": (
-        "ALL_ZERO_PLAN_DIGEST",
-        "DIGEST_OF_REORDERED_PLAN",
-        "DIGEST_OF_OTHER_BATCH_PLAN",
-        "PLAN_BYTES_SWAPPED_AFTER_DIGEST_CHECK",
-    ),
-    "qualification_window_mismatch": (
-        "WINDOW_START_SHIFTED_FORWARD",
-        "WINDOW_END_SHIFTED_BACKWARD",
-        "WINDOW_BOUNDS_REVERSED",
-        "WINDOW_SWAPPED_AFTER_RECEIPT_CHECK",
-    ),
-    "cohort_mismatch": (
-        "EXPECTED_SECURITY_REMOVED",
-        "FOREIGN_SECURITY_ADDED",
-        "SECURITY_DUPLICATED",
-        "COHORT_ORDER_AND_IDENTITY_SWAPPED_AFTER_CHECK",
-    ),
-    "scoped_manifest_hash_mismatch": (
-        "ALL_ZERO_MANIFEST_DIGEST",
-        "DIGEST_OF_UNSCOPED_MANIFEST",
-        "DIGEST_OF_OTHER_RUN_MANIFEST",
-        "MANIFEST_BYTES_SWAPPED_AFTER_DIGEST_CHECK",
-    ),
-    "pending_gate_state_mismatch": (
-        "PENDING_GATE_REMOVED",
-        "PENDING_GATE_MARKED_PASS",
-        "UNKNOWN_GATE_INSERTED",
-        "GATE_STATE_SWAPPED_AFTER_RECEIPT_CHECK",
-    ),
-    "missing_stage_binding": (
-        "CLI_OPTION_ABSENT",
-        "API_ARGUMENT_NONE",
-        "BINDING_FILE_ABSENT",
-        "VALID_BINDING_REMOVED_AFTER_CHECK",
-    ),
-    "malformed_stage_binding": (
-        "CLI_PATH_POINTS_TO_ZERO_BYTE_FILE",
-        "API_ARGUMENT_IS_NON_OBJECT",
-        "SERIALIZED_BINDING_HAS_UNKNOWN_FIELD",
-        "VALID_BINDING_SWAPPED_FOR_TRUNCATED_JSON",
-    ),
-    "forged_stage_authentication_tag": (
-        "SINGLE_HEX_NIBBLE_CHANGED",
-        "AUTHENTICATION_TAG_TRUNCATED",
-        "VALID_TAG_FROM_FOREIGN_STAGE_TREE",
-        "TAG_SWAPPED_AFTER_SCHEMA_VALIDATION",
-    ),
-    "wrong_stage_key_id": (
-        "UNKNOWN_KEY_ID",
-        "RUN_KEY_ID_USED_AS_STAGE_KEY_ID",
-        "RETIRED_STAGE_KEY_ID",
-        "KEY_ID_SWAPPED_AFTER_LOOKUP",
-    ),
-    "cross_run_stage_binding": (
-        "BINDING_FROM_PRIOR_RUN",
-        "BINDING_FROM_LATER_RUN",
-        "BINDING_FROM_SIBLING_BATCH_RUN",
-        "BINDING_RUN_ID_SWAPPED_AFTER_AUTHENTICATION",
-    ),
-    "wrong_stage_id": (
-        "PREDECESSOR_STAGE_ID_USED",
-        "SUCCESSOR_STAGE_ID_USED",
-        "UNKNOWN_STAGE_ID_USED",
-        "STAGE_ID_SWAPPED_AFTER_AUTHENTICATION",
-    ),
-    "stage_manifest_hash_mismatch": (
-        "ALL_ZERO_STAGE_MANIFEST_DIGEST",
-        "DIGEST_OF_PARTIAL_STAGE_MANIFEST",
-        "DIGEST_OF_FOREIGN_STAGE_MANIFEST",
-        "STAGE_MANIFEST_SWAPPED_AFTER_DIGEST_CHECK",
-    ),
-    "stage_tree_addition": (
-        "UNBOUND_REGULAR_FILE_ADDED",
-        "UNBOUND_NESTED_DIRECTORY_ADDED",
-        "UNBOUND_EMPTY_FILE_ADDED",
-        "FILE_ADDED_AFTER_TREE_SNAPSHOT",
-    ),
-    "stage_tree_deletion": (
-        "BOUND_REGULAR_FILE_REMOVED",
-        "BOUND_EMPTY_FILE_REMOVED",
-        "BOUND_NESTED_FILE_REMOVED",
-        "FILE_REMOVED_AFTER_TREE_SNAPSHOT",
-    ),
-    "stage_tree_byte_drift": (
-        "FIRST_BYTE_CHANGED_SAME_SIZE",
-        "FILE_TRUNCATED",
-        "FILE_EXTENDED",
-        "BYTES_SWAPPED_AFTER_OPEN_HANDLE_CHECK",
-    ),
-    "unsafe_stage_entry": tuple(value for _, value in UNSAFE_ENTRY_VARIANTS),
-    "stage_tree_toc_tou": (
-        "FILE_RENAMED_BETWEEN_STAT_AND_OPEN",
-        "DIRECTORY_REPLACED_BETWEEN_WALKS",
-        "FILE_REPLACED_WITH_SYMLINK_AFTER_OPEN",
-        "TREE_MUTATED_BEFORE_FINAL_IDENTITY_RECHECK",
-    ),
-    "stage_root_overlap_or_alias": (
-        "STAGE_ROOT_EQUALS_RECEIPT_ROOT",
-        "STAGE_ROOT_IS_CHILD_OF_OUTPUT_ROOT",
-        "STAGE_ROOT_SYMLINK_ALIASES_RUN_ROOT",
-        "ROOT_REPLACED_WITH_ALIAS_AFTER_DISJOINTNESS_CHECK",
-    ),
-    "stage_artifact_inventory_mismatch": (
-        "DECLARED_ARTIFACT_MISSING_FROM_TREE",
-        "TREE_ARTIFACT_MISSING_FROM_DECLARATION",
-        "DECLARED_ARTIFACT_DIGEST_DIFFERS",
-        "INVENTORY_SWAPPED_AFTER_BINDING_CHECK",
-    ),
-    "predecessor_binding_omission": (
-        "PREDECESSOR_ARGUMENT_OMITTED",
-        "PREDECESSOR_LIST_EMPTY",
-        "PREDECESSOR_EDGE_ABSENT_FROM_ARTIFACT",
-        "PREDECESSOR_EDGE_REMOVED_AFTER_GRAPH_CHECK",
-    ),
-    "predecessor_binding_replay": (
-        "PREDECESSOR_FROM_PRIOR_RUN",
-        "PREDECESSOR_FROM_PRIOR_BATCH",
-        "DUPLICATE_PREDECESSOR_EDGE",
-        "CURRENT_EDGE_SWAPPED_FOR_REPLAYED_EDGE",
-    ),
-    "predecessor_binding_wrong_stage": (
-        "EDGE_NAMES_NON_PREDECESSOR_STAGE",
-        "EDGE_REVERSES_STAGE_ORDER",
-        "EDGE_SKIPS_REQUIRED_STAGE",
-        "EDGE_STAGE_ID_SWAPPED_AFTER_GRAPH_CHECK",
-    ),
-    "five_security_denominator_promotion": (
-        "CLI_REQUESTS_FIVE_SECURITY_DENOMINATOR",
-        "API_RESULT_SETS_DENOMINATOR_TO_FIVE",
-        "ARTIFACT_COPIES_LEGACY_FIVE_SECURITY_DENOMINATOR",
-        "DENOMINATOR_PROMOTED_AFTER_CLAIM_CHECK",
-    ),
-    "full_market_claim_promotion": (
-        "CLI_REQUESTS_FULL_MARKET_SCOPE",
-        "API_RESULT_SETS_FULL_MARKET_TRUE",
-        "ARTIFACT_LABELS_TRI_COHORT_FULL_MARKET",
-        "FULL_MARKET_FLAG_PROMOTED_AFTER_CLAIM_CHECK",
-    ),
-    "benchmark_fallback_promotion": (
-        "CLI_ALLOWS_GENERIC_BENCHMARK_FALLBACK",
-        "API_ACCEPTS_INCOMPATIBLE_FIVE_SECURITY_SERIES",
-        "ARTIFACT_MARKS_MISSING_SECTORS_QUALIFIED",
-        "BENCHMARK_STATUS_PROMOTED_AFTER_CLAIM_CHECK",
-    ),
-    "d01_policy_promotion": (
-        "CLI_SELECTS_D01_OPTION_WITHOUT_DECISION",
-        "API_SETS_OUTCOME_POLICY_FROZEN",
-        "ARTIFACT_EMBEDS_UNAPPROVED_POLICY",
-        "D01_STATUS_PROMOTED_AFTER_CLAIM_CHECK",
-    ),
-    "untrusted_legacy_claim_promotion": (
-        "CLI_IMPORTS_QUARANTINED_JULY_CLAIM",
-        "API_MARKS_LEGACY_CLAIM_TRUSTED",
-        "ARTIFACT_USES_LEGACY_CLAIM_AS_EVIDENCE",
-        "LEGACY_STATUS_PROMOTED_AFTER_CLAIM_CHECK",
-    ),
-    "output_root_preexists": (
-        "CLI_OUTPUT_PATH_ALREADY_EXISTS",
-        "API_OUTPUT_DIRECTORY_ALREADY_EXISTS",
-        "SERIALIZED_PLAN_TARGETS_EXISTING_OUTPUT",
-        "OUTPUT_ROOT_CREATED_BY_RACER_AFTER_CHECK",
-    ),
-    "partial_output_on_rejection": (
-        "CLI_FAILURE_LEAVES_REPORT_FILE",
-        "API_FAILURE_LEAVES_TEMP_DIRECTORY",
-        "ARTIFACT_FAILURE_LEAVES_NORMALIZED_BYTES",
-        "RACE_FAILURE_LEAVES_PARTIAL_COMMIT",
-    ),
-    "output_commit_toc_tou": (
-        "OUTPUT_PARENT_RENAMED_BEFORE_COMMIT",
-        "OUTPUT_ROOT_REPLACED_BEFORE_COMMIT",
-        "TEMP_OUTPUT_REPLACED_WITH_SYMLINK",
-        "COMMIT_DESTINATION_CHANGED_AFTER_FINAL_CHECK",
-    ),
-}
+def _materialization_spec(
+    artifact: str,
+    field: str,
+    action: str,
+    resign_policy: str,
+    value: str | None,
+) -> MaterializationSpec:
+    return MaterializationSpec(artifact, field, action, resign_policy, value)
+
+
+MATERIALIZATION_SPECS: Mapping[str, MaterializationSpec] = MappingProxyType(
+    {
+        "missing_run_receipt": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/", "DELETE_FILE", "NOT_APPLICABLE", None
+        ),
+        "malformed_run_receipt": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/", "WRITE_TRUNCATED_JSON", "NOT_APPLICABLE", '{"truncated":'
+        ),
+        "forged_run_authentication_tag": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/authentication/tag", "FLIP_FIRST_TAG_NIBBLE", "PRESERVE_STALE_AUTHENTICATION", "one changed hex nibble"
+        ),
+        "wrong_run_key_id": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/authentication/key_id", "SET_UNKNOWN_KEY_ID", "PRESERVE_STALE_AUTHENTICATION", "unknown-ku-bo-011-run-key"
+        ),
+        "non_independent_authority": _materialization_spec(
+            "BOUNDARY_ADMISSION_REQUEST", "/v1_stage_key", "REUSE_RUN_SECRET_AS_STAGE_SECRET", "NOT_APPLICABLE", "request.run_key"
+        ),
+        "expired_run_receipt": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/expires_at", "SET_EXPIRY_BEFORE_DECISION", "RESIGN_WITH_RUN_AUTHORITY", "decision_at minus 1 second"
+        ),
+        "future_run_receipt": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/issued_at", "SET_ISSUANCE_AFTER_DECISION", "RESIGN_WITH_RUN_AUTHORITY", "issued_at=decision_at+1s; expires_at=issued_at+1h; recompute run_date"
+        ),
+        "cross_run_receipt": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/run_id", "SET_FOREIGN_RUN_ID", "RESIGN_WITH_SEMANTIC_AUTHORITY", "foreign-${target_run_id}"
+        ),
+        "wrong_receipt_audience": _materialization_spec(
+            "RUN_RECEIPT_FILE", "/audience", "SET_FOREIGN_AUDIENCE", "RESIGN_WITH_RUN_AUTHORITY", "foreign-diagnostic-audience"
+        ),
+        "wrong_batch_binding": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/batch_id", "SET_FOREIGN_BATCH_ID", "RESIGN_WITH_SEMANTIC_AUTHORITY", "tri-999-foreign-batch"
+        ),
+        "batch_plan_hash_mismatch": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/batch_plan_sha256", "SET_ZERO_SHA256", "RESIGN_WITH_SEMANTIC_AUTHORITY", "0 repeated 64 times"
+        ),
+        "qualification_window_mismatch": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/qualification_window", "REPLACE_QUALIFICATION_WINDOW", "RESIGN_WITH_SEMANTIC_AUTHORITY", "2026-08-02..2026-08-12 Asia/Kuwait"
+        ),
+        "cohort_mismatch": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/cohort", "REPLACE_WITH_EMPTY_ZERO_HASH_COHORT", "RESIGN_WITH_SEMANTIC_AUTHORITY", "security_count=3; zero cohort hash; empty securities"
+        ),
+        "scoped_manifest_hash_mismatch": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/scoped_manifest_sha256", "SET_ZERO_SHA256", "RESIGN_WITH_SEMANTIC_AUTHORITY", "0 repeated 64 times"
+        ),
+        "pending_gate_state_mismatch": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/run_binding/pending_gate_state", "REMOVE_FIRST_GATE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "remove first insertion-ordered gate"
+        ),
+        "missing_stage_binding": _materialization_spec(
+            "STAGE_BINDING_FILE", "/", "DELETE_FILE", "NOT_APPLICABLE", None
+        ),
+        "malformed_stage_binding": _materialization_spec(
+            "STAGE_BINDING_FILE", "/", "WRITE_TRUNCATED_JSON", "NOT_APPLICABLE", '{"truncated":'
+        ),
+        "forged_stage_authentication_tag": _materialization_spec(
+            "STAGE_BINDING_FILE", "/authentication/tag", "FLIP_LAST_TAG_NIBBLE", "PRESERVE_STALE_AUTHENTICATION", "one changed hex nibble"
+        ),
+        "wrong_stage_key_id": _materialization_spec(
+            "STAGE_BINDING_FILE", "/authentication/key_id", "SET_UNKNOWN_KEY_ID", "PRESERVE_STALE_AUTHENTICATION", "unknown-ku-bo-011-stage-key"
+        ),
+        "cross_run_stage_binding": _materialization_spec(
+            "STAGE_BINDING_FILE", "/run_binding/run_id", "SET_FOREIGN_RUN_ID", "RESIGN_WITH_STAGE_AUTHORITY", "foreign-${target_run_id}"
+        ),
+        "wrong_stage_id": _materialization_spec(
+            "STAGE_BINDING_FILE", "/stage_id", "SET_OTHER_STAGE_ID", "RESIGN_WITH_STAGE_AUTHORITY", "STATUS_CORPORATE unless current is STATUS_CORPORATE, otherwise OFFICIAL_FOUNDATION"
+        ),
+        "stage_manifest_hash_mismatch": _materialization_spec(
+            "BOUNDARY_ADMISSION_REQUEST", "/expected_stage_manifest_sha256", "SET_ZERO_SHA256", "NOT_APPLICABLE", "0 repeated 64 times"
+        ),
+        "stage_tree_addition": _materialization_spec(
+            "STAGE_INPUT_TREE", "/raw/unbound.bin", "WRITE_UNBOUND_FILE", "NOT_APPLICABLE", "unbound stage-tree addition"
+        ),
+        "stage_tree_deletion": _materialization_spec(
+            "STAGE_INPUT_TREE", "/raw/evidence.bin", "DELETE_FILE", "NOT_APPLICABLE", None
+        ),
+        "stage_tree_byte_drift": _materialization_spec(
+            "STAGE_INPUT_TREE", "/raw/evidence.bin", "OVERWRITE_FILE_BYTES", "NOT_APPLICABLE", "mutated stage bytes"
+        ),
+        "unsafe_stage_entry": _materialization_spec(
+            "STAGE_INPUT_TREE", "/raw/unsafe-link.bin", "CREATE_SYMLINK_WITH_FIFO_FALLBACK", "NOT_APPLICABLE", "outside-stage.bin; FIFO fallback raw/unsafe-fifo"
+        ),
+        "stage_tree_toc_tou": _materialization_spec(
+            "STAGE_INPUT_TREE", "/ku-bo-011-race-marker.bin", "INJECT_FILE_AFTER_FIRST_TREE_SCAN", "NOT_APPLICABLE", "inserted after first production tree scan"
+        ),
+        "stage_root_overlap_or_alias": _materialization_spec(
+            "VERIFIED_OUTPUT_BINDING", "/output_root", "SET_OUTPUT_ROOT_INSIDE_STAGE", "NOT_APPLICABLE", "input_root/overlapping-output"
+        ),
+        "stage_artifact_inventory_mismatch": _materialization_spec(
+            "STAGE_BINDING_FILE", "/stage_artifact/complete_file_count", "INCREMENT_INTEGER", "RESIGN_WITH_STAGE_AUTHORITY", "+1"
+        ),
+        "predecessor_binding_omission": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/predecessor_bindings", "REPLACE_WITH_EMPTY_LIST", "RESIGN_WITH_SEMANTIC_AUTHORITY", "[]"
+        ),
+        "predecessor_binding_replay": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/predecessor_bindings/-", "APPEND_COPY_OF_FIRST_ROW", "RESIGN_WITH_SEMANTIC_AUTHORITY", "copy predecessor_bindings[0]"
+        ),
+        "predecessor_binding_wrong_stage": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/predecessor_bindings/0/stage_id", "SET_WRONG_PREDECESSOR_STAGE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "WRONG_PREDECESSOR_STAGE"
+        ),
+        "five_security_denominator_promotion": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/claims/denominator", "SET_CLAIM_VALUE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "FIVE_SECURITY_COHORT"
+        ),
+        "full_market_claim_promotion": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/claims/full_market", "SET_CLAIM_VALUE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "true"
+        ),
+        "benchmark_fallback_promotion": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/claims/benchmark_fallback_allowed", "SET_CLAIM_VALUE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "true"
+        ),
+        "d01_policy_promotion": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/claims/outcome_session_policy", "SET_CLAIM_VALUE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "FROZEN_D01_APPROVED"
+        ),
+        "untrusted_legacy_claim_promotion": _materialization_spec(
+            "SEMANTIC_ADMISSION_FILE", "/claims/legacy_july", "SET_CLAIM_VALUE", "RESIGN_WITH_SEMANTIC_AUTHORITY", "TRUSTED_LEGACY_CLAIM"
+        ),
+        "output_root_preexists": _materialization_spec(
+            "ATOMIC_OUTPUT_TRANSACTION", "/output_root", "CREATE_OUTPUT_ROOT_WITH_RACER_FILE", "NOT_APPLICABLE", "racer.txt=fixture-owned output racer"
+        ),
+        "partial_output_on_rejection": _materialization_spec(
+            "ATOMIC_STAGING_DIRECTORY", "/partial.txt", "WRITE_STAGED_FILE_THEN_RAISE", "NOT_APPLICABLE", "this partial candidate must never be published; then RuntimeError"
+        ),
+        "output_commit_toc_tou": _materialization_spec(
+            "ATOMIC_OUTPUT_TRANSACTION", "/output_root", "CREATE_OUTPUT_ROOT_WITH_RACER_FILE", "NOT_APPLICABLE", "racer.txt=fixture-owned output racer"
+        ),
+    }
+)
+
+
+EXPECTED_REJECTION_OVERRIDES: Mapping[
+    tuple[str, int], tuple[str, str]
+] = MappingProxyType(
+    {
+        ("output_root_preexists", 3): (
+            "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+            "PRE_COMMIT_RECHECK",
+        ),
+        ("output_commit_toc_tou", 0): (
+            "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+            "PRE_COMMIT_RECHECK",
+        ),
+        ("output_commit_toc_tou", 1): (
+            "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+            "PRE_COMMIT_RECHECK",
+        ),
+        ("output_commit_toc_tou", 2): (
+            "PARTIAL_OUTPUT_FORBIDDEN",
+            "PRE_COMMIT_RECHECK",
+        ),
+    }
+)
+EXPECTED_REJECTION_OVERRIDE_RULE_COUNT = 4
+EXPECTED_REJECTION_OVERRIDE_CASE_COUNT = 32
+EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT = 16
+EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT = 24
 
 
 TOTAL_CASES = len(BOUNDARIES) * len(MUTATIONS) * VARIANTS_PER_PAIR
@@ -423,30 +365,92 @@ def _mutation_values(
     *,
     profile: AttackProfile,
     variant_index: int,
-) -> tuple[str | None, str | None, str | None, str]:
+) -> tuple[str | None, str | None, str | None, str, dict[str, Any]]:
     try:
-        values = _VALUE_PROFILES[mutation.mutation_id]
+        spec = MATERIALIZATION_SPECS[mutation.mutation_id]
     except KeyError as exc:
         raise AssertionError(
-            f"mutation has no semantic value profiles: {mutation.mutation_id}"
+            f"mutation has no production materializer: {mutation.mutation_id}"
         ) from exc
-    if len(values) != len(ATTACK_PROFILES):
-        raise AssertionError(
-            f"mutation must define {len(ATTACK_PROFILES)} semantic profiles: "
-            f"{mutation.mutation_id}"
-        )
-    value = values[variant_index]
-    secondary_value: str | None = (
-        f"ORIGINAL_BOUND_VALUE_FOR_{mutation.target.strip('/').replace('/', '_').upper()}"
-    )
+
+    timing_by_channel = {
+        "CLI_ARGUMENT": "BEFORE_CLI_PARSE_AND_PUBLIC_BOUNDARY",
+        "DIRECT_API_OBJECT": "BEFORE_DIRECT_PUBLIC_BOUNDARY",
+        "SERIALIZED_ARTIFACT": "BEFORE_SERIALIZED_ARTIFACT_ADMISSION",
+        "FILESYSTEM_RACE": "PUBLIC_BOUNDARY_PRE_COMMIT_RECHECK",
+    }
+    artifact = spec.artifact
+    field = spec.field
+    action = spec.action
+    resign_policy = spec.resign_policy
+    value = spec.value
+    actual_timing = timing_by_channel[profile.input_channel]
+
+    if mutation.mutation_id in {"missing_run_receipt", "missing_stage_binding"}:
+        if variant_index < 2:
+            artifact = "BOUNDARY_ADMISSION_REQUEST"
+            field = (
+                "/receipt_path"
+                if mutation.mutation_id == "missing_run_receipt"
+                else "/stage_binding_path"
+            )
+            action = "SET_REQUEST_PATH_NONE"
+        else:
+            action = "DELETE_FILE"
+    elif mutation.mutation_id == "stage_tree_toc_tou":
+        actual_timing = "DURING_PRODUCTION_TREE_DOUBLE_SNAPSHOT"
+    elif mutation.mutation_id == "partial_output_on_rejection":
+        actual_timing = "INSIDE_ATOMIC_OUTPUT_WORKER_AFTER_ADMISSION"
+    elif mutation.mutation_id == "output_commit_toc_tou":
+        actual_timing = "PUBLIC_BOUNDARY_PRE_COMMIT_RECHECK"
+        if variant_index == 2:
+            artifact = "ATOMIC_STAGING_DIRECTORY"
+            field = "/"
+            action = "DELETE_STAGING_DIRECTORY"
+            value = None
+
+    materialization = {
+        "handler_id": mutation.mutation_id,
+        "ingress": MATERIALIZATION_INGRESS_BY_CHANNEL[profile.input_channel],
+        "artifact": artifact,
+        "field": field,
+        "action": action,
+        "timing": actual_timing,
+        "resign_policy": resign_policy,
+        "value": value,
+    }
+    secondary_value: str | None = None
     unsafe_entry_kind: str | None = None
     if mutation.mutation_id == "unsafe_stage_entry":
-        unsafe_entry_kind, value = UNSAFE_ENTRY_VARIANTS[variant_index]
+        unsafe_entry_kind, _ = UNSAFE_ENTRY_VARIANTS[0]
     attack_shape = (
-        f"{mutation.operation} {mutation.target} through {profile.input_channel} "
-        f"at {profile.timing}: {value or 'OMITTED'}"
+        f"handler_id={mutation.mutation_id}; ingress={materialization['ingress']}; "
+        f"action={action}; artifact={artifact}; field={field}; "
+        f"timing={actual_timing}; resign_policy={resign_policy}; "
+        f"value={value if value is not None else 'null'}"
     )
-    return value, secondary_value, unsafe_entry_kind, attack_shape
+    return value, secondary_value, unsafe_entry_kind, attack_shape, materialization
+
+
+def _expected_rejection(
+    mutation: MutationSpec,
+    profile: AttackProfile,
+    variant_index: int,
+) -> tuple[str, str]:
+    """Return the code and phase at the production detection point.
+
+    Most cases retain the mutation-family code and attack-channel phase. The
+    explicit overrides are the small locked set where the channel label is
+    earlier than the point at which atomic output can actually detect the
+    failure.
+    """
+
+    if not 0 <= variant_index < VARIANTS_PER_PAIR:
+        raise IndexError("variant_index is out of range")
+    return EXPECTED_REJECTION_OVERRIDES.get(
+        (mutation.mutation_id, variant_index),
+        (mutation.failure_code, profile.failure_phase),
+    )
 
 
 def build_case(
@@ -486,10 +490,21 @@ def build_case(
     if mutation.mutation_id == "cross_run_stage_binding":
         binding_run_id = f"foreign-binding-run-{case_index:04d}"
 
-    value, secondary_value, unsafe_entry_kind, attack_shape = _mutation_values(
+    (
+        value,
+        secondary_value,
+        unsafe_entry_kind,
+        attack_shape,
+        materialization,
+    ) = _mutation_values(
         mutation,
         profile=profile,
         variant_index=variant_index,
+    )
+    failure_code, failure_phase = _expected_rejection(
+        mutation,
+        profile,
+        variant_index,
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -515,6 +530,7 @@ def build_case(
             "secondary_value": secondary_value,
             "unsafe_entry_kind": unsafe_entry_kind,
         },
+        "materialization": materialization,
         "context": {
             "case_seed_sha256": token,
             "target_run_id": target_run_id,
@@ -526,8 +542,8 @@ def build_case(
         },
         "expected": {
             "decision": "REJECT",
-            "failure_code": mutation.failure_code,
-            "failure_phase": profile.failure_phase,
+            "failure_code": failure_code,
+            "failure_phase": failure_phase,
             "maximum_output_writes": 0,
             "market_evidence_claim": "NOT_EVALUATED",
         },

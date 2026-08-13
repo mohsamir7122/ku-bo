@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass, field
+import errno
 import hashlib
 import io
 import json
@@ -16,6 +17,10 @@ DEFAULT_MAX_TREE_BYTES = 512 * 1024 * 1024
 DEFAULT_MAX_TREE_FILES = 4096
 DEFAULT_MAX_TREE_ENTRIES = 8192
 DEFAULT_MAX_TREE_DEPTH = 64
+
+
+class TreeSnapshotChangedError(ValueError):
+    """The tree changed while a bounded snapshot was being constructed."""
 
 
 def _is_reparse_point(metadata: os.stat_result) -> bool:
@@ -87,7 +92,12 @@ def _recheck_ancestor_snapshot(
             raise ValueError(f"{field} changed while being read") from exc
         current = _identity(metadata)
         directory = index < len(snapshot) - 1
-        unchanged = current[:5] == expected[:5] if directory else current == expected
+        # Directory size/link-count can change when an unrelated sibling is
+        # created elsewhere under the same ancestor.  Path safety depends on
+        # the directory object (device, inode, and type), not those mutable
+        # inventory counters.  The leaf file still receives the full identity
+        # comparison below.
+        unchanged = current[:3] == expected[:3] if directory else current == expected
         if stat.S_ISLNK(metadata.st_mode) or _is_reparse_point(metadata) or not unchanged:
             raise ValueError(f"{field} changed while being read")
 
@@ -338,34 +348,45 @@ def snapshot_regular_tree(
         raise ValueError("tree snapshot limits must be positive")
     absolute = require_real_directory(root, field=field)
     before_root = _identity(os.lstat(absolute))
-    first = _scan_regular_tree_once(
-        absolute,
-        field=field,
-        max_files=max_files,
-        max_entries=max_entries,
-        max_depth=max_depth,
-        max_file_bytes=max_file_bytes,
-        max_total_bytes=max_total_bytes,
-    )
-    second = _scan_regular_tree_once(
-        absolute,
-        field=field,
-        max_files=max_files,
-        max_entries=max_entries,
-        max_depth=max_depth,
-        max_file_bytes=max_file_bytes,
-        max_total_bytes=max_total_bytes,
-    )
+    def scan() -> tuple[RegularFileSnapshot, ...]:
+        try:
+            return _scan_regular_tree_once(
+                absolute,
+                field=field,
+                max_files=max_files,
+                max_entries=max_entries,
+                max_depth=max_depth,
+                max_file_bytes=max_file_bytes,
+                max_total_bytes=max_total_bytes,
+            )
+        except ValueError as exc:
+            message = str(exc).lower()
+            cause = exc.__cause__
+            raced_enumeration = (
+                "cannot be enumerated safely" in message
+                and isinstance(cause, OSError)
+                and cause.errno in {errno.ENOENT, errno.ENOTDIR, errno.ESTALE}
+            )
+            if "changed while" in message or "changed during" in message or raced_enumeration:
+                raise TreeSnapshotChangedError(
+                    f"{field} changed while being snapshotted"
+                ) from exc
+            raise
+
+    first = scan()
+    second = scan()
     first_inventory = [item.inventory_row() for item in first]
     second_inventory = [item.inventory_row() for item in second]
     try:
         after_root = _identity(os.lstat(absolute))
     except OSError as exc:
-        raise ValueError(f"{field} changed while being snapshotted") from exc
+        raise TreeSnapshotChangedError(
+            f"{field} changed while being snapshotted"
+        ) from exc
     if first_inventory != second_inventory:
-        raise ValueError(f"{field} changed while being snapshotted")
+        raise TreeSnapshotChangedError(f"{field} changed while being snapshotted")
     if before_root[:5] != after_root[:5]:
-        raise ValueError(f"{field} changed while being snapshotted")
+        raise TreeSnapshotChangedError(f"{field} changed while being snapshotted")
     return RegularTreeSnapshot(root=absolute, files=second)
 
 

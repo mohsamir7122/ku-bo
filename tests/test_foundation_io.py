@@ -3,8 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from kubo import foundation_io
 from kubo.foundation_io import (
+    TreeSnapshotChangedError,
     prepare_output_root,
     read_csv_bytes,
     safe_regular_file,
@@ -86,6 +89,80 @@ class FoundationIoTests(unittest.TestCase):
                 expected,
             )
 
+    def test_safe_reader_allows_unrelated_sibling_creation_during_read(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "authority"
+            parent.mkdir()
+            path = parent / "receipt.json"
+            path.write_bytes(b'{"status":"PASS"}\n')
+            sibling = parent / "unrelated-audit-note.txt"
+            original_read = foundation_io.os.read
+            sibling_created = False
+
+            def create_sibling(descriptor: int, size: int) -> bytes:
+                nonlocal sibling_created
+                content = original_read(descriptor, size)
+                if not sibling_created:
+                    sibling.write_bytes(b"unrelated concurrent write\n")
+                    sibling_created = True
+                return content
+
+            with patch("kubo.foundation_io.os.read", side_effect=create_sibling):
+                content = safe_regular_file(path, field="receipt")
+
+            self.assertEqual(content, b'{"status":"PASS"}\n')
+            self.assertTrue(sibling.is_file())
+
+    def test_safe_reader_still_rejects_leaf_replacement_during_read(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "authority"
+            parent.mkdir()
+            path = parent / "receipt.json"
+            path.write_bytes(b'{"status":"PASS"}\n')
+            original = parent / "original-receipt.json"
+            original_read = foundation_io.os.read
+            replaced = False
+
+            def replace_leaf(descriptor: int, size: int) -> bytes:
+                nonlocal replaced
+                content = original_read(descriptor, size)
+                if not replaced:
+                    path.rename(original)
+                    path.write_bytes(b'{"status":"FORGED"}\n')
+                    replaced = True
+                return content
+
+            with patch("kubo.foundation_io.os.read", side_effect=replace_leaf):
+                with self.assertRaisesRegex(ValueError, "changed while being read"):
+                    safe_regular_file(path, field="receipt")
+
+    def test_safe_reader_still_rejects_ancestor_replacement_during_read(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            ancestor = root / "authority"
+            ancestor.mkdir()
+            path = ancestor / "receipt.json"
+            path.write_bytes(b'{"status":"PASS"}\n')
+            moved = root / "moved-authority"
+            original_read = foundation_io.os.read
+            replaced = False
+
+            def replace_ancestor(descriptor: int, size: int) -> bytes:
+                nonlocal replaced
+                content = original_read(descriptor, size)
+                if not replaced:
+                    ancestor.rename(moved)
+                    try:
+                        ancestor.symlink_to(moved, target_is_directory=True)
+                    except (NotImplementedError, OSError) as exc:
+                        self.skipTest(f"symlink creation is unavailable: {exc}")
+                    replaced = True
+                return content
+
+            with patch("kubo.foundation_io.os.read", side_effect=replace_ancestor):
+                with self.assertRaisesRegex(ValueError, "changed while being read"):
+                    safe_regular_file(path, field="receipt")
+
     def test_tree_snapshot_bounds_empty_entries_and_depth(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -102,6 +179,57 @@ class FoundationIoTests(unittest.TestCase):
                 nested.mkdir()
             with self.assertRaisesRegex(ValueError, "maximum depth 2"):
                 snapshot_regular_tree(root, field="tree", max_depth=2)
+
+    def test_tree_snapshot_reports_tree_change_between_scans(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evidence = root / "evidence.bin"
+            evidence.write_bytes(b"before")
+            original_scan = foundation_io._scan_regular_tree_once
+            scan_count = 0
+
+            def mutate_after_first_scan(*args, **kwargs):
+                nonlocal scan_count
+                result = original_scan(*args, **kwargs)
+                scan_count += 1
+                if scan_count == 1:
+                    evidence.write_bytes(b"after")
+                return result
+
+            with patch(
+                "kubo.foundation_io._scan_regular_tree_once",
+                side_effect=mutate_after_first_scan,
+            ):
+                with self.assertRaisesRegex(
+                    TreeSnapshotChangedError,
+                    "changed while being snapshotted",
+                ):
+                    snapshot_regular_tree(root, field="tree")
+
+    def test_tree_snapshot_reports_tree_disappearance_between_scans(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "tree"
+            root.mkdir()
+            original_scan = foundation_io._scan_regular_tree_once
+            scan_count = 0
+
+            def remove_after_first_scan(*args, **kwargs):
+                nonlocal scan_count
+                result = original_scan(*args, **kwargs)
+                scan_count += 1
+                if scan_count == 1:
+                    root.rmdir()
+                return result
+
+            with patch(
+                "kubo.foundation_io._scan_regular_tree_once",
+                side_effect=remove_after_first_scan,
+            ):
+                with self.assertRaisesRegex(
+                    TreeSnapshotChangedError,
+                    "changed while being snapshotted",
+                ):
+                    snapshot_regular_tree(root, field="tree")
 
 
 if __name__ == "__main__":
