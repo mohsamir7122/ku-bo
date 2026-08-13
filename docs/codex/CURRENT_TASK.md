@@ -4,8 +4,8 @@
 TASK_ID: KU-BO-011
 STATUS: IN_PROGRESS
 REPOSITORY: mohsamir7122/ku-bo
-CONTROL_BASE_BRANCH: test/ku-bo-011-adversarial-corpus-v0.1
-CONTROL_BASE_SHA: 3d773448b78ca99f6761a43b852f53967fdbb095
+CONTROL_BASE_BRANCH: main
+CONTROL_BASE_SHA: c621fcf88034c4571aa08aee2e54e2e026a4f651
 EXPECTED_NEW_BRANCH: build/tri-security-receipt-enforcement-v0.2
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
@@ -30,27 +30,64 @@ created, recheck security-sensitive state immediately before atomic commit,
 and preserve all current evidence, rights, policy, Benchmark, and financial
 non-claim boundaries.
 
-Do not merge during implementation. The user's conditional ordered-merge
-approval is recorded in `docs/codex/USER_DECISIONS.md` as
-`KU-BO-MERGE-003`; it may be exercised only after the applicable exact-head
-acceptance and CI gates pass.
+Do not merge the implementation during active validation. The PR #12 portion
+of the user's ordered approval has been exercised and passed post-merge CI.
+The remaining implementation-merge authority is recorded in
+`docs/codex/USER_DECISIONS.md` as `KU-BO-MERGE-003`; it may be exercised only
+after the production Adapter, complete suite, publication, and exact-head CI
+gates pass.
 
 ## Verified dependency state
 
 ```text
-main@6bcfbabf840e6876a878dfd692afbf746780d731
-GitHub Actions 31629909113 / PASS
+main@c621fcf88034c4571aa08aee2e54e2e026a4f651
+PR #12 merged as TEST_SPEC_ONLY
+Post-merge GitHub Actions 31684299396 / PASS
 
-test/ku-bo-011-adversarial-corpus-v0.1
-@3d773448b78ca99f6761a43b852f53967fdbb095
-Draft PR #12 / GitHub Actions 31631077911 / PASS
+build/tri-security-receipt-enforcement-v0.2
+@5e5b4ad9237ccaff04974576a3c77b2058a79b8f
+Implementation code head before control commit / Draft PR and CI pending
 ```
 
-PR #12 contains 1,280 deterministic synthetic Test Specifications and a strict
-Adapter harness. It carries
+Merged PR #12 contains 1,280 deterministic synthetic Test Specifications and
+a strict Adapter harness. It carries
 `TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM`; it is not an
 implementation dependency that may be treated as proof merely because its
 self-audit passes.
+
+The implementation branch now contains semantic admission v2, mandatory
+Direct API and CLI admission construction for all eight boundaries, atomic
+no-overwrite staging with pre-commit revalidation, exact input-role binding,
+the predecessor DAG, strict Schema, and a non-oracle production Adapter. The
+Adapter owns an independent materialization contract and dispatches the
+synthetic attacks through the named public production boundary. These
+delivered code surfaces do not complete KU-BO-011 until the publication and
+exact-head CI gates below pass.
+
+## Verified local implementation proof
+
+The following results are verified locally at implementation code head
+`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`, before this control-record
+commit:
+
+```text
+Complete local unit/adversarial suite                 1,916 PASS
+Strict source-tree Adapter corpus                     1,280/1,280 PASS
+Clean-installed-wheel Adapter corpus                  1,280/1,280 PASS
+Installed authenticated boundary DAG                 8/8 PASS
+Installed semantic admissions                        8
+Installed lineage artifacts                          8
+Corpus v3 deterministic generator/audit              PASS
+Corpus v3 SHA-256                                     e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
+Compile / Codex control / smoke / secret / diff       PASS
+```
+
+This proves `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT` locally only. PR #12
+remains historically `TEST_SPEC_ONLY`; the branch result does not convert its
+merged Test Specification into runtime proof. No market bytes, provider or
+capture authority, rights, real backtest, forecast, probability, accuracy,
+recommendation, or production operation is proven. `KU-BO-008-D01` remains
+`OPEN`.
 
 ## Required boundary map
 
@@ -106,6 +143,14 @@ KU-BO-011 must add a documented versioned contract or Schema for semantic
 admission and the predecessor graph. It must not flip the existing v1 claim to
 `true`, silently broaden v1, or accept caller Booleans as proof.
 
+The implementation contract is Schema `2.0` at
+`schemas/tri-security-semantic-admission.schema.json`; it is separate from the
+unchanged `tri-security-stage-binding.schema.json` v1 contract and rejects
+unknown fields, wrong boundary/stage pairs, wrong ordered input roles, and
+wrong ordered predecessor stage sets structurally. Runtime verification remains
+authoritative for authentication, hashes, same-run equality, safe filesystem
+identity, and TOCTOU revalidation.
+
 The new admission must authenticate and bind at least:
 
 - exact Run Receipt, run ID, batch ID, and independent authority identities;
@@ -152,6 +197,11 @@ completion therefore requires an Adapter and tests that:
 
 A strict 1,280-case pass without this proof is insufficient.
 
+The branch-local Adapter now supplies that dispatch and anti-oracle proof, and
+both the source-tree and clean-installed-wheel strict runs passed all 1,280
+cases. This remains local evidence until the same implementation and control
+head is published as a Draft PR and exact-head GitHub Actions passes.
+
 ## Acceptance gates
 
 1. All eight Direct APIs and CLIs require and validate the correct admission.
@@ -173,6 +223,12 @@ A strict 1,280-case pass without this proof is insufficient.
 9. A sanitized result is written using
    `docs/codex/HANDOFF_TEMPLATE.md` at
    `docs/codex/handoffs/KU-BO-011-result.md`.
+
+Local gates 1 through 7 and the partial form of gate 9 have passed at
+`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`. Gate 8 is still pending, and gate
+9 cannot be classified completed until the handoff records the Draft PR and
+its exact-head CI. `STATUS` therefore remains `IN_PROGRESS`,
+`EXPECTED_PR_MODE` remains `DRAFT`, and `MERGE_ALLOWED` remains `NO`.
 
 ## Required safety and non-claim boundaries
 
@@ -199,13 +255,13 @@ A strict 1,280-case pass without this proof is insufficient.
 
 ## Publication and ordered-merge behavior
 
-- Publish the implementation first as a Draft PR.
-- Preserve PR #12 as a `TEST_SPEC_ONLY` dependency.
-- Before exercising `KU-BO-MERGE-003`, recheck the exact head, changed files,
-  review state, mergeability, secret/privacy scan, and exact-head CI.
-- Merge PR #12 first. Then update or retarget the implementation PR to the new
-  `main` without force-pushing, rerun exact-head CI, and merge it only if every
-  applicable KU-BO-011 gate passes.
+- PR #12 has already merged first as `TEST_SPEC_ONLY`; preserve that non-claim.
+- Complete the production Adapter and all local acceptance gates, then publish
+  the implementation as a Draft PR from current `main` ancestry.
+- Before exercising the remaining `KU-BO-MERGE-003` authority, recheck the
+  exact implementation head, changed files, review state, mergeability,
+  secret/privacy scan, and exact-head CI.
+- Merge the implementation only if every applicable KU-BO-011 gate passes.
 - Do not merge PR #2 or PR #3, delete branches, enable auto-merge, or perform
   destructive cleanup under this task.
 

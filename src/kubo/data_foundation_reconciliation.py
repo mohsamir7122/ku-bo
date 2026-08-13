@@ -7,9 +7,10 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
-from typing import Any, Mapping, TextIO
+from typing import TYPE_CHECKING, Any, Mapping, TextIO
 from urllib.parse import urlsplit
 
+from .atomic_output import run_atomic_output
 from .foundation_io import (
     load_strict_json_object,
     prepare_output_root,
@@ -20,6 +21,9 @@ from .foundation_io import (
 )
 from .hashing import canonical_json_bytes
 from .strict import parse_aware, parse_iso_date
+
+if TYPE_CHECKING:
+    from .tri_security_admission import BoundaryAdmissionRequest
 
 
 DATA_FOUNDATION_RECONCILIATION_SCHEMA_VERSION = "1.0"
@@ -3251,6 +3255,83 @@ def _require_independent_final_readiness_authority(
 
 
 def build_data_foundation_packet(
+    *,
+    official_foundation_root: Path,
+    status_history_root: Path,
+    ca_enrichment_root: Path,
+    research_price_history_root: Path,
+    benchmark_root: Path,
+    official_eod_root: Path,
+    project_root: Path,
+    output_root: Path,
+    outcome_session_policy_path: Path | None = None,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    from .tri_security_admission import admit_boundary, build_boundary_operation_binding
+    from .tri_security_lineage import verify_final_predecessor_lineages
+
+    requested_output = Path(os.path.abspath(output_root))
+    actual_policy_path = (
+        Path(outcome_session_policy_path)
+        if outcome_session_policy_path is not None
+        else Path(project_root) / "config" / "pilot" / "outcome_session_policy.json"
+    )
+    operation_binding = build_boundary_operation_binding(
+        "build_data_foundation_packet",
+        decision_at=admission_request.decision_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="build_data_foundation_packet",
+        output_root=requested_output,
+        boundary_inputs={
+            "official_foundation_root": Path(official_foundation_root),
+            "status_history_root": Path(status_history_root),
+            "ca_enrichment_root": Path(ca_enrichment_root),
+            "research_price_history_root": Path(research_price_history_root),
+            "benchmark_root": Path(benchmark_root),
+            "official_eod_root": Path(official_eod_root),
+            "project_root": Path(project_root),
+            "outcome_session_policy_path": actual_policy_path,
+        },
+        operation_binding=operation_binding,
+    )
+    verify_final_predecessor_lineages(
+        token,
+        predecessor_roots={
+            "OFFICIAL_FOUNDATION": Path(official_foundation_root),
+            "STATUS_HISTORY": Path(status_history_root),
+            "CA_ENRICHMENT": Path(ca_enrichment_root),
+            "RESEARCH_PRICE_HISTORY": Path(research_price_history_root),
+            "BENCHMARK_HISTORY": Path(benchmark_root),
+            "OFFICIAL_EOD": Path(official_eod_root),
+        },
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _build_data_foundation_packet_unchecked(
+            official_foundation_root=official_foundation_root,
+            status_history_root=status_history_root,
+            ca_enrichment_root=ca_enrichment_root,
+            research_price_history_root=research_price_history_root,
+            benchmark_root=benchmark_root,
+            official_eod_root=official_eod_root,
+            project_root=project_root,
+            output_root=staging,
+            outcome_session_policy_path=outcome_session_policy_path,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        requested_output,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
+
+
+def _build_data_foundation_packet_unchecked(
     *,
     official_foundation_root: Path,
     status_history_root: Path,

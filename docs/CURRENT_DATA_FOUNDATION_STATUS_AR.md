@@ -15,27 +15,29 @@ build/data-foundation-v0.2
                                       └── build/tri-security-run-receipt-v0.1
 ```
 
-الحالة الحية بعد دمج PRs #10 و#11:
+الحالة الحية بعد دمج PR #12 كحزمة اختبارات فقط:
 
 ```text
-main@6bcfbabf840e6876a878dfd692afbf746780d731
-  └── CI 31629909113 PASS
-        └── test/ku-bo-011-adversarial-corpus-v0.1
-              @3d773448b78ca99f6761a43b852f53967fdbb095
-              └── Draft PR #12 / CI 31631077911 PASS
+main@c621fcf88034c4571aa08aee2e54e2e026a4f651
+  └── PR #12 merged / TEST_SPEC_ONLY
+        └── Post-merge CI 31684299396 PASS
+              └── build/tri-security-receipt-enforcement-v0.2
+                    @5e5b4ad9237ccaff04974576a3c77b2058a79b8f
 ```
 
 قاعدة المرحلة الحالية:
 
 ```text
-test/ku-bo-011-adversarial-corpus-v0.1
-@3d773448b78ca99f6761a43b852f53967fdbb095
+main
+@c621fcf88034c4571aa08aee2e54e2e026a4f651
 ```
 
 فرع تنفيذ `KU-BO-011` المحلي هو
-`build/tri-security-receipt-enforcement-v0.2`. بدأ من Head حزمة الاختبارات
-نفسه، وحالته `IN_PROGRESS`؛ لم يكن له Implementation Commit أوPR منشور عند
-هذه اللقطة.
+`build/tri-security-receipt-enforcement-v0.2`. يتضمن `main` بعد دمج PR #12،
+وImplementation Code Head قبل Commit سجلات التحكم الحالية هو
+`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`. حالته `IN_PROGRESS`؛ نجحت
+بواباته المحلية، لكن لا يوجد Implementation Draft PR منشور أوExact-head CI
+خاص به بعد.
 
 ## طبقة Price History
 
@@ -61,15 +63,18 @@ test/ku-bo-011-adversarial-corpus-v0.1
 - إعداد Benchmark الموروث غير متوافق مع قطاعي Industrials وUtilities في
   الدفعة الثلاثية، لذلك يبقى Qualification محجوبًا صراحة ولا يجوز إعادة
   استخدام مقام Pilot الخماسي.
-- هذه عقود Standalone فقط؛ لم تُفرض بعد كمدخل إلزامي لكل Importer أوفي
-  Final Reconciliation. ذلك هو حد `KU-BO-011`، ولذلك المرحلة ليست
-  Qualification end-to-end.
+- بقي Stage Binding v1 عقد سلامة بايتات فقط ولم يتغير ادعاؤه
+  `binding_proves_stage_matches_run_scope=false`. أضاف فرع KU-BO-011 عقد
+  Semantic Admission v2 منفصلًا بمفتاح ثالث مستقل، وفرضه في Direct API وCLI
+  لكل Importer وفي Final Reconciliation. نجح إثبات Adapter الاصطناعي محليًا
+  في 1,280/1,280 حالة من Source Tree و1,280/1,280 من Clean Installed Wheel،
+  لكن Exact-head CI لم يكتمل بعد؛ لذلك المرحلة ليست Qualification end-to-end.
 - كل دفعة تحمل البوابات النهائية الاثنتي عشرة بالحالة
   `PENDING_EXTERNAL_EVIDENCE`.
 
 ## حزمة قبول KU-BO-011
 
-PR #12 تحتوي حزمة **Test Specification اصطناعية فقط**:
+PR #12 مدمجة الآن في `main` كحزمة **Test Specification اصطناعية فقط**:
 
 ```text
 8 importer/reconciliation boundaries
@@ -82,7 +87,8 @@ x 4 attack channels/timings
 `53c95afbdf4174a5c3e74c2bfb798beddc650841f1301d4b8d99bc4a54af2b03`.
 نجح Exact-head CI على Python 3.11 إلى 3.14 وشغّل 1,841 Test مع فحوص
 التوليد الحتمي وSchema والبصمات الدلالية وWheel وInstalled CLI وSmoke
-وControl وSecret Guard.
+وControl وSecret Guard. ثم دُمجت PR #12 في `c621fcf` ونجح Post-merge CI
+`31684299396`.
 
 هذا النجاح يثبت سلامة **مواصفات الاختبار وبنيتها** فقط، ولا يثبت أن أي
 Importer تفرض Run Receipt أوStage Binding. من دون Implementation Adapter
@@ -94,25 +100,60 @@ Importer تفرض Run Receipt أوStage Binding. من دون Implementation Adap
 TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
 ```
 
+هذه هي الحالة التاريخية لـPR #12 ولا تتغير بأثر رجعي. أما فرع التنفيذ الحالي
+فرفع Corpus إلى v3 بعقد Materialization تنفيذي مستقل، ونجح Generator/Audit
+محليًا ببصمة:
+
+```text
+e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
+```
+
+التمييز الملزم هو: PR #12 تظل `TEST_SPEC_ONLY`، بينما Head التنفيذ يثبت
+`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT` **محليًا فقط**.
+
 ## نطاق تنفيذ KU-BO-011 الحالي
 
-الحالة `IN_PROGRESS`. يلزم التنفيذ الجديد أن:
+الحالة `IN_PROGRESS`. أضاف الفرع الحالي:
 
-- يضيف Semantic Stage Admission بعقد وإصدار مستقلين؛
-- يبقي `Stage Binding v1.0` Byte-integrity contract فقط ولا يغير
+- Semantic Stage Admission v2 بعقد وإصدار مستقلين ومفتاح HMAC ثالث لا يساوي
+  مفتاح Run أومفتاح Stage؛
+- إبقاء `Stage Binding v1.0` Byte-integrity contract فقط من دون تغيير
   `binding_proves_stage_matches_run_scope=false`؛
-- يفرض المصادقة والربط الدلالي في Direct API وCLI للـImporters السبعة
+- فرض المصادقة والربط الدلالي في Direct API وCLI للـImporters السبعة
   وFinal Reconciliation؛
-- يربط Run/Batch/Cohort/Window/Stage والـPredecessor graph الفعلية؛
-- يرفض أي Input مفقودة أومزورة أومنتهية أومخلوطة أوغير متوافقة قبل إنشاء
+- ربط Run/Batch/Cohort/Window/Stage والـPredecessor graph الفعلية وأدوار
+  المدخلات الدقيقة؛
+- رفض أي Input مفقودة أومزورة أومنتهية أومخلوطة أوغير متوافقة قبل إنشاء
   Output؛
-- يعيد التحقق قبل Atomic commit لمقاومة TOCTOU؛
-- يثبت 1,280 حالة عبر Production paths ومن دون أي كتابة محمية عند الرفض.
+- Atomic staging بلا overwrite مع إعادة التحقق قبل Commit لمقاومة TOCTOU؛
+- أمر CLI لإصدار Semantic Admission وبناء `BoundaryAdmissionRequest` من
+  مفاتيح Runtime-only وأدلة Predecessor؛
+- Schema صارمة JSON Schema 2020-12 في
+  `schemas/tri-security-semantic-admission.schema.json` تمنع الحقول الزائدة
+  وتثبت أزواج Boundary/Stage وأدوار المدخلات ومجموعات Predecessor المرتبة؛
+- Adapter لا يستورد `expected` أوMutators الاختبارات، ويملك عقدًا مستقلًا
+  لـArtifact/Field/Action/Timing/Resign Policy/Value، ويستدعي Public Boundary
+  الحقيقي لكل حالة؛
+- نجح Strict Source Adapter وClean Installed Wheel Adapter في 1,280/1,280
+  لكل منهما مع عدم إنشاء Protected Output عند الرفض؛
+- نجح Installed Authenticated DAG للحدود الثمانية، وأنشأ وتحقق من ثمانية
+  Semantic Admissions وثمانية Lineage Artifacts؛
+- نجح Full Local Suite بعدد 1,916 Test؛ ونجحت فحوص Compile وCorpus
+  Generator/Audit v3 وCodex Control وSynthetic Smoke وSecret Guard وDiff.
 
-تفويض الدمج المرتب مسجل في `KU-BO-MERGE-003`، لكن Metadata المهمة تبقى
-محافظة أثناء التنفيذ: `MERGE_ALLOWED: NO`. لا يدمج PR #12 إلا أولًا وبعد
-Fresh exact-head CI، ثم يعاد تحقق Implementation PR بعد تحديثها إلى `main`
-ولا تدمج إلا بعد اكتمال جميع البوابات.
+هذه النتائج تثبت كودًا وسلوكًا خصوميًا اصطناعيًا فقط. لا تثبت Market Data أو
+Provider/Capture Authority أوRights أوReal Backtest أوForecast أوProbability
+أوAccuracy أوRecommendation أوProduction Readiness.
+
+المتبقي قبل الإغلاق هو تسجيل ونشر Implementation Draft PR ثم نجاح GitHub
+Actions على Exact Head نفسه. لذلك Handoff الحالية `PARTIAL`، والمهمة تظل
+`IN_PROGRESS`.
+
+تفويض الدمج المرتب مسجل في `KU-BO-MERGE-003`. اكتمل جزؤه الأول بدمج PR #12
+أولًا ونجاح Post-merge CI. يبقى جزء Implementation فقط، وMetadata المهمة تظل
+محافظة أثناء التنفيذ: `EXPECTED_PR_MODE: DRAFT` و`MERGE_ALLOWED: NO`. لا تدمج
+Implementation PR إلا بعد اكتمال Adapter والبوابات المحلية وFresh exact-head
+CI.
 
 ## Current Official Identity and Calendar
 
@@ -256,18 +297,16 @@ HISTORICAL_STATUS_INTERVALS_READY
 - Browser sessions أوCookies.
 - Credentials أوTokens.
 - Drive identifiers.
-- Run أوStage HMAC keys؛ المفاتيح Runtime-only وخارج Git.
+- Run أوStage أوSemantic HMAC keys؛ المفاتيح Runtime-only وخارج Git.
 
 جميع ملفات Runtime وRaw Evidence تبقى خارج Git.
 
 ## البوابات التالية
 
 ```text
-MERGE_KU_BO_011_TEST_SPEC_AFTER_FRESH_CI
-IMPLEMENT_VERSIONED_SEMANTIC_STAGE_ADMISSION
-ENFORCE_RECEIPTS_AT_ALL_EIGHT_PRE_WRITE_BOUNDARIES
-PROVE_ZERO_WRITE_REJECTION_THROUGH_PRODUCTION_PATHS
-CARRY_AUTHENTICATED_PREDECESSOR_GRAPH_INTO_FINAL_RECONCILIATION
+PUBLISH_KU_BO_011_IMPLEMENTATION_AS_DRAFT_PR
+PASS_KU_BO_011_EXACT_HEAD_GITHUB_ACTIONS
+RECHECK_KU_BO_MERGE_003_AT_ORDERED_MERGE_BOUNDARY
 FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
 VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS
 IMPORT_REAL_RIGHTS_COMPATIBLE_BENCHMARK_HISTORY

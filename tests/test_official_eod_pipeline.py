@@ -11,7 +11,7 @@ import unittest
 from kubo.hashing import canonical_json_bytes
 from kubo.official_eod_import import (
     OFFICIAL_DAILY_EOD_HEADERS,
-    import_official_daily_eod,
+    _import_official_daily_eod_unchecked,
     validate_official_eod_output,
 )
 from kubo.official_eod_workspace import prepare_official_eod_workspace
@@ -88,7 +88,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
         workspace: Path,
     ) -> tuple[Path, dict]:
         output = root / "eod-output"
-        report = import_official_daily_eod(
+        report = _import_official_daily_eod_unchecked(
             workspace_root=workspace,
             official_foundation_root=official,
             status_history_root=history,
@@ -321,7 +321,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
                 rights_status="RESEARCH_USE_AUTHORIZED",
             )
             registry, _, _ = _licensed_registry()
-            report = import_official_daily_eod(
+            report = _import_official_daily_eod_unchecked(
                 workspace_root=workspace,
                 official_foundation_root=official,
                 status_history_root=history,
@@ -350,7 +350,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             )
             add_matching_market_totals(workspace)
             registry, _, _ = _licensed_registry()
-            report = import_official_daily_eod(
+            report = _import_official_daily_eod_unchecked(
                 workspace_root=workspace,
                 official_foundation_root=official,
                 status_history_root=history,
@@ -378,7 +378,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             )
             registry, key, payload = _licensed_registry()
             output = root / "eod-output"
-            report = import_official_daily_eod(
+            report = _import_official_daily_eod_unchecked(
                 workspace_root=workspace,
                 official_foundation_root=official,
                 status_history_root=history,
@@ -443,7 +443,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             manifest["providers"][0]["observed_at"] = "2026-08-09T12:39:59+03:00"
             manifest_path.write_bytes(canonical_json_bytes(manifest))
             with self.assertRaisesRegex(ValueError, "precedes official session close"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,
@@ -462,7 +462,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             manifest["market_totals"]["observed_at"] = "2026-08-09T12:39:59+03:00"
             manifest_path.write_bytes(canonical_json_bytes(manifest))
             with self.assertRaisesRegex(ValueError, "precedes official session close"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,
@@ -484,7 +484,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             manifest_path.write_bytes(canonical_json_bytes(manifest))
 
             with self.assertRaisesRegex(ValueError, "imported_at must not be in the future"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,
@@ -503,7 +503,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             provider_path.write_bytes(provider_path.read_bytes() + b"tamper")
             output = root / "hash-output"
             with self.assertRaisesRegex(ValueError, "hash mismatch"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,
@@ -525,7 +525,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             )
             output = root / "stale-output"
             with self.assertRaisesRegex(ValueError, "stale or substituted upstream"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,
@@ -542,7 +542,7 @@ class OfficialEodPipelineTests(unittest.TestCase):
             add_provider(workspace)
             output, _ = self._import(root, official, history, workspace)
             with self.assertRaisesRegex(ValueError, "refusing to overwrite"):
-                import_official_daily_eod(
+                _import_official_daily_eod_unchecked(
                     workspace_root=workspace,
                     official_foundation_root=official,
                     status_history_root=history,

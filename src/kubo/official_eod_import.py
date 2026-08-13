@@ -4,10 +4,12 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
+import os
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import urlsplit
 
+from .atomic_output import run_atomic_output
 from .foundation_io import (
     load_strict_json_object,
     nonnegative_int,
@@ -39,6 +41,11 @@ from .official_eod_workspace import (
 )
 from .runtime_trust import RuntimeTrustError, RuntimeTrustRegistry
 from .strict import contains_placeholder, https_url, parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 
 
 def _validated_imported_at(value: Any) -> datetime:
@@ -1297,6 +1304,60 @@ def import_official_daily_eod(
     run_id: str,
     imported_at: str,
     runtime_trust_registry: RuntimeTrustRegistry | None = None,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    requested_output = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_official_eod",
+        decision_at=admission_request.decision_at,
+        run_id=run_id,
+        imported_at=imported_at,
+        runtime_trust_registry=runtime_trust_registry,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_official_eod",
+        output_root=requested_output,
+        boundary_inputs={
+            "workspace_root": Path(workspace_root),
+            "official_foundation_root": Path(official_foundation_root),
+            "status_history_root": Path(status_history_root),
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_official_daily_eod_unchecked(
+            workspace_root=workspace_root,
+            official_foundation_root=official_foundation_root,
+            status_history_root=status_history_root,
+            output_root=staging,
+            run_id=run_id,
+            imported_at=imported_at,
+            runtime_trust_registry=runtime_trust_registry,
+            logical_output_root=requested_output,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        requested_output,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
+
+
+def _import_official_daily_eod_unchecked(
+    *,
+    workspace_root: str | Path,
+    official_foundation_root: str | Path,
+    status_history_root: str | Path,
+    output_root: str | Path,
+    run_id: str,
+    imported_at: str,
+    runtime_trust_registry: RuntimeTrustRegistry | None = None,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     workspace = require_real_directory(Path(workspace_root), field="workspace_root")
     decision_at = _validated_imported_at(imported_at)
@@ -1400,7 +1461,11 @@ def import_official_daily_eod(
             quarantine_path, field="official EOD quarantine ledger"
         )
     report = _report(
-        output=output,
+        output=(
+            Path(os.path.abspath(logical_output_root))
+            if logical_output_root is not None
+            else output
+        ),
         manifest=manifest,
         manifest_sha256=sha256_bytes(manifest_bytes),
         imported_at=decision_at,

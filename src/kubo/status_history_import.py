@@ -8,10 +8,16 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from .atomic_output import run_atomic_output
 from .hashing import canonical_json_bytes, sha256_bytes
 from .status_history import build_status_intervals, parse_status_notice
 from .status_history_workspace import STATUS_HISTORY_MANIFEST_SCHEMA_VERSION
 from .strict import parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 
 
 MAX_MANIFEST_BYTES = 4 * 1024 * 1024
@@ -303,6 +309,48 @@ def import_status_history(
     status_corporate_root: Path,
     workspace: Path,
     output_root: Path,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    requested_output = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_status_history",
+        decision_at=admission_request.decision_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_status_history",
+        output_root=requested_output,
+        boundary_inputs={
+            "status_corporate_root": Path(status_corporate_root),
+            "workspace": Path(workspace),
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_status_history_unchecked(
+            status_corporate_root=status_corporate_root,
+            workspace=workspace,
+            output_root=staging,
+            logical_output_root=requested_output,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        requested_output,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
+
+
+def _import_status_history_unchecked(
+    *,
+    status_corporate_root: Path,
+    workspace: Path,
+    output_root: Path,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     workspace = Path(workspace)
     if not workspace.is_dir() or workspace.is_symlink():
@@ -753,11 +801,16 @@ def import_status_history(
         if history_report["status_history_ready"]
         else "BLOCKED"
     )
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output
+    )
     report = {
         "schema_version": "1.0",
         "status": status,
         "run_id": manifest["run_id"],
-        "output_root": str(output),
+        "output_root": str(logical_output),
         "history_window_from": window_from.isoformat(),
         "history_window_to": window_to.isoformat(),
         "security_count": len(expected_identity),
@@ -765,12 +818,23 @@ def import_status_history(
         "notice_count": len(notice_csv_rows),
         "interval_count": len(intervals),
         "errors": combined_errors,
-        "status_notice_ledger": str(notice_path),
-        "status_intervals": str(interval_path),
-        "status_query_ledger": str(query_path),
-        "opening_status_evidence": str(opening_path),
+        "status_notice_ledger": str(
+            logical_output / notice_path.relative_to(output)
+        ),
+        "status_intervals": str(
+            logical_output / interval_path.relative_to(output)
+        ),
+        "status_query_ledger": str(
+            logical_output / query_path.relative_to(output)
+        ),
+        "opening_status_evidence": str(
+            logical_output / opening_path.relative_to(output)
+        ),
         "validation_report": str(
-            report_output / "status_history_validation_report.json"
+            logical_output
+            / (report_output / "status_history_validation_report.json").relative_to(
+                output
+            )
         ),
         "remaining_gates": [
             "CORPORATE_ACTION_RETURN_POLICIES",

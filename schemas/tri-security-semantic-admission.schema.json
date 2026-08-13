@@ -1,0 +1,588 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-semantic-admission.schema.json",
+  "title": "KU-BO authenticated tri-security semantic boundary admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "admission_id",
+    "issued_at",
+    "boundary_id",
+    "stage_id",
+    "v1_references",
+    "run_binding",
+    "input_tree",
+    "boundary_inputs",
+    "operation_binding",
+    "predecessor_bindings",
+    "claims",
+    "claim_boundary",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "audience": {"const": "kubo-tri-security-boundary-admission"},
+    "admission_id": {"$ref": "#/$defs/identifier"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "boundary_id": {"enum": [
+      "import_user_price_exports",
+      "import_official_foundation",
+      "import_status_corporate",
+      "import_ca_enrichment",
+      "import_status_history",
+      "import_benchmark_history",
+      "import_official_eod",
+      "build_data_foundation_packet"
+    ]},
+    "stage_id": {"$ref": "#/$defs/stageId"},
+    "v1_references": {"$ref": "#/$defs/v1References"},
+    "run_binding": {"$ref": "#/$defs/runBinding"},
+    "input_tree": {"$ref": "#/$defs/inputTree"},
+    "boundary_inputs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/boundaryInput"}
+    },
+    "operation_binding": {"$ref": "#/$defs/operationBinding"},
+    "predecessor_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/predecessorBinding"}
+    },
+    "claims": {"$ref": "#/$defs/claims"},
+    "claim_boundary": {
+      "const": "AUTHENTICATED_SEMANTIC_BOUNDARY_BINDING_NOT_MARKET_EVIDENCE"
+    },
+    "authentication": {"$ref": "#/$defs/authentication"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_user_price_exports"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "RESEARCH_PRICE_HISTORY"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "config_dir"}}},
+              {"properties": {"role": {"const": "input_dir"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {
+            "properties": {
+              "arguments": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["observed_at"],
+                "properties": {
+                  "observed_at": {"type": "string", "format": "date-time"}
+                }
+              }
+            }
+          },
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "RUN_AUTHORITY_ROOT"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_official_foundation"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "OFFICIAL_FOUNDATION"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "config_dir"}}},
+              {"properties": {"role": {"const": "workspace"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {"$ref": "#/$defs/emptyOperationBinding"},
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "RUN_AUTHORITY_ROOT"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_status_corporate"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "STATUS_CORPORATE"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "official_foundation_root"}}},
+              {"properties": {"role": {"const": "workspace"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {"$ref": "#/$defs/emptyOperationBinding"},
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_ca_enrichment"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "CA_ENRICHMENT"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "status_corporate_root"}}},
+              {"properties": {"role": {"const": "workspace"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {"$ref": "#/$defs/emptyOperationBinding"},
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "STATUS_CORPORATE"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_status_history"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "STATUS_HISTORY"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "status_corporate_root"}}},
+              {"properties": {"role": {"const": "workspace"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {"$ref": "#/$defs/emptyOperationBinding"},
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "STATUS_CORPORATE"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_benchmark_history"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "BENCHMARK_HISTORY"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "config_dir"}}},
+              {"properties": {"role": {"const": "official_foundation_root"}}},
+              {"properties": {"role": {"const": "workspace"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {
+            "properties": {
+              "arguments": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["imported_at"],
+                "properties": {
+                  "imported_at": {"type": "string", "format": "date-time"}
+                }
+              }
+            }
+          },
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "import_official_eod"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "OFFICIAL_EOD"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "workspace_root"}}},
+              {"properties": {"role": {"const": "official_foundation_root"}}},
+              {"properties": {"role": {"const": "status_history_root"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {
+            "properties": {
+              "arguments": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["run_id", "imported_at", "runtime_trust"],
+                "properties": {
+                  "run_id": {"$ref": "#/$defs/identifier"},
+                  "imported_at": {"type": "string", "format": "date-time"},
+                  "runtime_trust": {
+                    "oneOf": [
+                      {"type": "null"},
+                      {"$ref": "#/$defs/runtimeTrustBinding"}
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}}},
+              {"properties": {"stage_id": {"const": "STATUS_HISTORY"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"boundary_id": {"const": "build_data_foundation_packet"}}},
+      "then": {
+        "properties": {
+          "stage_id": {"const": "FINAL_DATA_FOUNDATION_RECONCILIATION"},
+          "boundary_inputs": {
+            "prefixItems": [
+              {"properties": {"role": {"const": "official_foundation_root"}}},
+              {"properties": {"role": {"const": "status_history_root"}}},
+              {"properties": {"role": {"const": "ca_enrichment_root"}}},
+              {"properties": {"role": {"const": "research_price_history_root"}}},
+              {"properties": {"role": {"const": "benchmark_root"}}},
+              {"properties": {"role": {"const": "official_eod_root"}}},
+              {"properties": {"role": {"const": "project_root"}}},
+              {"properties": {"role": {"const": "outcome_session_policy_path"}}}
+            ],
+            "items": false
+          },
+          "operation_binding": {"$ref": "#/$defs/emptyOperationBinding"},
+          "predecessor_bindings": {
+            "prefixItems": [
+              {"properties": {"stage_id": {"const": "OFFICIAL_FOUNDATION"}}},
+              {"properties": {"stage_id": {"const": "STATUS_HISTORY"}}},
+              {"properties": {"stage_id": {"const": "CA_ENRICHMENT"}}},
+              {"properties": {"stage_id": {"const": "RESEARCH_PRICE_HISTORY"}}},
+              {"properties": {"stage_id": {"const": "BENCHMARK_HISTORY"}}},
+              {"properties": {"stage_id": {"const": "OFFICIAL_EOD"}}}
+            ],
+            "items": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "operationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "decision_at", "arguments"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "decision_at": {"type": "string", "format": "date-time"},
+        "arguments": {"type": "object"}
+      }
+    },
+    "emptyOperationBinding": {
+      "properties": {
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "maxProperties": 0
+        }
+      }
+    },
+    "runtimeTrustBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry_id",
+        "content_sha256",
+        "authenticated_key_id",
+        "semantics_sha256"
+      ],
+      "properties": {
+        "registry_id": {"$ref": "#/$defs/identifier"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "authenticated_key_id": {"$ref": "#/$defs/identifier"},
+        "semantics_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "stageId": {
+      "enum": [
+        "RUN_AUTHORITY_ROOT",
+        "RESEARCH_PRICE_HISTORY",
+        "OFFICIAL_FOUNDATION",
+        "STATUS_CORPORATE",
+        "CA_ENRICHMENT",
+        "STATUS_HISTORY",
+        "BENCHMARK_HISTORY",
+        "OFFICIAL_EOD",
+        "FINAL_DATA_FOUNDATION_RECONCILIATION"
+      ]
+    },
+    "v1References": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_boundary",
+        "run_receipt_sha256",
+        "stage_binding_sha256"
+      ],
+      "properties": {
+        "claim_boundary": {"const": "AUTHENTICATED_BINDING_NOT_MARKET_EVIDENCE"},
+        "run_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "stage_binding_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "runBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "batch_id",
+        "batch_sequence",
+        "batch_plan_sha256",
+        "scoped_manifest_sha256",
+        "qualification_window",
+        "cohort",
+        "pending_gate_state"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/runId"
+        },
+        "batch_id": {
+          "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/batchId"
+        },
+        "batch_sequence": {"const": 1},
+        "batch_plan_sha256": {"$ref": "#/$defs/sha256"},
+        "scoped_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "qualification_window": {
+          "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/qualificationWindow"
+        },
+        "cohort": {
+          "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/cohort"
+        },
+        "pending_gate_state": {"$ref": "#/$defs/pendingGateState"}
+      }
+    },
+    "pendingGateState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "POINT_IN_TIME_IDENTITY",
+        "TRADING_CALENDAR",
+        "SECURITY_STATUS_HISTORY",
+        "PRICE_DENOMINATOR",
+        "PRICE_EVIDENCE",
+        "PRICE_CORPORATE_ACTION_QA",
+        "BENCHMARK_HISTORY",
+        "BENCHMARK_EVIDENCE",
+        "MARKET_TOTAL_RECONCILIATION",
+        "QUERY_AND_PAGINATION_COMPLETENESS",
+        "RUNTIME_SECRET_GUARD",
+        "CLAIM_BOUNDARIES"
+      ],
+      "properties": {
+        "POINT_IN_TIME_IDENTITY": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "TRADING_CALENDAR": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "SECURITY_STATUS_HISTORY": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "PRICE_DENOMINATOR": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "PRICE_EVIDENCE": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "PRICE_CORPORATE_ACTION_QA": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "BENCHMARK_HISTORY": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "BENCHMARK_EVIDENCE": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "MARKET_TOTAL_RECONCILIATION": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "QUERY_AND_PAGINATION_COMPLETENESS": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "RUNTIME_SECRET_GUARD": {"const": "PENDING_EXTERNAL_EVIDENCE"},
+        "CLAIM_BOUNDARIES": {"const": "PENDING_EXTERNAL_EVIDENCE"}
+      }
+    },
+    "inventoryRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "inputTree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_role",
+        "manifest_sha256",
+        "file_count",
+        "size_bytes",
+        "inventory_sha256",
+        "inventory",
+        "directory_count",
+        "directory_inventory_sha256",
+        "directories"
+      ],
+      "properties": {
+        "root_role": {"const": "BOUNDARY_INPUT_TREE"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "directory_count": {"type": "integer", "minimum": 0},
+        "directory_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "directories": {
+          "type": "array",
+          "maxItems": 8192,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "inventory": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4096,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/inventoryRow"},
+          "contains": {
+            "type": "object",
+            "properties": {"path": {"const": "manifest.json"}},
+            "required": ["path"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      }
+    },
+    "boundaryInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "kind", "file_count", "size_bytes", "inventory_sha256"],
+      "properties": {
+        "role": {"enum": [
+          "config_dir",
+          "input_dir",
+          "workspace",
+          "workspace_root",
+          "official_foundation_root",
+          "status_corporate_root",
+          "status_history_root",
+          "ca_enrichment_root",
+          "research_price_history_root",
+          "benchmark_root",
+          "official_eod_root",
+          "project_root",
+          "outcome_session_policy_path"
+        ]},
+        "kind": {"enum": ["REGULAR_TREE", "REGULAR_FILE"]},
+        "file_count": {"type": "integer", "minimum": 0},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "directory_count": {"type": "integer", "minimum": 0},
+        "directory_inventory_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "REGULAR_TREE"}}},
+          "then": {
+            "required": ["directory_count", "directory_inventory_sha256"],
+            "properties": {
+              "directory_count": {"type": "integer", "minimum": 0},
+              "directory_inventory_sha256": {"$ref": "#/$defs/sha256"}
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {"required": ["directory_count"]},
+                {"required": ["directory_inventory_sha256"]}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "predecessorBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "run_id", "admission_sha256"],
+      "properties": {
+        "stage_id": {"$ref": "#/$defs/stageId"},
+        "run_id": {
+          "$ref": "https://github.com/mohsamir7122/ku-bo/schemas/tri-security-run-receipt.schema.json#/$defs/runId"
+        },
+        "admission_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "denominator",
+        "security_count",
+        "full_market",
+        "benchmark_status",
+        "benchmark_fallback_allowed",
+        "outcome_session_policy",
+        "legacy_july",
+        "market_evidence_claimed",
+        "backtest_ready",
+        "forecast_allowed",
+        "recommendation_allowed"
+      ],
+      "properties": {
+        "denominator": {"const": "NAMED_TRI_SECURITY_COHORT"},
+        "security_count": {"const": 3},
+        "full_market": {"const": false},
+        "benchmark_status": {
+          "const": "CONFIGURED_SERIES_INCOMPATIBLE_WITH_TRI_COHORT"
+        },
+        "benchmark_fallback_allowed": {"const": false},
+        "outcome_session_policy": {"const": "UNFROZEN_KU_BO_008_D01_OPEN"},
+        "legacy_july": {"const": "UNTRUSTED_LEGACY_CLAIM_QUARANTINED"},
+        "market_evidence_claimed": {"const": false},
+        "backtest_ready": {"const": false},
+        "forecast_allowed": {"const": false},
+        "recommendation_allowed": {"const": false}
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

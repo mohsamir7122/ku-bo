@@ -8,10 +8,16 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from .atomic_output import run_atomic_output
 from .ca_adjustments import calculate_adjustment
 from .ca_enrichment_workspace import CA_ENRICHMENT_MANIFEST_SCHEMA_VERSION
 from .hashing import canonical_json_bytes, sha256_bytes
 from .strict import parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 
 
 MAX_MANIFEST_BYTES = 2 * 1024 * 1024
@@ -361,11 +367,12 @@ def _copy_validated_artifact(
     return content
 
 
-def import_ca_enrichment(
+def _import_ca_enrichment_unchecked(
     *,
     status_corporate_root: Path,
     workspace: Path,
     output_root: Path,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     workspace = Path(workspace)
     if not workspace.is_dir() or workspace.is_symlink():
@@ -381,6 +388,11 @@ def import_ca_enrichment(
         upstream_hashes=upstream_hashes,
     )
     output = _prepare_output_root(Path(output_root))
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output
+    )
     raw_output = output / "raw"
     text_output = output / "text"
     normalized_output = output / "normalized"
@@ -676,15 +688,21 @@ def import_ca_enrichment(
         "schema_version": "1.0",
         "status": status,
         "run_id": manifest["run_id"],
-        "output_root": str(output),
+        "output_root": str(logical_output),
         "action_count": total,
         "accepted_action_count": accepted,
         "reference_factor_ready_count": reference_ready,
         "return_engine_ready_count": return_ready,
         "pending_actions": sorted(set(pending_actions)),
         "errors": sorted(set(errors)),
-        "corporate_action_factor_ledger": str(factor_path),
-        "corporate_action_return_policy_queue": str(policy_path),
+        "corporate_action_factor_ledger": str(
+            logical_output / "normalized" / "corporate_action_factor_ledger.csv"
+        ),
+        "corporate_action_return_policy_queue": str(
+            logical_output
+            / "normalized"
+            / "corporate_action_return_policy_queue.csv"
+        ),
         "remaining_gates": [
             "RETURN_POLICY_FOR_RIGHTS_AND_COMPLEX_ACTIONS",
             "HISTORICAL_STATUS_INTERVALS",
@@ -706,6 +724,47 @@ def import_ca_enrichment(
     report_path = report_output / "ca_enrichment_import_report.json"
     report_path.write_bytes(canonical_json_bytes(report))
     return report
+
+
+def import_ca_enrichment(
+    *,
+    status_corporate_root: Path,
+    workspace: Path,
+    output_root: Path,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    target = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_ca_enrichment",
+        decision_at=admission_request.decision_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_ca_enrichment",
+        output_root=target,
+        boundary_inputs={
+            "status_corporate_root": status_corporate_root,
+            "workspace": workspace,
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_ca_enrichment_unchecked(
+            status_corporate_root=status_corporate_root,
+            workspace=workspace,
+            output_root=staging,
+            logical_output_root=target,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        target,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
 
 
 __all__ = [

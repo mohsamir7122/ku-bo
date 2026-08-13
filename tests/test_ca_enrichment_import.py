@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from kubo.ca_enrichment_import import import_ca_enrichment
+from kubo.ca_enrichment_import import _import_ca_enrichment_unchecked
 from kubo.ca_enrichment_workspace import prepare_ca_enrichment_workspace
 from tests.foundation_fixture_helpers import build_status_corporate_output
 
@@ -154,7 +154,7 @@ class CorporateActionEnrichmentImportTests(unittest.TestCase):
             root = Path(directory)
             upstream, workspace = self._workspace(root)
             output = root / "ca-output"
-            report = import_ca_enrichment(
+            report = _import_ca_enrichment_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=output,
@@ -204,7 +204,7 @@ class CorporateActionEnrichmentImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             upstream, workspace = self._workspace(root, accept_actions=False)
-            report = import_ca_enrichment(
+            report = _import_ca_enrichment_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "ca-output",
@@ -217,7 +217,7 @@ class CorporateActionEnrichmentImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             upstream, workspace = self._workspace(root, missing_phrase=True)
-            report = import_ca_enrichment(
+            report = _import_ca_enrichment_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "ca-output",
@@ -233,7 +233,7 @@ class CorporateActionEnrichmentImportTests(unittest.TestCase):
             upstream, workspace = self._workspace(root, stale_schedule_hash=True)
             output = root / "ca-output"
             with self.assertRaisesRegex(ValueError, "stale schedule row hash"):
-                import_ca_enrichment(
+                _import_ca_enrichment_unchecked(
                     status_corporate_root=upstream,
                     workspace=workspace,
                     output_root=output,
@@ -250,7 +250,7 @@ class CorporateActionEnrichmentImportTests(unittest.TestCase):
                 output_root=workspace,
                 run_id="ca-zero",
             )
-            report = import_ca_enrichment(
+            report = _import_ca_enrichment_unchecked(
                 status_corporate_root=upstream,
                 workspace=workspace,
                 output_root=root / "ca-output",

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .atomic_output import run_atomic_output
 from .hashing import canonical_json_bytes, sha256_bytes
 from .identity import IdentityRecord, validate_security_master, validate_status_history
 from .status_corporate_parsers import (
@@ -33,6 +34,11 @@ from .status_corporate_workspace import (
     STATUS_CORPORATE_MANIFEST_SCHEMA_VERSION,
 )
 from .strict import parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 
 
 KUWAIT = ZoneInfo("Asia/Kuwait")
@@ -406,18 +412,24 @@ def _stable_action_id(record: CorporateActionScheduleRecord, raw_sha256: str) ->
     return "ca-schedule-" + sha256_bytes(identity)[:24]
 
 
-def import_status_corporate(
+def _import_status_corporate_unchecked(
     *,
     config_dir: Path,
     official_foundation_root: Path,
     workspace: Path,
     output_root: Path,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     del config_dir  # Identity is taken only from the validated upstream official packet.
     workspace = Path(workspace)
     if not workspace.is_dir() or workspace.is_symlink():
         raise ValueError("workspace must be a real directory")
     output = _prepare_output_root(Path(output_root))
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output
+    )
     raw_output = output / "raw"
     normalized_output = output / "normalized"
     report_output = output / "reports"
@@ -745,25 +757,41 @@ def import_status_corporate(
         "schema_version": "1.0",
         "status": status,
         "run_id": manifest["run_id"],
-        "output_root": str(output),
+        "output_root": str(logical_output),
         "status_snapshot_effective_date": snapshot_date.isoformat(),
         "corporate_action_window_from": window_from.isoformat(),
         "corporate_action_window_to": window_to.isoformat(),
-        "upstream_identity_receipt": str(output / "upstream_identity_receipt.json"),
-        "security_status_evidence": str(status_path),
-        "delisting_archive": str(delisting_path),
-        "corporate_action_market_rows": str(market_action_path),
-        "corporate_action_schedule": str(action_path),
-        "corporate_action_enrichment_queue": str(enrichment_path),
-        "query_ledger": str(query_path),
+        "upstream_identity_receipt": str(
+            logical_output / "upstream_identity_receipt.json"
+        ),
+        "security_status_evidence": str(
+            logical_output / "normalized" / "security_status_evidence.csv"
+        ),
+        "delisting_archive": str(
+            logical_output / "normalized" / "delisting_archive.csv"
+        ),
+        "corporate_action_market_rows": str(
+            logical_output / "normalized" / "corporate_action_market_rows.csv"
+        ),
+        "corporate_action_schedule": str(
+            logical_output / "normalized" / "corporate_action_schedule.csv"
+        ),
+        "corporate_action_enrichment_queue": str(
+            logical_output
+            / "normalized"
+            / "corporate_action_enrichment_queue.csv"
+        ),
+        "query_ledger": str(
+            logical_output / "manifests" / "query_ledger.csv"
+        ),
         "security_status_report": str(
-            report_output / "security_status_report.json"
+            logical_output / "reports" / "security_status_report.json"
         ),
         "delisting_archive_report": str(
-            report_output / "delisting_archive_report.json"
+            logical_output / "reports" / "delisting_archive_report.json"
         ),
         "corporate_action_schedule_report": str(
-            report_output / "corporate_action_schedule_report.json"
+            logical_output / "reports" / "corporate_action_schedule_report.json"
         ),
         "security_status": status_report["status"],
         "corporate_action_schedule_status": action_report["status"],
@@ -798,6 +826,49 @@ def import_status_corporate(
     report_path = report_output / "status_corporate_import_report.json"
     report_path.write_bytes(canonical_json_bytes(report))
     return report
+
+
+def import_status_corporate(
+    *,
+    config_dir: Path,
+    official_foundation_root: Path,
+    workspace: Path,
+    output_root: Path,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    target = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_status_corporate",
+        decision_at=admission_request.decision_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_status_corporate",
+        output_root=target,
+        boundary_inputs={
+            "official_foundation_root": official_foundation_root,
+            "workspace": workspace,
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_status_corporate_unchecked(
+            config_dir=config_dir,
+            official_foundation_root=official_foundation_root,
+            workspace=workspace,
+            output_root=staging,
+            logical_output_root=target,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        target,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
 
 
 __all__ = [

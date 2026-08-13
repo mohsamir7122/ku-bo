@@ -12,28 +12,47 @@
   },
   "case_count": 1280,
   "case_schema_path": "tests/corpus/ku_bo_011_case.schema.json",
-  "case_schema_sha256": "bf126a97223815e2708f6f210cbe61e39893948550521e86cb614f7fdbf3861c",
+  "case_schema_sha256": "f388ab9ef838158fae2d8621089c3a256d7bf9a0272c7b49addca39860e6d929",
   "claim_boundary": "TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM",
   "corpus_path": "tests/corpus/ku_bo_011_cases.jsonl",
-  "corpus_sha256": "53c95afbdf4174a5c3e74c2bfb798beddc650841f1301d4b8d99bc4a54af2b03",
+  "corpus_sha256": "e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288",
   "dimensions": {
     "boundaries": 8,
     "mutation_families": 40,
     "variants_per_boundary_mutation_pair": 4
   },
+  "expectation_model": "PRODUCTION_DETECTION_ORDER_V3_MATERIALIZED",
   "expected_decision_counts": {
     "REJECT": 1280
   },
+  "expected_failure_code_override_case_count": 16,
   "expected_failure_phase_counts": {
-    "ARTIFACT_VALIDATION_PRE_WRITE": 320,
-    "ENTRY_PRE_WRITE": 640,
-    "PRE_COMMIT_RECHECK": 320
+    "ARTIFACT_VALIDATION_PRE_WRITE": 312,
+    "ENTRY_PRE_WRITE": 624,
+    "PRE_COMMIT_RECHECK": 344
   },
+  "expected_failure_phase_override_case_count": 24,
+  "expected_rejection_override_case_count": 32,
+  "expected_rejection_override_rule_count": 4,
   "first_case_id": "KU-BO-011-C0001-import_user_price_exports-missing_run_receipt-V00",
   "generator_path": "scripts/generate_ku_bo_011_corpus.py",
-  "generator_version": "1.0",
+  "generator_version": "3.0",
   "harness_path": "tests/ku_bo_011_harness.py",
   "last_case_id": "KU-BO-011-C1280-build_data_foundation_packet-output_commit_toc_tou-V03",
+  "materialization_ingress_counts": {
+    "CLI_PARSER_TO_PUBLIC_BOUNDARY": 320,
+    "DIRECT_PUBLIC_BOUNDARY": 320,
+    "PUBLIC_BOUNDARY_PRE_COMMIT_HOOK": 320,
+    "SERIALIZED_ADMISSION_TO_PUBLIC_BOUNDARY": 320
+  },
+  "materialization_model": "PRODUCTION_HANDLER_DESCRIPTOR_V1",
+  "materialization_resign_policy_counts": {
+    "NOT_APPLICABLE": 480,
+    "PRESERVE_STALE_AUTHENTICATION": 128,
+    "RESIGN_WITH_RUN_AUTHORITY": 96,
+    "RESIGN_WITH_SEMANTIC_AUTHORITY": 480,
+    "RESIGN_WITH_STAGE_AUTHORITY": 96
+  },
   "mutation_counts": {
     "batch_plan_hash_mismatch": 32,
     "benchmark_fallback_promotion": 32,
@@ -76,7 +95,7 @@
     "wrong_stage_id": 32,
     "wrong_stage_key_id": 32
   },
-  "schema_version": "ku-bo-011-adversarial-corpus-manifest-v1",
+  "schema_version": "ku-bo-011-adversarial-corpus-manifest-v3",
   "semantic_fingerprint_count": 1280,
   "semantic_fingerprint_excludes": [
     "case_id",
@@ -90,6 +109,6 @@
     "variant_index",
     "profile_id"
   ],
-  "semantic_fingerprint_set_sha256": "4ac38fa9b62645a20426925aa4dab6ecdf8197d0cc1e426da48bfed3e7e16e9e",
+  "semantic_fingerprint_set_sha256": "45ba1b58d0666c4f4b1ed467b9ed2ed978ae53cdd158b0a509e8dae46c39d3ed",
   "unittest_case_method_count": 1280
 }

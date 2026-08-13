@@ -4,9 +4,11 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
+import os
 from pathlib import Path
 from typing import Any
 
+from .atomic_output import run_atomic_output
 from .benchmark_history import (
     MAX_BENCHMARK_VALUE,
     RAW_BENCHMARK_EXPORT_HEADERS,
@@ -36,6 +38,11 @@ from .foundation_io import (
 )
 from .hashing import canonical_json_bytes, sha256_bytes
 from .strict import parse_aware, parse_iso_date, require_sha256, safe_relative_path
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 
 
 MAX_MANIFEST_BYTES = 4 * 1024 * 1024
@@ -622,7 +629,55 @@ def import_benchmark_history(
     official_foundation_root: Path,
     workspace: Path,
     output_root: Path,
+    imported_at: str,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    requested_output = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_benchmark_history",
+        decision_at=admission_request.decision_at,
+        imported_at=imported_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_benchmark_history",
+        output_root=requested_output,
+        boundary_inputs={
+            "config_dir": Path(config_dir),
+            "official_foundation_root": Path(official_foundation_root),
+            "workspace": Path(workspace),
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_benchmark_history_unchecked(
+            config_dir=config_dir,
+            official_foundation_root=official_foundation_root,
+            workspace=workspace,
+            output_root=staging,
+            imported_at=imported_at,
+            logical_output_root=requested_output,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        requested_output,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
+
+
+def _import_benchmark_history_unchecked(
+    *,
+    config_dir: Path,
+    official_foundation_root: Path,
+    workspace: Path,
+    output_root: Path,
     imported_at: str | None = None,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     import_time = now if imported_at is None else parse_aware(imported_at, "imported_at")
@@ -805,21 +860,32 @@ def import_benchmark_history(
             }
         )
 
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output
+    )
     report = {
         "schema_version": "1.0",
         "status": status,
         "contract_status": validation.status,
         "run_id": manifest["run_id"],
         "imported_at": import_time.isoformat(),
-        "output_root": str(output),
+        "output_root": str(logical_output),
         "window_from": manifest["window_from"].isoformat(),
         "window_to": manifest["window_to"].isoformat(),
         "registry_id": registry.registry_id,
         "registry_sha256": registry.sha256,
         "registry_date_basis": registry.registry_date_basis,
-        "upstream_calendar_receipt": str(upstream_receipt_path),
-        "normalized_benchmark_history": str(normalized_path),
-        "evidence_manifest": str(evidence_manifest_path),
+        "upstream_calendar_receipt": str(
+            logical_output / upstream_receipt_path.relative_to(output)
+        ),
+        "normalized_benchmark_history": str(
+            logical_output / normalized_path.relative_to(output)
+        ),
+        "evidence_manifest": str(
+            logical_output / evidence_manifest_path.relative_to(output)
+        ),
         "benchmark_count": len(registry.benchmarks),
         "available_benchmark_count": len(available_codes),
         "row_count": len(normalized_rows),

@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import copy
+from collections import Counter
+import hashlib
 import json
 from pathlib import Path
 import re
 import unittest
 
 from jsonschema import Draft202012Validator
+from tests import ku_bo_011_harness
 
 from tests.ku_bo_011_harness import (
     CORPUS_PATH,
     MANIFEST_PATH,
+    PUBLIC_BOUNDARIES,
     SCHEMA_PATH,
     CorpusValidationError,
     TargetAdapterFailure,
@@ -25,15 +29,73 @@ from tests.ku_bo_011_harness import (
     verify_manifest,
 )
 from tests.ku_bo_011_mutators import (
+    ATTACK_PROFILES,
     BOUNDARIES,
     CLAIM_BOUNDARY,
+    EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT,
+    EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_CASE_COUNT,
+    EXPECTED_REJECTION_OVERRIDE_RULE_COUNT,
+    EXPECTED_REJECTION_OVERRIDES,
+    MATERIALIZATION_INGRESS_BY_CHANNEL,
+    MATERIALIZATION_SPECS,
     MUTATIONS,
     TOTAL_CASES,
     VARIANTS_PER_PAIR,
+    _expected_rejection,
+    build_case,
 )
 
 
 CASES = load_cases()
+
+
+def _dummy_dispatch_proof(case: dict[str, object]) -> dict[str, object]:
+    boundary = case["boundary"]
+    mutation = case["mutation"]
+    assert isinstance(boundary, dict)
+    assert isinstance(mutation, dict)
+    boundary_id = str(boundary["id"])
+    input_channel = str(mutation["input_channel"])
+    mutation_id = str(mutation["id"])
+    events = [
+        {
+            "event": "mutation",
+            "boundary_id": boundary_id,
+            "input_channel": input_channel,
+            "implementation": f"_{mutation_id}",
+        },
+        {
+            "event": "channel_gate",
+            "boundary_id": boundary_id,
+            "input_channel": input_channel,
+            "implementation": "data_foundation_cli.parser+public_boundary",
+        },
+        {
+            "event": "public_boundary",
+            "boundary_id": boundary_id,
+            "input_channel": input_channel,
+            "implementation": PUBLIC_BOUNDARIES[boundary_id],
+        },
+    ]
+    encoded = json.dumps(
+        events,
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8") + b"\n"
+    return {
+        "schema_version": "ku-bo-011-dispatch-proof-v1",
+        "boundary_id": boundary_id,
+        "input_channel": input_channel,
+        "mutation_id": mutation_id,
+        "public_boundary": PUBLIC_BOUNDARIES[boundary_id],
+        "rejection_type": "kubo.tri_security_admission.BoundaryAdmissionError",
+        "authority_key_sha256": ("1" * 64, "2" * 64, "3" * 64),
+        "events": events,
+        "events_sha256": hashlib.sha256(encoded).hexdigest(),
+    }
 
 
 class TestKUBO011CaseSpecs(unittest.TestCase):
@@ -87,8 +149,134 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
         self.assertEqual(VARIANTS_PER_PAIR, 4)
         self.assertEqual(len(BOUNDARIES) * len(MUTATIONS) * VARIANTS_PER_PAIR, 1280)
 
+    def test_v3_detection_order_overrides_are_exact_and_limited(self) -> None:
+        self.assertEqual(
+            dict(EXPECTED_REJECTION_OVERRIDES),
+            {
+                ("output_root_preexists", 3): (
+                    "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+                    "PRE_COMMIT_RECHECK",
+                ),
+                ("output_commit_toc_tou", 0): (
+                    "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+                    "PRE_COMMIT_RECHECK",
+                ),
+                ("output_commit_toc_tou", 1): (
+                    "OUTPUT_ROOT_CHANGED_DURING_COMMIT",
+                    "PRE_COMMIT_RECHECK",
+                ),
+                ("output_commit_toc_tou", 2): (
+                    "PARTIAL_OUTPUT_FORBIDDEN",
+                    "PRE_COMMIT_RECHECK",
+                ),
+            },
+        )
+        self.assertEqual(EXPECTED_REJECTION_OVERRIDE_RULE_COUNT, 4)
+        self.assertEqual(EXPECTED_REJECTION_OVERRIDE_CASE_COUNT, 32)
+        self.assertEqual(EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT, 16)
+        self.assertEqual(EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT, 24)
+
+        overridden_case_numbers: set[int] = set()
+        code_override_count = 0
+        phase_override_count = 0
+        generated_cases: list[dict[str, object]] = []
+        for boundary_index, _boundary in enumerate(BOUNDARIES):
+            for mutation_index, mutation in enumerate(MUTATIONS):
+                for variant_index, profile in enumerate(ATTACK_PROFILES):
+                    code, phase = _expected_rejection(
+                        mutation,
+                        profile,
+                        variant_index,
+                    )
+                    if (code, phase) == (
+                        mutation.failure_code,
+                        profile.failure_phase,
+                    ):
+                        continue
+                    case = build_case(
+                        boundary_index,
+                        mutation_index,
+                        variant_index,
+                    )
+                    generated_cases.append(case)
+                    overridden_case_numbers.add(
+                        int(str(case["case_id"]).split("-C", 1)[1].split("-", 1)[0])
+                    )
+                    code_override_count += code != mutation.failure_code
+                    phase_override_count += phase != profile.failure_phase
+                    self.assertEqual(
+                        case["expected"],
+                        {
+                            "decision": "REJECT",
+                            "failure_code": code,
+                            "failure_phase": phase,
+                            "maximum_output_writes": 0,
+                            "market_evidence_claim": "NOT_EVALUATED",
+                        },
+                    )
+
+        self.assertEqual(len(generated_cases), EXPECTED_REJECTION_OVERRIDE_CASE_COUNT)
+        self.assertEqual(
+            code_override_count,
+            EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT,
+        )
+        self.assertEqual(
+            phase_override_count,
+            EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT,
+        )
+        self.assertEqual(
+            overridden_case_numbers,
+            {
+                base + boundary_offset
+                for base in (152, 157, 158, 159)
+                for boundary_offset in range(0, 1121, 160)
+            },
+        )
+
+        phase_counts = Counter(case["expected"]["failure_phase"] for case in CASES)
+        self.assertEqual(
+            phase_counts,
+            {
+                "ENTRY_PRE_WRITE": 624,
+                "ARTIFACT_VALIDATION_PRE_WRITE": 312,
+                "PRE_COMMIT_RECHECK": 344,
+            },
+        )
+
     def test_all_cases_are_schema_valid(self) -> None:
         validate_schema(CASES)
+
+    def test_v3_materialization_is_complete_and_matches_the_handler(self) -> None:
+        self.assertEqual(set(MATERIALIZATION_SPECS), {row.mutation_id for row in MUTATIONS})
+        for case in CASES:
+            mutation = case["mutation"]
+            materialization = case["materialization"]
+            self.assertEqual(materialization["handler_id"], mutation["id"])
+            self.assertEqual(
+                materialization["ingress"],
+                MATERIALIZATION_INGRESS_BY_CHANNEL[mutation["input_channel"]],
+            )
+            self.assertEqual(materialization["value"], mutation["value"])
+            for field in (
+                "handler_id",
+                "ingress",
+                "artifact",
+                "field",
+                "action",
+                "timing",
+                "resign_policy",
+            ):
+                self.assertIn(f"{field}={materialization[field]}", mutation["attack_shape"])
+
+    def test_harness_passes_materialization_without_the_expected_oracle(self) -> None:
+        supplied = ku_bo_011_harness._adapter_case(CASES[0])
+        self.assertIn("materialization", supplied)
+        self.assertEqual(
+            supplied["materialization"]["handler_id"],
+            supplied["mutation"]["id"],
+        )
+        self.assertNotIn("expected", supplied)
+        self.assertNotIn("claim_boundary", supplied)
 
     def test_all_cases_are_unique_balanced_and_semantically_locked(self) -> None:
         summary = audit_cases(CASES)
@@ -100,8 +288,33 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
 
     def test_manifest_binds_corpus_and_schema(self) -> None:
         manifest = verify_manifest(CASES)
+        self.assertEqual(
+            manifest["schema_version"],
+            "ku-bo-011-adversarial-corpus-manifest-v3",
+        )
+        self.assertEqual(manifest["generator_version"], "3.0")
+        self.assertEqual(
+            manifest["expectation_model"],
+            "PRODUCTION_DETECTION_ORDER_V3_MATERIALIZED",
+        )
+        self.assertEqual(
+            manifest["materialization_model"],
+            "PRODUCTION_HANDLER_DESCRIPTOR_V1",
+        )
         self.assertEqual(manifest["case_count"], 1280)
         self.assertEqual(manifest["unittest_case_method_count"], 1280)
+        self.assertEqual(
+            manifest["expected_rejection_override_case_count"],
+            EXPECTED_REJECTION_OVERRIDE_CASE_COUNT,
+        )
+        self.assertEqual(
+            manifest["expected_failure_code_override_case_count"],
+            EXPECTED_FAILURE_CODE_OVERRIDE_CASE_COUNT,
+        )
+        self.assertEqual(
+            manifest["expected_failure_phase_override_case_count"],
+            EXPECTED_FAILURE_PHASE_OVERRIDE_CASE_COUNT,
+        )
         self.assertEqual(manifest["claim_boundary"], CLAIM_BOUNDARY)
 
     def test_corpus_files_are_committed_under_tests_only(self) -> None:
@@ -113,6 +326,12 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
     def test_schema_rejects_unknown_fields(self) -> None:
         invalid = copy.deepcopy(CASES[0])
         invalid["unexpected"] = True
+        errors = list(Draft202012Validator(load_case_schema()).iter_errors(invalid))
+        self.assertTrue(errors)
+
+    def test_schema_requires_the_executable_materialization_descriptor(self) -> None:
+        invalid = copy.deepcopy(CASES[0])
+        invalid.pop("materialization")
         errors = list(Draft202012Validator(load_case_schema()).iter_errors(invalid))
         self.assertTrue(errors)
 
@@ -136,17 +355,22 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
         ):
             load_target_adapter(None)
 
-    def test_strict_adapter_contract_accepts_a_zero_write_rejection(self) -> None:
+    def test_strict_adapter_contract_accepts_a_zero_write_rejection_without_oracle(
+        self,
+    ) -> None:
         case = CASES[0]
 
         def adapter(**kwargs):
             supplied = kwargs["case"]
+            self.assertNotIn("expected", supplied)
+            self.assertNotIn("claim_boundary", supplied)
             return {
                 "case_id": supplied["case_id"],
-                "decision": supplied["expected"]["decision"],
-                "failure_code": supplied["expected"]["failure_code"],
-                "failure_phase": supplied["expected"]["failure_phase"],
+                "decision": "REJECT",
+                "failure_code": "RUN_RECEIPT_REQUIRED",
+                "failure_phase": "ENTRY_PRE_WRITE",
                 "output_writes": [],
+                "dispatch_proof": _dummy_dispatch_proof(case),
             }
 
         execute_strict_case(case, adapter)
@@ -163,33 +387,72 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
             supplied = kwargs["case"]
             return {
                 "case_id": supplied["case_id"],
-                "decision": supplied["expected"]["decision"],
-                "failure_code": supplied["expected"]["failure_code"],
-                "failure_phase": supplied["expected"]["failure_phase"],
+                "decision": "REJECT",
+                "failure_code": "RUN_RECEIPT_REQUIRED",
+                "failure_phase": "ENTRY_PRE_WRITE",
                 "output_writes": [],
+                "dispatch_proof": _dummy_dispatch_proof(case),
             }
 
         with self.assertRaisesRegex(TargetAdapterFailure, "protected output root"):
             execute_strict_case(case, adapter)
 
-    def test_strict_adapter_cannot_rewrite_nested_expected_values(self) -> None:
+    def test_strict_adapter_cannot_read_or_rewrite_expected_values(self) -> None:
         case = CASES[0]
         original_failure_code = case["expected"]["failure_code"]
 
         def adapter(**kwargs):
             supplied = kwargs["case"]
-            supplied["expected"]["failure_code"] = "ORACLE_REWRITE"
+            self.assertNotIn("expected", supplied)
             return {
                 "case_id": supplied["case_id"],
                 "decision": "REJECT",
                 "failure_code": "ORACLE_REWRITE",
-                "failure_phase": supplied["expected"]["failure_phase"],
+                "failure_phase": "ENTRY_PRE_WRITE",
                 "output_writes": [],
+                "dispatch_proof": _dummy_dispatch_proof(case),
             }
 
         with self.assertRaisesRegex(TargetAdapterFailure, "failure_code"):
             execute_strict_case(case, adapter)
         self.assertEqual(case["expected"]["failure_code"], original_failure_code)
+
+    def test_strict_harness_expected_canary_is_not_visible_to_adapter(self) -> None:
+        case = copy.deepcopy(CASES[0])
+        case["expected"]["failure_code"] = "HARNESS_CANARY"
+
+        def adapter(**kwargs):
+            supplied = kwargs["case"]
+            self.assertNotIn("expected", supplied)
+            return {
+                "case_id": supplied["case_id"],
+                "decision": "REJECT",
+                "failure_code": "RUN_RECEIPT_REQUIRED",
+                "failure_phase": "ENTRY_PRE_WRITE",
+                "output_writes": [],
+                "dispatch_proof": _dummy_dispatch_proof(case),
+            }
+
+        with self.assertRaisesRegex(TargetAdapterFailure, "HARNESS_CANARY"):
+            execute_strict_case(case, adapter)
+
+    def test_strict_harness_detects_sibling_staging_residue(self) -> None:
+        case = CASES[0]
+
+        def adapter(**kwargs):
+            supplied = kwargs["case"]
+            (kwargs["case_root"] / ".output.staging-residue").mkdir()
+            return {
+                "case_id": supplied["case_id"],
+                "decision": "REJECT",
+                "failure_code": "RUN_RECEIPT_REQUIRED",
+                "failure_phase": "ENTRY_PRE_WRITE",
+                "output_writes": [],
+                "dispatch_proof": _dummy_dispatch_proof(case),
+            }
+
+        with self.assertRaisesRegex(TargetAdapterFailure, "protected case surface"):
+            execute_strict_case(case, adapter)
 
     def test_jsonl_contains_one_canonical_object_per_nonblank_line(self) -> None:
         content = CORPUS_PATH.read_text(encoding="utf-8")

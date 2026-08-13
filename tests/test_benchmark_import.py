@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 from kubo.benchmark_history import BENCHMARK_HISTORY_HEADERS
-from kubo.benchmark_import import import_benchmark_history
+from kubo.benchmark_import import _import_benchmark_history_unchecked
 from tests.benchmark_fixture_helpers import (
     ROOT,
     accept_fixture_manifest,
@@ -46,7 +46,7 @@ class BenchmarkImportTests(unittest.TestCase):
         )
 
     def _import(self) -> dict[str, object]:
-        return import_benchmark_history(
+        return _import_benchmark_history_unchecked(
             config_dir=ROOT / "config",
             official_foundation_root=self.official,
             workspace=self.workspace,
@@ -166,7 +166,7 @@ class BenchmarkImportTests(unittest.TestCase):
             row["rights_status"] = "RESEARCH_USE_AUTHORIZED"
         self._save_manifest(manifest)
 
-        report = import_benchmark_history(
+        report = _import_benchmark_history_unchecked(
             config_dir=config_dir,
             official_foundation_root=self.official,
             workspace=self.workspace,
@@ -213,7 +213,7 @@ class BenchmarkImportTests(unittest.TestCase):
     def test_declared_import_time_must_not_be_in_the_future(self) -> None:
         self._accept()
         with self.assertRaisesRegex(ValueError, "imported_at must not be in the future"):
-            import_benchmark_history(
+            _import_benchmark_history_unchecked(
                 config_dir=ROOT / "config",
                 official_foundation_root=self.official,
                 workspace=self.workspace,

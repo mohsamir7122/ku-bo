@@ -4,9 +4,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from kubo.official_foundation_import import import_official_foundation
+from kubo.official_foundation_import import _import_official_foundation_unchecked
 from kubo.official_foundation_workspace import prepare_official_foundation_workspace
-from kubo.status_corporate_import import import_status_corporate
+from kubo.status_corporate_import import _import_status_corporate_unchecked
 from kubo.status_corporate_workspace import prepare_status_corporate_workspace
 from tests.test_official_foundation_import import (
     CONTACT_HTML,
@@ -59,7 +59,7 @@ def build_official_foundation_output(root: Path) -> Path:
         encoding="utf-8",
     )
     output = root / "official-output"
-    report = import_official_foundation(
+    report = _import_official_foundation_unchecked(
         config_dir=ROOT / "config",
         workspace=workspace,
         output_root=output,
@@ -122,7 +122,7 @@ def build_status_corporate_output(
         encoding="utf-8",
     )
     output = root / "status-output"
-    report = import_status_corporate(
+    report = _import_status_corporate_unchecked(
         config_dir=ROOT / "config",
         official_foundation_root=official_output,
         workspace=workspace,

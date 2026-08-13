@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .atomic_output import run_atomic_output
 from .hashing import canonical_json_bytes, sha256_bytes
 from .price_collection_workspace import MANIFEST_HEADERS
 from .research_price_history import (
@@ -19,6 +20,11 @@ from .research_price_history import (
     write_research_price_history,
 )
 from .strict import https_url, parse_aware, parse_iso_date, require_sha256
+from .tri_security_admission import (
+    BoundaryAdmissionRequest,
+    admit_boundary,
+    build_boundary_operation_binding,
+)
 from .vendor_symbol_mapping import VendorSymbolMapping, VendorSymbolMappingCatalog
 
 
@@ -379,13 +385,14 @@ def _prepare_output_root(path: Path) -> Path:
 
 
 
-def import_investing_user_exports(
+def _import_investing_user_exports_unchecked(
     *,
     config_dir: Path,
     input_dir: Path,
     output_root: Path,
     observed_at: str,
     decision_at: str | None = None,
+    logical_output_root: Path | None = None,
 ) -> dict[str, Any]:
     observed = parse_aware(observed_at, "observed_at")
     decision = parse_aware(decision_at or observed_at, "decision_at")
@@ -395,6 +402,11 @@ def import_investing_user_exports(
     if not input_dir.is_dir() or input_dir.is_symlink():
         raise ValueError("input_dir must be a real directory")
     output_root = _prepare_output_root(Path(output_root))
+    logical_output = (
+        Path(os.path.abspath(logical_output_root))
+        if logical_output_root is not None
+        else output_root
+    )
 
     catalog = VendorSymbolMappingCatalog(config_dir)
     candidates = sorted(
@@ -590,10 +602,12 @@ def import_investing_user_exports(
         "capture_mode": "USER_EXPORT",
         "decision_at": decision.isoformat(),
         "observed_at": observed.isoformat(),
-        "output_root": str(output_root),
+        "output_root": str(logical_output),
         "collection_manifest": str(manifest_path) if manifest_path else None,
         "preserved_collection_manifest": (
-            str(preserved_manifest_path) if preserved_manifest_path else None
+            str(logical_output / "price_collection_manifest.csv")
+            if preserved_manifest_path
+            else None
         ),
         "collection_manifest_sha256": (
             sha256_bytes(manifest_bytes) if manifest_bytes is not None else None
@@ -602,8 +616,12 @@ def import_investing_user_exports(
         "imported_symbols": imported_symbols,
         "missing_exports": missing_exports,
         "rejected_exports": rejected_exports,
-        "normalized_research_price_history": str(normalized_path),
-        "data_quality_report": str(data_quality_path),
+        "normalized_research_price_history": str(
+            logical_output / "normalized" / "research_price_history.csv"
+        ),
+        "data_quality_report": str(
+            logical_output / "reports" / "data_quality_report.json"
+        ),
         "row_count": len(normalized_rows),
         "official_identity_ready": official_identity_ready,
         "remaining_gates": [
@@ -631,6 +649,52 @@ def import_investing_user_exports(
     report_path = report_dir / "user_export_import_report.json"
     report_path.write_bytes(canonical_json_bytes(report))
     return report
+
+
+def import_investing_user_exports(
+    *,
+    config_dir: Path,
+    input_dir: Path,
+    output_root: Path,
+    observed_at: str,
+    decision_at: str,
+    admission_request: BoundaryAdmissionRequest,
+) -> dict[str, Any]:
+    target = Path(os.path.abspath(output_root))
+    operation_binding = build_boundary_operation_binding(
+        "import_user_price_exports",
+        decision_at=decision_at,
+        observed_at=observed_at,
+    )
+    token = admit_boundary(
+        admission_request,
+        boundary_id="import_user_price_exports",
+        output_root=target,
+        boundary_inputs={
+            "config_dir": config_dir,
+            "input_dir": input_dir,
+        },
+        operation_binding=operation_binding,
+    )
+
+    def worker(staging: Path) -> dict[str, Any]:
+        report = _import_investing_user_exports_unchecked(
+            config_dir=config_dir,
+            input_dir=input_dir,
+            output_root=staging,
+            observed_at=observed_at,
+            decision_at=decision_at,
+            logical_output_root=target,
+        )
+        token.materialize_receipt(staging)
+        token.materialize_lineage(staging)
+        return report
+
+    return run_atomic_output(
+        target,
+        worker,
+        before_commit=lambda _staging: token.revalidate_before_commit(),
+    )
 
 
 __all__ = [

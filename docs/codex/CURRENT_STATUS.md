@@ -11,23 +11,25 @@ mohsamir7122/ku-bo
 ## Verified live chain
 
 ```text
-main@6bcfbabf840e6876a878dfd692afbf746780d731
-  └── GitHub Actions 31629909113 / PASS
-        └── test/ku-bo-011-adversarial-corpus-v0.1
-              @3d773448b78ca99f6761a43b852f53967fdbb095
-              └── Draft PR #12 / GitHub Actions 31631077911 / PASS
+main@c621fcf88034c4571aa08aee2e54e2e026a4f651
+  └── Merge PR #12 as TEST_SPEC_ONLY
+        └── GitHub Actions 31684299396 / PASS
+              └── build/tri-security-receipt-enforcement-v0.2
+                    @5e5b4ad9237ccaff04974576a3c77b2058a79b8f
 ```
 
-PRs #4 through #11 are merged into `main`. PR #12 is clean and mergeable
-against that exact `main` head, but it contains a deterministic KU-BO-011
-acceptance-spec corpus only. It does not implement mandatory downstream Run
-Receipt or Stage Binding enforcement. Open PRs #2 and #3 remain stale,
+PRs #4 through #12 are merged into `main`. PR #12 entered `main` at merge
+commit `c621fcf` and post-merge CI run `31684299396` passed, but its status
+remains `TEST_SPEC_ONLY`: it contributes the deterministic KU-BO-011
+acceptance corpus, not runtime enforcement. Open PRs #2 and #3 remain stale,
 conflicting, and based on pre-stack history; neither is an authority or a safe
 base for current work.
 
 The local KU-BO-011 implementation branch
-`build/tri-security-receipt-enforcement-v0.2` was created from the exact PR #12
-head. At this status snapshot it has no implementation commit or published PR.
+`build/tri-security-receipt-enforcement-v0.2` now includes merged `main` and is
+at implementation code head `5e5b4ad9237ccaff04974576a3c77b2058a79b8f`
+before the current control-record commit. It has no published implementation
+PR or exact-head GitHub Actions result yet.
 
 ## Proven on merged main
 
@@ -37,6 +39,8 @@ head. At this status snapshot it has no implementation commit or published PR.
 - every final Data Foundation gate remains `PENDING_EXTERNAL_EVIDENCE`;
 - authenticated Run Receipt and Stage Binding v1 primitives use independent
   runtime-only HMAC authorities and fail closed on byte or scope drift;
+- the merged PR #12 corpus locks 1,280 deterministic synthetic adversarial
+  Test Specifications while retaining its explicit non-claim;
 - the inherited five-security Benchmark registry remains explicitly
   incompatible with the tri-security cohort because Industrials and Utilities
   sector series are missing;
@@ -49,7 +53,7 @@ run, but its explicit claim remains
 `binding_proves_stage_matches_run_scope=false`. It has no authenticated
 predecessor graph and must not be reinterpreted as semantic admission.
 
-## PR #12 — KU-BO-011 acceptance specification only
+## Merged PR #12 — KU-BO-011 acceptance specification only
 
 PR #12 publishes:
 
@@ -64,7 +68,8 @@ The corpus SHA-256 is
 `53c95afbdf4174a5c3e74c2bfb798beddc650841f1301d4b8d99bc4a54af2b03`.
 Its exact-head CI ran 1,841 repository tests and passed the deterministic
 generator, Schema, semantic-fingerprint, wheel, installed-CLI, smoke, control,
-and secret checks on Python 3.11 through 3.14.
+and secret checks on Python 3.11 through 3.14. PR #12 then merged as `c621fcf`,
+and post-merge `main` CI run `31684299396` passed.
 
 This proves the structure and reproducibility of the synthetic test
 specification only. Without an implementation Adapter, strict mode returns
@@ -76,22 +81,50 @@ PR #12 therefore carries the non-claim:
 TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
 ```
 
-## Active KU-BO-011 boundary
+## Active KU-BO-011 implementation
 
-KU-BO-011 is `IN_PROGRESS`. It must:
+KU-BO-011 remains `IN_PROGRESS`. At code head
+`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`, the implementation branch now
+delivers:
 
-- add versioned semantic admission without changing the v1 byte-integrity
-  claim;
-- make the authenticated Run Receipt and correct stage admission mandatory at
-  all seven importer boundaries and final Data Foundation reconciliation;
-- bind the exact run, batch, three-security cohort, qualification window,
-  stage identity, and required predecessor graph;
-- reject missing, altered, stale, replayed, cross-run, wrong-stage,
-  wrong-cohort, wrong-window, scope-promoting, or Benchmark-incompatible input
-  before any protected output write;
-- revalidate security-sensitive state before atomic commit to detect TOCTOU;
-- prove the rejection paths through production APIs and CLIs, not through an
-  expectation-echoing test double.
+- semantic admission v2 authenticated by a third runtime-only HMAC authority,
+  separate from Run Receipt and Stage Binding v1;
+- an exact eight-boundary stage map, boundary-input role binding, and
+  authenticated predecessor DAG;
+- mandatory `BoundaryAdmissionRequest` entry arguments for all eight Direct
+  APIs and installed CLI commands;
+- no-overwrite atomic staging plus admission revalidation immediately before
+  commit;
+- an issuance CLI for semantic admissions and required predecessor paths;
+- focused positive/negative tests for admission, wrapper ordering, exact input
+  maps, atomic output, CLI construction, and independent keys;
+- a strict JSON Schema 2020-12 contract at
+  `schemas/tri-security-semantic-admission.schema.json`;
+- a non-echoing production Adapter with an independent executable
+  materialization contract for every mutation/channel/variant and AST guards
+  against importing the Test-Spec oracle;
+- Corpus v3 generation and audit with 1,280 exact executable descriptors and
+  corpus SHA-256
+  `e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288`;
+- strict source-tree and clean-installed-wheel runs of all 1,280 cases, both
+  passing `1,280/1,280` with zero protected-output writes;
+- an installed authenticated eight-boundary predecessor DAG that produced and
+  verified eight semantic admissions and eight lineage artifacts; and
+- a complete local unit/adversarial suite of 1,916 passing tests, plus passing
+  compile, deterministic generator/audit, Codex control, synthetic smoke,
+  secret, and diff checks.
+
+These local results support only the branch-local classification
+`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT`. They do not retroactively change
+PR #12: its merged evidence remains historically `TEST_SPEC_ONLY`. They also
+do not prove market data, provider authority, capture rights, a real backtest,
+forecast skill, probability, accuracy, recommendation, or production
+readiness.
+
+Completion still requires committing the control handoff, publishing the
+implementation as a Draft PR, and receiving exact-head GitHub Actions success
+on that published head. The current KU-BO-011 handoff is therefore `PARTIAL`,
+not completed.
 
 The user's current instruction authorizes the necessary ordered changes and
 merges only under the conditions recorded in `KU-BO-MERGE-003`. During active
@@ -111,11 +144,9 @@ applicable gates pass and the approval record is rechecked.
 
 ## Still not proven
 
-- production-path receipt and semantic-stage enforcement at all eight
-  KU-BO-011 boundaries;
-- an authenticated and complete predecessor graph carried into final
-  reconciliation;
-- zero-write rejection for all 1,280 cases against the real implementation;
+- a published implementation Draft PR and exact-head GitHub Actions proof for
+  the implementation branch;
+- a completed KU-BO-011 handoff tied to that published exact-head CI result;
 - complete effective-dated historical market universe;
 - real rights-compatible Benchmark and Official Complete EOD packets;
 - complete historical Corporate Actions and suspension/resumption evidence;
