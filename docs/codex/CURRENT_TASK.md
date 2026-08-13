@@ -17,7 +17,7 @@ PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
 HISTORICAL_EVALUATION_REQUESTED: YES
-BLOCKED_ON: REAL_POINT_IN_TIME_DATA; FULL_UNIVERSE_RECONCILIATION; OUTCOME_SESSION_POLICY; EXTERNAL_PUBLICATION_TOOLING
+BLOCKED_ON: REAL_POINT_IN_TIME_DATA; FULL_UNIVERSE_RECONCILIATION; OUTCOME_SESSION_POLICY; MERGE_BOUNDARY_REVIEW
 ```
 
 ## Mission
@@ -51,6 +51,11 @@ additional merge. PR #2 and PR #3 are 127 commits behind, non-mergeable, and
 explicitly superseded by the current stack. Do not merge or wholesale
 cherry-pick them. Reimplement a useful idea from them only if it satisfies the
 current contracts and tests.
+
+The implementation is published as Draft PR #14 at
+`58a78042d5d509e599d2e273d793856b1dee14dd`. Exact-head GitHub Actions Run
+`31733924569` passed on Python 3.11 through 3.14. This control-record update is
+a later head and must receive fresh exact-head CI before the merge boundary.
 
 Do not merge this task branch until the complete suite, installed-wheel checks,
 real-evidence stop gates, Draft PR review, and exact-head GitHub Actions pass.

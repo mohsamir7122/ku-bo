@@ -5,8 +5,9 @@
 ## منفذ في الأساس البرمجي
 
 العناصر الموروثة متحققة بحسب CI التاريخي الخاص بها. عناصر `KU-BO-012`
-مضافة على فرع المهمة واجتازت بوابات القبول المحلية، لكن Exact-head CI
-الخارجي والـPR والدمج لم تحدث؛ لا تُقرأ القائمة كإعلان Production أوMerge.
+مضافة على فرع المهمة واجتازت بوابات القبول المحلية، ونُشرت في Draft PR #14
+واجتاز رأس التنفيذ Exact-head CI. لم يحدث الدمج؛ لا تُقرأ القائمة كإعلان
+Production أوMerge.
 
 - كتالوج يحوي 68 تعريف مصدر موزعة على 62 مجموعة استقلال و59 نطاقًا مرشحًا بعد استبعاد البحث والتخزين؛ 53 منها معلنة Enabled-public في الكتالوج، و52 نطاق Start URL تنفيذيًا مميزًا قبل الحجز. هذه تعريفات سياسة وليست موصلات حية.
 - خمس سياسات تغطي 14 منتجًا بحثيًا وزمنيًا، منها `KUWAIT_120D_NEXT_SESSION_RESEARCH`.
@@ -35,7 +36,7 @@
 - مصفوفة قدرات آلية تفصل تعريف المصدر وCapture وParser وFixture evidence عن `LIVE_OPERATIONAL`؛ لا تسجل أي مصدر حيًا تشغيليًا في هذه النسخة.
 - JSON Schemas وMethodology Registry ووثائق تشغيل وSecurity policy.
 - GitHub Actions على Python 3.11 و3.12 و3.13 و3.14 مع Compile وFull Suite وSmoke وSecret Guard وبناء Wheel واختباره بعقد `--project-root`.
-- أضيفت إلى CI مرحلة KU-BO-012 المركزة، وأضيف إلى Installed Wheel التحقق من `validate-research-workflow` ومن ظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. هذا تعديل Workflow فقط، ولا توجد نتيجة CI خاصة بـKU-BO-012 عند هذه النقطة.
+- أضيفت إلى CI مرحلة KU-BO-012 المركزة، وأضيف إلى Installed Wheel التحقق من `validate-research-workflow` ومن ظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. نجح Exact-head Run `31733924569` لرأس التنفيذ `58a78042d5d509e599d2e273d793856b1dee14dd` على Python 3.11 إلى 3.14.
 
 ## حالة قدرات المصادر
 
@@ -74,7 +75,7 @@ accuracy_claim_allowed: false
 - Codex control check: `PASS` على 15 ملف تحكم و10 ملفات مطلوبة، مع 0 Errors و0 Warnings.
 - Wheel النهائية: `PASS`؛ الحجم `444351` بايت، وSHA-256 هو `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`.
 - Isolated install/imports/CLI help/`validate-research-workflow`: `PASS`؛ و`installed_data_foundation_check`: `PASS` مع 8 Semantic admissions و8 Lineages.
-- GitHub Actions الخاصة بـKU-BO-012: `NOT_RUN`; لا يوجد PR أوCI SHA مسجل.
+- GitHub Actions الخاصة بـKU-BO-012: `PASS` لرأس التنفيذ المنشور في Draft PR #14؛ Run `31733924569`، SHA `58a78042d5d509e599d2e273d793856b1dee14dd`، وكل Jobs Python 3.11/3.12/3.13/3.14 نجحت. تحديث سجل التحكم اللاحق يحتاج CI جديدًا قبل مراجعة الدمج.
 
 ## غير مكتمل عمدًا ولا يجوز الادعاء بعكسه
 

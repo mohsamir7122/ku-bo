@@ -34,9 +34,10 @@ main
 PR #1 وPRs #4 إلى #13 أسلاف لـ`main` ولا تحتاج دمجًا آخر. PR #2 وPR #3
 قديمتان، متأخرتان 127 Commit، وغير قابلتين للدمج المباشر ومتجاوزتان بالعقود
 الحالية؛ يمنع دمجهما أوCherry-pick شامل منهما. فرع المهمة الحالي هو
-`agent/kuwait-120d-next-session`، ولم يُنشر له Draft PR أوExact-head CI أوMerge
-بعد. التفويض `KU-BO-MERGE-004` شرطي، وتبقى الحالة `MERGE_ALLOWED: NO` أثناء
-التنفيذ.
+`agent/kuwait-120d-next-session`، ونُشر في Draft PR #14 عند رأس التنفيذ
+`58a78042d5d509e599d2e273d793856b1dee14dd`، ونجح Exact-head CI Run
+`31733924569` على Python 3.11 إلى 3.14. لم يحدث Merge. التفويض
+`KU-BO-MERGE-004` شرطي، وتبقى الحالة `MERGE_ALLOWED: NO` أثناء التنفيذ.
 
 ## امتداد KU-BO-012 فوق Data Foundation
 
@@ -103,8 +104,9 @@ Orchestrator/Context/Integration/Replay/CLI، ونجح Full Suite النهائي
 `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`، ونجح
 التثبيت المعزول وImports وCLI help و`validate-research-workflow`، ونجح
 `installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. أضيفت
-Gates المركزة إلى CI، لكن لا يوجد PR أوCI Run/SHA أوMerge خاص
-بـKU-BO-012 بعد.
+Gates المركزة إلى CI، ونُشرت في Draft PR #14؛ نجح Run `31733924569` للرأس
+`58a78042d5d509e599d2e273d793856b1dee14dd`. لم يحدث Merge، وتغيير سجل التحكم
+اللاحق يحتاج Exact-head CI جديدًا قبل مراجعة حد الدمج.
 
 ## طبقة Price History
 

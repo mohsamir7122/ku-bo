@@ -296,11 +296,11 @@ Ledger Seal صالحًا.
 
 ## التحقق
 
-أضيف إلى CI Gate مركز لـKU-BO-012 يشغّل Workflow وSource Orchestrator وContext/Factor وجسر التكامل وReplay وCLI، كما أضيفت فحوص Installed Wheel لأمر `validate-research-workflow` وظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. الإضافة إلى ملف CI لا تعني أن Run خارجيًا نُفّذ بعد.
+أضيف إلى CI Gate مركز لـKU-BO-012 يشغّل Workflow وSource Orchestrator وContext/Factor وجسر التكامل وReplay وCLI، كما أضيفت فحوص Installed Wheel لأمر `validate-research-workflow` وظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. نُشر التنفيذ في Draft PR #14 عند `58a78042d5d509e599d2e273d793856b1dee14dd`، ونجح Exact-head GitHub Actions Run `31733924569` على Python 3.11 إلى 3.14.
 
 نجحت محليًا `183/183` من اختبارات Workflow/Source Orchestrator/Ingestion/Context/Integration/Replay/CLI/Schemas المركزة بعد تدقيق التكامل النهائي، ثم نجحت Full Suite النهائية على الشجرة الحالية `2,067/2,067` في `164.347s`. نجحت كذلك `compileall`، وفحوص JSON، و`git diff --check`، وSmoke، وSecret Guard، وتوليد وتدقيق Corpus من `1,280` حالة. ونجح Codex control check على 15 ملف تحكم و10 ملفات مطلوبة مع 0 Errors و0 Warnings.
 
-نجح بناء Wheel النهائية بحجم `444351` بايت وبصمة SHA-256 الآتية: `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. كما نجح التثبيت المعزول، وImports، وCLI help، و`validate-research-workflow`، و`installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. هذه نتائج محلية فقط؛ لا توجد نتيجة GitHub Actions أوPR أوMerge خاصة بـKU-BO-012.
+نجح بناء Wheel النهائية بحجم `444351` بايت وبصمة SHA-256 الآتية: `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. كما نجح التثبيت المعزول، وImports، وCLI help، و`validate-research-workflow`، و`installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. PR #14 ما زالت Draft ولم تُدمج؛ وتغيير سجل التحكم اللاحق لتنفيذ `58a78042...` يحتاج Exact-head CI جديدًا قبل أي Merge-boundary review.
 
 ```bash
 PYTHONPATH=src python3 -m compileall -q src tests scripts

@@ -155,16 +155,16 @@ Codex control:                                           PASS (15/10; 0 errors/0
 final wheel:                                             PASS (444351 bytes)
 isolated install/imports/CLI/workflow validation:        PASS
 installed_data_foundation_check:                         PASS (8 admissions; 8 lineages)
-KU-BO-012 GitHub Actions:                                NOT_RUN
+KU-BO-012 implementation-head GitHub Actions:            PASS (Run 31733924569; Python 3.11-3.14)
 ```
 
-بصمة Wheel النهائية SHA-256 هي `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. أضيفت مرحلة KU-BO-012 المركزة إلى CI، وأضيفت Installed-Wheel checks لأوامر Workflow/Search/Integration/Replay، ومنها ظهور `build-kuwait-research-bundle`. نجاحها محليًا ليس دليل CI منشورًا، ولا يوجد PR أوCI SHA أوMerge لـKU-BO-012 عند هذه النقطة.
+بصمة Wheel النهائية SHA-256 هي `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. أضيفت مرحلة KU-BO-012 المركزة إلى CI، وأضيفت Installed-Wheel checks لأوامر Workflow/Search/Integration/Replay، ومنها ظهور `build-kuwait-research-bundle`. نُشر التنفيذ في Draft PR #14 عند `58a78042d5d509e599d2e273d793856b1dee14dd`، ونجح Run `31733924569`. لم يحدث Merge، وتحديث سجل التحكم هذا يحتاج Exact-head CI جديدًا قبل حد الدمج.
 
 ## حالة الفروع والدمج
 
 - PR #1 وPRs #4–#13 أسلاف لـ`main@92b2bdd`، ولذلك لا تحتاج دمجًا جديدًا.
 - PR #2 وPR #3 قديمان، غير قابلين للدمج مباشرة، ومتجاوزان بالعقود الحالية؛ يُمنع دمجهما أوCherry-pick شامل منهما.
-- KU-BO-012 ما زالت `IN_PROGRESS` على Draft branch. `MERGE_ALLOWED` يبقى `NO` حتى نجاح الحزمة الكاملة وExact-head CI وإعادة فحص قرار الدمج الشرطي `KU-BO-MERGE-004`.
+- KU-BO-012 ما زالت `IN_PROGRESS` في Draft PR #14. `MERGE_ALLOWED` يبقى `NO` حتى نجاح Exact-head CI لرأس سجل التحكم اللاحق وإعادة فحص قرار الدمج الشرطي `KU-BO-MERGE-004`.
 - قرار سياسة Outcome عبر التعليق/التوقف `KU-BO-008-D01` ما زال `OPEN`.
 
 ## حدود الادعاء

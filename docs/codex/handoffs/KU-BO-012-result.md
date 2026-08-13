@@ -6,10 +6,10 @@ REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 92b2bdd2460a7508922297a12d85f13264d43acb
 TASK_BRANCH: agent/kuwait-120d-next-session
-FINAL_SHA: PENDING_UNCOMMITTED
-DRAFT_PR: NOT_PUBLISHED
+FINAL_SHA: 58a78042d5d509e599d2e273d793856b1dee14dd (published implementation evidence; later control-record head pending)
+DRAFT_PR: #14 / https://github.com/mohsamir7122/ku-bo/pull/14
 PR_BASE: main
-CI_RUN: NOT_RUN_FOR_KU-BO-012
+CI_RUN: 31733924569 / PASS / implementation SHA / Python 3.11-3.14
 STARTED_AT: 2026-08-13
 COMPLETED_AT: IN_PROGRESS
 ```
@@ -78,7 +78,8 @@ Implement a bounded, multi-source Kuwait research workflow that builds a rolling
 - Added `docs/KUWAIT_120D_NEXT_SESSION_AR.md` with the operational and claim-boundary contract.
 - Added focused KU-BO-012 CI tests and installed-wheel checks for workflow
   validation and the Source Search/Integration/Replay command surfaces.
-- No PR, CI, merge, live capability, or real backtest completion is claimed.
+- Draft PR #14 and its successful implementation-head CI are recorded. No
+  merge, live capability, or real backtest completion is claimed.
 
 ## Validation performed
 
@@ -179,7 +180,8 @@ probability: FORBIDDEN
 recommendation: FORBIDDEN
 full-market coverage: FORBIDDEN
 LIVE_OPERATIONAL source status: FORBIDDEN; count is 0
-PR/CI/merge completion: FORBIDDEN
+Draft PR and implementation-head CI: PROVEN; PR #14 / Run 31733924569
+merge completion: FORBIDDEN; no merge occurred
 ```
 
 ## Privacy and repository safety
@@ -208,7 +210,8 @@ DELETE_CANDIDATE: none
 - Missing official point-in-time universe, EOD, benchmark, status, Corporate Actions, and sealed decisions prevents any latest-40 percentage.
 - A 40-session replay, if later admissible, remains a descriptive pilot rather than prospective validation.
 - The full local suite, local acceptance gates, final wheel, and installed-wheel
-  exercises pass, but no Draft PR exact-head CI or merge-boundary review has
+  exercises pass. Draft PR #14 implementation-head CI passed, but this later
+  control-record head still needs exact-head CI and no merge-boundary review has
   occurred.
 
 ## Smallest logical next task
@@ -217,7 +220,7 @@ DELETE_CANDIDATE: none
 TASK_ID: KU-BO-012-CONTINUE
 PROPOSED_BRANCH: agent/kuwait-120d-next-session
 DEPENDENCY: preserve KU-BO-008-D01 as OPEN and do not alter the locally accepted integration contracts
-GOAL: retain the sanitized STOP_BACKTEST artifact, publish a Draft PR, and request exact-head CI without merging
+GOAL: retain the sanitized STOP_BACKTEST artifact, validate the later control-record head, and perform a fresh merge-boundary review without bypassing MERGE_ALLOWED
 ENTRY_GATE: all current-tree local acceptance gates and installed-wheel exercises pass
-EXIT_GATE: exact-head Draft PR CI passes and a fresh merge-boundary review is recorded; merge remains separately gated
+EXIT_GATE: exact-head CI for the control-record head passes and a fresh merge-boundary review is recorded; merge remains separately gated
 ```

@@ -13,7 +13,8 @@ mohsamir7122/ku-bo
 ```text
 main@92b2bdd2460a7508922297a12d85f13264d43acb
   └── agent/kuwait-120d-next-session
-        └── KU-BO-012 / IN_PROGRESS / DRAFT
+        └── Draft PR #14 / implementation@58a78042d5d509e599d2e273d793856b1dee14dd
+              └── KU-BO-012 / IN_PROGRESS / DRAFT / CI 31733924569 PASS
 ```
 
 PR #1 and PRs #4 through #13 are strict ancestors of the verified `main` head;
@@ -24,8 +25,9 @@ not be merged or wholesale cherry-picked.
 `EXPECTED_PR_MODE` remains `DRAFT` and `MERGE_ALLOWED` remains `NO`. The
 conditional authority in `KU-BO-MERGE-004` applies only after the complete
 local gates, publication of a Draft PR, exact-head GitHub Actions, and a fresh
-merge-boundary review. None of those publication or merge outcomes is claimed
-by this status record.
+merge-boundary review. Draft PR #14 is published and its implementation head
+passed CI; this later control-record head still requires its own exact-head CI
+before the merge-boundary review. No merge is claimed by this status record.
 
 ## Active KU-BO-012 implementation
 
@@ -72,9 +74,9 @@ The branch adds the product `KUWAIT_120D_NEXT_SESSION_RESEARCH` with:
   adjusted-gross label is before costs; costs affect actionable and net-excess
   secondary metrics.
 
-The branch is still under validation. Presence of these contracts and modules
-does not establish a live connector, real market coverage, a completed full
-suite, CI, PR publication, or merge.
+The branch remains `IN_PROGRESS` pending the merge boundary. Presence of these
+contracts and modules, the completed local suite, and the successful Draft-PR
+CI do not establish a live connector, real market coverage, or merge.
 
 ## Source catalog and capability status
 
@@ -134,9 +136,10 @@ cannot be substituted for real market evidence.
 - Isolated install, imports, CLI help, and `validate-research-workflow`: `PASS`;
   `installed_data_foundation_check`: `PASS` with 8 semantic admissions and 8
   lineages.
-- KU-BO-012 focused CI gates and installed-wheel checks for workflow, source
-  search, integration, and replay commands were added to the workflow, but no
-  KU-BO-012 PR, CI run/SHA, or merge exists yet.
+- KU-BO-012 is published as Draft PR #14. Exact-head Run `31733924569` passed
+  on implementation SHA `58a78042d5d509e599d2e273d793856b1dee14dd`, including
+  Python 3.11, 3.12, 3.13, and 3.14. This later control-record update requires
+  fresh exact-head CI; no merge exists.
 
 ## External and legacy evidence status
 
@@ -152,8 +155,8 @@ cannot be substituted for real market evidence.
 
 ## Still not proven
 
-- Draft PR publication, exact-head GitHub Actions, merge-boundary review, or
-  post-merge `main` CI;
+- exact-head GitHub Actions for this later control-record head, merge-boundary
+  review, merge, or post-merge `main` CI;
 - complete effective-dated historical market universe and full denominator;
 - real rights-compatible Benchmark and Official Complete EOD packets;
 - complete historical Corporate Actions and suspension/resumption evidence;
