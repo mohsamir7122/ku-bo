@@ -440,6 +440,9 @@ class SourceNetworkCatalog:
         return {
             "status": "PASS",
             "sources": len(self.sources),
+            "independence_groups": len(
+                {source.independence_group for source in self.sources.values()}
+            ),
             "profiles": len(self.policies),
             "products": len(self.product_to_policy),
             "roles": sorted(self.roles),

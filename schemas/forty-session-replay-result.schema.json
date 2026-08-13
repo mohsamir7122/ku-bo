@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/forty-session-replay-result.schema.json",
+  "title": "KU-BO strict forty-session replay result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "input_sha256",
+    "packet_id",
+    "errors",
+    "warnings",
+    "metrics",
+    "diagnostics",
+    "agreement_rate",
+    "agreement_rate_status",
+    "authority_receipt_sha256",
+    "authority_verified",
+    "accuracy_claim_allowed",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": ["PASS_BACKTEST", "STOP_BACKTEST"]
+    },
+    "input_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "packet_id": {
+      "oneOf": [
+        {"type": "string", "minLength": 1, "maxLength": 128},
+        {"type": "null"}
+      ]
+    },
+    "errors": {"$ref": "#/$defs/messages"},
+    "warnings": {"$ref": "#/$defs/messages"},
+    "metrics": {
+      "oneOf": [
+        {"$ref": "#/$defs/metrics"},
+        {"type": "null"}
+      ]
+    },
+    "diagnostics": {"$ref": "#/$defs/diagnostics"},
+    "agreement_rate": {
+      "oneOf": [
+        {"type": "number", "minimum": 0, "maximum": 1},
+        {"type": "null"}
+      ]
+    },
+    "agreement_rate_status": {
+      "enum": ["MEASURED", "NOT_APPLICABLE"]
+    },
+    "authority_receipt_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "authority_verified": {"type": "boolean"},
+    "accuracy_claim_allowed": {"type": "boolean"},
+    "claim_boundaries": {"$ref": "#/$defs/claim_boundaries"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "STOP_BACKTEST"}
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "errors": {"minItems": 1},
+          "metrics": {"type": "null"},
+          "agreement_rate": {"type": "null"},
+          "agreement_rate_status": {"const": "NOT_APPLICABLE"},
+          "authority_receipt_sha256": {"type": "null"},
+          "authority_verified": {"const": false},
+          "accuracy_claim_allowed": {"const": false},
+          "claim_boundaries": {
+            "allOf": [
+              {"$ref": "#/$defs/claim_boundaries"},
+              {
+                "properties": {
+                  "independent_final_authority_receipt_verified": {"const": false},
+                  "metrics_withheld_on_stop": {"const": true}
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "PASS_BACKTEST"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "input_sha256": {"$ref": "#/$defs/sha256"},
+          "packet_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "errors": {"maxItems": 0},
+          "metrics": {"$ref": "#/$defs/metrics"},
+          "diagnostics": {
+            "allOf": [
+              {"$ref": "#/$defs/diagnostics"},
+              {
+                "properties": {
+                  "decision_sessions": {"const": 40},
+                  "effective_decisions": {"const": 40},
+                  "process_valid_scoreable_sessions": {"const": 40},
+                  "denominator_rows": {"minimum": 80},
+                  "selected_rows": {"minimum": 40}
+                }
+              }
+            ]
+          },
+          "agreement_rate": {"type": "number", "minimum": 0, "maximum": 1},
+          "agreement_rate_status": {"const": "MEASURED"},
+          "authority_receipt_sha256": {"$ref": "#/$defs/sha256"},
+          "authority_verified": {"const": true},
+          "accuracy_claim_allowed": {"const": true},
+          "claim_boundaries": {
+            "allOf": [
+              {"$ref": "#/$defs/claim_boundaries"},
+              {
+                "properties": {
+                  "independent_final_authority_receipt_verified": {"const": true},
+                  "metrics_withheld_on_stop": {"const": false}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "messages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_sessions",
+        "effective_decisions",
+        "process_valid_scoreable_sessions",
+        "denominator_rows",
+        "selected_rows"
+      ],
+      "properties": {
+        "decision_sessions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "effective_decisions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "process_valid_scoreable_sessions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "denominator_rows": {"type": "integer", "minimum": 0, "maximum": 40000},
+        "selected_rows": {"type": "integer", "minimum": 0, "maximum": 800}
+      }
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "wilson_interval": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/rate"},
+        {"$ref": "#/$defs/rate"}
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "nullable_rank_ic": {
+      "oneOf": [
+        {"type": "number", "minimum": -1, "maximum": 1},
+        {"type": "null"}
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_sessions",
+        "effective_decisions",
+        "denominator_rows",
+        "selected_rows",
+        "coverage",
+        "primary_label",
+        "primary_absolute_up_hits",
+        "primary_selected_denominator",
+        "primary_selected_directional_agreement",
+        "primary_selected_wilson_95",
+        "primary_top1_hits",
+        "primary_top1_denominator",
+        "primary_top1_directional_agreement",
+        "primary_top1_wilson_95",
+        "actionable_net_up_hits",
+        "actionable_net_up_denominator",
+        "actionable_net_up_rate",
+        "secondary_labels",
+        "market_net_excess_hits",
+        "market_net_excess_denominator",
+        "market_net_excess_rate",
+        "sector_net_excess_hits",
+        "sector_net_excess_denominator",
+        "sector_net_excess_rate",
+        "mean_selected_adjusted_gross_return",
+        "mean_selected_net_return",
+        "mean_selected_market_net_excess_return",
+        "mean_selected_sector_net_excess_return",
+        "mean_recall_at_k",
+        "mean_primary_rank_ic",
+        "primary_rank_ic_decisions",
+        "mean_market_net_excess_rank_ic",
+        "market_rank_ic_decisions",
+        "mean_sector_net_excess_rank_ic",
+        "sector_rank_ic_decisions",
+        "probability"
+      ],
+      "properties": {
+        "decision_sessions": {"const": 40},
+        "effective_decisions": {"const": 40},
+        "denominator_rows": {"type": "integer", "minimum": 80, "maximum": 40000},
+        "selected_rows": {"type": "integer", "minimum": 40, "maximum": 800},
+        "coverage": {"const": 1.0},
+        "primary_label": {"const": "GROSS_ADJUSTED_RETURN_GT_0"},
+        "primary_absolute_up_hits": {"type": "integer", "minimum": 0, "maximum": 800},
+        "primary_selected_denominator": {"type": "integer", "minimum": 40, "maximum": 800},
+        "primary_selected_directional_agreement": {"$ref": "#/$defs/rate"},
+        "primary_selected_wilson_95": {"$ref": "#/$defs/wilson_interval"},
+        "primary_top1_hits": {"type": "integer", "minimum": 0, "maximum": 40},
+        "primary_top1_denominator": {"const": 40},
+        "primary_top1_directional_agreement": {"$ref": "#/$defs/rate"},
+        "primary_top1_wilson_95": {"$ref": "#/$defs/wilson_interval"},
+        "actionable_net_up_hits": {"type": "integer", "minimum": 0, "maximum": 800},
+        "actionable_net_up_denominator": {"type": "integer", "minimum": 40, "maximum": 800},
+        "actionable_net_up_rate": {"$ref": "#/$defs/rate"},
+        "secondary_labels": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "MARKET_NET_EXCESS_GT_0"},
+            {"const": "SECTOR_NET_EXCESS_GT_0"}
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "market_net_excess_hits": {"type": "integer", "minimum": 0, "maximum": 800},
+        "market_net_excess_denominator": {"type": "integer", "minimum": 40, "maximum": 800},
+        "market_net_excess_rate": {"$ref": "#/$defs/rate"},
+        "sector_net_excess_hits": {"type": "integer", "minimum": 0, "maximum": 800},
+        "sector_net_excess_denominator": {"type": "integer", "minimum": 40, "maximum": 800},
+        "sector_net_excess_rate": {"$ref": "#/$defs/rate"},
+        "mean_selected_adjusted_gross_return": {"type": "number"},
+        "mean_selected_net_return": {"type": "number"},
+        "mean_selected_market_net_excess_return": {"type": "number"},
+        "mean_selected_sector_net_excess_return": {"type": "number"},
+        "mean_recall_at_k": {"$ref": "#/$defs/rate"},
+        "mean_primary_rank_ic": {"$ref": "#/$defs/nullable_rank_ic"},
+        "primary_rank_ic_decisions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "mean_market_net_excess_rank_ic": {"$ref": "#/$defs/nullable_rank_ic"},
+        "market_rank_ic_decisions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "mean_sector_net_excess_rank_ic": {"$ref": "#/$defs/nullable_rank_ic"},
+        "sector_rank_ic_decisions": {"type": "integer", "minimum": 0, "maximum": 40},
+        "probability": {"type": "null"}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "historical_replay_is_prospective_accuracy",
+        "absolute_up_is_primary_label",
+        "market_and_sector_net_excess_are_secondary_labels",
+        "modeled_costs_affect_actionable_and_excess_metrics",
+        "independent_final_authority_receipt_verified",
+        "probability_generated",
+        "metrics_withheld_on_stop"
+      ],
+      "properties": {
+        "historical_replay_is_prospective_accuracy": {"const": false},
+        "absolute_up_is_primary_label": {"const": true},
+        "market_and_sector_net_excess_are_secondary_labels": {"const": true},
+        "modeled_costs_affect_actionable_and_excess_metrics": {"const": true},
+        "independent_final_authority_receipt_verified": {"type": "boolean"},
+        "probability_generated": {"const": false},
+        "metrics_withheld_on_stop": {"type": "boolean"}
+      }
+    }
+  }
+}

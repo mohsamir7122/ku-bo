@@ -2,10 +2,20 @@
 
 هذا الملف يصف ما نُفذ واختُبر داخل المستودع. لا يعلن اكتمال منصة Production، أوتوافر المصادر الخارجية، أوصلاحية النظام للتوصية أوالتنفيذ المالي.
 
-## منفذ ومتحقق منه في الأساس البرمجي
+## منفذ في الأساس البرمجي
 
-- كتالوج يحوي 40 تعريف مصدر موزعة على 35 مجموعة استقلال، بما فيها Facebook وInstagram وTikTok وX كتعريفات سياسة معطلة افتراضيًا وليست موصلات API عاملة.
-- أربع سياسات تغطي 13 منتجًا بحثيًا وزمنيًا.
+العناصر الموروثة متحققة بحسب CI التاريخي الخاص بها. عناصر `KU-BO-012`
+مضافة على فرع المهمة واجتازت بوابات القبول المحلية، لكن Exact-head CI
+الخارجي والـPR والدمج لم تحدث؛ لا تُقرأ القائمة كإعلان Production أوMerge.
+
+- كتالوج يحوي 68 تعريف مصدر موزعة على 62 مجموعة استقلال و59 نطاقًا مرشحًا بعد استبعاد البحث والتخزين؛ 53 منها معلنة Enabled-public في الكتالوج، و52 نطاق Start URL تنفيذيًا مميزًا قبل الحجز. هذه تعريفات سياسة وليست موصلات حية.
+- خمس سياسات تغطي 14 منتجًا بحثيًا وزمنيًا، منها `KUWAIT_120D_NEXT_SESSION_RESEARCH`.
+- عقد Workflow يثبت نوافذ 120 يومًا للسياق و30 يومًا للأحداث النشطة و7 أيام للمجتمع و72 ساعة للمحفزات الحديثة، مع Corpus تراكمي وWatermark.
+- بحث متعدد الموجات بخطة افتراضية عادلة من 50 نطاقًا ومساهمات جديدة `17/0/29/4`. تحجز الموجة الأخيرة للأرشيف والمجتمع، فتشمل `t.me` و`indexsignal.com`، بينما يبقى Search Router مسجلًا وغير منفذ. توجد ثلاث محاولات للأخطاء العابرة لكل استراتيجية وأربع استراتيجيات مختلفة للرد الصحيح الفارغ.
+- Retry fail-stop: لا إعادة للمنع الصريح، و429 يتوقف بعد ثلاث محاولات في الاستراتيجية نفسها؛ يُحترم `Retry-After` ضمن Wall budget فقط، ويتوقف المسار إذا تجاوزها أوفشل Sleeper. يحفظ Ledger الـDisposition وRetry-After وLimitations، ولا يدعي External Seal أوPublication time أوقياس كل Low-level HTTP request.
+- مدقق تشغيل محفوظ يعيد بصمة تقرير Source Search وسجل المحاولات والـRaw artifacts. وجسر `build-kuwait-research-bundle` يربط هذه البايتات بمدخلات `parsed-research-inputs` الصارمة ثم يصدر Context/Exposure/Factor artifacts Atomically، من دون ادعاء Parser عام أوتوليد قيم من Raw bytes.
+- عقود Context Event وSecurity Exposure وFactor Snapshot ومقام كامل؛ كل سهم متوقع يأخذ Disposition صريحة، والعامل المفقود لا يتحول إلى صفر. `factor_snapshot_sha256` تربط الصفوف والعوامل والأدلة والتصرفات والدرجات، وتُفرض نوافذ Freshness من سجل العوامل، ومنها 24 ساعة لحالة التداول، ولا يدخل حدث `SUPERSEDED` في Factor-eligible exposure.
+- عقد Replay Execution-grade صارم لـ40 قرارًا و41 جلسة رسمية. يعيد اشتقاق Rank من Score ويفرض Top-K وFill موثقًا لكل Selected؛ يبقي Non-trading rows في المقام لكنه يعيد `STOP_BACKTEST` ما دام `KU-BO-008-D01` مفتوحًا. الـPrimary adjusted-gross label قبل تكاليف التنفيذ، بينما تطبق التكاليف على Actionable وNet-excess metrics الثانوية. لا يعلن Runtime حالة `STOP_INFERENCE` غير قابلة للوصول.
 - Capture layer آمنة للملفات وPublic HTTPS مع Domain Allowlist وRobots وTimeout وMax bytes ومنع Auth/CAPTCHA/Paywall bypass. ترفض Capture Plan قبل Connector أوI/O إذا تجاوزت 32 مهمة، أو128 MiB مجموع بايتات، أو300 ثانية مجموع مهلات.
 - حزمة تشغيل Per-run مع Hash وتوقيت ونطاق وميزانية ومصالحة `raw_bytes`.
 - Quorum لكل ورقة مالية، لا على مستوى السوق فقط.
@@ -25,15 +35,46 @@
 - مصفوفة قدرات آلية تفصل تعريف المصدر وCapture وParser وFixture evidence عن `LIVE_OPERATIONAL`؛ لا تسجل أي مصدر حيًا تشغيليًا في هذه النسخة.
 - JSON Schemas وMethodology Registry ووثائق تشغيل وSecurity policy.
 - GitHub Actions على Python 3.11 و3.12 و3.13 و3.14 مع Compile وFull Suite وSmoke وSecret Guard وبناء Wheel واختباره بعقد `--project-root`.
+- أضيفت إلى CI مرحلة KU-BO-012 المركزة، وأضيف إلى Installed Wheel التحقق من `validate-research-workflow` ومن ظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. هذا تعديل Workflow فقط، ولا توجد نتيجة CI خاصة بـKU-BO-012 عند هذه النقطة.
+
+## حالة قدرات المصادر
+
+```text
+DEFINED_ONLY:          66
+END_TO_END_TESTED:      2  (generated fixtures only)
+LIVE_OPERATIONAL:       0
+```
+
+إضافة المصدر أوالنطاق إلى الكتالوج لا تثبت Capture أوParser أوحق وصول. Telegram وIndexSignal يظلان Community sentiment/routing فقط، ولا يثبتان Official fact أوPrice أوCorporate Action أوCatalyst.
+
+## نتيجة اختبار الأربعين الأخيرة
+
+تم تفعيل عقد التقييم Fail-closed، لكن لا توجد داخل المستودع حزمة سوق حقيقية Point-in-Time تشمل 40 قرارًا و41 جلسة رسمية مع الكون الكامل والأسعار والإجراءات والحالة والنتائج. النتيجة الصحيحة حاليًا:
+
+```text
+run_status: STOP_BACKTEST
+process_valid_scoreable_sessions: 0
+expected_decision_sessions: 40
+metrics: null
+agreement_rate: null
+agreement_rate_status: NOT_APPLICABLE
+authority_receipt_sha256: null
+authority_verified: false
+accuracy_claim_allowed: false
+```
+
+`agreement_rate=null/NOT_APPLICABLE` تُعرض بشريًا `N/A` ولا تعني `0%`: لا يوجد مقام صالح لحساب النسبة. لا يجوز فتح النتائج أوحساب دقة من Fixtures مولدة.
 
 ## حالة التحقق
 
-- Full Unit/Adversarial Suite: راجع نتيجة GitHub Actions الخاصة بالـCommit؛ لا يثبت هذا المستند عددًا محليًا قابلًا للتقادم.
-- `scripts/smoke_check.py`: PASS.
-- `scripts/secret_guard.py`: PASS.
-- `compileall`: PASS.
-- بناء Wheel `0.1.0`: PASS. تشغيله خارج Checkout يتطلب `--project-root` يشير إلى مستودع يحتوي `config/`؛ وهو ليس Wheel مستقل الإعدادات.
-- JSON config/schemas: PASS.
+- اختبارات Workflow/Source Orchestrator/Ingestion/Context/Integration/Replay/CLI/Schemas المركزة: `183/183 PASS`.
+- Full Suite النهائية على الشجرة الحالية: `2,067/2,067 PASS` في `164.347s`.
+- `compileall` وJSON checks و`git diff --check` وSmoke وSecret Guard: `PASS`.
+- توليد Corpus من `1,280` حالة وتدقيقه: `PASS`.
+- Codex control check: `PASS` على 15 ملف تحكم و10 ملفات مطلوبة، مع 0 Errors و0 Warnings.
+- Wheel النهائية: `PASS`؛ الحجم `444351` بايت، وSHA-256 هو `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`.
+- Isolated install/imports/CLI help/`validate-research-workflow`: `PASS`؛ و`installed_data_foundation_check`: `PASS` مع 8 Semantic admissions و8 Lineages.
+- GitHub Actions الخاصة بـKU-BO-012: `NOT_RUN`; لا يوجد PR أوCI SHA مسجل.
 
 ## غير مكتمل عمدًا ولا يجوز الادعاء بعكسه
 
@@ -45,6 +86,7 @@
 - Entitlement receipt وسجل الثقة يتحققان محليًا ولا يستعلمان حيًا من Vendor licensing service؛ لا يوجد Entitlement تشغيلي أوFeed مرخص مهيأ داخل المستودع.
 - لا يحتوي المستودع على سجل ثقة تشغيلي أومفتاح Runtime. الآلية منفذة، لكن تشغيل مصدر محمي يبقى محجوبًا حتى يقدمهما المشغل خارج Packet مع التفويض القانوني اللازم.
 - Full historical backtest يظل محجوبًا حتى Point-in-Time Universe وCorporate Actions وExecution data وSealed prospective denominator.
+- `KU-BO-008-D01` ما زال `OPEN`؛ سياسة تقدم جلسة النتيجة عبر التعليق/التوقف غير مجمدة Product-specific.
 - لا توجد خدمة Production منشورة، أوScheduler تشغيلي، أومراقبة توافر مستمرة، أوضمان لاستقرار أي مصدر خارجي.
 - لا توجد Captures حية مسجلة ومصرح بها تثبت قبول المحللين على الصفحات الخارجية الحالية. المحللان المنفذان مختبران على Fixtures تعاقدية مولدة فقط، وبقية المصادر بلا Parsers عاملة. التشغيل الحقيقي يحتاج تفويض الوصول وFixtures مصرح بها وQA ومراقبة Drift.
 - CI الحالي Linux فقط. حزمة `tzdata` أصبحت Runtime dependency مثبتة تلقائيًا كي يعمل `Asia/Kuwait` على Windows أوContainer مصغر بلا System IANA tzdb؛ ولا يزال دعم منصة إضافية خارج اختبارات الـwheel المعزولة غير مُدّعى بلا CI خاص بها.

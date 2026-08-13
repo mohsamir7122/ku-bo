@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-search-run.schema.json",
+  "title": "KU-BO 120-Day Multi-Wave Source Search Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "workflow_id", "timezone", "decision_at", "window_from", "window_to",
+    "status", "limitations", "waves", "sources", "attempt_ledger", "domain_coverage", "budget", "watermarks",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "workflow_id": {"const": "KUWAIT_120D_NEXT_SESSION_RESEARCH"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "decision_at": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+    "window_from": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+    "window_to": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+    "status": {"enum": ["COMPLETE", "DEGRADED", "FAILED"]},
+    "limitations": {
+      "type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}
+    },
+    "waves": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/wave"}},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "attempt_ledger": {"$ref": "#/$defs/attemptLedger"},
+    "domain_coverage": {"$ref": "#/$defs/domainCoverage"},
+    "budget": {"$ref": "#/$defs/budget"},
+    "watermarks": {"$ref": "#/$defs/watermarks"},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_is_qualified_finding", "raw_capture_is_qualified_finding",
+        "zero_result_is_negative_market_evidence", "attempt_count_proves_source_completeness",
+        "attempt_ledger_hash_chain_is_external_seal",
+        "registrable_domain_count_is_independent_evidence_count", "watermark_is_market_truth",
+        "capture_timestamp_is_point_in_time_evidence", "low_level_http_requests_are_metered",
+        "explicit_subset_satisfies_default_domain_target",
+        "live_operational_claim", "probability_generated", "recommendation_generated"
+      ],
+      "properties": {
+        "attempt_is_qualified_finding": {"const": false},
+        "raw_capture_is_qualified_finding": {"const": false},
+        "zero_result_is_negative_market_evidence": {"const": false},
+        "attempt_count_proves_source_completeness": {"const": false},
+        "attempt_ledger_hash_chain_is_external_seal": {"const": false},
+        "registrable_domain_count_is_independent_evidence_count": {"const": false},
+        "watermark_is_market_truth": {"const": false},
+        "capture_timestamp_is_point_in_time_evidence": {"const": false},
+        "low_level_http_requests_are_metered": {"const": false},
+        "explicit_subset_satisfies_default_domain_target": {"const": false},
+        "live_operational_claim": {"const": false},
+        "probability_generated": {"const": false},
+        "recommendation_generated": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "wave": {
+      "type": "object", "additionalProperties": false,
+      "required": ["wave_id", "ordinal", "status", "source_ids", "attempt_count", "degraded_source_ids", "limitations"],
+      "properties": {
+        "wave_id": {"type": "string", "minLength": 1},
+        "ordinal": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["COMPLETE", "DEGRADED", "EMPTY", "BUDGET_STOPPED"]},
+        "source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "attempt_count": {"type": "integer", "minimum": 0},
+        "degraded_source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "source_id", "wave_id", "status", "route_count", "completed_route_count",
+        "attempt_count", "strategies_attempted", "window_from", "window_to",
+        "watermark_before", "watermark_after", "limitations"
+      ],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "wave_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["QUALIFIED", "ZERO_RESULT", "CAPTURED_PENDING_PARSER", "BLOCKED", "AUTH_REQUIRED", "ERROR"]},
+        "route_count": {"type": "integer", "minimum": 1},
+        "completed_route_count": {"type": "integer", "minimum": 0},
+        "attempt_count": {"type": "integer", "minimum": 0},
+        "strategies_attempted": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "window_from": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+        "window_to": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+        "watermark_before": {"type": ["string", "null"], "format": "date-time", "pattern": "\\+03:00$"},
+        "watermark_after": {"type": ["string", "null"], "format": "date-time", "pattern": "\\+03:00$"},
+        "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "attemptLedger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "row_count", "network_attempt_count", "first_attempt_hash", "last_attempt_hash"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "row_count": {"type": "integer", "minimum": 0},
+        "network_attempt_count": {"type": "integer", "minimum": 0, "maximum": 600},
+        "first_attempt_hash": {"$ref": "#/$defs/nullableSha256"},
+        "last_attempt_hash": {"$ref": "#/$defs/nullableSha256"}
+      }
+    },
+    "domainCoverage": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "algorithm", "catalog_registrable_domains", "catalog_registrable_domain_count",
+        "attempted_registrable_domains", "attempted_registrable_domain_count",
+        "selection_mode", "global_target_applicable", "global_target_met"
+      ],
+      "properties": {
+        "algorithm": {"const": "CONSERVATIVE_SUFFIX_TABLE_V1"},
+        "catalog_registrable_domains": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "catalog_registrable_domain_count": {"type": "integer", "minimum": 0},
+        "attempted_registrable_domains": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "attempted_registrable_domain_count": {"type": "integer", "minimum": 0},
+        "selection_mode": {"enum": ["DEFAULT_FAIR_NETWORK", "EXPLICIT_SOURCE_SUBSET"]},
+        "global_target_applicable": {"type": "boolean"},
+        "global_target_met": {"type": ["boolean", "null"]}
+      }
+    },
+    "budget": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "target_distinct_registrable_domains", "max_distinct_registrable_domains",
+        "max_requests", "max_wall_seconds", "usage_distinct_registrable_domains",
+        "usage_requests", "usage_wall_seconds", "stop_reason"
+      ],
+      "properties": {
+        "target_distinct_registrable_domains": {"const": 50},
+        "max_distinct_registrable_domains": {"const": 50},
+        "max_requests": {"const": 600},
+        "max_wall_seconds": {"const": 1800},
+        "usage_distinct_registrable_domains": {"type": "integer", "minimum": 0, "maximum": 50},
+        "usage_requests": {"type": "integer", "minimum": 0, "maximum": 600},
+        "usage_wall_seconds": {"type": "number", "minimum": 0},
+        "stop_reason": {"type": ["string", "null"]}
+      }
+    },
+    "watermarks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["context_days", "timezone", "initial", "final"],
+      "properties": {
+        "context_days": {"const": 120},
+        "timezone": {"const": "Asia/Kuwait"},
+        "initial": {"type": "object", "additionalProperties": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"}},
+        "final": {"type": "object", "additionalProperties": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"}}
+      }
+    }
+  }
+}

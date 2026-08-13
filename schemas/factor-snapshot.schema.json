@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/factor-snapshot.schema.json",
+  "title": "KU-BO full-denominator versioned factor snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "factor_snapshot_sha256",
+    "product_id",
+    "decision_id",
+    "decision_at",
+    "universe_as_of",
+    "registry_id",
+    "registry_version",
+    "registry_sha256",
+    "expected_security_codes",
+    "rows",
+    "denominator_reconciliation",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "snapshot_id": {"type": "string", "pattern": "^factor-snapshot-[0-9a-f]{24}$"},
+    "factor_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+    "product_id": {"const": "KUWAIT_120D_NEXT_SESSION_RESEARCH"},
+    "decision_id": {"type": "string", "minLength": 1},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "universe_as_of": {"type": "string", "format": "date-time"},
+    "registry_id": {"const": "kuwait-120d-next-session-factor-registry"},
+    "registry_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "registry_sha256": {"$ref": "#/$defs/sha256"},
+    "expected_security_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9]{1,12}$"}
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/securityRow"}
+    },
+    "denominator_reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "expected_count",
+        "row_count",
+        "missing_security_codes",
+        "extra_security_codes",
+        "duplicate_security_codes"
+      ],
+      "properties": {
+        "status": {"const": "EXACT"},
+        "expected_count": {"type": "integer", "minimum": 1},
+        "row_count": {"type": "integer", "minimum": 1},
+        "missing_security_codes": {"type": "array", "maxItems": 0},
+        "extra_security_codes": {"type": "array", "maxItems": 0},
+        "duplicate_security_codes": {"type": "array", "maxItems": 0}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score_is_probability",
+        "missing_encoded_as_zero",
+        "forecast_accuracy_claimed",
+        "full_market_coverage_claimed",
+        "recommendation_allowed"
+      ],
+      "properties": {
+        "score_is_probability": {"const": false},
+        "missing_encoded_as_zero": {"const": false},
+        "forecast_accuracy_claimed": {"const": false},
+        "full_market_coverage_claimed": {"const": false},
+        "recommendation_allowed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reasonCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$"}
+    },
+    "factor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factor_id", "status", "value", "available_at", "evidence_hashes", "reason_codes"],
+      "properties": {
+        "factor_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+        "status": {"enum": ["OBSERVED", "MISSING", "NOT_APPLICABLE", "REJECTED"]},
+        "value": {"type": ["number", "string", "null"]},
+        "available_at": {"type": ["string", "null"], "format": "date-time"},
+        "evidence_hashes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sha256"}
+        },
+        "reason_codes": {"$ref": "#/$defs/reasonCodes"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "MISSING"}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "value": {"type": "null"},
+              "available_at": {"type": "null"},
+              "evidence_hashes": {"maxItems": 0},
+              "reason_codes": {"minItems": 1}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "OBSERVED"}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "value": {"type": ["number", "string"]},
+              "available_at": {"type": "string", "format": "date-time"},
+              "evidence_hashes": {"minItems": 1}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"enum": ["NOT_APPLICABLE", "REJECTED"]}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "value": {"type": "null"},
+              "available_at": {"type": "string", "format": "date-time"},
+              "evidence_hashes": {"minItems": 1},
+              "reason_codes": {"minItems": 1}
+            }
+          }
+        }
+      ]
+    },
+    "securityRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "security_code",
+        "factors",
+        "observed_factor_count",
+        "missing_factor_count",
+        "not_applicable_factor_count",
+        "rejected_factor_count",
+        "required_factor_coverage",
+        "disposition",
+        "first_failed_stage",
+        "reason_codes",
+        "score",
+        "score_kind",
+        "probability"
+      ],
+      "properties": {
+        "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+        "factors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/factor"}
+        },
+        "observed_factor_count": {"type": "integer", "minimum": 0},
+        "missing_factor_count": {"type": "integer", "minimum": 0},
+        "not_applicable_factor_count": {"type": "integer", "minimum": 0},
+        "rejected_factor_count": {"type": "integer", "minimum": 0},
+        "required_factor_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "disposition": {"enum": ["SELECTED", "REJECTED", "ABSTAINED", "UNRESOLVED"]},
+        "first_failed_stage": {
+          "type": ["string", "null"],
+          "enum": [
+            "UNIVERSE_IDENTITY",
+            "SECURITY_STATUS",
+            "PRICE_DATA",
+            "EVENT_CONTEXT",
+            "EXPOSURE_MAPPING",
+            "FACTOR_INPUTS",
+            "FACTOR_VALIDATION",
+            "RANKING",
+            "DISPOSITION",
+            null
+          ]
+        },
+        "reason_codes": {"$ref": "#/$defs/reasonCodes"},
+        "score": {"type": ["number", "null"]},
+        "score_kind": {"type": ["string", "null"], "enum": ["UNVALIDATED_RESEARCH_SCORE", null]},
+        "probability": {"type": "null"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"disposition": {"const": "SELECTED"}}, "required": ["disposition"]},
+          "then": {
+            "properties": {
+              "first_failed_stage": {"type": "null"},
+              "reason_codes": {"maxItems": 0},
+              "score": {"type": "number"},
+              "score_kind": {"const": "UNVALIDATED_RESEARCH_SCORE"},
+              "probability": {"type": "null"}
+            }
+          },
+          "else": {
+            "properties": {
+              "first_failed_stage": {"type": "string"},
+              "reason_codes": {"minItems": 1}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"disposition": {"enum": ["ABSTAINED", "UNRESOLVED"]}},
+            "required": ["disposition"]
+          },
+          "then": {
+            "properties": {
+              "score": {"type": "null"},
+              "score_kind": {"type": "null"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

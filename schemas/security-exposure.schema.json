@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/security-exposure.schema.json",
+  "title": "KU-BO point-in-time context-event to security exposure link",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "exposure_id",
+    "canonical_event_id",
+    "security_code",
+    "exposure_type",
+    "sector_code",
+    "direction",
+    "confidence",
+    "materiality",
+    "available_at",
+    "decision_at",
+    "confirmation_class",
+    "contradiction_status",
+    "factor_eligible",
+    "evidence_hashes",
+    "reason_codes"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "exposure_id": {"type": "string", "pattern": "^exp-[0-9a-f]{24}$"},
+    "canonical_event_id": {"type": "string", "pattern": "^ctx-[0-9a-f]{24}$"},
+    "security_code": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+    "exposure_type": {
+      "enum": ["DIRECT_NAMED", "CONTRACT_COUNTERPARTY", "SECTOR_EXPOSURE", "INFERRED_EXPOSURE", "UNRESOLVED"]
+    },
+    "sector_code": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z0-9][A-Z0-9_.:-]{0,63}$"
+    },
+    "direction": {"enum": ["POSITIVE", "NEGATIVE", "NEUTRAL", "UNKNOWN"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "materiality": {"type": "number", "minimum": 0, "maximum": 1},
+    "available_at": {"type": "string", "format": "date-time"},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "confirmation_class": {
+      "enum": ["OFFICIAL_EVIDENCE", "NEWS_CORROBORATED", "ANALYTICAL_INFERENCE", "UNRESOLVED"]
+    },
+    "contradiction_status": {"enum": ["UNCONTESTED", "CONTESTED", "RESOLVED", "UNKNOWN"]},
+    "factor_eligible": {"type": "boolean"},
+    "evidence_hashes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"exposure_type": {"const": "SECTOR_EXPOSURE"}}, "required": ["exposure_type"]},
+      "then": {"properties": {"sector_code": {"type": "string"}}},
+      "else": {"properties": {"sector_code": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"exposure_type": {"const": "INFERRED_EXPOSURE"}}, "required": ["exposure_type"]},
+      "then": {"properties": {"confirmation_class": {"const": "ANALYTICAL_INFERENCE"}}}
+    },
+    {
+      "if": {"properties": {"exposure_type": {"const": "UNRESOLVED"}}, "required": ["exposure_type"]},
+      "then": {
+        "properties": {
+          "confirmation_class": {"const": "UNRESOLVED"},
+          "direction": {"const": "UNKNOWN"},
+          "factor_eligible": {"const": false},
+          "reason_codes": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"contradiction_status": {"const": "CONTESTED"}}, "required": ["contradiction_status"]},
+      "then": {"properties": {"factor_eligible": {"const": false}}}
+    }
+  ]
+}

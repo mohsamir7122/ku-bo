@@ -24,7 +24,9 @@
 
 يسجل الكتالوج شبكة قابلة للتوسع من المصادر وعائلات الناشرين، موزعة على أدوار لا على قائمة ثقة عمياء:
 
-الحالة الحالية في `0.1.0` هي **40 تعريف مصدر** تُحتسب ضمن **35 مجموعة استقلال**؛ عدد الروابط أوالأسطح لا يساوي عدد الناشرين المستقلين.
+الحالة الحالية على فرع `KU-BO-012` هي **68 تعريف مصدر** تُحتسب ضمن **62 مجموعة استقلال**؛ عدد الروابط أوالأسطح لا يساوي عدد الناشرين المستقلين. بعد استبعاد أسطح البحث والتخزين يوجد **59 نطاقًا مرشحًا**، منها **53 نطاقًا مصرحًا في الكتالوج كعام ومفعّل افتراضيًا**، وتتحول Start URLs المنفذة إلى **52 نطاقًا مميزًا** قبل الحجز العادل. الخطة الافتراضية تختار 50 نطاقًا بالضبط، بمساهمات جديدة حسب الموجات `17/0/29/4`، وتحجز الأربعة الأخيرة للأرشيف/المجتمع بما يضمن محاولة `t.me` و`indexsignal.com`. البقية تحتاج تفعيلًا أوحق استخدام؛ ولا يمثل أي رقم تأكيدات مستقلة.
+
+حالة القدرة منفصلة عن التسجيل: **66** تعريفًا `DEFINED_ONLY`، و**2** فقط `END_TO_END_TESTED` على Fixtures مولدة، و**0** `LIVE_OPERATIONAL`. لا يُرقّى مصدر لأن اسمه موجود أولأن صفحته قابلة للفتح يدويًا.
 
 - رسمي/جهة إصدار: بورصة الكويت، تقاريرها وإفصاحاتها، هيئة أسواق المال/iFSAH، ومواقع علاقات المستثمرين الموثقة.
 - سوق وتاريخ سعري: Investing.com، TradingView، Argaam، MarketScreener، Mubasher، Yahoo Finance، وTradingEconomics.
@@ -34,6 +36,30 @@
 - بيانات مرخّصة: ICE أو Broker/Market Feed مصرح به عند وجود Entitlement حقيقي.
 
 كل مصدر يملك عقدًا يحدد أدواره، نطاقاته، مجموعة استقلاله، أقصى درجة لتوقيت الدليل، وما إذا كان يستطيع إنشاء Finding أم لا.
+
+## مسار سياق الكويت وتقييم الجلسة التالية
+
+يضيف `KU-BO-012` المنتج `KUWAIT_120D_NEXT_SESSION_RESEARCH` كمسار بحثي محافظ على مستوى الكون المؤهل كاملًا. يحتفظ بأربع نوافذ مستقلة:
+
+```text
+سياق الكويت:             120 يومًا تقويميًا
+الأحداث النشطة:           30 يومًا تقويميًا
+مزاج المجتمع:              7 أيام تقويمية
+المحفزات الأحدث:           72 ساعة
+أفق النتيجة:               الجلسة الرسمية المكتملة التالية
+```
+
+التجميع تراكمي وله Watermark؛ التشغيل العادي لا يعيد تنزيل أربعة أشهر كاملة في كل سؤال. تسير المحاولات في موجات: رسمي/رقابي، ثم جهات الإصدار والحكومة، ثم البيانات المنظمة والأخبار، ثم المجتمع والأرشيف. `web_search_router` مسجل للتوجيه فقط ولا ينفذه المشغل الحالي. يحاول المشغل 50 نطاقًا بحثيًا مميزًا ضمن ميزانية ثابتة، ويعيد الخطأ العابر بحد أقصى ثلاث محاولات لكل استراتيجية. أما الرد الصحيح الفارغ فيسمح بأربع استراتيجيات استعلام مختلفة جوهريًا، لا أربع إعادات للرابط نفسه. المنع الصريح وLogin وCAPTCHA وPaywall وRobots لا يُتجاوز أي منها؛ تُحفظ المحاولة وسببها.
+
+إعادة المحاولة Fail-stop: المنع الصريح لا يعاد، وHTTP 429 يبقى في الاستراتيجية نفسها ثم يوقف المصدر بعد المحاولة الثالثة بدل الدوران على استعلام آخر. يحترم `Retry-After` ما دام داخل ميزانية الوقت المتبقية؛ وإذا تجاوزها أوفشل Sleeper يتوقف المسار. يسجل Attempt Ledger كل قرار مع `retry_after_seconds` وDisposition والقيود، ويصرح بأن Hash chain ليست External Seal، وأن Capture time ليست Publication time، وأن Low-level HTTP غير محسوبة كلٌ على حدة، وأن Parser يجب أن يفرض Point-in-Time cutoff، وأن Zero Result يحتاج Material query-route proofs فريدة.
+
+يمكن إعادة فتح تشغيل Source Search المحفوظ والتحقق منه قبل الدمج؛ يعيد المدقق حساب بصمة التقرير وسجل المحاولات والبايتات الخام المشار إليها. ثم يقبل `build-kuwait-research-bundle` ملفًا صارمًا من Parsed Inputs، ويرفض أي Evidence hash لا يحل إلى تلك البايتات، ويصدر Context/Exposure/Factor artifacts وحزمة تكامل Atomically. هذا جسر تكامل قابل للتدقيق، وليس Parser عامًا: لا يستنتج من البايتات أحداثًا أوتعرضات أوعوامل أوDispositions أوScores من تلقاء نفسه.
+
+تُطبّع الأحداث إلى `KUWAIT_MACRO` أو`SECTOR` أو`SECURITY`، ثم ترتبط بالأسهم بأدلة Exposure صريحة. ينتج Factor Snapshot لكل عضو متوقع وصف مقام كامل يوضح `SELECTED` أو`REJECTED` أو`ABSTAINED` أو`UNRESOLVED`. تربط `factor_snapshot_sha256` المحتوى القانوني الكامل للصفوف والعوامل والأدلة والتصرفات والدرجات، ويُشتق منها `snapshot_id`. كما تُفرض Freshness كل عامل من سجل النوافذ؛ حالة التداول الحالية نافذتها 24 ساعة، والحدث `SUPERSEDED` لا يصبح Factor-eligible. القيمة المفقودة تظل `MISSING` أو`NOT_APPLICABLE` ولا تتحول إلى صفر محايد. Telegram وIndexSignal للمزاج أوتوجيه البحث فقط، ولا يثبتان حقيقة رسمية أوالسعر أوالإجراء أوالمحفز منفردين.
+
+عقد الإعادة التاريخية الصارم يحتاج **41 جلسة رسمية متتالية** لتقييم **40 قرارًا**، مع Universe وFeatures وOutcomes وCorporate Actions وحالة تداول وبصمات Point-in-Time لكل قرار. المنتج Execution-grade: الترتيب يُعاد اشتقاقه من Score تنازليًا مع Security Code كفاصل حتمي، والاختيار يساوي Top-K، وكل صف مختار يحتاج `FILLED` موثقًا. يبقى العضو غير المتداول في المقام، لكنه يوقف الإعادة ما دام قرار `KU-BO-008-D01` مفتوحًا؛ لا يُحذف ولا يُمنح Close اصطناعيًا.
+
+الـPrimary label هو `GROSS_ADJUSTED_RETURN_GT_0`: عائد الجلسة التالية الإجمالي المعدل قبل تكاليف التنفيذ. الرسوم وSpread وSlippage تدخل في Actionable net ومقاييس Market/Sector net-excess الثانوية، لا في الـPrimary gross label. لا يحتوي المستودع حاليًا على Packet سوقي حقيقي يحقق العقد؛ لذلك نتيجة CLI لاختبار الأربعين الأخيرة هي `STOP_BACKTEST` مع **0 من 40 جلسة قابلة للقياس** و`metrics=null`. ويصدر العقد `agreement_rate=null` مع `agreement_rate_status=NOT_APPLICABLE`، و`authority_verified=false`، و`accuracy_claim_allowed=false`؛ أي إن نسبة التوافق المعروضة بشريًا **`N/A` وليست `0%`**. لا يعرض Runtime حالة `STOP_INFERENCE` لأنها غير قابلة للوصول في هذا العقد الصارم. التفاصيل في `docs/KUWAIT_120D_NEXT_SESSION_AR.md`.
 
 ## نصاب المصادر حسب الأفق
 
@@ -93,6 +119,17 @@ kubo --project-root /absolute/path/to/ku-bo validate-source-network
 ```bash
 PYTHONPATH=src python -m kubo validate-source-network
 ```
+
+جسر Source Search إلى Context/Exposure/Factor يعمل على تشغيل محفوظ ومدخلات Parsed صريحة:
+
+```bash
+kubo --project-root /absolute/path/to/ku-bo build-kuwait-research-bundle \
+  --source-search-root /absolute/path/to/source-search-run \
+  --parsed-inputs /absolute/path/to/parsed-research-inputs.json \
+  --output-root /absolute/path/to/integrated-research-bundle
+```
+
+يعيد الأمر التحقق من التقرير والسجل والبايتات، ولا يحول Raw capture إلى Finding تلقائيًا.
 
 إنشاء خطة بحث من حزمة تشغيل:
 
@@ -259,6 +296,12 @@ Ledger Seal صالحًا.
 
 ## التحقق
 
+أضيف إلى CI Gate مركز لـKU-BO-012 يشغّل Workflow وSource Orchestrator وContext/Factor وجسر التكامل وReplay وCLI، كما أضيفت فحوص Installed Wheel لأمر `validate-research-workflow` وظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. الإضافة إلى ملف CI لا تعني أن Run خارجيًا نُفّذ بعد.
+
+نجحت محليًا `183/183` من اختبارات Workflow/Source Orchestrator/Ingestion/Context/Integration/Replay/CLI/Schemas المركزة بعد تدقيق التكامل النهائي، ثم نجحت Full Suite النهائية على الشجرة الحالية `2,067/2,067` في `164.347s`. نجحت كذلك `compileall`، وفحوص JSON، و`git diff --check`، وSmoke، وSecret Guard، وتوليد وتدقيق Corpus من `1,280` حالة. ونجح Codex control check على 15 ملف تحكم و10 ملفات مطلوبة مع 0 Errors و0 Warnings.
+
+نجح بناء Wheel النهائية بحجم `444351` بايت وبصمة SHA-256 الآتية: `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. كما نجح التثبيت المعزول، وImports، وCLI help، و`validate-research-workflow`، و`installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. هذه نتائج محلية فقط؛ لا توجد نتيجة GitHub Actions أوPR أوMerge خاصة بـKU-BO-012.
+
 ```bash
 PYTHONPATH=src python3 -m compileall -q src tests scripts
 PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -300,10 +343,11 @@ kubo-data-foundation prepare-tri-security-batch \
 قطاعي Industrials وUtilities في الدفعة الثلاثية؛ لذلك يظل
 `benchmark_qualification_allowed=false` ويفشل أي إخفاء لعدم التوافق مغلقًا.
 
-هذه الطبقة تثبت المصادقة وسلامة الربط فقط. لا تزال أوامر الاستيراد والمصالحة
-لا تفرض الإيصال end-to-end حتى `KU-BO-011`، ولا ينتج عنها Market Evidence أو
-Qualification أوتفويض للدفعة التالية أوBacktest أوForecast. دليل التشغيل
-الكامل في `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`.
+هذه الطبقة تثبت المصادقة وسلامة الربط فقط. أضاف `KU-BO-011` فرض Semantic
+Admission على الحدود الثمانية واختبارات خصومية اصطناعية، لكنه لم يحوّل
+العقود إلى Market Evidence أوQualification أوتفويض للدفعة التالية أوBacktest
+أوForecast. دليل الإيصالات في `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`،
+والحالة المتراكمة في `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`.
 
 تشغّل GitHub Actions هذه البوابات على Python `3.11` و`3.12` و`3.13` و`3.14`. لا تثبت الوثائق عدد اختبارات ثابتًا؛ نتيجة CI الخاصة بالـCommit هي المرجع.
 
@@ -314,7 +358,14 @@ Qualification أوتفويض للدفعة التالية أوBacktest أوForeca
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
 - `config/source_capabilities.json`: حالة Capture/Parser/Fixture/Live لكل مصدر من دون استنتاج القدرة من مجرد وجوده في الكتالوج.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
+- `config/research_workflows.json`: نوافذ وميزانيات وموجات `KUWAIT_120D_NEXT_SESSION_RESEARCH` وعقد الأربعين قرارًا.
+- `config/source_query_strategies.json`: استراتيجيات الاستعلام المميزة وسياسة المحاولة المحدودة.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
+- `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
+- `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
+- `src/kubo/kuwait_research_pipeline.py`: التحقق من Source Search المحفوظ وربطه بمدخلات Parser الصارمة وإخراج حزمة Context/Exposure/Factor ذرية.
+- `src/kubo/forty_session_replay.py`: تقييم 40 قرارًا/41 جلسة مع Stop gates قبل المقاييس.
+- `src/kubo/research_workflow.py`: تحميل عقد المنتج ودمج تقارير جاهزية طبقات البحث.
 - `src/kubo/source_parsers.py`: المحللان المحدودان لبورصة الكويت وInvesting مع فشل Parser Drift مغلقًا.
 - `src/kubo/parser_materialization.py`: مصالحة الهوية وتحويل البايتات الملتقطة إلى حزمة قابلة للتحقق.
 - `src/kubo/runtime_trust.py`: مصادقة سجل الثقة الخارجي وربط التفويض الحساس Fail-closed.
@@ -329,6 +380,7 @@ Qualification أوتفويض للدفعة التالية أوBacktest أوForeca
 - `src/kubo/liquidity.py`: قياسات السيولة ومحاكاة تنفيذ محافظة.
 - `src/kubo/pipeline.py`: المسار الافتراضي الجديد والمسار التاريخي المنفصل.
 - `src/kubo/cli_v3.py`: واجهة الأوامر.
+- `schemas/parsed-research-inputs.schema.json`: عقد الانتقال الصريح من البايتات المتحققة إلى الأحداث والتعرضات ومدخلات العوامل والتصرفات.
 - `schemas/`: عقود JSON Schema القابلة للقراءة الآلية.
 - `research/methodology_registry.json`: الأبحاث والقواعد والاختبارات المنهجية.
 - `.github/workflows/ci.yml`: Compile وUnit/Adversarial Tests وSmoke Check وSecret Guard.
@@ -340,6 +392,7 @@ Qualification أوتفويض للدفعة التالية أوBacktest أوForeca
 - `docs/BENCHMARK_OFFICIAL_EOD_V0_2_AR.md`: تشغيل Benchmark وOfficial EOD والمصالحة النهائية وحدود الأدلة.
 - `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`: عقد المصادقة وربط الخطة والمقام والنافذة وشجرة المرحلة.
 - `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`: الحالة المتراكمة الحالية والبوابات الخارجية المتبقية.
+- `docs/KUWAIT_120D_NEXT_SESSION_AR.md`: عقد البحث المطول، معنى 50 نطاقًا، وحدود اختبار الأربعين الأخيرة.
 - `docs/legacy_v2/`: وثائق V2 التاريخية للرجوع، وليست مسار التشغيل الافتراضي.
 
 ## الحد الفاصل المهم

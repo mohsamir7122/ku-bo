@@ -73,8 +73,14 @@ class SourceNetworkTests(unittest.TestCase):
     def test_network_catalog_is_research_only(self):
         report = self.catalog.report()
         self.assertEqual(report["status"], "PASS")
-        self.assertGreaterEqual(report["sources"], 30)
-        self.assertEqual(report["profiles"], 4)
+        self.assertEqual(report["sources"], 68)
+        self.assertEqual(report["independence_groups"], 62)
+        self.assertEqual(report["profiles"], 5)
+        self.assertEqual(
+            report["capability_status_counts"],
+            {"DEFINED_ONLY": 66, "END_TO_END_TESTED": 2},
+        )
+        self.assertEqual(report["live_operational_sources"], [])
         self.assertFalse(report["claim_boundaries"]["probability_allowed"])
         self.assertFalse(report["claim_boundaries"]["recommendation_allowed"])
 

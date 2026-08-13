@@ -15,32 +15,96 @@ build/data-foundation-v0.2
                                       └── build/tri-security-run-receipt-v0.1
 ```
 
-الحالة الحية بعد دمج PR #12 كحزمة اختبارات فقط:
+الحالة المتحققة عند بدء `KU-BO-012`:
 
 ```text
-main@c621fcf88034c4571aa08aee2e54e2e026a4f651
-  └── PR #12 merged / TEST_SPEC_ONLY
-        └── Post-merge CI 31684299396 PASS
-              └── build/tri-security-receipt-enforcement-v0.2
-                    @6dc821f8342bf2041ac3bed983c6805ff0a2c3fc
-                      └── Draft PR #13
-                            └── CI 31695010037 PASS
+main@92b2bdd2460a7508922297a12d85f13264d43acb
+  └── PR #1 and PRs #4-#13 already integrated
+        └── agent/kuwait-120d-next-session
+              └── KU-BO-012 / IN_PROGRESS / DRAFT / MERGE_ALLOWED NO
 ```
 
 قاعدة المرحلة الحالية:
 
 ```text
 main
-@c621fcf88034c4571aa08aee2e54e2e026a4f651
+@92b2bdd2460a7508922297a12d85f13264d43acb
 ```
 
-فرع تنفيذ `KU-BO-011` هو
-`build/tri-security-receipt-enforcement-v0.2`. يتضمن `main` بعد دمج PR #12،
-ونُشر كـDraft PR #13 على Remote Head
-`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`. اكتمل CI Run `31695010037`
-بنجاح، ونجحت Jobs الخاصة بـPython 3.11 و3.12 و3.13 و3.14. تظل الحالة
-`IN_PROGRESS` لأن Commit سجلات التحكم اللاحق يحتاج Exact-head CI أخيرًا قبل
-إعادة فحص حد الدمج.
+PR #1 وPRs #4 إلى #13 أسلاف لـ`main` ولا تحتاج دمجًا آخر. PR #2 وPR #3
+قديمتان، متأخرتان 127 Commit، وغير قابلتين للدمج المباشر ومتجاوزتان بالعقود
+الحالية؛ يمنع دمجهما أوCherry-pick شامل منهما. فرع المهمة الحالي هو
+`agent/kuwait-120d-next-session`، ولم يُنشر له Draft PR أوExact-head CI أوMerge
+بعد. التفويض `KU-BO-MERGE-004` شرطي، وتبقى الحالة `MERGE_ALLOWED: NO` أثناء
+التنفيذ.
+
+## امتداد KU-BO-012 فوق Data Foundation
+
+يضيف المنتج `KUWAIT_120D_NEXT_SESSION_RESEARCH` سياقًا تراكميًا 120 يومًا،
+مع نوافذ 30 يومًا للأحداث النشطة و7 أيام للمجتمع و72 ساعة للمحفز الحديث.
+يسجل المحاولات في موجات محدودة، ثم يطبّع Context Events وSecurity Exposure
+وFactor Snapshots ويصدر صف مقام لكل ورقة متوقعة. Telegram وIndexSignal
+للمزاج أوالتوجيه فقط.
+
+يعيد Persisted Source Search validator حساب بصمات التقرير وسجل المحاولات
+والـRaw artifacts قبل دمجها. ويضيف `kuwait_research_pipeline` مع
+`parsed-research-inputs.schema.json` وأمر `build-kuwait-research-bundle` جسرًا
+ذريًا إلى Context/Exposure/Factor artifacts. الجسر لا يدعي Parser عامًّا ولا
+يستنتج قيمًا أودرجات من Raw bytes.
+
+الكتالوج على الفرع يحتوي 68 تعريف مصدر و62 مجموعة استقلال و59 نطاقًا مرشحًا
+بعد استبعاد البحث والتخزين. منها 53 نطاقًا معلنًا Enabled-public، و52 نطاق
+Start URL تنفيذيًا مميزًا قبل الحجز. الخطة العادلة تختار 50 بمساهمات
+`17/0/29/4`، وتحجز الموجة الأخيرة للأرشيف و`t.me` و`indexsignal.com`؛ Search
+Router مسجل وغير منفذ. حالة القدرة: 66 `DEFINED_ONLY`، و2
+`END_TO_END_TESTED` على Fixtures مولدة، و0 `LIVE_OPERATIONAL`.
+
+المحاولات Fail-stop: Hard block لا يعاد، و429 يتوقف بعد ثلاث محاولات في
+الاستراتيجية نفسها، ويحترم `Retry-After` ضمن ميزانية الوقت. تجاوز الميزانية
+أوفشل Sleeper يوقف المسار. يحفظ Ledger القيود وDisposition وRetry-After، مع
+Non-claims صريحة حول External Seal وPublication time وLow-level metering وParser
+cutoff وZero-result proofs.
+
+تربط `factor_snapshot_sha256` الصفوف والعوامل والأدلة والتصرفات والدرجات
+كاملة، ويُشتق `snapshot_id` منها. تُفرض Freshness من Registry، بما فيها 24
+ساعة لحالة التداول، ولا يدخل حدث `SUPERSEDED` في Factor-eligible exposure.
+أما Replay فيعيد اشتقاق Rank من Score ويفرض Top-K وFill موثقًا لأن المنتج
+Execution-grade. Primary label هو adjusted gross return قبل التكاليف؛ تستخدم
+التكاليف في Actionable وNet-excess metrics الثانوية.
+
+عقد الإعادة التاريخية يحتاج 40 قرارًا و41 جلسة رسمية متتالية مع Real
+Point-in-Time Universe وEOD وBenchmark وStatus وCorporate Actions وFeatures
+وOutcomes منفصلة. هذه الحزمة غير موجودة؛ لذلك نتيجة الأربعين الأخيرة هي:
+
+```text
+status=STOP_BACKTEST
+process_valid_scoreable_sessions=0
+expected_decision_sessions=40
+metrics=null
+agreement_rate=null
+agreement_rate_status=NOT_APPLICABLE
+authority_receipt_sha256=null
+authority_verified=false
+accuracy_claim_allowed=false
+```
+
+تُعرض `agreement_rate=null/NOT_APPLICABLE` بشريًا `N/A` ولا تعني `0%`؛ لا
+يوجد مقام مؤهل للحساب. يبقى `KU-BO-008-D01` `OPEN`، ولا توجد سياسة
+Product-specific مجمدة لعبور التعليق أوالتوقف. لذلك يبقى Non-trading member في
+المقام لكنه يوقف Replay بدل حذفه أوتوليد Close اصطناعي. لا يعلن Runtime حالة
+`STOP_INFERENCE` غير قابلة للوصول.
+
+التحقق المركز المحلي نجح `183/183` لاختبارات Workflow/Source
+Orchestrator/Context/Integration/Replay/CLI، ونجح Full Suite النهائي
+`2,067/2,067` في `164.347s`. كما نجح `compileall` وJSON وDiff وSmoke
+وSecret Guard، وتوليد وتدقيق Corpus من `1,280` حالة، وCodex control
+على 15 ملف تحكم و10 ملفات مطلوبة بلا Errors أوWarnings. نجحت Wheel
+النهائية بحجم `444351` بايت وSHA-256
+`ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`، ونجح
+التثبيت المعزول وImports وCLI help و`validate-research-workflow`، ونجح
+`installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. أضيفت
+Gates المركزة إلى CI، لكن لا يوجد PR أوCI Run/SHA أوMerge خاص
+بـKU-BO-012 بعد.
 
 ## طبقة Price History
 
@@ -104,7 +168,7 @@ Importer تفرض Run Receipt أوStage Binding. من دون Implementation Adap
 TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
 ```
 
-هذه هي الحالة التاريخية لـPR #12 ولا تتغير بأثر رجعي. أما فرع التنفيذ الحالي
+هذه هي الحالة التاريخية لـPR #12 ولا تتغير بأثر رجعي. أما فرع التنفيذ آنذاك
 فرفع Corpus إلى v3 بعقد Materialization تنفيذي مستقل، ونجح Generator/Audit
 محليًا ببصمة:
 
@@ -116,9 +180,10 @@ e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
 `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY` على Head منشور
 وناجح في CI، من دون أي ترقية لادعاءات السوق.
 
-## نطاق تنفيذ KU-BO-011 الحالي
+## النطاق التاريخي لتنفيذ KU-BO-011 المدمج
 
-الحالة `IN_PROGRESS`. أضاف الفرع الحالي:
+هذه فقرة تاريخية تصف ما أضافه فرع KU-BO-011 قبل دخوله في
+`main@92b2bdd2460a7508922297a12d85f13264d43acb`:
 
 - Semantic Stage Admission v2 بعقد وإصدار مستقلين ومفتاح HMAC ثالث لا يساوي
   مفتاح Run أومفتاح Stage؛
@@ -150,17 +215,12 @@ e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
 Market Data أوProvider/Capture Authority أوRights أوReal Backtest أوForecast
 أوProbability أوAccuracy أوRecommendation أوProduction Readiness.
 
-اكتمل دليل التنفيذ المنشور: Draft PR #13 عند
-`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`، ونجح Exact-head CI Run
-`31695010037` على Python 3.11 إلى 3.14. لذلك Handoff دليل التنفيذ
-`COMPLETED`. تظل المهمة `IN_PROGRESS` و`MERGE_ALLOWED: NO` لأن تحديث سجلات
-التحكم الحالي سينشئ Head لاحقًا يحتاج CI أخيرًا وإعادة فحص حد الدمج.
-
-تفويض الدمج المرتب مسجل في `KU-BO-MERGE-003`. اكتمل جزؤه الأول بدمج PR #12
-أولًا ونجاح Post-merge CI. يبقى جزء Implementation فقط، وMetadata المهمة تظل
-محافظة أثناء التنفيذ: `EXPECTED_PR_MODE: DRAFT` و`MERGE_ALLOWED: NO`. لا تدمج
-Implementation PR إلا بعد نجاح Exact-head CI لتحديث سجلات التحكم الحالي
-وإعادة فحص حد الدمج.
+كان دليل التنفيذ قد نُشر على Draft PR #13 عند
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc` ونجح Exact-head CI Run
+`31695010037` على Python 3.11 إلى 3.14، ثم أصبح هذا التاريخ ضمن `main` الحالي.
+لا يُعاد استخدام ذلك CI كإثبات لـKU-BO-012، ولا يثبت Market Evidence أوReal
+Backtest أوForecast أوProbability أوAccuracy أوRecommendation أوProduction
+Readiness.
 
 ## Current Official Identity and Calendar
 
@@ -311,9 +371,10 @@ HISTORICAL_STATUS_INTERVALS_READY
 ## البوابات التالية
 
 ```text
-PUSH_KU_BO_011_CONTROL_RECORD_UPDATE
-PASS_CONTROL_RECORD_EXACT_HEAD_GITHUB_ACTIONS
-RECHECK_KU_BO_MERGE_003_AT_ORDERED_MERGE_BOUNDARY
+COMPLETE_KU_BO_012_LOCAL_ACCEPTANCE_SUITE
+PUBLISH_KU_BO_012_DRAFT_PR
+PASS_KU_BO_012_EXACT_HEAD_GITHUB_ACTIONS
+RECHECK_KU_BO_MERGE_004_AT_MERGE_BOUNDARY
 FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
 VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS
 IMPORT_REAL_RIGHTS_COMPATIBLE_BENCHMARK_HISTORY
@@ -329,6 +390,7 @@ PASS_FINAL_REAL_DATA_FOUNDATION_RECONCILIATION
 ```text
 Compile
 Full Unit and Adversarial Suite
+KU-BO-012 Workflow, Source Search, Context, Integration, Factor, Replay, and CLI Gates
 Source Parser and Live-Probe Gates
 Official Identity and Calendar Gates
 Current Status and Corporate Action Schedule Gates
@@ -341,4 +403,5 @@ Synthetic Smoke Check
 Secret Guard
 Wheel Build and Reinstallation
 Installed CLI Checks
+Installed KU-BO-012 Workflow/Search/Replay Command Checks
 ```
