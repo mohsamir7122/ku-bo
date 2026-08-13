@@ -1,6 +1,6 @@
 # الحالة الحالية لـData Foundation Pilot
 
-تاريخ اللقطة: `2026-08-12`
+تاريخ اللقطة: `2026-08-13`
 
 السلسلة التاريخية التي أصبحت مدمجة في `main`:
 
@@ -11,23 +11,31 @@ build/data-foundation-v0.2
               └── build/ca-enrichment-status-history-v0.2
                     └── ops/codex-control-center-v0.1
                           └── build/benchmark-official-eod-v0.2
+                                └── build/tri-security-pilot-v0.3
+                                      └── build/tri-security-run-receipt-v0.1
 ```
 
-الفرع النشط غير المدمج:
+الحالة الحية بعد دمج PRs #10 و#11:
 
 ```text
-main@be5fe3883016dedf07fa680905f7199f3906b4d8
-  └── build/tri-security-pilot-v0.3@7d032c98b0ef9f27e913199487ad4577119c2631
-        └── Draft PR #10 / CI 31571987659 PASS
-              └── build/tri-security-run-receipt-v0.1
-                    └── Draft PR #11 / implementation CI 31626453749 PASS
+main@6bcfbabf840e6876a878dfd692afbf746780d731
+  └── CI 31629909113 PASS
+        └── test/ku-bo-011-adversarial-corpus-v0.1
+              @3d773448b78ca99f6761a43b852f53967fdbb095
+              └── Draft PR #12 / CI 31631077911 PASS
 ```
 
 قاعدة المرحلة الحالية:
 
 ```text
-main@be5fe3883016dedf07fa680905f7199f3906b4d8
+test/ku-bo-011-adversarial-corpus-v0.1
+@3d773448b78ca99f6761a43b852f53967fdbb095
 ```
+
+فرع تنفيذ `KU-BO-011` المحلي هو
+`build/tri-security-receipt-enforcement-v0.2`. بدأ من Head حزمة الاختبارات
+نفسه، وحالته `IN_PROGRESS`؛ لم يكن له Implementation Commit أوPR منشور عند
+هذه اللقطة.
 
 ## طبقة Price History
 
@@ -58,6 +66,53 @@ main@be5fe3883016dedf07fa680905f7199f3906b4d8
   Qualification end-to-end.
 - كل دفعة تحمل البوابات النهائية الاثنتي عشرة بالحالة
   `PENDING_EXTERNAL_EVIDENCE`.
+
+## حزمة قبول KU-BO-011
+
+PR #12 تحتوي حزمة **Test Specification اصطناعية فقط**:
+
+```text
+8 importer/reconciliation boundaries
+x 40 mutation families
+x 4 attack channels/timings
+= 1,280 deterministic case specifications
+```
+
+بصمة Corpus هي
+`53c95afbdf4174a5c3e74c2bfb798beddc650841f1301d4b8d99bc4a54af2b03`.
+نجح Exact-head CI على Python 3.11 إلى 3.14 وشغّل 1,841 Test مع فحوص
+التوليد الحتمي وSchema والبصمات الدلالية وWheel وInstalled CLI وSmoke
+وControl وSecret Guard.
+
+هذا النجاح يثبت سلامة **مواصفات الاختبار وبنيتها** فقط، ولا يثبت أن أي
+Importer تفرض Run Receipt أوStage Binding. من دون Implementation Adapter
+يعيد الوضع الصارم `TARGET_ADAPTER_UNAVAILABLE`. وحتى بعد إضافة Adapter يجب
+أن تستدعي Production APIs وCLIs الحقيقية، ولا يجوز أن تنجح بمجرد إعادة
+القيم المتوقعة من Test Case. لذلك يبقى ادعاء PR #12:
+
+```text
+TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
+```
+
+## نطاق تنفيذ KU-BO-011 الحالي
+
+الحالة `IN_PROGRESS`. يلزم التنفيذ الجديد أن:
+
+- يضيف Semantic Stage Admission بعقد وإصدار مستقلين؛
+- يبقي `Stage Binding v1.0` Byte-integrity contract فقط ولا يغير
+  `binding_proves_stage_matches_run_scope=false`؛
+- يفرض المصادقة والربط الدلالي في Direct API وCLI للـImporters السبعة
+  وFinal Reconciliation؛
+- يربط Run/Batch/Cohort/Window/Stage والـPredecessor graph الفعلية؛
+- يرفض أي Input مفقودة أومزورة أومنتهية أومخلوطة أوغير متوافقة قبل إنشاء
+  Output؛
+- يعيد التحقق قبل Atomic commit لمقاومة TOCTOU؛
+- يثبت 1,280 حالة عبر Production paths ومن دون أي كتابة محمية عند الرفض.
+
+تفويض الدمج المرتب مسجل في `KU-BO-MERGE-003`، لكن Metadata المهمة تبقى
+محافظة أثناء التنفيذ: `MERGE_ALLOWED: NO`. لا يدمج PR #12 إلا أولًا وبعد
+Fresh exact-head CI، ثم يعاد تحقق Implementation PR بعد تحديثها إلى `main`
+ولا تدمج إلا بعد اكتمال جميع البوابات.
 
 ## Current Official Identity and Calendar
 
@@ -208,8 +263,12 @@ HISTORICAL_STATUS_INTERVALS_READY
 ## البوابات التالية
 
 ```text
+MERGE_KU_BO_011_TEST_SPEC_AFTER_FRESH_CI
+IMPLEMENT_VERSIONED_SEMANTIC_STAGE_ADMISSION
+ENFORCE_RECEIPTS_AT_ALL_EIGHT_PRE_WRITE_BOUNDARIES
+PROVE_ZERO_WRITE_REJECTION_THROUGH_PRODUCTION_PATHS
+CARRY_AUTHENTICATED_PREDECESSOR_GRAPH_INTO_FINAL_RECONCILIATION
 FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
-ENFORCE_TRI_SECURITY_RECEIPT_AND_STAGE_BINDING_END_TO_END
 VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS
 IMPORT_REAL_RIGHTS_COMPATIBLE_BENCHMARK_HISTORY
 IMPORT_REAL_COMPLETE_OFFICIAL_OR_LICENSED_DAILY_EOD

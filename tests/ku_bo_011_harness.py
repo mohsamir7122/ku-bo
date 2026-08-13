@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import copy
 import hashlib
 import importlib
 import json
@@ -383,8 +384,12 @@ def load_target_adapter(spec: str | None) -> Callable[..., Mapping[str, Any]]:
 
 
 def _snapshot_output_tree(root: Path) -> tuple[tuple[str, str, int], ...]:
+    if not root.exists() and not root.is_symlink():
+        return (("<root>", "missing", 0),)
     if not root.is_dir() or root.is_symlink():
-        raise TargetAdapterFailure("adapter removed or replaced the output root")
+        metadata = os.lstat(root)
+        kind = "symlink" if stat.S_ISLNK(metadata.st_mode) else "non-directory"
+        return (("<root>", kind, metadata.st_size),)
     rows: list[tuple[str, str, int]] = []
 
     def walk(directory: Path, relative: Path) -> None:
@@ -407,7 +412,7 @@ def _snapshot_output_tree(root: Path) -> tuple[tuple[str, str, int], ...]:
                 rows.append((entry_relative, f"special:{metadata.st_mode}", 0))
 
     walk(root, Path())
-    return tuple(rows)
+    return (("<root>", "directory", 0), *rows)
 
 
 def execute_strict_case(
@@ -419,11 +424,19 @@ def execute_strict_case(
         input_root = case_root / "input"
         output_root = case_root / "output"
         input_root.mkdir()
-        output_root.mkdir()
+        original_case = copy.deepcopy(dict(case))
+        expected = copy.deepcopy(original_case["expected"])
+        checks = {
+            "case_id": original_case["case_id"],
+            "decision": expected["decision"],
+            "failure_code": expected["failure_code"],
+            "failure_phase": expected["failure_phase"],
+            "output_writes": [],
+        }
         before = _snapshot_output_tree(output_root)
         try:
             result = adapter(
-                case=dict(case),
+                case=copy.deepcopy(original_case),
                 case_root=case_root,
                 input_root=input_root,
                 output_root=output_root,
@@ -434,6 +447,11 @@ def execute_strict_case(
             ) from exc
         after = _snapshot_output_tree(output_root)
 
+    if dict(case) != original_case:
+        raise TargetAdapterFailure(
+            f"adapter mutated the locked source case {case.get('case_id')}"
+        )
+
     if not isinstance(result, Mapping):
         raise TargetAdapterFailure(
             f"adapter result for {case.get('case_id')} must be a mapping"
@@ -443,14 +461,6 @@ def execute_strict_case(
             f"adapter result keys for {case.get('case_id')} must be "
             f"{sorted(RESULT_KEYS)}"
         )
-    expected = case["expected"]
-    checks = {
-        "case_id": case["case_id"],
-        "decision": expected["decision"],
-        "failure_code": expected["failure_code"],
-        "failure_phase": expected["failure_phase"],
-        "output_writes": [],
-    }
     for key, expected_value in checks.items():
         if result[key] != expected_value:
             raise TargetAdapterFailure(

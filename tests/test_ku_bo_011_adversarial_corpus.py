@@ -155,6 +155,7 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
         case = CASES[0]
 
         def adapter(**kwargs):
+            kwargs["output_root"].mkdir()
             (kwargs["output_root"] / "forbidden.txt").write_text(
                 "must not exist",
                 encoding="utf-8",
@@ -170,6 +171,25 @@ class TestKUBO011CorpusInfrastructure(unittest.TestCase):
 
         with self.assertRaisesRegex(TargetAdapterFailure, "protected output root"):
             execute_strict_case(case, adapter)
+
+    def test_strict_adapter_cannot_rewrite_nested_expected_values(self) -> None:
+        case = CASES[0]
+        original_failure_code = case["expected"]["failure_code"]
+
+        def adapter(**kwargs):
+            supplied = kwargs["case"]
+            supplied["expected"]["failure_code"] = "ORACLE_REWRITE"
+            return {
+                "case_id": supplied["case_id"],
+                "decision": "REJECT",
+                "failure_code": "ORACLE_REWRITE",
+                "failure_phase": supplied["expected"]["failure_phase"],
+                "output_writes": [],
+            }
+
+        with self.assertRaisesRegex(TargetAdapterFailure, "failure_code"):
+            execute_strict_case(case, adapter)
+        self.assertEqual(case["expected"]["failure_code"], original_failure_code)
 
     def test_jsonl_contains_one_canonical_object_per_nonblank_line(self) -> None:
         content = CORPUS_PATH.read_text(encoding="utf-8")
