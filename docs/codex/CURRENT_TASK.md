@@ -17,6 +17,9 @@ PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
 TEST_SPEC_PR: https://github.com/mohsamir7122/ku-bo/pull/12
+IMPLEMENTATION_PR: https://github.com/mohsamir7122/ku-bo/pull/13
+IMPLEMENTATION_PR_SHA: 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc
+IMPLEMENTATION_CI_RUN: https://github.com/mohsamir7122/ku-bo/actions/runs/31695010037
 BLOCKED_ON: REAL_MARKET_EVIDENCE; AUTHENTICATED_CAPTURE_AUTHORITY; KU-BO-008-D01; BENCHMARK_SCOPE_COMPATIBILITY
 ```
 
@@ -45,8 +48,9 @@ PR #12 merged as TEST_SPEC_ONLY
 Post-merge GitHub Actions 31684299396 / PASS
 
 build/tri-security-receipt-enforcement-v0.2
-@5e5b4ad9237ccaff04974576a3c77b2058a79b8f
-Implementation code head before control commit / Draft PR and CI pending
+@6dc821f8342bf2041ac3bed983c6805ff0a2c3fc
+Draft PR #13 / GitHub Actions 31695010037 PASS
+Python 3.11 / 3.12 / 3.13 / 3.14 jobs PASS
 ```
 
 Merged PR #12 contains 1,280 deterministic synthetic Test Specifications and
@@ -61,14 +65,14 @@ no-overwrite staging with pre-commit revalidation, exact input-role binding,
 the predecessor DAG, strict Schema, and a non-oracle production Adapter. The
 Adapter owns an independent materialization contract and dispatches the
 synthetic attacks through the named public production boundary. These
-delivered code surfaces do not complete KU-BO-011 until the publication and
-exact-head CI gates below pass.
+delivered code surfaces are published and exact-head CI-proven at `6dc821f`.
+KU-BO-011 remains active until this later control-record head passes its own
+exact-head CI and the ordered merge boundary is rechecked.
 
-## Verified local implementation proof
+## Verified published implementation proof
 
-The following results are verified locally at implementation code head
-`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`, before this control-record
-commit:
+The following results are published in Draft PR #13 at implementation head
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`:
 
 ```text
 Complete local unit/adversarial suite                 1,916 PASS
@@ -80,14 +84,16 @@ Installed lineage artifacts                          8
 Corpus v3 deterministic generator/audit              PASS
 Corpus v3 SHA-256                                     e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
 Compile / Codex control / smoke / secret / diff       PASS
+Exact-head GitHub Actions run 31695010037             PASS
+Python 3.11 / 3.12 / 3.13 / 3.14 jobs                PASS
 ```
 
-This proves `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT` locally only. PR #12
-remains historically `TEST_SPEC_ONLY`; the branch result does not convert its
-merged Test Specification into runtime proof. No market bytes, provider or
-capture authority, rights, real backtest, forecast, probability, accuracy,
-recommendation, or production operation is proven. `KU-BO-008-D01` remains
-`OPEN`.
+This proves published `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT` and remains
+`SYNTHETIC_ONLY`. PR #12 remains historically `TEST_SPEC_ONLY`; the branch
+result does not convert its merged Test Specification into runtime proof. No
+market bytes, provider or capture authority, rights, real backtest, forecast,
+probability, accuracy, recommendation, or production operation is proven.
+`KU-BO-008-D01` remains `OPEN`.
 
 ## Required boundary map
 
@@ -197,10 +203,10 @@ completion therefore requires an Adapter and tests that:
 
 A strict 1,280-case pass without this proof is insufficient.
 
-The branch-local Adapter now supplies that dispatch and anti-oracle proof, and
-both the source-tree and clean-installed-wheel strict runs passed all 1,280
-cases. This remains local evidence until the same implementation and control
-head is published as a Draft PR and exact-head GitHub Actions passes.
+The Adapter supplies that dispatch and anti-oracle proof, and both the
+source-tree and clean-installed-wheel strict runs passed all 1,280 cases. Draft
+PR #13 and exact-head run `31695010037` publish and confirm that implementation
+proof at `6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`.
 
 ## Acceptance gates
 
@@ -224,11 +230,12 @@ head is published as a Draft PR and exact-head GitHub Actions passes.
    `docs/codex/HANDOFF_TEMPLATE.md` at
    `docs/codex/handoffs/KU-BO-011-result.md`.
 
-Local gates 1 through 7 and the partial form of gate 9 have passed at
-`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`. Gate 8 is still pending, and gate
-9 cannot be classified completed until the handoff records the Draft PR and
-its exact-head CI. `STATUS` therefore remains `IN_PROGRESS`,
-`EXPECTED_PR_MODE` remains `DRAFT`, and `MERGE_ALLOWED` remains `NO`.
+Implementation gates 1 through 9 passed at published head
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`, including run `31695010037` on
+Python 3.11 through 3.14. This control-record update creates a later head that
+must receive its own exact-head CI before merge-boundary review. `STATUS`
+therefore remains `IN_PROGRESS`, `EXPECTED_PR_MODE` remains `DRAFT`, and
+`MERGE_ALLOWED` remains `NO`.
 
 ## Required safety and non-claim boundaries
 
@@ -256,8 +263,8 @@ its exact-head CI. `STATUS` therefore remains `IN_PROGRESS`,
 ## Publication and ordered-merge behavior
 
 - PR #12 has already merged first as `TEST_SPEC_ONLY`; preserve that non-claim.
-- Complete the production Adapter and all local acceptance gates, then publish
-  the implementation as a Draft PR from current `main` ancestry.
+- Preserve Draft PR #13 and its proven implementation head while publishing
+  this control-record-only update without broadening implementation claims.
 - Before exercising the remaining `KU-BO-MERGE-003` authority, recheck the
   exact implementation head, changed files, review state, mergeability,
   secret/privacy scan, and exact-head CI.

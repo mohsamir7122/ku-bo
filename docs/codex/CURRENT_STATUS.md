@@ -15,7 +15,9 @@ main@c621fcf88034c4571aa08aee2e54e2e026a4f651
   └── Merge PR #12 as TEST_SPEC_ONLY
         └── GitHub Actions 31684299396 / PASS
               └── build/tri-security-receipt-enforcement-v0.2
-                    @5e5b4ad9237ccaff04974576a3c77b2058a79b8f
+                    @6dc821f8342bf2041ac3bed983c6805ff0a2c3fc
+                      └── Draft PR #13
+                            └── GitHub Actions 31695010037 / PASS
 ```
 
 PRs #4 through #12 are merged into `main`. PR #12 entered `main` at merge
@@ -25,11 +27,12 @@ acceptance corpus, not runtime enforcement. Open PRs #2 and #3 remain stale,
 conflicting, and based on pre-stack history; neither is an authority or a safe
 base for current work.
 
-The local KU-BO-011 implementation branch
+The KU-BO-011 implementation branch
 `build/tri-security-receipt-enforcement-v0.2` now includes merged `main` and is
-at implementation code head `5e5b4ad9237ccaff04974576a3c77b2058a79b8f`
-before the current control-record commit. It has no published implementation
-PR or exact-head GitHub Actions result yet.
+published as Draft PR #13 at remote implementation head
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`. Exact-head GitHub Actions run
+`31695010037` completed successfully, including the Python 3.11, 3.12, 3.13,
+and 3.14 jobs.
 
 ## Proven on merged main
 
@@ -83,9 +86,8 @@ TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
 
 ## Active KU-BO-011 implementation
 
-KU-BO-011 remains `IN_PROGRESS`. At code head
-`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`, the implementation branch now
-delivers:
+KU-BO-011 remains `IN_PROGRESS`. At published implementation head
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`, Draft PR #13 now delivers:
 
 - semantic admission v2 authenticated by a third runtime-only HMAC authority,
   separate from Run Receipt and Stage Binding v1;
@@ -114,17 +116,17 @@ delivers:
   compile, deterministic generator/audit, Codex control, synthetic smoke,
   secret, and diff checks.
 
-These local results support only the branch-local classification
-`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT`. They do not retroactively change
-PR #12: its merged evidence remains historically `TEST_SPEC_ONLY`. They also
-do not prove market data, provider authority, capture rights, a real backtest,
-forecast skill, probability, accuracy, recommendation, or production
-readiness.
+The implementation evidence is now published and exact-head CI-proven as
+`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY`. It does not
+retroactively change PR #12: its merged evidence remains historically
+`TEST_SPEC_ONLY`. It also does not prove market data, provider authority,
+capture rights, a real backtest, forecast skill, probability, accuracy,
+recommendation, or production readiness.
 
-Completion still requires committing the control handoff, publishing the
-implementation as a Draft PR, and receiving exact-head GitHub Actions success
-on that published head. The current KU-BO-011 handoff is therefore `PARTIAL`,
-not completed.
+The implementation-evidence handoff can now be `COMPLETED`. KU-BO-011 remains
+`IN_PROGRESS`, `EXPECTED_PR_MODE` remains `DRAFT`, and `MERGE_ALLOWED` remains
+`NO`: this control-record update will create a head after `6dc821f`, and that
+new exact head must pass CI before the ordered merge-boundary recheck.
 
 The user's current instruction authorizes the necessary ordered changes and
 merges only under the conditions recorded in `KU-BO-MERGE-003`. During active
@@ -144,9 +146,9 @@ applicable gates pass and the approval record is rechecked.
 
 ## Still not proven
 
-- a published implementation Draft PR and exact-head GitHub Actions proof for
-  the implementation branch;
-- a completed KU-BO-011 handoff tied to that published exact-head CI result;
+- exact-head GitHub Actions for the control-record commit after
+  `6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`;
+- final merge-boundary review, mergeability recheck, and post-merge `main` CI;
 - complete effective-dated historical market universe;
 - real rights-compatible Benchmark and Official Complete EOD packets;
 - complete historical Corporate Actions and suspension/resumption evidence;

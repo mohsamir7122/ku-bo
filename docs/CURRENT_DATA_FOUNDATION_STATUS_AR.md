@@ -22,7 +22,9 @@ main@c621fcf88034c4571aa08aee2e54e2e026a4f651
   └── PR #12 merged / TEST_SPEC_ONLY
         └── Post-merge CI 31684299396 PASS
               └── build/tri-security-receipt-enforcement-v0.2
-                    @5e5b4ad9237ccaff04974576a3c77b2058a79b8f
+                    @6dc821f8342bf2041ac3bed983c6805ff0a2c3fc
+                      └── Draft PR #13
+                            └── CI 31695010037 PASS
 ```
 
 قاعدة المرحلة الحالية:
@@ -32,12 +34,13 @@ main
 @c621fcf88034c4571aa08aee2e54e2e026a4f651
 ```
 
-فرع تنفيذ `KU-BO-011` المحلي هو
+فرع تنفيذ `KU-BO-011` هو
 `build/tri-security-receipt-enforcement-v0.2`. يتضمن `main` بعد دمج PR #12،
-وImplementation Code Head قبل Commit سجلات التحكم الحالية هو
-`5e5b4ad9237ccaff04974576a3c77b2058a79b8f`. حالته `IN_PROGRESS`؛ نجحت
-بواباته المحلية، لكن لا يوجد Implementation Draft PR منشور أوExact-head CI
-خاص به بعد.
+ونُشر كـDraft PR #13 على Remote Head
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`. اكتمل CI Run `31695010037`
+بنجاح، ونجحت Jobs الخاصة بـPython 3.11 و3.12 و3.13 و3.14. تظل الحالة
+`IN_PROGRESS` لأن Commit سجلات التحكم اللاحق يحتاج Exact-head CI أخيرًا قبل
+إعادة فحص حد الدمج.
 
 ## طبقة Price History
 
@@ -68,7 +71,8 @@ main
   Semantic Admission v2 منفصلًا بمفتاح ثالث مستقل، وفرضه في Direct API وCLI
   لكل Importer وفي Final Reconciliation. نجح إثبات Adapter الاصطناعي محليًا
   في 1,280/1,280 حالة من Source Tree و1,280/1,280 من Clean Installed Wheel،
-  لكن Exact-head CI لم يكتمل بعد؛ لذلك المرحلة ليست Qualification end-to-end.
+  ونجح Exact-head CI المنشور؛ ومع ذلك المرحلة ليست Qualification end-to-end
+  لأن الإثبات اصطناعي ولا يحتوي Market Evidence.
 - كل دفعة تحمل البوابات النهائية الاثنتي عشرة بالحالة
   `PENDING_EXTERNAL_EVIDENCE`.
 
@@ -108,8 +112,9 @@ TEST_SPEC_ONLY_NO_KU_BO_011_RUNTIME_ENFORCEMENT_CLAIM
 e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
 ```
 
-التمييز الملزم هو: PR #12 تظل `TEST_SPEC_ONLY`، بينما Head التنفيذ يثبت
-`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT` **محليًا فقط**.
+التمييز الملزم هو: PR #12 تظل `TEST_SPEC_ONLY`، بينما PR #13 تثبت
+`CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY` على Head منشور
+وناجح في CI، من دون أي ترقية لادعاءات السوق.
 
 ## نطاق تنفيذ KU-BO-011 الحالي
 
@@ -141,19 +146,21 @@ e7e84f75feae5ea72a5d4f67af50da24f5d46e5a9cba49030ff8547a41b50288
 - نجح Full Local Suite بعدد 1,916 Test؛ ونجحت فحوص Compile وCorpus
   Generator/Audit v3 وCodex Control وSynthetic Smoke وSecret Guard وDiff.
 
-هذه النتائج تثبت كودًا وسلوكًا خصوميًا اصطناعيًا فقط. لا تثبت Market Data أو
-Provider/Capture Authority أوRights أوReal Backtest أوForecast أوProbability
-أوAccuracy أوRecommendation أوProduction Readiness.
+هذه النتائج المنشورة تثبت كودًا وسلوكًا خصوميًا اصطناعيًا فقط. لا تثبت
+Market Data أوProvider/Capture Authority أوRights أوReal Backtest أوForecast
+أوProbability أوAccuracy أوRecommendation أوProduction Readiness.
 
-المتبقي قبل الإغلاق هو تسجيل ونشر Implementation Draft PR ثم نجاح GitHub
-Actions على Exact Head نفسه. لذلك Handoff الحالية `PARTIAL`، والمهمة تظل
-`IN_PROGRESS`.
+اكتمل دليل التنفيذ المنشور: Draft PR #13 عند
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`، ونجح Exact-head CI Run
+`31695010037` على Python 3.11 إلى 3.14. لذلك Handoff دليل التنفيذ
+`COMPLETED`. تظل المهمة `IN_PROGRESS` و`MERGE_ALLOWED: NO` لأن تحديث سجلات
+التحكم الحالي سينشئ Head لاحقًا يحتاج CI أخيرًا وإعادة فحص حد الدمج.
 
 تفويض الدمج المرتب مسجل في `KU-BO-MERGE-003`. اكتمل جزؤه الأول بدمج PR #12
 أولًا ونجاح Post-merge CI. يبقى جزء Implementation فقط، وMetadata المهمة تظل
 محافظة أثناء التنفيذ: `EXPECTED_PR_MODE: DRAFT` و`MERGE_ALLOWED: NO`. لا تدمج
-Implementation PR إلا بعد اكتمال Adapter والبوابات المحلية وFresh exact-head
-CI.
+Implementation PR إلا بعد نجاح Exact-head CI لتحديث سجلات التحكم الحالي
+وإعادة فحص حد الدمج.
 
 ## Current Official Identity and Calendar
 
@@ -304,8 +311,8 @@ HISTORICAL_STATUS_INTERVALS_READY
 ## البوابات التالية
 
 ```text
-PUBLISH_KU_BO_011_IMPLEMENTATION_AS_DRAFT_PR
-PASS_KU_BO_011_EXACT_HEAD_GITHUB_ACTIONS
+PUSH_KU_BO_011_CONTROL_RECORD_UPDATE
+PASS_CONTROL_RECORD_EXACT_HEAD_GITHUB_ACTIONS
 RECHECK_KU_BO_MERGE_003_AT_ORDERED_MERGE_BOUNDARY
 FREEZE_OUTCOME_AND_RIGHTS_RETURN_POLICY
 VERIFY_OFFICIAL_BENCHMARK_DEFINITIONS_AND_RIGHTS

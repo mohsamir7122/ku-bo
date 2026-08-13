@@ -1,18 +1,24 @@
 # KU-BO-011 — Eight-boundary semantic admission enforcement
 
 ```text
-FINAL_STATUS: PARTIAL
+FINAL_STATUS: COMPLETED
 REPOSITORY: https://github.com/mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: c621fcf88034c4571aa08aee2e54e2e026a4f651
 TASK_BRANCH: build/tri-security-receipt-enforcement-v0.2
-FINAL_SHA: 5e5b4ad9237ccaff04974576a3c77b2058a79b8f (implementation code head before control-record commit)
-DRAFT_PR: PENDING
+FINAL_SHA: 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc (published implementation head; this control-record update creates a later head)
+DRAFT_PR: https://github.com/mohsamir7122/ku-bo/pull/13
 PR_BASE: main
-CI_RUN: PENDING — no exact-head implementation GitHub Actions result yet
+CI_RUN: https://github.com/mohsamir7122/ku-bo/actions/runs/31695010037 — PASS
 STARTED_AT: 2026-08-13 (Asia/Kuwait)
-COMPLETED_AT: PENDING — Draft publication and exact-head CI remain open
+COMPLETED_AT: 2026-08-13 (Asia/Kuwait)
 ```
+
+`FINAL_STATUS: COMPLETED` classifies the published implementation evidence at
+`6dc821f8342bf2041ac3bed983c6805ff0a2c3fc`. It does not authorize merge. This
+handoff/control update creates a later commit, which must pass exact-head CI
+before the ordered `KU-BO-MERGE-003` boundary is rechecked. Accordingly,
+`CURRENT_TASK` remains `IN_PROGRESS` and `MERGE_ALLOWED` remains `NO`.
 
 ## User goal
 
@@ -130,20 +136,23 @@ DETAIL: Control metadata, synthetic smoke contracts, secret-pattern safety, and 
 ```
 
 ```text
-COMMAND_OR_JOB: implementation Draft PR and exact-head GitHub Actions
-RESULT: SKIPPED
-DETAIL: Not yet published or run. This is the remaining reason FINAL_STATUS is PARTIAL and MERGE_ALLOWED remains NO.
+COMMAND_OR_JOB: Draft PR #13 exact-head GitHub Actions run 31695010037
+RESULT: PASS
+DETAIL: Remote implementation head 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc completed successfully; Python 3.11, 3.12, 3.13, and 3.14 jobs all passed.
 ```
 
 ## Evidence and data status
 
 - Semantic-admission runtime, public-boundary enforcement, atomic commit,
   predecessor DAG, Adapter, Schemas, and tests:
-  `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY`, proven locally
-  at the recorded code head.
+  `CODE_AND_SYNTHETIC_ADVERSARIAL_ENFORCEMENT / SYNTHETIC_ONLY`, proven on the
+  published Draft PR #13 implementation head.
 - Historical merged PR #12: `SYNTHETIC_ONLY / TEST_SPEC_ONLY`; the later branch
   result does not change its historical claim.
-- Draft publication and exact-head CI: `PARTIAL`.
+- Draft publication and implementation exact-head CI: `PROVEN`.
+- This later control-record commit and its required exact-head CI: `PARTIAL`
+  until pushed and completed; it affects merge readiness, not the already
+  completed implementation-evidence classification.
 - Real identity, status, Corporate Action, price, Benchmark, EOD, provider
   capture, and final reconciliation evidence: `BLOCKED` or `LIVE_DEPENDENT`.
 - Licensed/provider data and rights: `LICENSED_FEED_DEPENDENT`.
@@ -153,9 +162,9 @@ DETAIL: Not yet published or run. This is the remaining reason FINAL_STATUS is P
 
 ## Claims allowed
 
-- The branch locally enforces authenticated semantic admission at the eight
+- Draft PR #13 enforces authenticated semantic admission at the eight
   named public boundaries and revalidates it before atomic commit.
-- The branch locally detects the 1,280 declared synthetic attacks through
+- Draft PR #13 detects the 1,280 declared synthetic attacks through
   source-tree and clean-installed-wheel execution.
 - The installed synthetic fixture constructs the exact authenticated
   predecessor DAG with eight semantic admissions and eight lineages.
@@ -199,8 +208,10 @@ conversation material entered Git.
   outcome evaluation.
 - `KU-BO-MERGE-003`: `APPROVED` conditionally for PR #12 followed by the
   implementation PR. The PR #12 portion is complete. The implementation
-  portion cannot be exercised until Draft publication, exact-head review and
-  CI, and a final gate recheck. Task metadata remains `MERGE_ALLOWED: NO`.
+  evidence is published and exact-head CI-proven at `6dc821f`, but the merge
+  portion cannot be exercised until this control-record head receives CI and
+  the final merge-boundary recheck passes. Task metadata remains
+  `MERGE_ALLOWED: NO`.
 
 ## Items classified for retention
 
@@ -208,7 +219,7 @@ conversation material entered Git.
 KEEP: semantic admission runtime, Schema, CLI, public-boundary wrappers, atomic output, and lineage contract
 KEEP: Corpus v3, deterministic generator/audit, production Adapter, anti-oracle tests, and installed-wheel proof
 KEEP: explicit Stage Binding v1 non-claim and all market/evidence/rights/policy blockers
-KEEP: this PARTIAL handoff until it is updated with the Draft PR and exact-head CI
+KEEP: this COMPLETED implementation-evidence handoff and update it only with later merge/post-merge facts
 ARCHIVE: PR #12 as historical TEST_SPEC_ONLY evidence; do not reinterpret it
 ARCHIVE: stale PR #2/#3 as historical context; no closure or deletion authorized
 PRIVATE_ONLY: runtime keys, real receipts, captured evidence, licensed files, and private conversations
@@ -217,9 +228,9 @@ DELETE_CANDIDATE: None
 
 ## Known limitations and risks
 
-- The exact implementation/control head has not passed GitHub Actions and is
-  not yet reviewable through a Draft PR. Local results alone cannot satisfy the
-  publication gate.
+- The published implementation head passed GitHub Actions, but this
+  control-record update creates a later head. Merge remains prohibited until
+  that later head passes CI and the ordered merge boundary is rechecked.
 - The adversarial corpus is synthetic. It cannot prove source availability,
   identity truth, provider authority, rights, denominator completeness, or
   market correctness.
@@ -231,10 +242,10 @@ DELETE_CANDIDATE: None
 ## Smallest logical next task
 
 ```text
-TASK_ID: KU-BO-011-PUBLISH-AND-CI
+TASK_ID: KU-BO-011-CONTROL-CI-AND-MERGE-RECHECK
 PROPOSED_BRANCH: build/tri-security-receipt-enforcement-v0.2
-DEPENDENCY: implementation code head 5e5b4ad9237ccaff04974576a3c77b2058a79b8f plus this control-record commit
-GOAL: publish the implementation as a Draft PR against main and obtain exact-head GitHub Actions evidence without merging
-ENTRY_GATE: local 1,916-test, 1,280/1,280 source, 1,280/1,280 installed-wheel, installed DAG, compile, control, smoke, secret, and diff checks remain green
-EXIT_GATE: Draft PR exists at the exact control head, all required GitHub Actions jobs pass on that head, and the handoff records the PR/CI identifiers while MERGE_ALLOWED remains NO pending the ordered merge-boundary recheck
+DEPENDENCY: Draft PR #13 implementation head 6dc821f8342bf2041ac3bed983c6805ff0a2c3fc and CI run 31695010037 PASS, plus this control-record commit
+GOAL: publish the control-record update, obtain exact-head GitHub Actions evidence, and perform the ordered KU-BO-MERGE-003 boundary recheck without weakening any non-claim
+ENTRY_GATE: PR #13 remains Draft and the implementation evidence at 6dc821f remains green; CURRENT_TASK remains IN_PROGRESS and MERGE_ALLOWED remains NO
+EXIT_GATE: the later control-record head passes all required GitHub Actions jobs and mergeability, changed-files, review, privacy/secret, and approval guards are rechecked before any merge action
 ```
