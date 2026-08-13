@@ -15,10 +15,10 @@ class CodexControlCheckTests(unittest.TestCase):
     def test_repository_control_layer_passes(self) -> None:
         report = validate(ROOT)
         self.assertEqual(report["status"], "PASS", report["errors"])
-        self.assertEqual(report["task_id"], "KU-BO-010")
+        self.assertEqual(report["task_id"], "KU-BO-011")
         self.assertEqual(
             report["expected_branch"],
-            "build/tri-security-run-receipt-v0.1",
+            "build/tri-security-receipt-enforcement-v0.2",
         )
         self.assertFalse(
             report["claim_boundaries"]["control_check_authorizes_merge"]
