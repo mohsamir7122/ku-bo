@@ -56,12 +56,35 @@ IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 ## Approved decisions
 
 ```text
+DECISION_ID: KU-BO-MERGE-003
+STATUS: APPROVED
+DATE_RAISED: 2026-08-13
+TARGET: PR #12 followed by the KU-BO-011 implementation PR
+CATEGORY: MERGE
+CURRENT_STATE: main is 6bcfbabf840e6876a878dfd692afbf746780d731 with post-merge CI run 31629909113 PASS. Draft PR #12 is clean and mergeable at 3d773448b78ca99f6761a43b852f53967fdbb095 with exact-head CI run 31631077911 PASS, but it contains only the deterministic acceptance-spec corpus and no KU-BO-011 runtime enforcement. The implementation branch build/tri-security-receipt-enforcement-v0.2 starts at that exact Test Spec head and remains IN_PROGRESS.
+WHY_A_DECISION_IS_REQUIRED: Repository rules prohibit any merge without an explicit user decision. The Test Spec and implementation must enter main in dependency order, and each changed or retargeted exact head must pass its applicable acceptance and CI gates before merge.
+OPTIONS:
+1. Update the control records, run fresh CI, merge PR #12 as TEST_SPEC_ONLY, create or retarget the implementation PR to updated main, prove production-path enforcement, rerun exact-head CI, then merge the implementation PR.
+2. Merge PR #12 only and leave the implementation as a Draft.
+3. Merge both without production-path Adapter proof or fresh post-retarget CI.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: The locked synthetic Test Specification and the separately reviewed runtime implementation may enter main in dependency order while every real-data, rights, outcome-policy, Benchmark, backtest, forecast, probability, accuracy, recommendation, and production gate remains fail-closed.
+CONSEQUENCE_OF_REJECTION: Both stages remain available only on their task branches.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep PR #12 and the implementation PR open as Drafts without merging.
+USER_DECISION: APPROVED in the active user session with the instruction "قم بعمل التعديل والدمج اللازم" after receiving the repository audit, non-merged-item reasons, and ordered development plan.
+DECIDED_AT: 2026-08-13
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: This approval is limited to PR #12 and the KU-BO-011 implementation PR, in that order, after their applicable exact-head gates pass. It does not authorize PR #2, PR #3, force-push, auto-merge, deletion, gate weakening, credentials, real-data publication, a later batch, model training, real backtest, forecast, probability, accuracy, recommendation, or production execution. CURRENT_TASK remains conservatively MERGE_ALLOWED: NO during implementation; the approval is rechecked only at the ordered merge boundary.
+IMPLEMENTED_IN_BRANCH_OR_PR: PENDING
+```
+
+```text
 DECISION_ID: KU-BO-MERGE-002
 STATUS: APPROVED
 DATE_RAISED: 2026-08-12
 TARGET: Stacked PR chain #10 -> #11
 CATEGORY: MERGE
-CURRENT_STATE: PR #10 and PR #11 were inspected at heads 7d032c98b0ef9f27e913199487ad4577119c2631 and 1a2cfeb390e7e17f029a07f326a75a1bc70d07a6. Both stacked Draft PRs were clean and their exact-head Linux CI matrices passed Python 3.11 through 3.14. The audit found one documentation-only discrepancy in PR #11: the installed-wheel checker exercised 16 selected distinct CLI flows, not 17.
+CURRENT_STATE: COMPLETED. PR #10 was merged as 2f51c88 and PR #11 was merged as 6bcfbab after the documentation correction and fresh dependency-order validation. Post-merge main CI run 31629909113 passed on Python 3.11 through 3.14. The original reviewed heads were 7d032c98b0ef9f27e913199487ad4577119c2631 and 1a2cfeb390e7e17f029a07f326a75a1bc70d07a6; the audit correction recorded that the installed-wheel checker exercised 16 selected distinct CLI flows, not 17.
 WHY_A_DECISION_IS_REQUIRED: Repository rules prohibit any merge without explicit user approval and require stacked PRs to merge in dependency order. The documentation correction and any merge-authority commits must receive fresh exact-head CI before merge.
 OPTIONS:
 1. Record this approval, correct the CLI-flow count, run fresh CI, merge PR #10 into main, retarget and revalidate PR #11 against main, then merge PR #11.
