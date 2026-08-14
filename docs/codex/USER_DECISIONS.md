@@ -75,7 +75,30 @@ USER_DECISION: APPROVED by the active instruction to program the layers, underst
 DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No corpus scrape, private data, access-control bypass, copyrighted bulk republication, completeness claim, guilt inference, model training, forecast, recommendation, or merge of KU-BO-013. Publish as Draft until a later explicit merge decision.
-IMPLEMENTED_IN_BRANCH_OR_PR: agent/kuwait-historical-knowledge-layer / pending Draft PR
+IMPLEMENTED_IN_BRANCH_OR_PR: COMPLETED DEVELOPMENT — PR #15 / agent/kuwait-historical-knowledge-layer / exact implementation head 27dedec792b7f057a975131562898a325fa372a1 / CI run 31785060069 PASS. Merge authority is recorded separately in KU-BO-MERGE-005.
+```
+
+```text
+DECISION_ID: KU-BO-MERGE-005
+STATUS: APPROVED
+DATE_RAISED: 2026-08-14
+TARGET: PR #15 / KU-BO-013 on agent/kuwait-historical-knowledge-layer
+CATEGORY: MERGE
+CURRENT_STATE: PR #15 is a clean, mergeable Draft against main at bafdda86b44b7603fe4adfa62dcc2a49bff8ae15. Its exact implementation head 27dedec792b7f057a975131562898a325fa372a1 passed CI run 31785060069 on Python 3.11 through 3.14. Local validation passed 2,082 tests plus compile, smoke, strict JSON/Schema, config/CLI, diff, control, Secret Guard, wheel build, isolated wheel install, and the installed historical-knowledge CLI. The branch programs planning contracts and source definitions only: 26 sources remain DEFINED_ONLY, 756 annual tasks remain NOT_COLLECTED, and no live corpus or company universe is claimed.
+WHY_A_DECISION_IS_REQUIRED: Repository rules require explicit user authority before merging KU-BO-013. Recording this authority creates a later documentation-only head that must receive fresh exact-head CI before the merge boundary.
+OPTIONS:
+1. Record the approval, run fresh exact-head CI on the authorization head, mark PR #15 ready, and merge only that exact head if all gates remain green.
+2. Leave PR #15 open as a Draft without merging.
+3. Merge without fresh CI or weaken the historical evidence and claim boundaries.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: The tested KU-BO-013 planning foundation may enter main while every live-collection, rights, completeness, legal, forecasting, recommendation, and production gate remains fail-closed.
+CONSEQUENCE_OF_REJECTION: The implementation remains available only in Draft PR #15.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep PR #15 as a validated Draft.
+USER_DECISION: APPROVED in the active user session through the explicit instruction to run the necessary tests, verify the updates, and then perform the merge.
+DECIDED_AT: 2026-08-14
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: No force-push, deletion, credentials, private or licensed data publication, corpus-completeness claim, guilt inference, gate weakening, model training, forecast, probability, accuracy, recommendation, or production execution. Merge only PR #15 after the later authorization head passes exact-head CI and a final mergeability review.
+IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on the PR #15 branch; exact-head CI and merge-boundary execution remain required.
 ```
 
 ```text
