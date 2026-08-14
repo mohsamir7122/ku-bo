@@ -2,12 +2,31 @@
 
 هذا الملف يصف ما نُفذ واختُبر داخل المستودع. لا يعلن اكتمال منصة Production، أوتوافر المصادر الخارجية، أوصلاحية النظام للتوصية أوالتنفيذ المالي.
 
-## منفذ في الأساس البرمجي
+## نقطة التطوير الحالية — KU-BO-014
 
-العناصر الموروثة متحققة بحسب CI التاريخي الخاص بها. عناصر `KU-BO-012`
-مضافة على فرع المهمة واجتازت بوابات القبول المحلية، ونُشرت في Draft PR #14
-واجتاز رأس التنفيذ Exact-head CI. لم يحدث الدمج؛ لا تُقرأ القائمة كإعلان
-Production أوMerge.
+الأساس المدمج على `main` عند
+`59833bf73510b3aa3901f628cbf2c13c0d01cf79` يتضمن KU-BO-012 وطبقة التخطيط
+التاريخي KU-BO-013 وتشديد بوابات الأدلة اللاحق. بدأ KU-BO-014 على الفرع
+`agent/bootstrap-archive-v0.1` لبناء Scaffold أرشيفي معزول وخالٍ من الأدلة.
+
+الحالة الحالية `IN_PROGRESS`: اكتمل البناء والفحص المحلي للـScaffold، بينما
+يبقى نشر Draft PR وExact-head CI معلقين. نجاح الفحص يثبت عقد الأرشيف الفارغ
+فقط؛ لا يعلن جمع Corpus أوProduction أوMerge.
+
+```text
+archive_mode: EMPTY_SCAFFOLD_ONLY
+archive_readiness: PLANNED_NOT_EXECUTED
+historical_evidence_artifacts: 0
+companies: 0
+events: 0
+collection_allowed: false
+merge_allowed: false
+```
+
+## منفذ في الأساس البرمجي الموروث
+
+العناصر الموروثة التالية متحققة بحسب CI التاريخي الخاص برؤوسها المدمجة،
+ويضاف إليها KU-BO-014 محليًا مع بقاء CI الخاص برأسه المنشور معلقًا.
 
 - كتالوج يحوي 68 تعريف مصدر موزعة على 62 مجموعة استقلال و59 نطاقًا مرشحًا بعد استبعاد البحث والتخزين؛ 53 منها معلنة Enabled-public في الكتالوج، و52 نطاق Start URL تنفيذيًا مميزًا قبل الحجز. هذه تعريفات سياسة وليست موصلات حية.
 - خمس سياسات تغطي 14 منتجًا بحثيًا وزمنيًا، منها `KUWAIT_120D_NEXT_SESSION_RESEARCH`.
@@ -68,14 +87,14 @@ accuracy_claim_allowed: false
 
 ## حالة التحقق
 
-- اختبارات Workflow/Source Orchestrator/Ingestion/Context/Integration/Replay/CLI/Schemas المركزة: `183/183 PASS`.
-- Full Suite النهائية على الشجرة الحالية: `2,067/2,067 PASS` في `164.347s`.
+- اختبارات KU-BO-014 وحدها: `34/34 PASS`، والاختبارات المستهدفة مع Historical وCodex Control: `57/57 PASS`.
+- Full Suite النهائية على الشجرة المحلية الحالية: `2,120/2,120 PASS` في `158.371s`.
 - `compileall` وJSON checks و`git diff --check` وSmoke وSecret Guard: `PASS`.
 - توليد Corpus من `1,280` حالة وتدقيقه: `PASS`.
-- Codex control check: `PASS` على 15 ملف تحكم و10 ملفات مطلوبة، مع 0 Errors و0 Warnings.
-- Wheel النهائية: `PASS`؛ الحجم `444351` بايت، وSHA-256 هو `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`.
-- Isolated install/imports/CLI help/`validate-research-workflow`: `PASS`؛ و`installed_data_foundation_check`: `PASS` مع 8 Semantic admissions و8 Lineages.
-- GitHub Actions الخاصة بـKU-BO-012: `PASS` لرأس التنفيذ المنشور في Draft PR #14؛ Run `31733924569`، SHA `58a78042d5d509e599d2e273d793856b1dee14dd`، وكل Jobs Python 3.11/3.12/3.13/3.14 نجحت. تحديث سجل التحكم اللاحق يحتاج CI جديدًا قبل مراجعة الدمج.
+- Codex control check: `PASS` على 18 ملف تحكم و10 ملفات مطلوبة، مع 0 Errors و0 Warnings.
+- Wheel KU-BO-014: `PASS`؛ الحجم `465934` بايت، وSHA-256 هو `707b351aa546e565826c3372acb78fe95e234b7e61af2a5d4b8009c5d91cbab0`.
+- Isolated install/CLI help و`validate-bootstrap-archive-config` و`prepare-bootstrap-archive` و`validate-bootstrap-archive`: `PASS`؛ أعاد التحقق من 28 مصدرًا و6 طبقات و756 مهمة وصفر Evidence/Company/Event.
+- Exact-head GitHub Actions لرأس KU-BO-014 المنشور: `PENDING` حتى إنشاء Draft PR؛ لا توجد سلطة Merge.
 
 ## غير مكتمل عمدًا ولا يجوز الادعاء بعكسه
 

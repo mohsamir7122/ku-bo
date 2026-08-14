@@ -304,10 +304,15 @@ def _start_year(rule: str, current_year: int) -> int:
     raise ValueError(f"unsupported start rule: {rule}")
 
 
-def compile_research_plan(catalog: HistoricalKnowledgeCatalog, *, as_of: date) -> dict[str, Any]:
+def compile_research_plan(
+    catalog: HistoricalKnowledgeCatalog,
+    *,
+    as_of: date,
+    current_date: date | None = None,
+) -> dict[str, Any]:
     """Create a deterministic annual plan, including explicit uncollected coverage."""
 
-    if as_of > date.today():
+    if as_of > (current_date or date.today()):
         raise ValueError("as_of cannot be in the future")
     tasks: list[dict[str, Any]] = []
     layer_summaries: list[dict[str, Any]] = []

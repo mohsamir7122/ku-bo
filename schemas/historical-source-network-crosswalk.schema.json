@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/historical-source-network-crosswalk.schema.json",
+  "title": "KU-BO declared-only historical to runtime source crosswalk",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "capability_claim", "bindings", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "capability_claim": {"const": "DEFINED_ONLY"},
+    "bindings": {
+      "type": "array",
+      "minItems": 28,
+      "maxItems": 28,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["historical_source_id", "network_source_ids", "bridge_status", "collection_allowed", "semantic_limit"],
+        "properties": {
+          "historical_source_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+          "network_source_ids": {"type": "array", "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"}},
+          "bridge_status": {"enum": ["DECLARED_MAPPING_ONLY", "PARTIAL_DECLARED_MAPPING", "UNMAPPED_DEFINED_ONLY"]},
+          "collection_allowed": {"const": false},
+          "semantic_limit": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "^\\S(?:.*\\S)?$"}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"bridge_status": {"const": "UNMAPPED_DEFINED_ONLY"}}, "required": ["bridge_status"]},
+            "then": {"properties": {"network_source_ids": {"maxItems": 0}}},
+            "else": {"properties": {"network_source_ids": {"minItems": 1}}}
+          }
+        ]
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crosswalk_is_connector_implementation", "crosswalk_is_parser_validation", "crosswalk_is_live_operational", "collection_allowed"],
+      "properties": {
+        "crosswalk_is_connector_implementation": {"const": false},
+        "crosswalk_is_parser_validation": {"const": false},
+        "crosswalk_is_live_operational": {"const": false},
+        "collection_allowed": {"const": false}
+      }
+    }
+  }
+}

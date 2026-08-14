@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/bootstrap-archive-manifest.schema.json",
+  "title": "KU-BO empty bootstrap archive control manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_id", "archive_id", "status", "control_artifacts", "evidence_artifacts", "counts", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "manifest_id": {"type": "string", "pattern": "^bootstrap-manifest-[0-9a-f]{24}$"},
+    "archive_id": {"type": "string", "pattern": "^bootstrap-[0-9a-f]{24}$"},
+    "status": {"const": "SCAFFOLD_ONLY_NO_EVIDENCE"},
+    "control_artifacts": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "evidence_artifacts": {"type": "array", "maxItems": 0},
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_artifact_count", "evidence_artifact_count"],
+      "properties": {
+        "control_artifact_count": {"const": 15},
+        "evidence_artifact_count": {"const": 0}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_artifact_is_historical_evidence", "empty_manifest_proves_historical_absence", "archive_collection_allowed"],
+      "properties": {
+        "control_artifact_is_historical_evidence": {"const": false},
+        "empty_manifest_proves_historical_absence": {"const": false},
+        "archive_collection_allowed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(control|historical|stages|reports)/[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/bootstrap-archive-workspace-report.schema.json",
+  "title": "KU-BO bootstrap archive workspace report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "archive_id", "archive_status", "readiness_status", "archive_descriptor_sha256", "bootstrap_archive_plan_sha256", "manifest_sha256", "historical_research_plan_sha256", "historical_task_count", "evidence_artifact_count", "company_count", "event_count", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "PASS_SCAFFOLD_PREPARATION"},
+    "archive_id": {"type": "string", "pattern": "^bootstrap-[0-9a-f]{24}$"},
+    "archive_status": {"const": "BOOTSTRAP_ARCHIVE_SCAFFOLD_PREPARED"},
+    "readiness_status": {"const": "PLANNED_NOT_EXECUTED"},
+    "archive_descriptor_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "bootstrap_archive_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "historical_research_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "historical_task_count": {"type": "integer", "minimum": 6},
+    "evidence_artifact_count": {"const": 0},
+    "company_count": {"const": 0},
+    "event_count": {"const": 0},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "$defs": {
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["historical_corpus_collected", "historical_completeness_claim_allowed", "company_intelligence_ready", "source_waves_ready", "boursa_reconciliation_ready", "live_operational", "forecast_allowed", "probability_allowed", "recommendation_allowed", "execution_allowed"],
+      "properties": {
+        "historical_corpus_collected": {"const": false},
+        "historical_completeness_claim_allowed": {"const": false},
+        "company_intelligence_ready": {"const": false},
+        "source_waves_ready": {"const": false},
+        "boursa_reconciliation_ready": {"const": false},
+        "live_operational": {"const": false},
+        "forecast_allowed": {"const": false},
+        "probability_allowed": {"const": false},
+        "recommendation_allowed": {"const": false},
+        "execution_allowed": {"const": false}
+      }
+    }
+  }
+}

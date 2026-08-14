@@ -95,8 +95,8 @@ Product-specific مجمدة لعبور التعليق أوالتوقف. لذلك
 المقام لكنه يوقف Replay بدل حذفه أوتوليد Close اصطناعي. لا يعلن Runtime حالة
 `STOP_INFERENCE` غير قابلة للوصول.
 
-التحقق المركز المحلي نجح `183/183` لاختبارات Workflow/Source
-Orchestrator/Context/Integration/Replay/CLI، ونجح Full Suite النهائي
+التحقق المركز المسجل على رأس KU-BO-012 نجح `183/183` لاختبارات Workflow/Source
+Orchestrator/Context/Integration/Replay/CLI، ونجح Full Suite الخاص بذلك الرأس
 `2,067/2,067` في `164.347s`. كما نجح `compileall` وJSON وDiff وSmoke
 وSecret Guard، وتوليد وتدقيق Corpus من `1,280` حالة، وCodex control
 على 15 ملف تحكم و10 ملفات مطلوبة بلا Errors أوWarnings. نجحت Wheel
@@ -106,7 +106,9 @@ Orchestrator/Context/Integration/Replay/CLI، ونجح Full Suite النهائي
 `installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. أضيفت
 Gates المركزة إلى CI، ونُشرت في Draft PR #14؛ نجح Run `31733924569` للرأس
 `58a78042d5d509e599d2e273d793856b1dee14dd`. لم يحدث Merge، وتغيير سجل التحكم
-اللاحق يحتاج Exact-head CI جديدًا قبل مراجعة حد الدمج.
+اللاحق احتاج Exact-head CI جديدًا قبل مراجعة حد الدمج. نتائج الشجرة الأحدث
+الخاصة بـKU-BO-014 موثقة في `docs/BUILD_STATUS_AR.md` ولا تغيّر بوابات Data
+Foundation الخارجية الواردة هنا.
 
 ## طبقة Price History
 

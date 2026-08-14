@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "capability_claim": "DEFINED_ONLY",
+  "bindings": [
+    {"historical_source_id": "kuwait_government_history", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No equivalent executable source is registered."},
+    {"historical_source_id": "kuwait_official_gazette", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No official-gazette runtime source is registered."},
+    {"historical_source_id": "moci_commercial_registry", "network_source_ids": ["moci_kuwait_official"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The network source does not by itself prove commercial-registry identity coverage."},
+    {"historical_source_id": "cma_kuwait", "network_source_ids": ["cma_ifsah"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "A declared semantic bridge is not a tested connector or parser."},
+    {"historical_source_id": "boursa_kuwait", "network_source_ids": ["boursa_current", "boursa_reports_archive", "boursa_disclosure_archive"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Current, report, and disclosure surfaces remain separate evidence roles."},
+    {"historical_source_id": "central_bank_kuwait", "network_source_ids": ["cbk_official"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "A declared semantic bridge is not a tested connector or parser."},
+    {"historical_source_id": "kuwait_csb", "network_source_ids": ["csb_kuwait_official"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "A declared semantic bridge is not a tested connector or parser."},
+    {"historical_source_id": "ministry_justice_kuwait", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No Ministry of Justice runtime source is registered."},
+    {"historical_source_id": "nazaha_kuwait", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No Nazaha runtime source is registered."},
+    {"historical_source_id": "kdipa_reports", "network_source_ids": ["kdipa_official"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "A declared semantic bridge is not a tested connector or parser."},
+    {"historical_source_id": "koc_history", "network_source_ids": ["koc_official"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The current corporate surface may not expose the full historical archive."},
+    {"historical_source_id": "kia_history", "network_source_ids": ["kia_official"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The current institutional surface may not expose the full historical archive."},
+    {"historical_source_id": "national_library_kuwait", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No National Library runtime source is registered."},
+    {"historical_source_id": "qatar_digital_library", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "No QDL or British Library runtime source is registered."},
+    {"historical_source_id": "imf_kuwait", "network_source_ids": ["imf_kuwait_structured"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "Structured macro coverage does not imply full historical-publication coverage."},
+    {"historical_source_id": "world_bank_kuwait", "network_source_ids": ["world_bank_kuwait_structured"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "Structured macro coverage does not imply full historical-publication coverage."},
+    {"historical_source_id": "kuna_archive", "network_source_ids": ["kuna"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The current KUNA surface does not prove archive-year completeness."},
+    {"historical_source_id": "kuwait_times_archive", "network_source_ids": ["kuwait_times_editorial"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The editorial surface does not prove archive-year completeness."},
+    {"historical_source_id": "alqabas_archive", "network_source_ids": ["alqabas_economy"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The economy surface does not prove archive-year completeness."},
+    {"historical_source_id": "alrai_archive", "network_source_ids": ["alrai_economy"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The economy surface does not prove archive-year completeness."},
+    {"historical_source_id": "alanba_archive", "network_source_ids": ["alanba_economy"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The economy surface does not prove archive-year completeness."},
+    {"historical_source_id": "aljarida_archive", "network_source_ids": ["aljarida_economy"], "bridge_status": "PARTIAL_DECLARED_MAPPING", "collection_allowed": false, "semantic_limit": "The economy surface does not prove archive-year completeness."},
+    {"historical_source_id": "internet_archive", "network_source_ids": ["wayback_machine"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Archive access does not grant rights to underlying publisher content."},
+    {"historical_source_id": "facebook_social", "network_source_ids": ["facebook_public_community"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Public social content remains routing or sentiment only."},
+    {"historical_source_id": "instagram_social", "network_source_ids": ["instagram_public_community"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Public social content remains routing or sentiment only."},
+    {"historical_source_id": "tiktok_social", "network_source_ids": ["tiktok_public_community"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Public social content remains routing or sentiment only."},
+    {"historical_source_id": "kuwait_community_forums", "network_source_ids": ["indexsignal_forum"], "bridge_status": "DECLARED_MAPPING_ONLY", "collection_allowed": false, "semantic_limit": "Forum content remains routing or sentiment only."},
+    {"historical_source_id": "wikipedia_routing", "network_source_ids": [], "bridge_status": "UNMAPPED_DEFINED_ONLY", "collection_allowed": false, "semantic_limit": "Search routing is not an evidence-source equivalence."}
+  ],
+  "claim_boundaries": {
+    "crosswalk_is_connector_implementation": false,
+    "crosswalk_is_parser_validation": false,
+    "crosswalk_is_live_operational": false,
+    "collection_allowed": false
+  }
+}

@@ -142,6 +142,39 @@ kubo --project-root . plan-historical-research \
 `CONTEXT_ONLY` ولا تولّد شراءً أو Forecast أو Score مباشرة. التفاصيل في
 `docs/KUWAIT_HISTORICAL_KNOWLEDGE_AR.md`.
 
+## أرشيف بدء التشغيل المعزول
+
+يبني `KU-BO-014` فوق الخطة التاريخية ولا يستبدلها. الهدف هو إنشاء
+`Bootstrap Archive Scaffold` ذري وغير قابل للاستبدال يحتوي على الخطة نفسها،
+بصمات مدخلات الإعداد، أوصاف المراحل، وManifest للتحكم فقط. يبدأ الأرشيف بصفر
+Evidence وصفر أحداث وصفر شركات؛ نجاح تهيئته لا يعني أن الجمع بدأ أوأن التاريخ
+اكتمل.
+
+ترتيب التطوير المحجوز هو: الأرشيف التاريخي، ثم `Company Intelligence`، ثم
+موجات المصادر، ثم المصالحة الرسمية النهائية مع بورصة الكويت. وتظل المرحلة
+الثانية محجوبة حتى يصل تعداد رسمي Effective-dated للشركات المدرجة. تُستخدم
+بورصة الكويت مبكرًا كمرساة هوية محدودة لهذا التعداد، ثم تعود في المرحلة
+الأخيرة للمصالحة الشاملة؛ فلا تُبنى ملفات الشركات من قائمة غير رسمية.
+
+يربط Crosswalk معلن مصادر KU-BO-013 بمعرّفات Source Network عندما توجد علاقة
+دلالية، لكنه لا يحول التعريف إلى Connector أوParser أوحق جمع. جميع الروابط
+تبدأ `collection_allowed=false`، وتبقى المصادر الاجتماعية للتوجيه أوالمزاج
+فقط. التفاصيل وحدود مساحة العمل في `docs/BOOTSTRAP_ARCHIVE_AR.md`.
+
+تهيئة الـScaffold والتحقق منه لا يجريان أي اتصال شبكي. يمكن وضعه داخل Checkout
+تحت `runtime/` غير المتتبع في Git، أومسار Runtime خارجي؛ ويجب أن يكون الهدف
+جديدًا وأبوه موجودًا:
+
+```bash
+mkdir -p runtime
+kubo --project-root . validate-bootstrap-archive-config
+kubo --project-root . prepare-bootstrap-archive \
+  --as-of 2026-08-14 \
+  --output-root runtime/bootstrap-2026-08-14
+kubo validate-bootstrap-archive \
+  --archive-root runtime/bootstrap-2026-08-14
+```
+
 جسر Source Search إلى Context/Exposure/Factor يعمل على تشغيل محفوظ ومدخلات Parsed صريحة:
 
 ```bash
@@ -318,11 +351,22 @@ Ledger Seal صالحًا.
 
 ## التحقق
 
-أضيف إلى CI Gate مركز لـKU-BO-012 يشغّل Workflow وSource Orchestrator وContext/Factor وجسر التكامل وReplay وCLI، كما أضيفت فحوص Installed Wheel لأمر `validate-research-workflow` وظهور `run-source-search` و`build-kuwait-research-bundle` و`evaluate-forty-session-replay`. نُشر التنفيذ في Draft PR #14 عند `58a78042d5d509e599d2e273d793856b1dee14dd`، ونجح Exact-head GitHub Actions Run `31733924569` على Python 3.11 إلى 3.14.
+يحتفظ CI بالـGate المركز لـKU-BO-012، ويضيف KU-BO-014 Gate مستقلًا للتاريخ
+والـCrosswalk والـScaffold والـSchemas والـCLI وضبط Codex. كما يختبر الـWheel
+المثبتة في `validate-bootstrap-archive-config` ثم ينشئ Archive تحت `runtime/`
+ويعيد التحقق منه. PR #15 وPR #16 مدمجان في `main`؛ أما KU-BO-014 فما زال على
+فرع تطوير بلا سلطة Merge إلى أن ينجح Exact-head CI الخاص بـDraft PR الجديد.
 
-نجحت محليًا `183/183` من اختبارات Workflow/Source Orchestrator/Ingestion/Context/Integration/Replay/CLI/Schemas المركزة بعد تدقيق التكامل النهائي، ثم نجحت Full Suite النهائية على الشجرة الحالية `2,067/2,067` في `164.347s`. نجحت كذلك `compileall`، وفحوص JSON، و`git diff --check`، وSmoke، وSecret Guard، وتوليد وتدقيق Corpus من `1,280` حالة. ونجح Codex control check على 15 ملف تحكم و10 ملفات مطلوبة مع 0 Errors و0 Warnings.
+نجحت محليًا اختبارات KU-BO-014 وحدها `34/34`، والاختبارات المستهدفة مع طبقة
+التاريخ وضبط Codex `57/57`، ثم نجحت Full Suite النهائية على الشجرة الحالية
+`2,120/2,120` في `158.371s`. نجحت كذلك `compileall`، وفحوص JSON، و
+`git diff --check`، وSmoke، وSecret Guard، وتوليد وتدقيق Corpus من `1,280`
+حالة. ونجح Codex control check على 18 ملف تحكم و10 ملفات مطلوبة مع 0 Errors
+و0 Warnings.
 
-نجح بناء Wheel النهائية بحجم `444351` بايت وبصمة SHA-256 الآتية: `ee089ec3a7e100e81e1ef4a0378824c2b3e817db7d4c23d2d197b728b400c3a3`. كما نجح التثبيت المعزول، وImports، وCLI help، و`validate-research-workflow`، و`installed_data_foundation_check` مع 8 Semantic admissions و8 Lineages. PR #14 ما زالت Draft ولم تُدمج؛ وتغيير سجل التحكم اللاحق لتنفيذ `58a78042...` يحتاج Exact-head CI جديدًا قبل أي Merge-boundary review.
+نجح بناء Wheel KU-BO-014 والتثبيت المعزول وCLI help والتحقق من الإعداد وإنشاء
+الـScaffold وإعادة فتحه من خارج Checkout. هذه نتيجة محلية؛ نشر Draft PR
+وExact-head CI ما زالا معلقين، ولا يجيز النجاح المحلي أي Merge أوجمع حي.
 
 ```bash
 PYTHONPATH=src python3 -m compileall -q src tests scripts
@@ -382,6 +426,9 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `config/research_workflows.json`: نوافذ وميزانيات وموجات `KUWAIT_120D_NEXT_SESSION_RESEARCH` وعقد الأربعين قرارًا.
 - `config/source_query_strategies.json`: استراتيجيات الاستعلام المميزة وسياسة المحاولة المحدودة.
+- `config/bootstrap_archive.json`: أقسام أرشيف بدء التشغيل وترتيب المراحل وسياسة التخزين المغلقة.
+- `config/historical_source_network_crosswalk.json`: ربط دلالي معلن فقط بين كتالوج التاريخ وشبكة المصادر، بلا تفويض جمع.
+- `src/kubo/bootstrap_archive/`: عقد الأرشيف، Crosswalk، التهيئة الذرية، وإعادة التحقق من Scaffold الخالي من الأدلة.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
 - `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
@@ -415,6 +462,7 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`: عقد المصادقة وربط الخطة والمقام والنافذة وشجرة المرحلة.
 - `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`: الحالة المتراكمة الحالية والبوابات الخارجية المتبقية.
 - `docs/KUWAIT_120D_NEXT_SESSION_AR.md`: عقد البحث المطول، معنى 50 نطاقًا، وحدود اختبار الأربعين الأخيرة.
+- `docs/BOOTSTRAP_ARCHIVE_AR.md`: معمارية KU-BO-014، شكل مساحة العمل، بوابات المراحل، وحدود عدم الجمع.
 - `docs/legacy_v2/`: وثائق V2 التاريخية للرجوع، وليست مسار التشغيل الافتراضي.
 
 ## الحد الفاصل المهم

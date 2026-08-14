@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "archive_kind": "KUWAIT_HISTORICAL_BOOTSTRAP",
+  "decision_use": "CONTEXT_ONLY",
+  "source_crosswalk": "historical_source_network_crosswalk.json",
+  "storage_policy": {
+    "corpus_location": "RUNTIME_UNTRACKED_ONLY",
+    "raw_content_committed_to_git": false,
+    "no_overwrite": true,
+    "atomic_publication_required": true,
+    "source_runtime_binding_required_before_collection": true
+  },
+  "archive_sections": [
+    {
+      "section_id": "KUWAIT_GENERAL_HISTORY",
+      "layer_ids": ["KUWAIT_YEARBOOK_1500_PRESENT"]
+    },
+    {
+      "section_id": "COMMERCIAL_ECONOMIC_HISTORY",
+      "layer_ids": [
+        "COMMERCIAL_CRISIS_CHRONOLOGY_1927_PRESENT",
+        "RECENT_ECONOMIC_EVENTS_ROLLING_5Y"
+      ]
+    },
+    {
+      "section_id": "COMPANY_HISTORY",
+      "layer_ids": ["COMPANY_LIFECYCLE_1970_PRESENT"]
+    },
+    {
+      "section_id": "LEGAL_REGULATORY_HISTORY",
+      "layer_ids": ["COMPANY_CASES_ROLLING_20Y"]
+    },
+    {
+      "section_id": "COMMUNITY_ARCHIVAL_CONTEXT",
+      "layer_ids": ["COMPANY_MEDIA_HISTORY_1980_PRESENT"]
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "BOOTSTRAP_ARCHIVE",
+      "order": 1,
+      "depends_on": [],
+      "initial_status": "EMPTY_ARCHIVE_PREPARED_COLLECTION_BLOCKED"
+    },
+    {
+      "stage_id": "COMPANY_INTELLIGENCE",
+      "order": 2,
+      "depends_on": ["BOOTSTRAP_ARCHIVE"],
+      "initial_status": "BLOCKED_PENDING_BOOTSTRAP_VALIDATION_AND_OFFICIAL_UNIVERSE"
+    },
+    {
+      "stage_id": "SOURCE_WAVES",
+      "order": 3,
+      "depends_on": ["COMPANY_INTELLIGENCE"],
+      "initial_status": "BLOCKED_PENDING_COMPANY_INTELLIGENCE"
+    },
+    {
+      "stage_id": "BOURSA_OFFICIAL_RECONCILIATION",
+      "order": 4,
+      "depends_on": ["SOURCE_WAVES"],
+      "initial_status": "BLOCKED_PENDING_SOURCE_WAVES"
+    }
+  ],
+  "directories": [
+    "control",
+    "historical",
+    "manifests",
+    "stages",
+    "raw/primary_official",
+    "raw/primary_archive",
+    "raw/intergovernmental",
+    "raw/editorial",
+    "raw/community",
+    "raw/routing_only",
+    "normalized/events",
+    "normalized/economic",
+    "normalized/companies",
+    "normalized/legal_regulatory",
+    "receipts/capture",
+    "receipts/search",
+    "receipts/rights",
+    "indexes/year",
+    "indexes/company",
+    "quarantine",
+    "reports"
+  ],
+  "claim_boundaries": {
+    "historical_corpus_collected": false,
+    "historical_completeness_claim_allowed": false,
+    "company_intelligence_ready": false,
+    "source_waves_ready": false,
+    "boursa_reconciliation_ready": false,
+    "direct_trading_decision_allowed": false
+  }
+}
