@@ -72,5 +72,10 @@ Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي ق
 - `historical-research-plan.schema.json`: خطة الطبقات التاريخية السنوية الست مع حالة `NOT_COLLECTED` وحدود الادعاء.
 - `historical-event-record.schema.json`: سجل حدث تاريخي ثنائي اللغة مربوط بالزمن والبصمات والتصحيحات والحالة القانونية.
 - `company-annual-history.schema.json`: حالة سنوية effective-dated للشركة وتأسيسها ومؤسسيها ومصيرها، من دون اختلاق حدث لسنة صامتة.
+- `historical-source-network-crosswalk.schema.json`: ربط دلالي `DEFINED_ONLY` بين مصادر المعرفة التاريخية ومعرّفات شبكة المصادر؛ لا يثبت Connector أوParser ولا يسمح بالجمع.
+- `bootstrap-archive-plan.schema.json`: خطة Scaffold الحتمية وترتيب المراحل الأربع وبوابات عدم الجاهزية.
+- `bootstrap-archive-descriptor.schema.json`: وصف مساحة العمل المنشورة وبصمات الخطة التاريخية وManifest التحكم.
+- `bootstrap-archive-manifest.schema.json`: جرد Control artifacts مع إلزام Evidence artifacts بمصفوفة فارغة في الإصدار 1.0.
+- `bootstrap-archive-workspace-report.schema.json`: تقرير تهيئة الـScaffold بصفر Evidence وصفر شركات وصفر أحداث وحدود ادعاء مغلقة.
 
 وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق. ويفرض `kubo.benchmark_import` Basis/Scope والتقويم من دون Forward Fill، ويعيد `kubo.official_eod_import` حساب مقام الأسهم والجلسات، ثم يعيد `kubo.data_foundation_reconciliation` فحص كل bytes وhashes ولا يثق بحالة محفوظة وحدها.

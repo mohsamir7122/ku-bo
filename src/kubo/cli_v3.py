@@ -10,6 +10,12 @@ from pathlib import Path
 import sys
 
 from . import __version__
+from .bootstrap_archive import (
+    load_bootstrap_archive_contract,
+    load_historical_source_network_crosswalk,
+    prepare_bootstrap_archive,
+    verify_bootstrap_archive,
+)
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .foundation_io import prepare_output_root
@@ -78,6 +84,8 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "evaluate-forty-session-replay",
         "validate-historical-knowledge",
         "plan-historical-research",
+        "validate-bootstrap-archive-config",
+        "prepare-bootstrap-archive",
     }
 )
 
@@ -92,6 +100,8 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/sources.json"),
     Path("config/historical_research_layers.json"),
     Path("config/historical_sources.json"),
+    Path("config/bootstrap_archive.json"),
+    Path("config/historical_source_network_crosswalk.json"),
 )
 
 
@@ -222,10 +232,22 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("validate-source-network")
     sub.add_parser("validate-research-workflow")
     sub.add_parser("validate-historical-knowledge")
+    sub.add_parser("validate-bootstrap-archive-config")
 
     historical_plan = sub.add_parser("plan-historical-research")
     historical_plan.add_argument("--as-of", required=True, help="Research cutoff date (YYYY-MM-DD)")
     historical_plan.add_argument("--output", type=Path)
+
+    bootstrap_prepare = sub.add_parser("prepare-bootstrap-archive")
+    bootstrap_prepare.add_argument(
+        "--as-of",
+        required=True,
+        help="Archive planning cutoff date (YYYY-MM-DD)",
+    )
+    bootstrap_prepare.add_argument("--output-root", type=Path, required=True)
+
+    bootstrap_validate = sub.add_parser("validate-bootstrap-archive")
+    bootstrap_validate.add_argument("--archive-root", type=Path, required=True)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -337,23 +359,44 @@ def main(argv: list[str] | None = None) -> int:
         "run-request",
         "capture",
         "materialize-parser-run",
+        "validate-bootstrap-archive-config",
+        "prepare-bootstrap-archive",
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
     historical_catalog = None
-    if args.command in {"validate-config", "validate-historical-knowledge", "plan-historical-research"}:
+    if args.command in {
+        "validate-config",
+        "validate-historical-knowledge",
+        "plan-historical-research",
+        "validate-bootstrap-archive-config",
+        "prepare-bootstrap-archive",
+    }:
         historical_catalog = HistoricalKnowledgeCatalog(project_root / "config")
 
     if args.command == "validate-config":
         assert network_catalog is not None
         assert historical_catalog is not None
         workflow = load_research_workflow(project_root / "config")
+        bootstrap_contract = load_bootstrap_archive_contract(
+            project_root / "config" / "bootstrap_archive.json"
+        )
+        bootstrap_crosswalk = load_historical_source_network_crosswalk(
+            project_root / "config" / "historical_source_network_crosswalk.json"
+        )
         report = {
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
             "source_network": network_catalog.report(),
             "research_workflow": asdict(workflow),
             "historical_knowledge": historical_catalog.report(),
+            "bootstrap_archive": {
+                "contract": bootstrap_contract.report(historical_catalog),
+                "source_crosswalk": bootstrap_crosswalk.report(
+                    historical_catalog,
+                    network_catalog,
+                ),
+            },
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
@@ -377,6 +420,23 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "validate-historical-knowledge":
         assert historical_catalog is not None
         report = historical_catalog.report()
+    elif args.command == "validate-bootstrap-archive-config":
+        assert historical_catalog is not None
+        assert network_catalog is not None
+        bootstrap_contract = load_bootstrap_archive_contract(
+            project_root / "config" / "bootstrap_archive.json"
+        )
+        bootstrap_crosswalk = load_historical_source_network_crosswalk(
+            project_root / "config" / "historical_source_network_crosswalk.json"
+        )
+        report = {
+            "status": "PASS_CONTRACT",
+            "bootstrap_archive": bootstrap_contract.report(historical_catalog),
+            "source_crosswalk": bootstrap_crosswalk.report(
+                historical_catalog,
+                network_catalog,
+            ),
+        }
     elif args.command == "plan-historical-research":
         assert historical_catalog is not None
         full_plan = compile_research_plan(historical_catalog, as_of=parse_as_of(args.as_of))
@@ -395,6 +455,14 @@ def main(argv: list[str] | None = None) -> int:
                 "task_count": len(full_plan["tasks"]),
                 "claim_boundaries": full_plan["claim_boundaries"],
             }
+    elif args.command == "prepare-bootstrap-archive":
+        report = prepare_bootstrap_archive(
+            project_root=project_root,
+            output_root=args.output_root,
+            as_of=parse_as_of(args.as_of),
+        )
+    elif args.command == "validate-bootstrap-archive":
+        report = verify_bootstrap_archive(archive_root=args.archive_root)
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(

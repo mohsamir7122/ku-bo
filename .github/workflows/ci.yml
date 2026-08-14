@@ -33,6 +33,16 @@ jobs:
           python scripts/audit_ku_bo_011_corpus.py --json
       - name: Unit and adversarial tests
         run: python -m unittest discover -s tests -v
+      - name: KU-BO-014 isolated bootstrap archive gates
+        run: |
+          python -m unittest \
+            tests.test_historical_knowledge \
+            tests.test_bootstrap_archive_contract \
+            tests.test_bootstrap_archive_workspace \
+            tests.test_bootstrap_archive_cli \
+            tests.test_bootstrap_archive_schemas \
+            tests.test_codex_control \
+            -v
       - name: KU-BO-012 Kuwait context, source-search, factor, and replay gates
         run: |
           python -m unittest \
@@ -114,9 +124,17 @@ jobs:
           installed_foundation="$installed_venv/bin/kubo-data-foundation"
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-source-network
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-research-workflow
+          "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-bootstrap-archive-config
           "$installed_kubo" --help | grep -q "run-source-search"
           "$installed_kubo" --help | grep -q "build-kuwait-research-bundle"
           "$installed_kubo" --help | grep -q "evaluate-forty-session-replay"
+          "$installed_kubo" --help | grep -q "prepare-bootstrap-archive"
+          mkdir -p "$GITHUB_WORKSPACE/runtime"
+          "$installed_kubo" --project-root "$GITHUB_WORKSPACE" prepare-bootstrap-archive \
+            --as-of 2026-08-14 \
+            --output-root "$GITHUB_WORKSPACE/runtime/ci-bootstrap-archive"
+          "$installed_kubo" validate-bootstrap-archive \
+            --archive-root "$GITHUB_WORKSPACE/runtime/ci-bootstrap-archive"
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-pilot-config
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry

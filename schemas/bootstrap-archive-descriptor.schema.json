@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/bootstrap-archive-descriptor.schema.json",
+  "title": "KU-BO bootstrap archive scaffold descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "archive_id", "archive_kind", "as_of", "prepared_at", "status", "readiness_status", "decision_use", "bootstrap_archive_plan_sha256", "historical_research_plan_id", "historical_research_plan_sha256", "manifest_id", "manifest_sha256", "stages", "counts", "collection_gate", "company_intelligence_gate", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "archive_id": {"type": "string", "pattern": "^bootstrap-[0-9a-f]{24}$"},
+    "archive_kind": {"const": "KUWAIT_HISTORICAL_BOOTSTRAP"},
+    "as_of": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "prepared_at": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "status": {"const": "BOOTSTRAP_ARCHIVE_SCAFFOLD_PREPARED"},
+    "readiness_status": {"const": "PLANNED_NOT_EXECUTED"},
+    "decision_use": {"const": "CONTEXT_ONLY"},
+    "bootstrap_archive_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "historical_research_plan_id": {"type": "string", "pattern": "^hist-plan-[0-9a-f]{24}$"},
+    "historical_research_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifest_id": {"type": "string", "pattern": "^bootstrap-manifest-[0-9a-f]{24}$"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "stages": {"$ref": "#/$defs/stageArray"},
+    "counts": {"$ref": "#/$defs/counts"},
+    "collection_gate": {"$ref": "#/$defs/collectionGate"},
+    "company_intelligence_gate": {"$ref": "#/$defs/companyIntelligenceGate"},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "$defs": {
+    "stageArray": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/bootstrapStage"},
+        {"$ref": "#/$defs/companyStage"},
+        {"$ref": "#/$defs/sourceWavesStage"},
+        {"$ref": "#/$defs/boursaStage"}
+      ],
+      "items": false
+    },
+    "bootstrapStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "BOOTSTRAP_ARCHIVE"},
+        "order": {"const": 1},
+        "depends_on": {"type": "array", "maxItems": 0},
+        "status": {"const": "EMPTY_ARCHIVE_PREPARED_COLLECTION_BLOCKED"}
+      }
+    },
+    "companyStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "COMPANY_INTELLIGENCE"},
+        "order": {"const": 2},
+        "depends_on": {"const": ["BOOTSTRAP_ARCHIVE"]},
+        "status": {"const": "BLOCKED_PENDING_BOOTSTRAP_VALIDATION_AND_OFFICIAL_UNIVERSE"}
+      }
+    },
+    "sourceWavesStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "SOURCE_WAVES"},
+        "order": {"const": 3},
+        "depends_on": {"const": ["COMPANY_INTELLIGENCE"]},
+        "status": {"const": "BLOCKED_PENDING_COMPANY_INTELLIGENCE"}
+      }
+    },
+    "boursaStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "BOURSA_OFFICIAL_RECONCILIATION"},
+        "order": {"const": 4},
+        "depends_on": {"const": ["SOURCE_WAVES"]},
+        "status": {"const": "BLOCKED_PENDING_SOURCE_WAVES"}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["historical_source_count", "historical_layer_count", "historical_task_count", "historical_evidence_artifact_count", "company_count", "event_count"],
+      "properties": {
+        "historical_source_count": {"const": 28},
+        "historical_layer_count": {"const": 6},
+        "historical_task_count": {"type": "integer", "minimum": 6},
+        "historical_evidence_artifact_count": {"const": 0},
+        "company_count": {"const": 0},
+        "event_count": {"const": 0}
+      }
+    },
+    "collectionGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": {"const": "BLOCKED"},
+        "reasons": {"const": ["SOURCE_RUNTIME_BINDINGS_NOT_VALIDATED", "SOURCE_RIGHTS_NOT_REVIEWED", "NO_ARCHIVE_COLLECTION_CONTRACT"]}
+      }
+    },
+    "companyIntelligenceGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "official_listed_universe_anchor_required", "final_boursa_reconciliation_remains_last_stage"],
+      "properties": {
+        "status": {"const": "BLOCKED"},
+        "official_listed_universe_anchor_required": {"const": true},
+        "final_boursa_reconciliation_remains_last_stage": {"const": true}
+      }
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["historical_corpus_collected", "historical_completeness_claim_allowed", "company_intelligence_ready", "source_waves_ready", "boursa_reconciliation_ready", "live_operational", "forecast_allowed", "probability_allowed", "recommendation_allowed", "execution_allowed"],
+      "properties": {
+        "historical_corpus_collected": {"const": false},
+        "historical_completeness_claim_allowed": {"const": false},
+        "company_intelligence_ready": {"const": false},
+        "source_waves_ready": {"const": false},
+        "boursa_reconciliation_ready": {"const": false},
+        "live_operational": {"const": false},
+        "forecast_allowed": {"const": false},
+        "probability_allowed": {"const": false},
+        "recommendation_allowed": {"const": false},
+        "execution_allowed": {"const": false}
+      }
+    }
+  }
+}

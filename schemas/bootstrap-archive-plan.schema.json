@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/bootstrap-archive-plan.schema.json",
+  "title": "KU-BO isolated bootstrap archive plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "archive_id", "archive_kind", "as_of", "status", "decision_use", "historical_research_plan_id", "archive_sections", "stages", "control_inputs", "source_bridge", "counts", "collection_gate", "company_intelligence_gate", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "archive_id": {"type": "string", "pattern": "^bootstrap-[0-9a-f]{24}$"},
+    "archive_kind": {"const": "KUWAIT_HISTORICAL_BOOTSTRAP"},
+    "as_of": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "status": {"const": "SCAFFOLD_PLANNED_NOT_EXECUTED"},
+    "decision_use": {"const": "CONTEXT_ONLY"},
+    "historical_research_plan_id": {"type": "string", "pattern": "^hist-plan-[0-9a-f]{24}$"},
+    "archive_sections": {
+      "const": [
+        {"section_id": "KUWAIT_GENERAL_HISTORY", "layer_ids": ["KUWAIT_YEARBOOK_1500_PRESENT"]},
+        {"section_id": "COMMERCIAL_ECONOMIC_HISTORY", "layer_ids": ["COMMERCIAL_CRISIS_CHRONOLOGY_1927_PRESENT", "RECENT_ECONOMIC_EVENTS_ROLLING_5Y"]},
+        {"section_id": "COMPANY_HISTORY", "layer_ids": ["COMPANY_LIFECYCLE_1970_PRESENT"]},
+        {"section_id": "LEGAL_REGULATORY_HISTORY", "layer_ids": ["COMPANY_CASES_ROLLING_20Y"]},
+        {"section_id": "COMMUNITY_ARCHIVAL_CONTEXT", "layer_ids": ["COMPANY_MEDIA_HISTORY_1980_PRESENT"]}
+      ]
+    },
+    "stages": {"$ref": "#/$defs/stageArray"},
+    "control_inputs": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_path", "stored_path", "role", "sha256", "size_bytes"],
+        "properties": {
+          "source_path": {"type": "string", "pattern": "^config/[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$"},
+          "stored_path": {"type": "string", "pattern": "^control/[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$"},
+          "role": {"enum": ["ARCHIVE_CONTRACT", "HISTORICAL_SOURCE_REGISTRY", "HISTORICAL_LAYER_REGISTRY", "DECLARED_SOURCE_CROSSWALK", "SOURCE_NETWORK_REGISTRY", "SOURCE_CAPABILITY_REGISTRY", "RESEARCH_POLICY_REGISTRY"]},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "size_bytes": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "source_bridge": {"$ref": "#/$defs/sourceBridge"},
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["historical_source_count", "historical_layer_count", "historical_task_count", "historical_evidence_artifact_count", "company_count", "event_count"],
+      "properties": {
+        "historical_source_count": {"const": 28},
+        "historical_layer_count": {"const": 6},
+        "historical_task_count": {"type": "integer", "minimum": 6},
+        "historical_evidence_artifact_count": {"const": 0},
+        "company_count": {"const": 0},
+        "event_count": {"const": 0}
+      }
+    },
+    "collection_gate": {"$ref": "#/$defs/collectionGate"},
+    "company_intelligence_gate": {"$ref": "#/$defs/companyIntelligenceGate"},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "$defs": {
+    "stageArray": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/bootstrapStage"},
+        {"$ref": "#/$defs/companyStage"},
+        {"$ref": "#/$defs/sourceWavesStage"},
+        {"$ref": "#/$defs/boursaStage"}
+      ],
+      "items": false
+    },
+    "bootstrapStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "BOOTSTRAP_ARCHIVE"},
+        "order": {"const": 1},
+        "depends_on": {"type": "array", "maxItems": 0},
+        "status": {"const": "EMPTY_ARCHIVE_PREPARED_COLLECTION_BLOCKED"}
+      }
+    },
+    "companyStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "COMPANY_INTELLIGENCE"},
+        "order": {"const": 2},
+        "depends_on": {"const": ["BOOTSTRAP_ARCHIVE"]},
+        "status": {"const": "BLOCKED_PENDING_BOOTSTRAP_VALIDATION_AND_OFFICIAL_UNIVERSE"}
+      }
+    },
+    "sourceWavesStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "SOURCE_WAVES"},
+        "order": {"const": 3},
+        "depends_on": {"const": ["COMPANY_INTELLIGENCE"]},
+        "status": {"const": "BLOCKED_PENDING_COMPANY_INTELLIGENCE"}
+      }
+    },
+    "boursaStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "order", "depends_on", "status"],
+      "properties": {
+        "stage_id": {"const": "BOURSA_OFFICIAL_RECONCILIATION"},
+        "order": {"const": 4},
+        "depends_on": {"const": ["SOURCE_WAVES"]},
+        "status": {"const": "BLOCKED_PENDING_SOURCE_WAVES"}
+      }
+    },
+    "sourceBridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "readiness_status", "historical_source_count", "bridge_status_counts", "mapped_historical_source_count", "collection_allowed", "live_operational"],
+      "properties": {
+        "status": {"const": "PASS_CONTRACT"},
+        "readiness_status": {"const": "DEFINED_ONLY"},
+        "historical_source_count": {"const": 28},
+        "bridge_status_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["DECLARED_MAPPING_ONLY", "PARTIAL_DECLARED_MAPPING", "UNMAPPED_DEFINED_ONLY"],
+          "properties": {
+            "DECLARED_MAPPING_ONLY": {"const": 10},
+            "PARTIAL_DECLARED_MAPPING": {"const": 11},
+            "UNMAPPED_DEFINED_ONLY": {"const": 7}
+          }
+        },
+        "mapped_historical_source_count": {"const": 21},
+        "collection_allowed": {"const": false},
+        "live_operational": {"const": false}
+      }
+    },
+    "collectionGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": {"const": "BLOCKED"},
+        "reasons": {"const": ["SOURCE_RUNTIME_BINDINGS_NOT_VALIDATED", "SOURCE_RIGHTS_NOT_REVIEWED", "NO_ARCHIVE_COLLECTION_CONTRACT"]}
+      }
+    },
+    "companyIntelligenceGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "official_listed_universe_anchor_required", "final_boursa_reconciliation_remains_last_stage"],
+      "properties": {
+        "status": {"const": "BLOCKED"},
+        "official_listed_universe_anchor_required": {"const": true},
+        "final_boursa_reconciliation_remains_last_stage": {"const": true}
+      }
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["historical_corpus_collected", "historical_completeness_claim_allowed", "company_intelligence_ready", "source_waves_ready", "boursa_reconciliation_ready", "live_operational", "forecast_allowed", "probability_allowed", "recommendation_allowed", "execution_allowed"],
+      "properties": {
+        "historical_corpus_collected": {"const": false},
+        "historical_completeness_claim_allowed": {"const": false},
+        "company_intelligence_ready": {"const": false},
+        "source_waves_ready": {"const": false},
+        "boursa_reconciliation_ready": {"const": false},
+        "live_operational": {"const": false},
+        "forecast_allowed": {"const": false},
+        "probability_allowed": {"const": false},
+        "recommendation_allowed": {"const": false},
+        "execution_allowed": {"const": false}
+      }
+    }
+  }
+}

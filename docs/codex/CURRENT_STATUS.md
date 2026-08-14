@@ -1,70 +1,98 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-14
+Status date: 2026-08-15
 
 Repository: `mohsamir7122/ku-bo`
 
-## Active work
+## Verified baseline
 
 ```text
-KU-BO-012 / PR #14 / exact head 73dc3daa994ffd4d41317cf486820264227a85f2
-  └── exact-head CI 31782243633 PASS
-      └── merged to main as bafdda86b44b7603fe4adfa62dcc2a49bff8ae15
-          └── post-merge main CI 31783361999 PASS
-          └── KU-BO-013 / PR #15 / implementation head 27dedec792b7f057a975131562898a325fa372a1
-              └── exact-head CI 31785060069 PASS
-              └── KU-BO-MERGE-005 APPROVED
-                  └── later authorization-record head / publication and exact-head CI pending
+main / origin/main: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
+PR #15: merged historical-knowledge planning layer
+PR #16: merged historical evidence-gate hardening
+active task: KU-BO-014
+active branch: agent/bootstrap-archive-v0.1
+merge authority for KU-BO-014: NONE
 ```
 
-The user explicitly authorized the KU-BO-012 merge, which completed after its
-exact-head CI passed. KU-BO-013 begins from merged main and is published as
-Draft PR #15. The user explicitly authorized its conditional merge in
-`KU-BO-MERGE-005`; the later documentation-only authorization head must still
-pass exact-head CI before the merge boundary is executed.
+The baseline contains the KU-BO-013 planning foundation and its follow-up
+hardening: 28 historical source definitions, six historical layers, strict
+official-primary confirmation, explicit procedural states for legal events,
+hash-bound complete-search receipts for `NO_VERIFIED_EVENT_FOUND`, and separate
+Facebook, Instagram, and TikTok start years.
 
-## KU-BO-013 implementation checkpoint
+## Active work — KU-BO-014
 
-- six annual research-layer definitions;
-- 26 source definitions: 12 primary official, 3 primary archive, 2
-  intergovernmental, 6 editorial, 2 community, and 1 routing-only;
-- deterministic plan generation with 756 annual tasks at as-of 2026-08-14;
-- mandatory official company enumeration for every company-year layer;
-- primary-source gates for registration, founders, company status, regulatory
-  actions, allegations, and court outcomes;
-- explicit legal procedural states and no guilt inference;
-- social/community/Wikipedia restrictions;
-- three JSON Schemas and two CLI commands.
+KU-BO-014 is building a separate `Bootstrap Archive` scaffold that reuses the
+KU-BO-013 catalog and plan. The intended workspace contains only deterministic
+control artifacts, input hashes, stage descriptors, and empty reserved
+directories. It must not contain a historical corpus or imply that collection
+has begun.
+
+The ordered stage contract is:
+
+```text
+BOOTSTRAP_ARCHIVE
+  └── COMPANY_INTELLIGENCE
+      └── SOURCE_WAVES
+          └── BOURSA_OFFICIAL_RECONCILIATION
+```
+
+`COMPANY_INTELLIGENCE` additionally requires an official listed-universe
+identity anchor. The final Boursa stage remains the comprehensive official
+reconciliation after the source waves.
+
+## Current contract checkpoint
+
+- isolated archive configuration and directory policy;
+- a declared-only source crosswalk between all 28 historical source IDs and
+  existing Source Network IDs where an honest semantic bridge exists;
+- explicit unmapped/partial states instead of invented equivalence;
+- atomic, no-overwrite scaffold publication;
+- deterministic plan and control-artifact hashes;
+- zero initial Evidence, companies, and events;
+- tamper-aware reopening and verification;
+- collection and all three downstream stages remain blocked until their real prerequisites pass.
+
+## Validation status
+
+```text
+KU-BO-014-only tests: 34/34 PASS
+targeted archive + historical + control tests: 57/57 PASS
+complete local suite: 2,120/2,120 PASS in 158.371s
+compile/smoke/Secret Guard/Schema/control: PASS
+KU-BO-011 deterministic corpus: 1,280 cases PASS
+wheel and isolated install/prepare/verify: PASS
+Draft PR: #17 OPEN / DRAFT
+implementation exact-head CI: Run 31840391449 PASS at c8b41b23e5ebe4f4243b42506862c36149d481c8
+final control-record head CI: PENDING
+```
+
+The local implementation tree passes the requested validation. The installed
+wheel prepared and independently verified the same 756-task, zero-Evidence
+scaffold from outside the checkout. Draft PR #17 publishes the identical tree,
+and exact-head Run 31840391449 passed on Python 3.11 through 3.14. This control
+record creates a later documentation-only head that still requires exact-head CI.
 
 ## Evidence and capability status
 
 ```text
-historical_sources:             26 DEFINED_ONLY
-historical_layers:               6
-planned_tasks_at_2026-08-14:    756 NOT_COLLECTED
-historical_events_collected:      0
-companies_enumerated:             0
-LIVE_OPERATIONAL:                 0
+bootstrap_archive_status:       DRAFT_PUBLISHED_IMPLEMENTATION_CI_PASS
+archive_readiness:              PLANNED_NOT_EXECUTED
+historical_evidence_artifacts:  0
+historical_events_collected:    0
+companies_enumerated:           0
+crosswalk_collection_allowed:   false
+LIVE_OPERATIONAL:               0
 ```
 
-This is code-and-contract progress only. It proves neither historical
-completeness nor company-universe completeness nor live source access.
+This proves the local empty-scaffold contract and tamper checks only. It does
+not prove historical completeness, company-universe completeness, live source
+access, Parser coverage, or investment readiness.
 
 ## Still required
 
-- publish the merge-authorization control record to PR #15;
-- pass fresh GitHub Actions on that exact later head;
-- recheck head, base, reviews, and mergeability, then mark ready and merge only
-  the validated SHA;
-- later source-by-source rights/access review before collection.
-
-## Local validation checkpoint
-
-- historical and control targeted tests: 19/19 PASS with Schema checks enabled;
-- complete suite: 2,082/2,082 PASS in 436.936s on the merge-authorization tree;
-- compile, smoke, strict JSON/Schema, config/CLI, diff, and control checks: PASS;
-- Secret Guard, wheel build, isolated wheel install, and the installed
-  `validate-historical-knowledge` CLI: PASS; wheel size 450075 bytes, SHA-256
-  `d74516550c72eaed7e998f59287b2de6721ab97bedf51ad93a178a6fdcb51b4f`;
-- PR #15 implementation-head CI run `31785060069`: PASS on Python 3.11 through
-  3.14. The later authorization-record head still requires its own run.
+- publish the control-record update and require exact-head CI on that later head;
+- keep merge blocked until a later explicit merge decision;
+- before any future collection, approve source-specific access and rights and
+  bind an official company universe.

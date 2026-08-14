@@ -56,6 +56,29 @@ IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 ## Approved decisions
 
 ```text
+DECISION_ID: KU-BO-014-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-14
+TARGET: KU-BO-014 isolated Bootstrap Archive scaffold
+CATEGORY: SCOPE; DEVELOPMENT; ARCHIVE
+CURRENT_STATE: Main at 59833bf73510b3aa3901f628cbf2c13c0d01cf79 contains the KU-BO-013 historical planning layer and its evidence-gate hardening. It can plan six historical layers but does not yet materialize an isolated, resumable archive workspace. The requested next order is Bootstrap Archive, Company Intelligence, source waves, then final Boursa Kuwait reconciliation.
+WHY_A_DECISION_IS_REQUIRED: The new archive scaffold expands the repository architecture and introduces a source crosswalk, runtime workspace contract, stage dependency chain, and new validation surfaces. Repository rules require explicit scope authority and prohibit treating an archive label as authority to collect or republish historical content.
+OPTIONS:
+1. Build an empty, atomic, no-overwrite scaffold that reuses KU-BO-013, blocks collection, and publishes only a Draft PR.
+2. Begin live historical collection and populate the archive immediately.
+3. Create a second repository and duplicate the historical contracts there.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may implement and test the isolated scaffold, strict source crosswalk, control manifests, stage gates, CLI integration, and documentation while all evidence, rights, live access, Company Intelligence, forecasting, and merge gates remain closed.
+CONSEQUENCE_OF_REJECTION: KU-BO remains at the historical planning layer without a materialized archive workspace.
+SAFER_REVERSIBLE_ALTERNATIVE: Documentation-only archive layout with no executable workspace builder.
+USER_DECISION: APPROVED through the active instruction to retain the existing repository, build the isolated archive professionally, prepare the later Company Intelligence/source-wave/Boursa stages, and test only after the archive scaffold is built.
+DECIDED_AT: 2026-08-14
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: DEVELOPMENT ONLY. No historical corpus collection, credentials, authenticated access, access-control bypass, rights or licensing decision, private or licensed-data publication, official-universe completeness claim, live source promotion, model training, real backtest, forecast, probability, recommendation, execution, force-push, deletion, or merge. MERGE_ALLOWED remains NO. Any merge requires a separate later decision after the final exact head passes all acceptance gates.
+IMPLEMENTED_IN_BRANCH_OR_PR: IN_PROGRESS — Draft PR #17 / agent/bootstrap-archive-v0.1. Implementation head c8b41b23e5ebe4f4243b42506862c36149d481c8 passed exact-head GitHub Actions Run 31840391449; the later control-record head still requires CI. MERGE_ALLOWED remains NO.
+```
+
+```text
 DECISION_ID: KU-BO-013-D01
 STATUS: APPROVED
 DATE_RAISED: 2026-08-14
@@ -84,7 +107,7 @@ STATUS: APPROVED
 DATE_RAISED: 2026-08-14
 TARGET: PR #15 / KU-BO-013 on agent/kuwait-historical-knowledge-layer
 CATEGORY: MERGE
-CURRENT_STATE: PR #15 is a clean, mergeable Draft against main at bafdda86b44b7603fe4adfa62dcc2a49bff8ae15. Its exact implementation head 27dedec792b7f057a975131562898a325fa372a1 passed CI run 31785060069 on Python 3.11 through 3.14. Local validation passed 2,082 tests plus compile, smoke, strict JSON/Schema, config/CLI, diff, control, Secret Guard, wheel build, isolated wheel install, and the installed historical-knowledge CLI. The branch programs planning contracts and source definitions only: 26 sources remain DEFINED_ONLY, 756 annual tasks remain NOT_COLLECTED, and no live corpus or company universe is claimed.
+CURRENT_STATE: COMPLETED. PR #15 passed its recorded implementation and authorization gates and merged into main as 32e048b234c73809b6f5119ae16937980184296c on 2026-08-14. The merge remained planning-only: no live corpus or company universe was claimed.
 WHY_A_DECISION_IS_REQUIRED: Repository rules require explicit user authority before merging KU-BO-013. Recording this authority creates a later documentation-only head that must receive fresh exact-head CI before the merge boundary.
 OPTIONS:
 1. Record the approval, run fresh exact-head CI on the authorization head, mark PR #15 ready, and merge only that exact head if all gates remain green.
@@ -98,7 +121,7 @@ USER_DECISION: APPROVED in the active user session through the explicit instruct
 DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No force-push, deletion, credentials, private or licensed data publication, corpus-completeness claim, guilt inference, gate weakening, model training, forecast, probability, accuracy, recommendation, or production execution. Merge only PR #15 after the later authorization head passes exact-head CI and a final mergeability review.
-IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on the PR #15 branch; exact-head CI and merge-boundary execution remain required.
+IMPLEMENTED_IN_BRANCH_OR_PR: COMPLETED — PR #15 merged to main as 32e048b234c73809b6f5119ae16937980184296c on 2026-08-14.
 ```
 
 ```text
@@ -193,7 +216,7 @@ STATUS: APPROVED
 DATE_RAISED: 2026-08-14
 TARGET: PR #16 / Harden PR #15 historical evidence gates
 CATEGORY: MERGE
-CURRENT_STATE: PR #16 is a clean, mergeable Draft against main at 32e048b234c73809b6f5119ae16937980184296c. Its implementation head 194922f9f5bf13a9332ea1f3d7cc4ae9d9307140 passed GitHub Actions on Python 3.11 through 3.14 and the complete 2,086-test suite. This authorization record creates a later documentation-only head that requires fresh exact-head CI before merge.
+CURRENT_STATE: COMPLETED. PR #16 passed its recorded implementation and authorization gates and merged into main as 59833bf73510b3aa3901f628cbf2c13c0d01cf79 on 2026-08-14. Its four historical evidence-gate fixes are now the KU-BO-014 control baseline.
 WHY_A_DECISION_IS_REQUIRED: Repository rules require explicit user authority recorded in this queue before merging.
 OPTIONS:
 1. Record approval, run fresh exact-head CI, mark PR #16 ready, and merge only that validated head.
@@ -207,7 +230,7 @@ USER_DECISION: APPROVED in the active user session through the explicit instruct
 DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: Merge only PR #16 after its authorization head passes exact-head CI and a final mergeability check. No force-push, deletion, credential use, private or licensed-data publication, corpus-completeness claim, gate weakening, forecast, probability, recommendation, or production execution.
-IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on PR #16 branch; exact-head CI and merge-boundary execution remain required.
+IMPLEMENTED_IN_BRANCH_OR_PR: COMPLETED — PR #16 merged to main as 59833bf73510b3aa3901f628cbf2c13c0d01cf79 on 2026-08-14.
 ```
 
 ## Rules

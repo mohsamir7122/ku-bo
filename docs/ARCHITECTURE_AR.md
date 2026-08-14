@@ -21,6 +21,35 @@ flowchart TD
 
 `research_network` هو المسار الافتراضي. يعتمد على دليل حديث متعدد المصادر ويعمل من دون أرشيف كامل أو نموذج. المنتج `KUWAIT_120D_NEXT_SESSION_RESEARCH` يضيف سياقًا تراكميًا وعقد مقام كامل، لكنه يظل Research Score غير مُحقق مستقبليًا. `validated_forecast` هو مسار V2 الصارم؛ لا يسمح باحتمال أو ادعاء أداء إلا عند استيفاء Pack وModel Card والتحقق المستقبلي.
 
+## مسار المعرفة التراكمية المعزول
+
+يضيف `KU-BO-014` مسارًا تحضيريًا منفصلًا عن Ranker وعن Source Search اليومي:
+
+```mermaid
+flowchart LR
+    A["KU-BO-013 Historical Catalog + Plan"] --> B["Bootstrap Archive Scaffold"]
+    O["Official listed-universe identity anchor"] --> C["Company Intelligence"]
+    B --> C
+    C --> D["Source Waves"]
+    D --> E["Boursa Official Reconciliation"]
+    E --> F["Future validated company context"]
+```
+
+`Bootstrap Archive` لا يمرر أي صف إلى Factor أوRanker. وظيفته في هذه المرحلة
+هي حجز بنية Runtime، تثبيت Config hashes، حفظ نسخة واحدة من الخطة التاريخية،
+ووصف Dependency DAG مع صفر Evidence. النشر Atomic وNo-overwrite، والتحقق يعيد
+فتح الشجرة ويحسب البصمات بدل الثقة في Manifest المحفوظ.
+
+يظل كتالوج KU-BO-013 هو السلطة الدلالية للمصادر التاريخية. ويضيف Crosswalk
+طبقة ربط مرجعية إلى Source Network من دون نسخ URLs أوالأدوار أوالقدرات. حالات
+الربط `DECLARED_MAPPING_ONLY` أو`PARTIAL_DECLARED_MAPPING` أو
+`UNMAPPED_DEFINED_ONLY`؛ وجميعها تبدأ بلا حق جمع.
+
+تحتاج `Company Intelligence` إلى مرساة هوية رسمية قبل التوسع إلى مهام
+Company-Year. هذا استخدام محدود لمسار Official Foundation القائم، وليس تنفيذًا
+مبكرًا للمصالحة الرسمية النهائية. التفاصيل في
+`docs/BOOTSTRAP_ARCHIVE_AR.md`.
+
 ## مكونات مسار الشبكة
 
 - `SourceNetworkCatalog`: يقرأ 68 تعريف مصدر و62 مجموعة استقلال وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت. يوجد 59 نطاقًا مرشحًا بعد استبعاد البحث والتخزين، و53 نطاقًا معلنًا Enabled-public، و52 نطاق Start URL تنفيذيًا مميزًا قبل الحجز. العدد لا يساوي تأكيدات مستقلة.
