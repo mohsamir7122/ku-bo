@@ -398,6 +398,89 @@ def validate_claim_support(
         raise ValueError("community/routing sources cannot establish factual claims")
 
 
+def validate_historical_event_record(
+    catalog: HistoricalKnowledgeCatalog,
+    record: Mapping[str, Any],
+) -> None:
+    """Couple high-trust event statuses to the validated source catalog."""
+
+    evidence = record.get("source_evidence")
+    if not isinstance(evidence, list) or not evidence:
+        raise ValueError("historical event requires source evidence")
+    source_map = {item.source_id: item for item in catalog.sources}
+    resolved: list[tuple[HistoricalSource, str]] = []
+    for item in evidence:
+        if not isinstance(item, Mapping):
+            raise ValueError("historical event evidence must be an object")
+        source_id = item.get("source_id")
+        if not isinstance(source_id, str) or source_id not in source_map:
+            raise ValueError("historical event references an unknown source")
+        role = item.get("evidence_role")
+        if role not in {"PRIMARY", "CORROBORATING", "CONTRADICTING", "ROUTING"}:
+            raise ValueError("historical event evidence role is invalid")
+        resolved.append((source_map[source_id], str(role)))
+
+    factual_status = record.get("factual_status")
+    if factual_status == "OFFICIAL_CONFIRMED" and not any(
+        source.tier == "PRIMARY_OFFICIAL" and role == "PRIMARY"
+        for source, role in resolved
+    ):
+        raise ValueError("OFFICIAL_CONFIRMED requires official primary evidence")
+
+    event_type = str(record.get("event_type", "")).strip().upper()
+    if event_type in {"LEGAL_ALLEGATION", "COURT_OUTCOME", "REGULATORY_ACTION"}:
+        validate_claim_support(
+            catalog,
+            fact_type=event_type,
+            source_ids=[source.source_id for source, _ in resolved],
+            legal_status=record.get("legal_status") if isinstance(record.get("legal_status"), str) else None,
+        )
+
+
+def validate_company_annual_history_record(
+    catalog: HistoricalKnowledgeCatalog,
+    record: Mapping[str, Any],
+) -> None:
+    """Reject verified-empty company years without complete, hash-bound searches."""
+
+    if record.get("coverage_status") != "NO_VERIFIED_EVENT_FOUND":
+        return
+    declared = record.get("declared_source_ids")
+    if not isinstance(declared, list) or not declared:
+        raise ValueError("NO_VERIFIED_EVENT_FOUND requires declared sources")
+    known_source_ids = {item.source_id for item in catalog.sources}
+    if any(not isinstance(item, str) or item not in known_source_ids for item in declared):
+        raise ValueError("NO_VERIFIED_EVENT_FOUND references an unknown declared source")
+    receipts = record.get("search_receipts")
+    if not isinstance(receipts, list) or not receipts:
+        raise ValueError("NO_VERIFIED_EVENT_FOUND requires search receipts")
+    evidence_hashes = record.get("source_evidence_hashes")
+    if not isinstance(evidence_hashes, list) or not evidence_hashes:
+        raise ValueError("NO_VERIFIED_EVENT_FOUND requires evidence hashes")
+    if record.get("event_ids") != []:
+        raise ValueError("NO_VERIFIED_EVENT_FOUND cannot bind event ids")
+
+    receipt_sources: set[str] = set()
+    for receipt in receipts:
+        if not isinstance(receipt, Mapping):
+            raise ValueError("search receipt must be an object")
+        source_id = receipt.get("source_id")
+        if not isinstance(source_id, str):
+            raise ValueError("search receipt source_id is invalid")
+        receipt_sources.add(source_id)
+        if (
+            receipt.get("access_status") != "COMPLETED"
+            or receipt.get("query_complete") is not True
+            or receipt.get("pagination_complete") is not True
+        ):
+            raise ValueError("NO_VERIFIED_EVENT_FOUND requires complete source checks")
+        capture_hash = receipt.get("capture_sha256")
+        if not isinstance(capture_hash, str) or capture_hash not in evidence_hashes:
+            raise ValueError("search receipt is not bound to source evidence")
+    if receipt_sources != set(declared):
+        raise ValueError("search receipts must cover every declared source exactly")
+
+
 def parse_as_of(value: str) -> date:
     try:
         parsed = datetime.strptime(value, "%Y-%m-%d").date()

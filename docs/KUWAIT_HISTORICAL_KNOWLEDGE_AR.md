@@ -14,7 +14,9 @@
 
 كل مهمة تحمل `NOT_COLLECTED`. لا يجوز تحويل غياب حدث موثق إلى حدث مخترع؛ بعد
 تشغيل الجمع لاحقًا يمكن استخدام `NO_VERIFIED_EVENT_FOUND` لسنة فُحصت وفق مصادر
-معلنة ولم يظهر فيها حدث قابل للتحقق.
+معلنة ولم يظهر فيها حدث قابل للتحقق. لا تُقبل هذه الحالة إلا بوجود قائمة
+المصادر المعلنة، وSearch receipts مكتملة لكل مصدر ولكل Query/Pagination، وربط
+كل receipt ببصمة Evidence محفوظة. الفشل أوالنقص يظل `PARTIAL` أو`NOT_COLLECTED`.
 
 ## ترتيب المصادر
 
@@ -25,7 +27,9 @@
 3. IMF وWorld Bank للتحليل الاقتصادي والسلاسل المساندة.
 4. KUNA والصحف الكويتية للتغطية والتعضيد واكتشاف الأسماء البديلة والتواريخ.
 5. Internet Archive لاستعادة نسخة مؤرخة مع بقاء حقوق الناشر الأصلي.
-6. المنتديات وInstagram وTikTok وFacebook وWikipedia للتوجيه أو المزاج فقط.
+6. المنتديات وFacebook وInstagram وTikTok وWikipedia للتوجيه أو المزاج فقط.
+   تُعامل المنصات منفصلة زمنيًا: Facebook من 2004، وInstagram من 2010، وTikTok
+   من 2017؛ ولا تُدرج أي منصة في خطة سنة تسبق إطلاقها.
 
 وجود الرابط في `config/historical_sources.json` لا يثبت أن Connector أوParser
 يعمل. كل التعريفات في هذه المرحلة `DEFINED_ONLY`، ولا يتم تجاوز Login أوCAPTCHA
@@ -53,7 +57,10 @@ dated للأسماء والاندماجات والاستحواذات والتص�
 يفصل العقد بين `ALLEGED` و`REFERRED` و`CHARGED` و`DECIDED` و`APPEALED` و`FINAL`.
 الإحالة إلى النيابة ليست حكمًا، والحكم قد لا يكون نهائيًا. الخبر الصحفي يمكن أن
 يعضد المسار لكنه لا ينشئ حقيقة قانونية من دون محكمة أوجهة رقابية أوالجريدة
-الرسمية. يجب تقليل البيانات الشخصية وعدم جمع محتوى خاص.
+الرسمية. ترفض الـSchema وRuntime validator أي Legal event يحمل
+`NOT_APPLICABLE`. كما لا تُقبل `OFFICIAL_CONFIRMED` إلا بوجود `PRIMARY` Evidence
+من مصدر `PRIMARY_OFFICIAL` معروف في السجل. يجب تقليل البيانات الشخصية وعدم جمع
+محتوى خاص.
 
 ## علاقتها بالقرار الاستثماري
 
@@ -70,7 +77,7 @@ dated للأسماء والاندماجات والاستحواذات والتص�
 
 ## الملفات
 
-- `config/historical_sources.json`: سجل 26 مصدرًا وحدود الوصول والحقوق.
+- `config/historical_sources.json`: سجل 28 مصدرًا وحدود الوصول والحقوق.
 - `config/historical_research_layers.json`: تعريف الفترات والـgrain.
 - `src/kubo/historical_knowledge.py`: التحقق والتخطيط وقواعد دعم الادعاء.
 - `schemas/historical-research-plan.schema.json`: عقد الخطة.

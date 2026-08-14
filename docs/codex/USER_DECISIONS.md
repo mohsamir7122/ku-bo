@@ -187,6 +187,29 @@ DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2 / PR #9
 ```
 
+```text
+DECISION_ID: KU-BO-MERGE-006
+STATUS: APPROVED
+DATE_RAISED: 2026-08-14
+TARGET: PR #16 / Harden PR #15 historical evidence gates
+CATEGORY: MERGE
+CURRENT_STATE: PR #16 is a clean, mergeable Draft against main at 32e048b234c73809b6f5119ae16937980184296c. Its implementation head 194922f9f5bf13a9332ea1f3d7cc4ae9d9307140 passed GitHub Actions on Python 3.11 through 3.14 and the complete 2,086-test suite. This authorization record creates a later documentation-only head that requires fresh exact-head CI before merge.
+WHY_A_DECISION_IS_REQUIRED: Repository rules require explicit user authority recorded in this queue before merging.
+OPTIONS:
+1. Record approval, run fresh exact-head CI, mark PR #16 ready, and merge only that validated head.
+2. Leave PR #16 open as a Draft.
+3. Merge without fresh CI or weaken evidence gates.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: The four historical evidence-gate fixes may enter main while live collection, completeness, forecasting, recommendation, and execution gates remain fail-closed.
+CONSEQUENCE_OF_REJECTION: The fixes remain available only in Draft PR #16.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep PR #16 as a validated Draft.
+USER_DECISION: APPROVED in the active user session through the explicit instruction to perform the merge, verify the initial Kuwait-screening steps, run the checks, and send the results by Gmail.
+DECIDED_AT: 2026-08-14
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: Merge only PR #16 after its authorization head passes exact-head CI and a final mergeability check. No force-push, deletion, credential use, private or licensed-data publication, corpus-completeness claim, gate weakening, forecast, probability, recommendation, or production execution.
+IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on PR #16 branch; exact-head CI and merge-boundary execution remain required.
+```
+
 ## Rules
 
 - Do not convert silence into approval.

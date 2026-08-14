@@ -16,7 +16,9 @@ from kubo.historical_knowledge import (
     HistoricalKnowledgeCatalog,
     compile_research_plan,
     parse_as_of,
+    validate_company_annual_history_record,
     validate_claim_support,
+    validate_historical_event_record,
 )
 
 
@@ -32,7 +34,7 @@ class HistoricalKnowledgeCatalogTests(unittest.TestCase):
         report = self.catalog.report()
         self.assertEqual(report["status"], "PASS_CONTRACT")
         self.assertEqual(report["readiness_status"], "DEFINED_ONLY")
-        self.assertEqual(report["source_count"], 26)
+        self.assertEqual(report["source_count"], 28)
         self.assertEqual(report["layer_count"], 6)
         self.assertFalse(report["claim_boundaries"]["historical_corpus_collected"])
 
@@ -63,7 +65,13 @@ class HistoricalKnowledgeCatalogTests(unittest.TestCase):
         )
 
     def test_community_and_wikipedia_cannot_establish_facts(self) -> None:
-        for source_id in ("social_platforms", "kuwait_community_forums", "wikipedia_routing"):
+        for source_id in (
+            "facebook_social",
+            "instagram_social",
+            "tiktok_social",
+            "kuwait_community_forums",
+            "wikipedia_routing",
+        ):
             with self.subTest(source=source_id):
                 with self.assertRaisesRegex(ValueError, "cannot establish factual claims"):
                     validate_claim_support(
@@ -76,7 +84,25 @@ class HistoricalKnowledgeCatalogTests(unittest.TestCase):
         validate_claim_support(
             self.catalog,
             fact_type="SOCIAL_SENTIMENT",
-            source_ids=["social_platforms"],
+            source_ids=["facebook_social"],
+        )
+
+    def test_each_social_platform_is_routed_only_after_its_launch_year(self) -> None:
+        roles = ("SOCIAL_ROUTING",)
+        self.assertEqual(self.catalog.sources_for_roles(roles, year=2003), ())
+        self.assertEqual(self.catalog.sources_for_roles(roles, year=2004), ("facebook_social",))
+        self.assertEqual(self.catalog.sources_for_roles(roles, year=2009), ("facebook_social",))
+        self.assertEqual(
+            self.catalog.sources_for_roles(roles, year=2010),
+            ("facebook_social", "instagram_social"),
+        )
+        self.assertEqual(
+            self.catalog.sources_for_roles(roles, year=2016),
+            ("facebook_social", "instagram_social"),
+        )
+        self.assertEqual(
+            self.catalog.sources_for_roles(roles, year=2017),
+            ("facebook_social", "instagram_social", "tiktok_social"),
         )
 
     def test_legal_claim_requires_official_role_and_procedural_status(self) -> None:
@@ -192,6 +218,14 @@ class HistoricalResearchPlanTests(unittest.TestCase):
 
 
 class HistoricalArtifactSchemaTests(unittest.TestCase):
+    @staticmethod
+    def _validator(name: str) -> Draft202012Validator:
+        if Draft202012Validator is None:
+            raise unittest.SkipTest("jsonschema optional dependency unavailable")
+        schema = json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        return Draft202012Validator(schema)
+
     def test_all_new_schemas_are_valid(self) -> None:
         if Draft202012Validator is None:
             self.skipTest("jsonschema optional dependency unavailable")
@@ -203,6 +237,139 @@ class HistoricalArtifactSchemaTests(unittest.TestCase):
             with self.subTest(schema=name):
                 schema = json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
                 Draft202012Validator.check_schema(schema)
+
+    def test_official_confirmed_event_rejects_routing_only_evidence(self) -> None:
+        record = {
+            "schema_version": "1.0",
+            "event_id": "hist-event-" + "a" * 24,
+            "year": 2026,
+            "occurred_at": "2026-08-14",
+            "date_precision": "DAY",
+            "published_at": "2026-08-14T08:00:00Z",
+            "first_available_at": "2026-08-14T08:00:00Z",
+            "captured_at": "2026-08-14T09:00:00Z",
+            "scope": "KUWAIT",
+            "event_type": "HISTORICAL_EVENT",
+            "summary_ar": "حدث تجريبي",
+            "summary_en": "Synthetic event",
+            "source_evidence": [
+                {
+                    "source_id": "wikipedia_routing",
+                    "url": "https://en.wikipedia.org/wiki/Kuwait",
+                    "content_sha256": "b" * 64,
+                    "capture_sha256": "c" * 64,
+                    "evidence_role": "ROUTING",
+                }
+            ],
+            "factual_status": "OFFICIAL_CONFIRMED",
+            "legal_status": "NOT_APPLICABLE",
+            "correction_status": "CURRENT",
+            "decision_use": "CONTEXT_ONLY",
+        }
+        self.assertTrue(list(self._validator("historical-event-record.schema.json").iter_errors(record)))
+        catalog = HistoricalKnowledgeCatalog(ROOT / "config")
+        with self.assertRaisesRegex(ValueError, "official primary evidence"):
+            validate_historical_event_record(catalog, record)
+        record["source_evidence"][0].update(
+            {
+                "source_id": "kuwait_government_history",
+                "url": "https://e.gov.kw/",
+                "evidence_role": "PRIMARY",
+            }
+        )
+        self.assertEqual(
+            list(self._validator("historical-event-record.schema.json").iter_errors(record)),
+            [],
+        )
+        validate_historical_event_record(catalog, record)
+
+    def test_legal_event_rejects_not_applicable_procedural_status(self) -> None:
+        record = {
+            "schema_version": "1.0",
+            "event_id": "hist-event-" + "d" * 24,
+            "year": 2026,
+            "occurred_at": "2026-08-14",
+            "date_precision": "DAY",
+            "published_at": "2026-08-14T08:00:00Z",
+            "first_available_at": "2026-08-14T08:00:00Z",
+            "captured_at": "2026-08-14T09:00:00Z",
+            "scope": "COMPANY",
+            "event_type": "COURT_OUTCOME",
+            "summary_ar": "حالة قانونية تجريبية",
+            "summary_en": "Synthetic legal event",
+            "source_evidence": [
+                {
+                    "source_id": "ministry_justice_kuwait",
+                    "url": "https://www.moj.gov.kw/",
+                    "content_sha256": "e" * 64,
+                    "capture_sha256": "f" * 64,
+                    "evidence_role": "PRIMARY",
+                }
+            ],
+            "factual_status": "OFFICIAL_CONFIRMED",
+            "legal_status": "NOT_APPLICABLE",
+            "correction_status": "CURRENT",
+            "decision_use": "CONTEXT_ONLY",
+        }
+        self.assertTrue(list(self._validator("historical-event-record.schema.json").iter_errors(record)))
+        catalog = HistoricalKnowledgeCatalog(ROOT / "config")
+        with self.assertRaisesRegex(ValueError, "procedural status"):
+            validate_historical_event_record(catalog, record)
+        record["legal_status"] = "DECIDED"
+        self.assertEqual(
+            list(self._validator("historical-event-record.schema.json").iter_errors(record)),
+            [],
+        )
+        validate_historical_event_record(catalog, record)
+
+    def test_no_verified_event_requires_complete_bound_search_receipts(self) -> None:
+        record = {
+            "schema_version": "1.0",
+            "company_id": "company-1",
+            "official_registration_id": "registration-1",
+            "year": 2026,
+            "legal_names": ["Synthetic Company"],
+            "founding": {
+                "founded_at": None,
+                "date_precision": "UNKNOWN",
+                "jurisdiction": "KW",
+                "circumstances_summary": None,
+            },
+            "annual_status": "UNKNOWN",
+            "founders": [],
+            "event_ids": [],
+            "source_evidence_hashes": [],
+            "declared_source_ids": [],
+            "search_receipts": [],
+            "coverage_status": "NO_VERIFIED_EVENT_FOUND",
+        }
+        self.assertTrue(list(self._validator("company-annual-history.schema.json").iter_errors(record)))
+        catalog = HistoricalKnowledgeCatalog(ROOT / "config")
+        with self.assertRaisesRegex(ValueError, "declared sources"):
+            validate_company_annual_history_record(catalog, record)
+        receipt_hash = "1" * 64
+        record.update(
+            {
+                "source_evidence_hashes": [receipt_hash],
+                "declared_source_ids": ["moci_commercial_registry"],
+                "search_receipts": [
+                    {
+                        "source_id": "moci_commercial_registry",
+                        "query": "Synthetic Company 2026",
+                        "searched_at": "2026-08-14T09:00:00Z",
+                        "capture_sha256": receipt_hash,
+                        "access_status": "COMPLETED",
+                        "query_complete": True,
+                        "pagination_complete": True,
+                    }
+                ],
+            }
+        )
+        self.assertEqual(
+            list(self._validator("company-annual-history.schema.json").iter_errors(record)),
+            [],
+        )
+        validate_company_annual_history_record(catalog, record)
 
 
 if __name__ == "__main__":
