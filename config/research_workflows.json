@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "workflows": [
+    {
+      "workflow_id": "KUWAIT_120D_NEXT_SESSION_RESEARCH",
+      "product_id": "KUWAIT_120D_NEXT_SESSION_RESEARCH",
+      "timezone": "Asia/Kuwait",
+      "windows": {
+        "context_calendar_days": 120,
+        "active_event_calendar_days": 30,
+        "community_sentiment_calendar_days": 7,
+        "fresh_catalyst_hours": 72
+      },
+      "source_search": {
+        "target_distinct_registrable_domains": 50,
+        "maximum_distinct_registrable_domains": 50,
+        "maximum_requests": 600,
+        "maximum_wall_seconds": 1800,
+        "transient_attempts_per_strategy": 3,
+        "empty_result_query_strategies": 4,
+        "incremental_corpus": true,
+        "wave_order": [
+          "OFFICIAL_AND_REGULATORY",
+          "ISSUER_AND_GOVERNMENT",
+          "STRUCTURED_AND_EDITORIAL",
+          "COMMUNITY_ARCHIVE_AND_ROUTING"
+        ]
+      },
+      "evaluation": {
+        "decision_sessions": 40,
+        "required_consecutive_official_sessions": 41,
+        "primary_target": "GROSS_ADJUSTED_RETURN_GT_0",
+        "secondary_targets": [
+          "MARKET_NET_EXCESS_GT_0",
+          "SECTOR_NET_EXCESS_GT_0"
+        ],
+        "ranking_rule": "SCORE_DESC_SECURITY_CODE_ASC",
+        "execution_grade_required": true,
+        "nontrading_outcome_policy": "STOP_BACKTEST_WHILE_KU_BO_008_D01_OPEN",
+        "minimum_universe_coverage": 1.0,
+        "minimum_evaluable_rate": 1.0,
+        "maximum_nonfill_rate": 0.0
+      },
+      "claim_boundaries": {
+        "search_snippet_is_evidence": false,
+        "community_is_official_truth": false,
+        "score_is_probability": false,
+        "historical_replay_is_prospective_validation": false,
+        "missing_data_is_zero_return": false
+      }
+    }
+  ]
+}

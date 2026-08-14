@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import socket
 import tempfile
 import unittest
 from datetime import datetime
@@ -91,6 +92,17 @@ def robots_response(body: bytes = b"User-agent: *\nDisallow:\n") -> FakeResponse
 
 
 class CaptureContractTests(unittest.TestCase):
+    def test_capture_writer_rejects_symlink_run_root(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            link = Path(directory) / "run"
+            try:
+                link.symlink_to(outside, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks are unavailable")
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                CapturePacketWriter(link)
+            self.assertEqual(list(Path(outside).iterdir()), [])
+
     def test_request_normalizes_domains_and_roles(self):
         item = capture_request(
             allowed_domains=("EXAMPLE.com.", "example.com"),
@@ -209,6 +221,16 @@ class FileConnectorTests(unittest.TestCase):
 
 
 class PublicHttpConnectorTests(unittest.TestCase):
+    def test_dns_resolution_failure_is_transient_but_non_public_is_blocked(self):
+        def failed_resolver(*_args, **_kwargs):
+            raise socket.gaierror("temporary failure")
+
+        result = PublicHttpConnector(clock=fixed_clock, resolver=failed_resolver).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.state, "ERROR")
+        self.assertEqual(result.error_code, "ROBOTS_DNS_ERROR")
+
     def test_dns_resolution_to_non_public_address_is_blocked_before_connect(self):
         def private_resolver(*_args, **_kwargs):
             return [
@@ -277,9 +299,26 @@ class PublicHttpConnectorTests(unittest.TestCase):
         result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
             capture_request(resource_path=None)
         )
-        self.assertEqual(result.state, "BLOCKED")
+        self.assertEqual(result.state, "ERROR")
         self.assertEqual(result.error_code, "ROBOTS_POLICY_UNAVAILABLE")
         self.assertEqual(len(opener.calls), 1)
+
+    def test_transient_robots_failure_is_not_cached_across_retry(self):
+        opener = QueueOpener(
+            error.URLError("offline"),
+            robots_response(),
+            FakeResponse(
+                b"ok",
+                "https://example.com/public/data",
+                headers={"Content-Type": "text/plain"},
+            ),
+        )
+        connector = PublicHttpConnector(clock=fixed_clock, opener=opener)
+        first = connector.capture(capture_request(resource_path=None))
+        second = connector.capture(capture_request(resource_path=None))
+        self.assertEqual(first.error_code, "ROBOTS_POLICY_UNAVAILABLE")
+        self.assertTrue(second.captured)
+        self.assertEqual(len(opener.calls), 3)
 
     def test_http_auth_rate_limit_and_server_failures_are_explicit(self):
         cases = (
@@ -300,6 +339,100 @@ class PublicHttpConnectorTests(unittest.TestCase):
                 self.assertEqual(result.state, state)
                 self.assertEqual(result.error_code, code)
                 self.assertFalse(result.captured)
+
+    def test_http_rate_limit_preserves_bounded_retry_after(self):
+        http_error = error.HTTPError(
+            "https://example.com/public/data",
+            429,
+            "rate limited",
+            {"Retry-After": "17"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_response(), http_error)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.error_code, "HTTP_RATE_LIMITED")
+        self.assertEqual(result.retry_after_seconds, 17.0)
+
+    def test_http_rate_limit_preserves_long_retry_after_for_budget_defer(self):
+        http_error = error.HTTPError(
+            "https://example.com/public/data",
+            429,
+            "rate limited",
+            {"Retry-After": "600"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_response(), http_error)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.retry_after_seconds, 600.0)
+
+    def test_negative_retry_after_is_invalid_but_does_not_escape_capture(self):
+        http_error = error.HTTPError(
+            "https://example.com/public/data",
+            429,
+            "rate limited",
+            {"Retry-After": "-1"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_response(), http_error)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.error_code, "HTTP_RATE_LIMITED")
+        self.assertIsNone(result.retry_after_seconds)
+
+    def test_http_error_preserves_validated_final_url(self):
+        http_error = error.HTTPError(
+            "https://example.com/redirected/rate",
+            429,
+            "rate limited",
+            {"Retry-After": "5"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_response(), http_error)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(
+                source_url="https://example.com/original",
+                resource_path=None,
+            )
+        )
+        self.assertEqual(result.final_url, "https://example.com/redirected/rate")
+        self.assertEqual(result.retry_after_seconds, 5.0)
+
+    def test_http_error_outside_allowlist_is_blocked(self):
+        http_error = error.HTTPError(
+            "https://evil.example/rate",
+            429,
+            "rate limited",
+            {"Retry-After": "5"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_response(), http_error)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.error_code, "REDIRECT_OUTSIDE_ALLOWLIST")
+        self.assertIsNone(result.retry_after_seconds)
+
+    def test_robots_rate_limit_preserves_retry_after_without_page_request(self):
+        robots_429 = error.HTTPError(
+            "https://example.com/robots.txt",
+            429,
+            "rate limited",
+            {"Retry-After": "19"},
+            io.BytesIO(b""),
+        )
+        opener = QueueOpener(robots_429)
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        self.assertEqual(result.error_code, "HTTP_RATE_LIMITED")
+        self.assertEqual(result.retry_after_seconds, 19.0)
+        self.assertIn("ROBOTS_ENDPOINT_RATE_LIMITED", result.limitations)
+        self.assertEqual(len(opener.calls), 1)
 
     def test_captcha_paywall_and_login_pages_are_not_saved(self):
         cases = (

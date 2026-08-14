@@ -15,6 +15,32 @@
       "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
     },
     {
+      "product_id": "KUWAIT_120D_NEXT_SESSION_RESEARCH",
+      "product_family": "full_universe_contextual_direction_rank",
+      "horizon_sessions": 1,
+      "target_rule": "GROSS_ADJUSTED_RETURN_GT_0",
+      "required_capabilities": [
+        "security_master",
+        "security_status_history",
+        "trading_calendar",
+        "daily_eod",
+        "daily_market_totals",
+        "benchmark_history",
+        "official_disclosures",
+        "corporate_actions",
+        "news_context",
+        "social_evidence",
+        "intraday_bars",
+        "l1_quotes",
+        "execution_fields"
+      ],
+      "execution_grade_required": true,
+      "minimum_independent_dates": 40,
+      "benchmark_rule": "point_in_time_market_and_sector",
+      "cost_policy": "recorded_next_session_entry_to_official_close_with_fees_spread_slippage_zero_nonfill_tolerance_and_absolute_up_primary_label",
+      "allowed_output": "UNVALIDATED_RESEARCH_SCORE_UNTIL_PROSPECTIVE_VALIDATION"
+    },
+    {
       "product_id": "next_session_plus_5_event",
       "product_family": "rare_event_probability",
       "horizon_sessions": 1,

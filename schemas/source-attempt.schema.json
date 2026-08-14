@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-attempt.schema.json",
+  "title": "KU-BO Exact Append-Only Source Attempt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "attempt_id", "sequence", "previous_attempt_hash", "event_type",
+    "wave_id", "source_id", "route_id", "strategy_id", "strategy_ordinal",
+    "attempt_ordinal", "window_from", "window_to", "requested_url", "final_url",
+    "registrable_domain", "access_mode", "capture_kind", "attempted_at", "completed_at",
+    "state", "query_status", "qualified_items", "zero_result", "http_status", "error_code",
+    "retry_after_seconds", "material_query_route_proof_sha256",
+    "content_sha256", "content_bytes", "artifact_path", "data_quality_flags", "limitations",
+    "retry_disposition", "retry_delay_seconds", "attempt_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "attempt_id": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_attempt_hash": {"$ref": "#/$defs/sha256"},
+    "event_type": {"enum": ["CAPTURE_ATTEMPT", "RETRY_CONTROL_EVENT"]},
+    "wave_id": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"},
+    "route_id": {"type": "string", "minLength": 1},
+    "strategy_id": {"type": "string", "minLength": 1},
+    "strategy_ordinal": {"type": "integer", "minimum": 1, "maximum": 4},
+    "attempt_ordinal": {"type": "integer", "minimum": 1, "maximum": 3},
+    "window_from": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+    "window_to": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
+    "requested_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "final_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "registrable_domain": {"type": "string", "minLength": 3},
+    "access_mode": {"enum": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD"]},
+    "capture_kind": {"enum": ["RAW_PAGE", "RAW_DOWNLOAD"]},
+    "attempted_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "state": {"enum": ["AVAILABLE", "PARTIAL", "BLOCKED", "ERROR", "AUTH_REQUIRED", "UNTESTED"]},
+    "query_status": {"enum": ["QUALIFIED", "ZERO_RESULT", "BLOCKED", "ERROR", "AUTH_REQUIRED", "PARSER_DRIFT", "DATA_QUALITY_REJECTED"]},
+    "qualified_items": {"type": "integer", "minimum": 0},
+    "zero_result": {"type": "boolean"},
+    "http_status": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+    "error_code": {"type": "string", "pattern": "^$|^[A-Z][A-Z0-9_]{0,127}$"},
+    "retry_after_seconds": {"type": ["number", "null"], "minimum": 0},
+    "material_query_route_proof_sha256": {
+      "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+    },
+    "content_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "content_bytes": {"type": "integer", "minimum": 0},
+    "artifact_path": {"type": ["string", "null"], "pattern": "^raw/"},
+    "data_quality_flags": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "retry_disposition": {
+      "enum": [
+        "RETRY_TRANSIENT", "NEXT_EMPTY_STRATEGY", "STOP_QUALIFIED", "STOP_HARD_BLOCK",
+        "STOP_CAPTURE_PENDING_PARSER", "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED",
+        "STOP_RATE_LIMITED", "STOP_RETRY_BUDGET", "STOP_SLEEPER_FAILURE", "NEXT_REJECTED_STRATEGY",
+        "STOP_STRATEGIES_EXHAUSTED"
+      ]
+    },
+    "retry_delay_seconds": {"type": "number", "minimum": 0},
+    "attempt_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"const": "RETRY_CONTROL_EVENT"}}},
+      "then": {
+        "properties": {
+          "state": {"const": "ERROR"},
+          "query_status": {"const": "ERROR"},
+          "qualified_items": {"const": 0},
+          "zero_result": {"const": false},
+          "http_status": {"type": "null"},
+          "error_code": {"const": "SLEEPER_FAILURE"},
+          "retry_after_seconds": {"type": "null"},
+          "material_query_route_proof_sha256": {"type": "null"},
+          "content_sha256": {"type": "null"},
+          "content_bytes": {"const": 0},
+          "artifact_path": {"type": "null"},
+          "data_quality_flags": {"maxItems": 0},
+          "retry_disposition": {"const": "STOP_SLEEPER_FAILURE"}
+        }
+      },
+      "else": {
+        "properties": {
+          "retry_disposition": {"not": {"const": "STOP_SLEEPER_FAILURE"}}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

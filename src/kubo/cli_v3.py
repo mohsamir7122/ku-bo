@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import base64
 import binascii
+from dataclasses import asdict
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,9 @@ import sys
 from . import __version__
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
+from .foundation_io import prepare_output_root
+from .hashing import canonical_json_bytes, sha256_file
+from .ingestion import PublicHttpConnector
 from .ledger import ForecastLedger
 from .outcome_sessions import OutcomeSessionAuthority
 from .pack import PackValidator
@@ -21,8 +25,16 @@ from .research_ledger import ResearchDecisionLedger
 from .reporting import build_report, render_report
 from .request_contracts import AnalysisRequest
 from .runtime_trust import RuntimeTrustRegistry, load_runtime_trust_registry
-from .hashing import sha256_file
+from .forty_session_replay import evaluate_forty_session_replay
+from .kuwait_research_pipeline import build_integrated_research_bundle
+from .research_workflow import load_research_workflow
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
+from .source_orchestrator import (
+    SourceSearchOrchestrator,
+    validate_source_search_report,
+    validate_source_search_run,
+)
+from .strict import parse_aware
 
 
 BLOCKING_STATUSES = {
@@ -30,6 +42,7 @@ BLOCKING_STATUSES = {
     "FAIL",
     "PACK_BLOCKED",
     "STOP_BACKTEST",
+    "STOP_INFERENCE",
     "SOURCE_NETWORK_BLOCKED",
     "EXECUTION_BLOCKED",
     "PARTIAL",
@@ -44,6 +57,7 @@ BLOCKING_STATUSES = {
     "SYNTHETIC_CONTRACT_ONLY",
     "MODEL_CARD_BLOCKED",
     "UNVALIDATED_RESEARCH_ONLY",
+    "DEGRADED",
 }
 
 PROJECT_CONFIG_COMMANDS = frozenset(
@@ -52,11 +66,15 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "materialize-parser-run",
         "plan",
         "run-request",
+        "run-source-search",
+        "build-kuwait-research-bundle",
         "validate-config",
         "validate-live-probe",
         "validate-network-run",
         "validate-pack",
+        "validate-research-workflow",
         "validate-source-network",
+        "evaluate-forty-session-replay",
     }
 )
 
@@ -64,8 +82,10 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/methods.json"),
     Path("config/products.json"),
     Path("config/research_policies.json"),
+    Path("config/research_workflows.json"),
     Path("config/source_capabilities.json"),
     Path("config/source_network.json"),
+    Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
 )
 
@@ -195,6 +215,24 @@ def parser() -> argparse.ArgumentParser:
 
     sub.add_parser("validate-config")
     sub.add_parser("validate-source-network")
+    sub.add_parser("validate-research-workflow")
+
+    replay = sub.add_parser("evaluate-forty-session-replay")
+    replay.add_argument("--packet", type=Path, required=True)
+    replay.add_argument("--runtime-root", type=Path, required=True)
+
+    source_search = sub.add_parser("run-source-search")
+    source_search.add_argument("--run-id", required=True)
+    source_search.add_argument("--decision-at", required=True)
+    source_search.add_argument("--output-root", type=Path, required=True)
+    source_search.add_argument("--query", default="بورصة الكويت")
+    source_search.add_argument("--source", action="append", dest="source_ids")
+    source_search.add_argument("--watermarks", type=Path)
+
+    integrate = sub.add_parser("build-kuwait-research-bundle")
+    integrate.add_argument("--source-search-root", type=Path, required=True)
+    integrate.add_argument("--parsed-inputs", type=Path, required=True)
+    integrate.add_argument("--output-root", type=Path, required=True)
 
     validate_run = sub.add_parser("validate-network-run")
     validate_run.add_argument("--run", type=Path, required=True)
@@ -279,6 +317,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in {
         "validate-config",
         "validate-source-network",
+        "validate-research-workflow",
+        "evaluate-forty-session-replay",
+        "run-source-search",
+        "build-kuwait-research-bundle",
         "validate-network-run",
         "validate-live-probe",
         "plan",
@@ -290,14 +332,86 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate-config":
         assert network_catalog is not None
+        workflow = load_research_workflow(project_root / "config")
         report = {
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
             "source_network": network_catalog.report(),
+            "research_workflow": asdict(workflow),
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
         report = network_catalog.report()
+    elif args.command == "validate-research-workflow":
+        assert network_catalog is not None
+        spec = load_research_workflow(project_root / "config")
+        report = {
+            "status": "PASS_CONTRACT",
+            "readiness_status": "LIVE_DEPENDENT",
+            "workflow": asdict(spec),
+            "source_capabilities": network_catalog.report()["capability_status_counts"],
+            "live_operational_sources": network_catalog.report()["live_operational_sources"],
+            "claim_boundaries": {
+                "operational_ready": False,
+                "backtest_ready": False,
+                "probability_allowed": False,
+                "recommendation_allowed": False,
+            },
+        }
+    elif args.command == "evaluate-forty-session-replay":
+        load_research_workflow(project_root / "config")
+        report = evaluate_forty_session_replay(
+            args.packet,
+            runtime_root=args.runtime_root,
+        )
+    elif args.command == "run-source-search":
+        assert network_catalog is not None
+        load_research_workflow(project_root / "config")
+        output_root = prepare_output_root(
+            args.output_root,
+            label="SOURCE_SEARCH_OUTPUT_ROOT",
+        )
+        watermarks = (
+            _load_strict_json_object(args.watermarks, "source-search watermarks")
+            if args.watermarks is not None
+            else None
+        )
+        run = SourceSearchOrchestrator(
+            catalog=network_catalog,
+            strategy_path=project_root / "config" / "source_query_strategies.json",
+            connector=PublicHttpConnector(),
+        ).run(
+            run_id=args.run_id,
+            decision_at=parse_aware(args.decision_at, "decision_at"),
+            attempt_log_path=output_root / "source_attempts.jsonl",
+            query_text=args.query,
+            source_ids=args.source_ids,
+            watermarks=watermarks,
+        )
+        report = run.to_dict()
+        validate_source_search_report(
+            report,
+            schema_root=project_root / "schemas",
+        )
+        report_path = output_root / "source_search_run.json"
+        with report_path.open("xb") as handle:
+            handle.write(canonical_json_bytes(report))
+            handle.flush()
+            os.fsync(handle.fileno())
+        validate_source_search_run(
+            output_root,
+            schema_root=project_root / "schemas",
+        )
+    elif args.command == "build-kuwait-research-bundle":
+        assert network_catalog is not None
+        load_research_workflow(project_root / "config")
+        report = build_integrated_research_bundle(
+            source_search_root=args.source_search_root,
+            parsed_inputs_path=args.parsed_inputs,
+            output_root=args.output_root,
+            source_catalog=network_catalog,
+            schema_root=project_root / "schemas",
+        )
     elif args.command == "validate-network-run":
         assert network_catalog is not None
         runtime_trust = _load_cli_runtime_trust_registry(

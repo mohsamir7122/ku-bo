@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from email.utils import parsedate_to_datetime
 import http.client
 import ipaddress
 import math
@@ -20,6 +21,7 @@ from urllib import error, request, robotparser
 from urllib.parse import parse_qsl, urljoin, urlparse, urlsplit, urlunsplit
 
 from . import __version__
+from .foundation_io import require_real_directory
 from .hashing import canonical_json_bytes, sha256_bytes
 from .strict import sensitive_query_key
 
@@ -166,6 +168,33 @@ def _provenance_url(value: str) -> str:
     )
 
 
+def _retry_after_seconds(headers, attempted_at: datetime) -> float | None:
+    """Parse Retry-After without shortening the server's requested delay.
+
+    The orchestrator owns the wall-time budget decision.  The connector must
+    preserve a valid server delay so the caller can defer instead of retrying
+    early.  Invalid negative or non-finite values are treated as absent.
+    """
+
+    raw = str(headers.get("Retry-After", "")).strip() if headers is not None else ""
+    if not raw:
+        return None
+    try:
+        integer_seconds = int(raw)
+        if integer_seconds < 0:
+            return None
+        seconds = float(integer_seconds)
+    except (ValueError, OverflowError):
+        try:
+            retry_at = parsedate_to_datetime(raw)
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=timezone.utc)
+            seconds = max(0.0, (retry_at - attempted_at).total_seconds())
+        except (TypeError, ValueError, OverflowError):
+            return None
+    return seconds if math.isfinite(seconds) and seconds >= 0 else None
+
+
 @dataclass(frozen=True)
 class CaptureRequest:
     """A bounded request to capture public bytes without qualifying market evidence."""
@@ -234,6 +263,8 @@ class CaptureResult:
     error_code: str
     data_quality_flags: tuple[str, ...]
     limitations: tuple[str, ...]
+    retry_after_seconds: float | None = None
+    material_query_route_proof_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not _SOURCE_ID_RE.fullmatch(self.source_id):
@@ -263,6 +294,28 @@ class CaptureResult:
             raise ValueError("content and observed_at must either both exist or both be absent")
         if self.error_code and not _CODE_RE.fullmatch(self.error_code):
             raise ValueError("error_code must be a stable uppercase code")
+        retry_after = self.retry_after_seconds
+        if retry_after is not None:
+            if (
+                isinstance(retry_after, bool)
+                or not isinstance(retry_after, (int, float))
+                or not math.isfinite(float(retry_after))
+                or float(retry_after) < 0
+            ):
+                raise ValueError("retry_after_seconds must be a non-negative finite number")
+            if self.error_code != "HTTP_RATE_LIMITED":
+                raise ValueError("retry_after_seconds is valid only for HTTP_RATE_LIMITED")
+            object.__setattr__(self, "retry_after_seconds", float(retry_after))
+        route_proof = self.material_query_route_proof_sha256
+        if route_proof is not None:
+            if not re.fullmatch(r"[0-9a-f]{64}", str(route_proof)):
+                raise ValueError("material_query_route_proof_sha256 must be a lowercase SHA-256")
+            if self.query_status != "ZERO_RESULT":
+                raise ValueError("material query route proof is valid only for ZERO_RESULT")
+            if self.content is None or route_proof != sha256_bytes(self.content):
+                raise ValueError(
+                    "material query route proof must hash the persisted zero-result bytes"
+                )
 
     @property
     def captured(self) -> bool:
@@ -284,6 +337,7 @@ def _failure(
     flags: tuple[str, ...] = (),
     limitations: tuple[str, ...] = (),
     final_url: str | None = None,
+    retry_after_seconds: float | None = None,
 ) -> CaptureResult:
     return CaptureResult(
         source_id=capture_request.source_id,
@@ -304,6 +358,7 @@ def _failure(
         error_code=error_code,
         data_quality_flags=tuple(sorted(set(flags))),
         limitations=tuple(sorted(set(limitations))),
+        retry_after_seconds=retry_after_seconds,
     )
 
 
@@ -456,6 +511,10 @@ class _UnsafeNetworkTargetError(RuntimeError):
     pass
 
 
+class _DnsResolutionError(RuntimeError):
+    pass
+
+
 def _resolve_public_addresses(
     host: str,
     port: int = 443,
@@ -473,7 +532,7 @@ def _resolve_public_addresses(
             proto=socket.IPPROTO_TCP,
         )
     except (OSError, socket.gaierror) as exc:
-        raise _UnsafeNetworkTargetError("DNS resolution failed") from exc
+        raise _DnsResolutionError("DNS resolution failed") from exc
     addresses: set[str] = set()
     for row in rows:
         try:
@@ -590,6 +649,7 @@ def _build_public_opener(
 class _RobotsDecision:
     allowed: bool
     code: str
+    retry_after_seconds: float | None = None
 
 
 class PublicHttpConnector:
@@ -631,13 +691,30 @@ class PublicHttpConnector:
             capture_request.allowed_domains,
             resolver=self._resolver,
         )
-        robots_decision = self._robots_allowed(opener, capture_request)
+        robots_decision = self._robots_allowed(opener, capture_request, attempted_at)
         if not robots_decision.allowed:
+            if robots_decision.code == "ROBOTS_HTTP_RATE_LIMITED":
+                return _failure(
+                    capture_request,
+                    attempted_at,
+                    state="BLOCKED",
+                    query_status="BLOCKED",
+                    error_code="HTTP_RATE_LIMITED",
+                    limitations=(
+                        "ROBOTS_ENDPOINT_RATE_LIMITED",
+                        "ROBOTS_POLICY_NOT_BYPASSED",
+                    ),
+                    retry_after_seconds=robots_decision.retry_after_seconds,
+                )
+            transient_robots = robots_decision.code in {
+                "ROBOTS_DNS_ERROR",
+                "ROBOTS_POLICY_UNAVAILABLE",
+            }
             return _failure(
                 capture_request,
                 attempted_at,
-                state="BLOCKED",
-                query_status="BLOCKED",
+                state="ERROR" if transient_robots else "BLOCKED",
+                query_status="ERROR" if transient_robots else "BLOCKED",
                 error_code=robots_decision.code,
                 limitations=("ROBOTS_POLICY_NOT_BYPASSED",),
             )
@@ -661,6 +738,14 @@ class PublicHttpConnector:
                 query_status="BLOCKED",
                 error_code="REDIRECT_OUTSIDE_ALLOWLIST",
             )
+        except _DnsResolutionError:
+            return _failure(
+                capture_request,
+                attempted_at,
+                state="ERROR",
+                query_status="ERROR",
+                error_code="HTTP_DNS_ERROR",
+            )
         except _UnsafeNetworkTargetError:
             return _failure(
                 capture_request,
@@ -671,7 +756,24 @@ class PublicHttpConnector:
             )
         except error.HTTPError as exc:
             try:
-                return self._http_failure(capture_request, attempted_at, int(exc.code))
+                final_url = str(exc.geturl() or capture_request.source_url)
+                try:
+                    _validate_public_url(final_url, capture_request.allowed_domains)
+                except ValueError:
+                    return _failure(
+                        capture_request,
+                        attempted_at,
+                        state="BLOCKED",
+                        query_status="BLOCKED",
+                        error_code="REDIRECT_OUTSIDE_ALLOWLIST",
+                    )
+                return self._http_failure(
+                    capture_request,
+                    attempted_at,
+                    int(exc.code),
+                    final_url=final_url,
+                    headers=exc.headers,
+                )
             finally:
                 exc.close()
         except (TimeoutError, socket.timeout):
@@ -700,7 +802,12 @@ class PublicHttpConnector:
                 error_code="HTTP_TRANSPORT_ERROR",
             )
 
-    def _robots_allowed(self, opener, capture_request: CaptureRequest) -> _RobotsDecision:
+    def _robots_allowed(
+        self,
+        opener,
+        capture_request: CaptureRequest,
+        attempted_at: datetime,
+    ) -> _RobotsDecision:
         parsed = urlparse(capture_request.source_url)
         origin = urlunsplit(("https", parsed.netloc, "", "", ""))
         cache_key = (capture_request.source_url, capture_request.user_agent)
@@ -723,10 +830,14 @@ class PublicHttpConnector:
                     decision = _RobotsDecision(True, "ROBOTS_NOT_PUBLISHED")
                     self._robots_cache[cache_key] = decision
                     return decision
+                if status == 429:
+                    return _RobotsDecision(
+                        False,
+                        "ROBOTS_HTTP_RATE_LIMITED",
+                        _retry_after_seconds(response.headers, attempted_at),
+                    )
                 if status < 200 or status >= 300:
-                    decision = _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
-                    self._robots_cache[cache_key] = decision
-                    return decision
+                    return _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
                 body = response.read(MAX_ROBOTS_BYTES + 1)
             finally:
                 response.close()
@@ -743,20 +854,33 @@ class PublicHttpConnector:
             return decision
         except _UnsafeRedirectError:
             decision = _RobotsDecision(False, "ROBOTS_REDIRECT_OUTSIDE_ALLOWLIST")
+        except _DnsResolutionError:
+            decision = _RobotsDecision(False, "ROBOTS_DNS_ERROR")
         except _UnsafeNetworkTargetError:
             decision = _RobotsDecision(False, "ROBOTS_NON_PUBLIC_NETWORK_TARGET")
         except error.HTTPError as exc:
             try:
-                decision = (
-                    _RobotsDecision(True, "ROBOTS_NOT_PUBLISHED")
-                    if int(exc.code) in {404, 410}
-                    else _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
-                )
+                status = int(exc.code)
+                if status in {404, 410}:
+                    decision = _RobotsDecision(True, "ROBOTS_NOT_PUBLISHED")
+                elif status == 429:
+                    decision = _RobotsDecision(
+                        False,
+                        "ROBOTS_HTTP_RATE_LIMITED",
+                        _retry_after_seconds(exc.headers, attempted_at),
+                    )
+                else:
+                    decision = _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
             finally:
                 exc.close()
         except (TimeoutError, socket.timeout, error.URLError, OSError, ValueError):
             decision = _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
-        self._robots_cache[cache_key] = decision
+        if decision.code not in {
+            "ROBOTS_DNS_ERROR",
+            "ROBOTS_HTTP_RATE_LIMITED",
+            "ROBOTS_POLICY_UNAVAILABLE",
+        }:
+            self._robots_cache[cache_key] = decision
         return decision
 
     def _read_response(
@@ -780,7 +904,13 @@ class PublicHttpConnector:
                     http_status=status,
                 )
             if status < 200 or status >= 300:
-                return self._http_failure(capture_request, attempted_at, status, final_url=final_url)
+                return self._http_failure(
+                    capture_request,
+                    attempted_at,
+                    status,
+                    final_url=final_url,
+                    headers=response.headers,
+                )
             if status == 206 or response.headers.get("Content-Range"):
                 return _failure(
                     capture_request,
@@ -890,6 +1020,7 @@ class PublicHttpConnector:
         status: int,
         *,
         final_url: str | None = None,
+        headers=None,
     ) -> CaptureResult:
         if status in {401, 407}:
             state, query_status, code = "AUTH_REQUIRED", "AUTH_REQUIRED", "HTTP_AUTH_REQUIRED"
@@ -913,6 +1044,11 @@ class PublicHttpConnector:
             error_code=code,
             http_status=status,
             final_url=final_url,
+            retry_after_seconds=(
+                _retry_after_seconds(headers, attempted_at)
+                if code == "HTTP_RATE_LIMITED"
+                else None
+            ),
         )
 
 
@@ -1006,20 +1142,23 @@ class CapturePacketWriter:
     """Write content-addressed raw files and deterministic V3 manifest/observations."""
 
     def __init__(self, run_root: Path):
-        self.run_root = Path(run_root).resolve()
+        self.run_root = Path(os.path.abspath(run_root))
         if self.run_root == Path(self.run_root.anchor):
             raise ValueError("run_root must not be a filesystem root")
-        self.run_root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        if not self.run_root.is_dir():
-            raise ValueError("run_root must be a directory")
+        require_real_directory(self.run_root.parent, field="run_root parent")
+        if self.run_root.exists() or self.run_root.is_symlink():
+            require_real_directory(self.run_root, field="run_root")
+        else:
+            try:
+                self.run_root.mkdir(mode=0o700)
+            except OSError as exc:
+                raise ValueError("run_root cannot be created safely") from exc
+            require_real_directory(self.run_root, field="run_root")
 
     def write(self, results: Iterable[CaptureResult]) -> CaptureWriteReport:
         result_rows = tuple(results)
         if not result_rows:
             raise ValueError("at least one CaptureResult is required")
-        raw_root = self.run_root / "raw"
-        raw_root.mkdir(parents=True, exist_ok=True)
-
         artifact_by_path: dict[str, dict[str, object]] = {}
         digest_by_result: dict[int, str] = {}
         for index, result in enumerate(result_rows):
@@ -1151,6 +1290,21 @@ class CapturePacketWriter:
                 raise ValueError("content-addressed raw artifact collision")
             return
         self._atomic_write(path, content)
+
+    def write_content_addressed_artifact(self, relative: Path, content: bytes) -> None:
+        """Write one raw content-addressed artifact through the secure dirfd path."""
+
+        candidate = Path(relative)
+        if (
+            candidate.is_absolute()
+            or ".." in candidate.parts
+            or len(candidate.parts) < 3
+            or candidate.parts[0] != "raw"
+            or not isinstance(content, bytes)
+            or sha256_bytes(content) not in candidate.name
+        ):
+            raise ValueError("content-addressed artifact path is invalid")
+        self._write_raw_once(self.run_root / candidate, content)
 
     def _atomic_write(self, path: Path, content: bytes) -> None:
         relative = self._relative_target(path)

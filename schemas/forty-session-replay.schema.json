@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/forty-session-replay.schema.json",
+  "title": "KU-BO strict forty-session point-in-time replay packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "product_id",
+    "timezone",
+    "created_at",
+    "evidence_classification",
+    "rights_status",
+    "data_foundation_status",
+    "final_authority_receipt_sha256",
+    "trading_calendar_sha256",
+    "code_sha256",
+    "policy_sha256",
+    "policy",
+    "official_sessions",
+    "decisions"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "packet_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "product_id": {"const": "KUWAIT_120D_NEXT_SESSION_RESEARCH"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "evidence_classification": {"const": "PROVEN_REAL_EVIDENCE"},
+    "rights_status": {"const": "RESEARCH_USE_AUTHORIZED"},
+    "data_foundation_status": {"const": "DATA_FOUNDATION_READY_FOR_BASELINE_BACKTEST"},
+    "final_authority_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "trading_calendar_sha256": {"$ref": "#/$defs/sha256"},
+    "code_sha256": {"$ref": "#/$defs/sha256"},
+    "policy_sha256": {"$ref": "#/$defs/sha256"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "official_sessions": {
+      "type": "array",
+      "minItems": 41,
+      "maxItems": 41,
+      "items": {"$ref": "#/$defs/official_session"}
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 40,
+      "maxItems": 40,
+      "items": {"$ref": "#/$defs/decision"}
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "security_code": {
+      "type": "string",
+      "pattern": "^[0-9]{1,12}$"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_label",
+        "secondary_labels",
+        "horizon_sessions",
+        "decision_count",
+        "top_k",
+        "minimum_effective_decisions",
+        "non_fill_policy",
+        "benchmark_rule",
+        "ranking_rule"
+      ],
+      "properties": {
+        "primary_label": {"const": "GROSS_ADJUSTED_RETURN_GT_0"},
+        "secondary_labels": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "MARKET_NET_EXCESS_GT_0"},
+            {"const": "SECTOR_NET_EXCESS_GT_0"}
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "horizon_sessions": {"const": 1},
+        "decision_count": {"const": 40},
+        "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
+        "minimum_effective_decisions": {"const": 40},
+        "non_fill_policy": {"const": "STOP_BACKTEST"},
+        "benchmark_rule": {"const": "POINT_IN_TIME_MARKET_AND_SECTOR"},
+        "ranking_rule": {"const": "SCORE_DESC_SECURITY_CODE_ASC"}
+      }
+    },
+    "official_session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trade_date",
+        "session_open_at",
+        "session_close_at",
+        "calendar_first_available_at",
+        "raw_sha256",
+        "is_trading_day"
+      ],
+      "properties": {
+        "trade_date": {"type": "string", "format": "date"},
+        "session_open_at": {"type": "string", "format": "date-time"},
+        "session_close_at": {"type": "string", "format": "date-time"},
+        "calendar_first_available_at": {"type": "string", "format": "date-time"},
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "is_trading_day": {"const": true}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "decision_session",
+        "outcome_session",
+        "decision_at",
+        "universe_first_available_at",
+        "universe_evidence_sha256",
+        "universe_sha256",
+        "feature_snapshot_sha256",
+        "feature_snapshot_created_at",
+        "policy_sha256",
+        "code_sha256",
+        "expected_security_codes",
+        "rows"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "decision_session": {"type": "string", "format": "date"},
+        "outcome_session": {"type": "string", "format": "date"},
+        "decision_at": {"type": "string", "format": "date-time"},
+        "universe_first_available_at": {"type": "string", "format": "date-time"},
+        "universe_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "universe_sha256": {"$ref": "#/$defs/sha256"},
+        "feature_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "feature_snapshot_created_at": {"type": "string", "format": "date-time"},
+        "policy_sha256": {"$ref": "#/$defs/sha256"},
+        "code_sha256": {"$ref": "#/$defs/sha256"},
+        "expected_security_codes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/security_code"}
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 1000,
+          "items": {"$ref": "#/$defs/replay_row"}
+        }
+      }
+    },
+    "replay_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "security_code",
+        "identity_valid_from",
+        "identity_valid_to",
+        "identity_first_available_at",
+        "feature_available_at",
+        "score_computed_at",
+        "feature_evidence_sha256",
+        "sector_code",
+        "sector_valid_from",
+        "sector_valid_to",
+        "sector_first_available_at",
+        "sector_identity_evidence_sha256",
+        "outcome_observed_at",
+        "outcome_evidence_sha256",
+        "market_benchmark_evidence_sha256",
+        "sector_benchmark_evidence_sha256",
+        "corporate_action_evidence_sha256",
+        "execution_evidence_sha256",
+        "execution_status",
+        "outcome_status",
+        "entry_at",
+        "exit_at",
+        "entry_price_fils",
+        "exit_price_fils",
+        "fees_return",
+        "spread_return",
+        "slippage_return",
+        "decision_close_fils",
+        "outcome_close_fils",
+        "price_adjustment_factor",
+        "cash_distribution_return",
+        "market_benchmark_decision_value",
+        "market_benchmark_outcome_value",
+        "sector_benchmark_decision_value",
+        "sector_benchmark_outcome_value",
+        "score",
+        "rank",
+        "selected",
+        "abstained"
+      ],
+      "properties": {
+        "security_code": {"$ref": "#/$defs/security_code"},
+        "identity_valid_from": {"type": "string", "format": "date"},
+        "identity_valid_to": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
+        "identity_first_available_at": {"type": "string", "format": "date-time"},
+        "feature_available_at": {"type": "string", "format": "date-time"},
+        "score_computed_at": {"type": "string", "format": "date-time"},
+        "feature_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "sector_code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9][A-Z0-9_.:-]{0,63}$"
+        },
+        "sector_valid_from": {"type": "string", "format": "date"},
+        "sector_valid_to": {
+          "oneOf": [
+            {"type": "string", "format": "date"},
+            {"type": "null"}
+          ]
+        },
+        "sector_first_available_at": {"type": "string", "format": "date-time"},
+        "sector_identity_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "outcome_observed_at": {"type": "string", "format": "date-time"},
+        "outcome_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "market_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "sector_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "corporate_action_evidence_sha256": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "execution_evidence_sha256": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "execution_status": {
+          "enum": ["FILLED", "NON_FILL", "SUSPENDED", "HALTED", "NO_EXECUTABLE_PRICE", "NOT_SELECTED"]
+        },
+        "outcome_status": {
+          "enum": [
+            "OBSERVED_TRADING_OUTCOME",
+            "NO_TRADE",
+            "SUSPENDED",
+            "HALTED",
+            "TRADED_THEN_SUSPENDED",
+            "NOT_LISTED_OR_NOT_ELIGIBLE"
+          ]
+        },
+        "entry_at": {
+          "oneOf": [
+            {"type": "string", "format": "date-time"},
+            {"type": "null"}
+          ]
+        },
+        "exit_at": {
+          "oneOf": [
+            {"type": "string", "format": "date-time"},
+            {"type": "null"}
+          ]
+        },
+        "entry_price_fils": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "exit_price_fils": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "fees_return": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "spread_return": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "slippage_return": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "decision_close_fils": {"type": "number", "exclusiveMinimum": 0},
+        "outcome_close_fils": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "price_adjustment_factor": {"type": "number", "exclusiveMinimum": 0},
+        "cash_distribution_return": {"type": "number", "minimum": 0, "maximum": 10},
+        "market_benchmark_decision_value": {"type": "number", "exclusiveMinimum": 0},
+        "market_benchmark_outcome_value": {"type": "number", "exclusiveMinimum": 0},
+        "sector_benchmark_decision_value": {"type": "number", "exclusiveMinimum": 0},
+        "sector_benchmark_outcome_value": {"type": "number", "exclusiveMinimum": 0},
+        "score": {
+          "oneOf": [
+            {"type": "number"},
+            {"type": "null"}
+          ]
+        },
+        "rank": {
+          "oneOf": [
+            {"type": "integer", "minimum": 1, "maximum": 1000},
+            {"type": "null"}
+          ]
+        },
+        "selected": {"type": "boolean"},
+        "abstained": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"abstained": {"const": true}},
+            "required": ["abstained"]
+          },
+          "then": {
+            "properties": {
+              "selected": {"const": false},
+              "score": {"type": "null"},
+              "rank": {"type": "null"}
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {"type": "number"},
+              "rank": {"type": "integer", "minimum": 1, "maximum": 1000}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome_status": {"const": "OBSERVED_TRADING_OUTCOME"}
+            },
+            "required": ["outcome_status"]
+          },
+          "then": {
+            "properties": {
+              "outcome_close_fils": {"type": "number", "exclusiveMinimum": 0}
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {"selected": {"const": true}},
+                  "required": ["selected"]
+                },
+                "then": {
+                  "properties": {
+                    "execution_evidence_sha256": {"$ref": "#/$defs/sha256"},
+                    "execution_status": {"const": "FILLED"},
+                    "entry_at": {"type": "string", "format": "date-time"},
+                    "exit_at": {"type": "string", "format": "date-time"},
+                    "entry_price_fils": {"type": "number", "exclusiveMinimum": 0},
+                    "exit_price_fils": {"type": "number", "exclusiveMinimum": 0},
+                    "fees_return": {"type": "number", "minimum": 0, "maximum": 1},
+                    "spread_return": {"type": "number", "minimum": 0, "maximum": 1},
+                    "slippage_return": {"type": "number", "minimum": 0, "maximum": 1}
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "execution_evidence_sha256": {"type": "null"},
+                    "execution_status": {"const": "NOT_SELECTED"},
+                    "entry_at": {"type": "null"},
+                    "exit_at": {"type": "null"},
+                    "entry_price_fils": {"type": "null"},
+                    "exit_price_fils": {"type": "null"},
+                    "fees_return": {"type": "null"},
+                    "spread_return": {"type": "null"},
+                    "slippage_return": {"type": "null"}
+                  }
+                }
+              }
+            ]
+          },
+          "else": {
+            "properties": {
+              "entry_at": {"type": "null"},
+              "exit_at": {"type": "null"},
+              "entry_price_fils": {"type": "null"},
+              "exit_price_fils": {"type": "null"},
+              "fees_return": {"type": "null"},
+              "spread_return": {"type": "null"},
+              "slippage_return": {"type": "null"}
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {"selected": {"const": true}},
+                  "required": ["selected"]
+                },
+                "then": {
+                  "properties": {
+                    "execution_evidence_sha256": {"$ref": "#/$defs/sha256"},
+                    "execution_status": {
+                      "enum": ["NON_FILL", "SUSPENDED", "HALTED", "NO_EXECUTABLE_PRICE"]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "execution_evidence_sha256": {"type": "null"},
+                    "execution_status": {"const": "NOT_SELECTED"}
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "outcome_status": {
+                      "enum": [
+                        "NO_TRADE",
+                        "SUSPENDED",
+                        "HALTED",
+                        "NOT_LISTED_OR_NOT_ELIGIBLE"
+                      ]
+                    }
+                  },
+                  "required": ["outcome_status"]
+                },
+                "then": {
+                  "properties": {"outcome_close_fils": {"type": "null"}}
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

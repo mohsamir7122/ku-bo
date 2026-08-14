@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/context-event.schema.json",
+  "title": "KU-BO deduplicated point-in-time Kuwait context event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "canonical_event_id",
+    "event_ids",
+    "scope",
+    "scope_key",
+    "event_type",
+    "direction",
+    "materiality",
+    "confidence",
+    "novelty",
+    "event_at",
+    "first_published_at",
+    "first_available_at",
+    "last_captured_at",
+    "decision_at",
+    "capture_modes",
+    "source_ids",
+    "source_group_ids",
+    "source_classes",
+    "origin_ids",
+    "origin_hashes",
+    "content_hashes",
+    "evidence_hashes",
+    "availability_evidence_hashes",
+    "relation_types",
+    "diffusion_count",
+    "independent_source_groups",
+    "factual_status",
+    "contradiction_status",
+    "correction_status",
+    "window_tags",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "canonical_event_id": {"type": "string", "pattern": "^ctx-[0-9a-f]{24}$"},
+    "event_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "scope": {"enum": ["KUWAIT_MACRO", "SECTOR", "SECURITY"]},
+    "scope_key": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_.:-]{0,63}$"},
+    "event_type": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$"},
+    "direction": {"enum": ["POSITIVE", "NEGATIVE", "NEUTRAL", "UNKNOWN"]},
+    "materiality": {"type": "number", "minimum": 0, "maximum": 1},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "novelty": {"type": "number", "minimum": 0, "maximum": 1},
+    "event_at": {"type": "string", "format": "date-time"},
+    "first_published_at": {"type": "string", "format": "date-time"},
+    "first_available_at": {"type": "string", "format": "date-time"},
+    "last_captured_at": {"type": "string", "format": "date-time"},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "capture_modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME", "RECORDED_FIXTURE"]}
+    },
+    "source_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_group_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_classes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "OFFICIAL",
+          "REGULATOR",
+          "ISSUER",
+          "GOVERNMENT",
+          "NEWS",
+          "MARKET_DATA",
+          "COMMUNITY",
+          "SEARCH_ROUTING",
+          "ARCHIVE"
+        ]
+      }
+    },
+    "origin_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "origin_hashes": {"$ref": "#/$defs/hashes"},
+    "content_hashes": {"$ref": "#/$defs/hashes"},
+    "evidence_hashes": {"$ref": "#/$defs/hashes"},
+    "availability_evidence_hashes": {"$ref": "#/$defs/hashes"},
+    "relation_types": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["STANDALONE", "ORIGINAL", "REPUBLISHED", "SUPPLEMENTARY", "CORRECTIVE"]}
+    },
+    "diffusion_count": {"type": "integer", "minimum": 1},
+    "independent_source_groups": {"type": "integer", "minimum": 1},
+    "factual_status": {
+      "enum": [
+        "OFFICIAL_CONFIRMED",
+        "MULTISOURCE_CORROBORATED",
+        "UNCONFIRMED",
+        "CONTESTED",
+        "ROUTING_ONLY"
+      ]
+    },
+    "contradiction_status": {"enum": ["UNCONTESTED", "CONTESTED", "RESOLVED", "UNKNOWN"]},
+    "correction_status": {"enum": ["CURRENT", "CORRECTED", "SUPERSEDED"]},
+    "window_tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["CONTEXT_120D", "ACTIVE_EVENT_30D", "COMMUNITY_SENTIMENT_7D", "FRESH_CATALYST_72H"]
+      }
+    },
+    "summary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "hashes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"scope": {"const": "KUWAIT_MACRO"}}, "required": ["scope"]},
+      "then": {"properties": {"scope_key": {"const": "KUWAIT"}}}
+    },
+    {
+      "if": {"properties": {"scope": {"const": "SECURITY"}}, "required": ["scope"]},
+      "then": {"properties": {"scope_key": {"pattern": "^[0-9]{1,12}$"}}}
+    },
+    {
+      "if": {"properties": {"factual_status": {"const": "CONTESTED"}}, "required": ["factual_status"]},
+      "then": {"properties": {"contradiction_status": {"const": "CONTESTED"}}}
+    }
+  ]
+}

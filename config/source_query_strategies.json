@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "KUWAIT_120D_NEXT_SESSION_RESEARCH",
+  "context_days": 120,
+  "target_distinct_registrable_domains": 50,
+  "max_distinct_registrable_domains": 50,
+  "max_requests": 600,
+  "max_wall_seconds": 1800,
+  "max_transient_attempts": 3,
+  "retry_delays_seconds": [0.25, 1.0],
+  "transient_error_codes": [
+    "CONNECTOR_INTERNAL_ERROR",
+    "HTTP_SERVER_ERROR",
+    "HTTP_DNS_ERROR",
+    "HTTP_TIMEOUT",
+    "HTTP_TRANSPORT_ERROR",
+    "HTTP_RATE_LIMITED",
+    "ROBOTS_DNS_ERROR",
+    "ROBOTS_POLICY_UNAVAILABLE"
+  ],
+  "empty_result_error_codes": [
+    "EMPTY_RESPONSE_BODY",
+    "HTTP_RESOURCE_NOT_FOUND"
+  ],
+  "strategies": [
+    {
+      "strategy_id": "LANDING_ROUTE",
+      "ordinal": 1,
+      "query_params": {}
+    },
+    {
+      "strategy_id": "DATE_WINDOW_ROUTE",
+      "ordinal": 2,
+      "query_params": {
+        "from": "{window_from}",
+        "to": "{window_to}"
+      }
+    },
+    {
+      "strategy_id": "TEXT_QUERY_ROUTE",
+      "ordinal": 3,
+      "query_params": {
+        "q": "{query}"
+      }
+    },
+    {
+      "strategy_id": "PAGED_WINDOW_QUERY_ROUTE",
+      "ordinal": 4,
+      "query_params": {
+        "from": "{window_from}",
+        "page": "1",
+        "q": "{query}",
+        "to": "{window_to}"
+      }
+    }
+  ],
+  "waves": [
+    {
+      "wave_id": "OFFICIAL_AND_REGULATORY",
+      "ordinal": 1,
+      "minimum_distinct_domains": 1,
+      "source_classes": ["PRIMARY_OFFICIAL"],
+      "limitations": []
+    },
+    {
+      "wave_id": "ISSUER_AND_GOVERNMENT",
+      "ordinal": 2,
+      "minimum_distinct_domains": 0,
+      "source_classes": ["PRIMARY_ISSUER"],
+      "limitations": []
+    },
+    {
+      "wave_id": "STRUCTURED_AND_EDITORIAL",
+      "ordinal": 3,
+      "minimum_distinct_domains": 1,
+      "source_classes": ["STRUCTURED_SECONDARY", "EDITORIAL"],
+      "limitations": []
+    },
+    {
+      "wave_id": "COMMUNITY_ARCHIVE_AND_ROUTING",
+      "ordinal": 4,
+      "minimum_distinct_domains": 4,
+      "source_classes": ["COMMUNITY", "WEB_ARCHIVE"],
+      "limitations": ["SEARCH_ROUTER_CATALOG_ONLY_NOT_EXECUTED"]
+    }
+  ],
+  "claim_boundaries": {
+    "attempt_is_live_operational_proof": false,
+    "attempt_count_is_independent_evidence": false,
+    "capture_timestamp_is_point_in_time_evidence": false,
+    "empty_result_is_negative_market_evidence": false,
+    "explicit_subset_satisfies_default_domain_target": false,
+    "generic_query_shape_is_material_zero_result_proof": false,
+    "logical_attempt_count_is_low_level_http_request_count": false,
+    "raw_capture_is_finding": false,
+    "watermark_is_market_truth": false
+  }
+}

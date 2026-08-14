@@ -20,6 +20,22 @@
       "recommendation_allowed": false
     },
     {
+      "profile_id": "kuwait_120d_next_session_mosaic",
+      "products": ["KUWAIT_120D_NEXT_SESSION_RESEARCH"],
+      "required_role_quorum": {"MARKET_DISCOVERY": 2, "PRICE_HISTORY": 1, "NEWS_ARCHIVE": 2},
+      "confirmation_roles": ["OFFICIAL_EVENT", "ISSUER_PRIMARY"],
+      "minimum_independent_sources": 4,
+      "minimum_independent_community_sources": 0,
+      "max_source_age_hours": 2880,
+      "signal_weights": {"CATALYST": 0.25, "PRICE_ACTIVITY": 0.25, "TECHNICAL": 0.15, "FUNDAMENTAL": 0.05, "SENTIMENT": 0.10, "LIQUIDITY": 0.10, "RISK": 0.10},
+      "sentiment_contribution_cap": 0.10,
+      "candidate_minimum_coverage": 0.55,
+      "full_market_coverage_required": 1.0,
+      "allowed_output": "CANDIDATE_RESEARCH_RANK",
+      "probability_allowed": false,
+      "recommendation_allowed": false
+    },
+    {
       "profile_id": "medium_term_source_mosaic",
       "products": ["ten_session_diagnostic", "fifteen_session_three_week_swing", "twenty_one_session_monthly_swing", "sixty_three_session_quarter_rank"],
       "required_role_quorum": {"MARKET_DISCOVERY": 2, "PRICE_HISTORY": 2, "NEWS_ARCHIVE": 2, "FUNDAMENTAL_ARCHIVE": 1},

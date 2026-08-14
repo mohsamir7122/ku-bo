@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-workflow.schema.json",
+  "title": "KU-BO research workflow configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "workflows"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["workflow_id", "product_id", "timezone", "windows", "source_search", "evaluation", "claim_boundaries"],
+        "properties": {
+          "workflow_id": {"type": "string", "minLength": 1},
+          "product_id": {"type": "string", "minLength": 1},
+          "timezone": {"const": "Asia/Kuwait"},
+          "windows": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["context_calendar_days", "active_event_calendar_days", "community_sentiment_calendar_days", "fresh_catalyst_hours"],
+            "properties": {
+              "context_calendar_days": {"const": 120},
+              "active_event_calendar_days": {"const": 30},
+              "community_sentiment_calendar_days": {"const": 7},
+              "fresh_catalyst_hours": {"const": 72}
+            }
+          },
+          "source_search": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target_distinct_registrable_domains", "maximum_distinct_registrable_domains", "maximum_requests", "maximum_wall_seconds", "transient_attempts_per_strategy", "empty_result_query_strategies", "incremental_corpus", "wave_order"],
+            "properties": {
+              "target_distinct_registrable_domains": {"const": 50},
+              "maximum_distinct_registrable_domains": {"const": 50},
+              "maximum_requests": {"const": 600},
+              "maximum_wall_seconds": {"const": 1800},
+              "transient_attempts_per_strategy": {"const": 3},
+              "empty_result_query_strategies": {"const": 4},
+              "incremental_corpus": {"const": true},
+              "wave_order": {
+                "type": "array",
+                "prefixItems": [
+                  {"const": "OFFICIAL_AND_REGULATORY"},
+                  {"const": "ISSUER_AND_GOVERNMENT"},
+                  {"const": "STRUCTURED_AND_EDITORIAL"},
+                  {"const": "COMMUNITY_ARCHIVE_AND_ROUTING"}
+                ],
+                "items": false,
+                "minItems": 4,
+                "maxItems": 4
+              }
+            }
+          },
+          "evaluation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decision_sessions", "required_consecutive_official_sessions", "primary_target", "secondary_targets", "ranking_rule", "execution_grade_required", "nontrading_outcome_policy", "minimum_universe_coverage", "minimum_evaluable_rate", "maximum_nonfill_rate"],
+            "properties": {
+              "decision_sessions": {"const": 40},
+              "required_consecutive_official_sessions": {"const": 41},
+              "primary_target": {"const": "GROSS_ADJUSTED_RETURN_GT_0"},
+              "secondary_targets": {
+                "type": "array",
+                "prefixItems": [
+                  {"const": "MARKET_NET_EXCESS_GT_0"},
+                  {"const": "SECTOR_NET_EXCESS_GT_0"}
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "ranking_rule": {"const": "SCORE_DESC_SECURITY_CODE_ASC"},
+              "execution_grade_required": {"const": true},
+              "nontrading_outcome_policy": {
+                "const": "STOP_BACKTEST_WHILE_KU_BO_008_D01_OPEN"
+              },
+              "minimum_universe_coverage": {"const": 1.0},
+              "minimum_evaluable_rate": {"const": 1.0},
+              "maximum_nonfill_rate": {"const": 0.0}
+            }
+          },
+          "claim_boundaries": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["search_snippet_is_evidence", "community_is_official_truth", "score_is_probability", "historical_replay_is_prospective_validation", "missing_data_is_zero_return"],
+            "properties": {
+              "search_snippet_is_evidence": {"const": false},
+              "community_is_official_truth": {"const": false},
+              "score_is_probability": {"const": false},
+              "historical_replay_is_prospective_validation": {"const": false},
+              "missing_data_is_zero_return": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  }
+}

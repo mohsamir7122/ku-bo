@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/parsed-research-inputs.schema.json",
+  "title": "KU-BO parser-to-context integration input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "decision_at",
+    "universe_as_of",
+    "expected_security_codes",
+    "manifest_hashes",
+    "context_events",
+    "security_exposures",
+    "factor_inputs_by_security",
+    "dispositions_by_security",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "decision_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "universe_as_of": {"type": "string", "format": "date-time"},
+    "expected_security_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9]{1,12}$"}
+    },
+    "manifest_hashes": {"$ref": "#/$defs/hashes"},
+    "context_events": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/rawEvent"}
+    },
+    "security_exposures": {
+      "type": "array",
+      "items": {"$ref": "security-exposure.schema.json"}
+    },
+    "factor_inputs_by_security": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[0-9]{1,12}$"},
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {"pattern": "^[a-z][a-z0-9_]{0,63}$"},
+        "additionalProperties": {"$ref": "#/$defs/factorInput"}
+      }
+    },
+    "dispositions_by_security": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[0-9]{1,12}$"},
+      "additionalProperties": {"$ref": "#/$defs/disposition"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parser_output_is_raw_capture", "score_is_probability", "recommendation_allowed"],
+      "properties": {
+        "parser_output_is_raw_capture": {"const": false},
+        "score_is_probability": {"const": false},
+        "recommendation_allowed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hashes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "rawEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "event_id", "scope", "scope_key", "event_type", "direction",
+        "materiality", "confidence", "novelty", "event_at", "published_at",
+        "first_available_at", "captured_at", "decision_at", "capture_mode", "source_id",
+        "source_group_id", "source_class", "origin_id", "origin_hash", "content_hash",
+        "evidence_hashes", "availability_evidence_hashes", "relation_type",
+        "original_event_id", "factual_status", "contradiction_status", "correction_status", "summary"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "event_id": {"type": "string", "minLength": 1},
+        "scope": {"enum": ["KUWAIT_MACRO", "SECTOR", "SECURITY"]},
+        "scope_key": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_.:-]{0,63}$"},
+        "event_type": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$"},
+        "direction": {"enum": ["POSITIVE", "NEGATIVE", "NEUTRAL", "UNKNOWN"]},
+        "materiality": {"type": "number", "minimum": 0, "maximum": 1},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "novelty": {"type": "number", "minimum": 0, "maximum": 1},
+        "event_at": {"type": "string", "format": "date-time"},
+        "published_at": {"type": "string", "format": "date-time"},
+        "first_available_at": {"type": "string", "format": "date-time"},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "decision_at": {"type": "string", "format": "date-time"},
+        "capture_mode": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME", "RECORDED_FIXTURE"]},
+        "source_id": {"type": "string", "minLength": 1},
+        "source_group_id": {"type": "string", "minLength": 1},
+        "source_class": {"enum": ["OFFICIAL", "REGULATOR", "ISSUER", "GOVERNMENT", "NEWS", "MARKET_DATA", "COMMUNITY", "SEARCH_ROUTING", "ARCHIVE"]},
+        "origin_id": {"type": "string", "minLength": 1},
+        "origin_hash": {"$ref": "#/$defs/sha256"},
+        "content_hash": {"$ref": "#/$defs/sha256"},
+        "evidence_hashes": {"$ref": "#/$defs/hashes"},
+        "availability_evidence_hashes": {"$ref": "#/$defs/hashes"},
+        "relation_type": {"enum": ["STANDALONE", "ORIGINAL", "REPUBLISHED", "SUPPLEMENTARY", "CORRECTIVE"]},
+        "original_event_id": {"type": ["string", "null"]},
+        "factual_status": {"enum": ["OFFICIAL_CONFIRMED", "MULTISOURCE_CORROBORATED", "UNCONFIRMED", "CONTESTED", "ROUTING_ONLY"]},
+        "contradiction_status": {"enum": ["UNCONTESTED", "CONTESTED", "RESOLVED", "UNKNOWN"]},
+        "correction_status": {"enum": ["CURRENT", "CORRECTED", "SUPERSEDED"]},
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "factorInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "available_at", "evidence_hashes", "reason_codes"],
+      "properties": {
+        "status": {"enum": ["OBSERVED", "MISSING", "NOT_APPLICABLE", "REJECTED"]},
+        "value": {"type": ["number", "string", "null"]},
+        "available_at": {"type": ["string", "null"], "format": "date-time"},
+        "evidence_hashes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/sha256"}},
+        "reason_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$"}}
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "first_failed_stage", "reason_codes", "score", "score_kind"],
+      "properties": {
+        "disposition": {"enum": ["SELECTED", "REJECTED", "ABSTAINED", "UNRESOLVED"]},
+        "first_failed_stage": {"type": ["string", "null"]},
+        "reason_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$"}},
+        "score": {"type": ["number", "null"]},
+        "score_kind": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
