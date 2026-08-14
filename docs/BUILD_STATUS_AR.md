@@ -94,7 +94,7 @@ accuracy_claim_allowed: false
 - Codex control check: `PASS` على 18 ملف تحكم و10 ملفات مطلوبة، مع 0 Errors و0 Warnings.
 - Wheel KU-BO-014: `PASS`؛ الحجم `465934` بايت، وSHA-256 هو `707b351aa546e565826c3372acb78fe95e234b7e61af2a5d4b8009c5d91cbab0`.
 - Isolated install/CLI help و`validate-bootstrap-archive-config` و`prepare-bootstrap-archive` و`validate-bootstrap-archive`: `PASS`؛ أعاد التحقق من 28 مصدرًا و6 طبقات و756 مهمة وصفر Evidence/Company/Event.
-- Exact-head GitHub Actions لرأس KU-BO-014 المنشور: `PENDING` حتى إنشاء Draft PR؛ لا توجد سلطة Merge.
+- Draft PR #17: `OPEN / DRAFT`؛ رأس التنفيذ `c8b41b23e5ebe4f4243b42506862c36149d481c8` نجح في GitHub Actions Run `31840391449` على Python 3.11–3.14. تحديث سجل التحكم اللاحق يحتاج Exact-head CI جديدًا؛ لا توجد سلطة Merge.
 
 ## غير مكتمل عمدًا ولا يجوز الادعاء بعكسه
 

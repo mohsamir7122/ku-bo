@@ -75,7 +75,7 @@ USER_DECISION: APPROVED through the active instruction to retain the existing re
 DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: DEVELOPMENT ONLY. No historical corpus collection, credentials, authenticated access, access-control bypass, rights or licensing decision, private or licensed-data publication, official-universe completeness claim, live source promotion, model training, real backtest, forecast, probability, recommendation, execution, force-push, deletion, or merge. MERGE_ALLOWED remains NO. Any merge requires a separate later decision after the final exact head passes all acceptance gates.
-IMPLEMENTED_IN_BRANCH_OR_PR: IN_PROGRESS — agent/bootstrap-archive-v0.1; Draft PR and exact-head validation pending.
+IMPLEMENTED_IN_BRANCH_OR_PR: IN_PROGRESS — Draft PR #17 / agent/bootstrap-archive-v0.1. Implementation head c8b41b23e5ebe4f4243b42506862c36149d481c8 passed exact-head GitHub Actions Run 31840391449; the later control-record head still requires CI. MERGE_ALLOWED remains NO.
 ```
 
 ```text

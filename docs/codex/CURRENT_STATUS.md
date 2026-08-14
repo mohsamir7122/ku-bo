@@ -1,6 +1,6 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-14
+Status date: 2026-08-15
 
 Repository: `mohsamir7122/ku-bo`
 
@@ -63,19 +63,21 @@ complete local suite: 2,120/2,120 PASS in 158.371s
 compile/smoke/Secret Guard/Schema/control: PASS
 KU-BO-011 deterministic corpus: 1,280 cases PASS
 wheel and isolated install/prepare/verify: PASS
-Draft PR: PENDING
-exact-head CI: PENDING
+Draft PR: #17 OPEN / DRAFT
+implementation exact-head CI: Run 31840391449 PASS at c8b41b23e5ebe4f4243b42506862c36149d481c8
+final control-record head CI: PENDING
 ```
 
 The local implementation tree passes the requested validation. The installed
 wheel prepared and independently verified the same 756-task, zero-Evidence
-scaffold from outside the checkout. No KU-BO-014 commit SHA, PR number, or
-exact-head CI result is recorded yet; those remain publication gates.
+scaffold from outside the checkout. Draft PR #17 publishes the identical tree,
+and exact-head Run 31840391449 passed on Python 3.11 through 3.14. This control
+record creates a later documentation-only head that still requires exact-head CI.
 
 ## Evidence and capability status
 
 ```text
-bootstrap_archive_status:       LOCAL_VALIDATION_PASS_CI_PENDING
+bootstrap_archive_status:       DRAFT_PUBLISHED_IMPLEMENTATION_CI_PASS
 archive_readiness:              PLANNED_NOT_EXECUTED
 historical_evidence_artifacts:  0
 historical_events_collected:    0
@@ -90,8 +92,7 @@ access, Parser coverage, or investment readiness.
 
 ## Still required
 
-- publish a Draft PR and require exact-head CI;
-- record the exact published SHA, PR, and CI run in the KU-BO-014 handoff;
+- publish the control-record update and require exact-head CI on that later head;
 - keep merge blocked until a later explicit merge decision;
 - before any future collection, approve source-specific access and rights and
   bind an official company universe.

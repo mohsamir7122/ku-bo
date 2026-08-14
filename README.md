@@ -354,8 +354,9 @@ Ledger Seal صالحًا.
 يحتفظ CI بالـGate المركز لـKU-BO-012، ويضيف KU-BO-014 Gate مستقلًا للتاريخ
 والـCrosswalk والـScaffold والـSchemas والـCLI وضبط Codex. كما يختبر الـWheel
 المثبتة في `validate-bootstrap-archive-config` ثم ينشئ Archive تحت `runtime/`
-ويعيد التحقق منه. PR #15 وPR #16 مدمجان في `main`؛ أما KU-BO-014 فما زال على
-فرع تطوير بلا سلطة Merge إلى أن ينجح Exact-head CI الخاص بـDraft PR الجديد.
+ويعيد التحقق منه. PR #15 وPR #16 مدمجان في `main`؛ أما KU-BO-014 فمنشور في
+Draft PR #17 بلا سلطة Merge. نجح رأس التنفيذ `c8b41b2` في Exact-head CI Run
+`31840391449`، ويظل رأس سجل التحكم اللاحق محتاجًا إلى CI مطابق قبل الإغلاق.
 
 نجحت محليًا اختبارات KU-BO-014 وحدها `34/34`، والاختبارات المستهدفة مع طبقة
 التاريخ وضبط Codex `57/57`، ثم نجحت Full Suite النهائية على الشجرة الحالية
@@ -365,8 +366,8 @@ Ledger Seal صالحًا.
 و0 Warnings.
 
 نجح بناء Wheel KU-BO-014 والتثبيت المعزول وCLI help والتحقق من الإعداد وإنشاء
-الـScaffold وإعادة فتحه من خارج Checkout. هذه نتيجة محلية؛ نشر Draft PR
-وExact-head CI ما زالا معلقين، ولا يجيز النجاح المحلي أي Merge أوجمع حي.
+الـScaffold وإعادة فتحه من خارج Checkout. نُشر Draft PR #17، ونجح رأس التنفيذ
+الدقيق في CI على Python 3.11–3.14. لا يجيز ذلك أي Merge أوجمع حي.
 
 ```bash
 PYTHONPATH=src python3 -m compileall -q src tests scripts

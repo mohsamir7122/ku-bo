@@ -6,10 +6,10 @@ REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
 TASK_BRANCH: agent/bootstrap-archive-v0.1
-FINAL_SHA: PENDING
-DRAFT_PR: PENDING
+FINAL_SHA: c8b41b23e5ebe4f4243b42506862c36149d481c8 (implementation head)
+DRAFT_PR: https://github.com/mohsamir7122/ku-bo/pull/17
 PR_BASE: main
-CI_RUN: PENDING
+CI_RUN: 31840391449 PASS (implementation head; later control-record head pending)
 STARTED_AT: 2026-08-14
 COMPLETED_AT: IN_PROGRESS
 ```
@@ -30,8 +30,9 @@ testing follows after the scaffold implementation is complete.
 - The historical catalog contains 28 `DEFINED_ONLY` source definitions and six
   layers; no historical corpus or official company universe is present.
 - KU-BO-014 begins on `agent/bootstrap-archive-v0.1`.
-- No KU-BO-014 PR or exact-head CI result is recorded yet; final local test
-  counts are recorded below.
+- Draft PR #17 publishes the implementation at `c8b41b23e5ebe4f4243b42506862c36149d481c8`.
+- Exact-head GitHub Actions Run `31840391449` passed on Python 3.11–3.14.
+- This record creates a later documentation-only head that requires its own CI.
 
 ## Changes made
 
@@ -69,8 +70,8 @@ RESULT: PASS
 DETAIL: final wheel 465934 bytes, SHA-256 707b351aa546e565826c3372acb78fe95e234b7e61af2a5d4b8009c5d91cbab0; installed CLI validated config, prepared, and independently verified the scaffold outside the checkout.
 
 COMMAND_OR_JOB: exact-head GitHub Actions
-RESULT: SKIPPED
-DETAIL: No Draft PR or CI run has been recorded for KU-BO-014.
+RESULT: PASS
+DETAIL: Draft PR #17 implementation head c8b41b23e5ebe4f4243b42506862c36149d481c8 passed Run 31840391449 on Python 3.11–3.14. The later control-record head remains subject to exact-head CI.
 ```
 
 ## Evidence and data status
