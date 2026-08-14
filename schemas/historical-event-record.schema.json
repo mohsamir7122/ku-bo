@@ -38,5 +38,60 @@
     "legal_status": {"enum": ["NOT_APPLICABLE", "ALLEGED", "REFERRED", "CHARGED", "DECIDED", "APPEALED", "FINAL"]},
     "correction_status": {"enum": ["CURRENT", "CORRECTED", "SUPERSEDED", "RETRACTED"]},
     "decision_use": {"const": "CONTEXT_ONLY"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"factual_status": {"const": "OFFICIAL_CONFIRMED"}},
+        "required": ["factual_status"]
+      },
+      "then": {
+        "properties": {
+          "source_evidence": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "source_id": {
+                  "enum": [
+                    "kuwait_government_history",
+                    "kuwait_official_gazette",
+                    "moci_commercial_registry",
+                    "cma_kuwait",
+                    "boursa_kuwait",
+                    "central_bank_kuwait",
+                    "kuwait_csb",
+                    "ministry_justice_kuwait",
+                    "nazaha_kuwait",
+                    "kdipa_reports",
+                    "koc_history",
+                    "kia_history"
+                  ]
+                },
+                "evidence_role": {"const": "PRIMARY"}
+              },
+              "required": ["source_id", "evidence_role"]
+            },
+            "minContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["LEGAL_ALLEGATION", "COURT_OUTCOME", "REGULATORY_ACTION"]
+          }
+        },
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "legal_status": {
+            "enum": ["ALLEGED", "REFERRED", "CHARGED", "DECIDED", "APPEALED", "FINAL"]
+          }
+        }
+      }
+    }
+  ]
 }

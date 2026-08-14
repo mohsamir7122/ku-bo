@@ -4,7 +4,7 @@
   "title": "KU-BO effective-dated company annual history",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "company_id", "official_registration_id", "year", "legal_names", "founding", "annual_status", "founders", "event_ids", "source_evidence_hashes", "coverage_status"],
+  "required": ["schema_version", "company_id", "official_registration_id", "year", "legal_names", "founding", "annual_status", "founders", "event_ids", "source_evidence_hashes", "declared_source_ids", "search_receipts", "coverage_status"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "company_id": {"type": "string", "minLength": 1},
@@ -38,12 +38,55 @@
     },
     "event_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
     "source_evidence_hashes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "declared_source_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"}
+    },
+    "search_receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "query", "searched_at", "capture_sha256", "access_status", "query_complete", "pagination_complete"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+          "query": {"type": "string", "minLength": 1},
+          "searched_at": {"type": "string", "format": "date-time"},
+          "capture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "access_status": {"enum": ["COMPLETED", "PARTIAL", "BLOCKED"]},
+          "query_complete": {"type": "boolean"},
+          "pagination_complete": {"type": "boolean"}
+        }
+      }
+    },
     "coverage_status": {"enum": ["COMPLETE_FOR_DECLARED_SOURCES", "PARTIAL", "NO_VERIFIED_EVENT_FOUND", "NOT_COLLECTED"]}
   },
   "allOf": [
     {
       "if": {"properties": {"coverage_status": {"const": "COMPLETE_FOR_DECLARED_SOURCES"}}, "required": ["coverage_status"]},
       "then": {"properties": {"official_registration_id": {"type": "string", "minLength": 1}, "source_evidence_hashes": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"coverage_status": {"const": "NO_VERIFIED_EVENT_FOUND"}}, "required": ["coverage_status"]},
+      "then": {
+        "properties": {
+          "official_registration_id": {"type": "string", "minLength": 1},
+          "event_ids": {"maxItems": 0},
+          "source_evidence_hashes": {"minItems": 1},
+          "declared_source_ids": {"minItems": 1},
+          "search_receipts": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "access_status": {"const": "COMPLETED"},
+                "query_complete": {"const": true},
+                "pagination_complete": {"const": true}
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
