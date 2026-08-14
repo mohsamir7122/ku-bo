@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/historical-research-plan.schema.json",
+  "title": "KU-BO Kuwait historical research plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "as_of", "status", "decision_use", "layers", "tasks", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "plan_id": {"type": "string", "pattern": "^hist-plan-[0-9a-f]{24}$"},
+    "as_of": {"type": "string", "format": "date"},
+    "status": {"const": "PLANNED_NOT_EXECUTED"},
+    "decision_use": {"const": "CONTEXT_ONLY"},
+    "layers": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["layer_id", "start_year", "end_year", "year_count", "grain", "coverage_status"],
+        "properties": {
+          "layer_id": {"type": "string"},
+          "start_year": {"type": "integer", "minimum": 1500},
+          "end_year": {"type": "integer", "minimum": 1500},
+          "year_count": {"type": "integer", "minimum": 1},
+          "grain": {"enum": ["YEAR", "COMPANY_YEAR"]},
+          "coverage_status": {"const": "NOT_COLLECTED"}
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "layer_id", "year", "grain", "coverage_status", "source_ids", "queries", "company_enumeration_required", "decision_use"],
+        "properties": {
+          "task_id": {"type": "string", "pattern": "^hist-[0-9a-f]{24}$"},
+          "layer_id": {"type": "string"},
+          "year": {"type": "integer", "minimum": 1500},
+          "grain": {"enum": ["YEAR", "COMPANY_YEAR"]},
+          "coverage_status": {"const": "NOT_COLLECTED"},
+          "source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "queries": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "company_enumeration_required": {"type": "boolean"},
+          "decision_use": {"const": "CONTEXT_ONLY"}
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": {"const": false},
+      "required": ["complete_history_claim_allowed", "complete_company_universe_claim_allowed", "legal_guilt_inference_allowed", "social_media_fact_confirmation_allowed", "direct_trading_decision_allowed"]
+    }
+  }
+}

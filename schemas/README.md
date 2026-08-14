@@ -69,5 +69,8 @@ Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي ق
 - `tri-security-run-receipt.schema.json`: إيصال HMAC خارجي يربط خطة الدفعة الأولى وScoped Config والمقام الثلاثي والنافذة من دون ترقية Evidence أوQualification.
 - `tri-security-stage-binding.schema.json`: ربط HMAC مستقل لمحتوى Run Receipt وManifest والجرد الكامل لشجرة مرحلة واحدة، مع منع خلط التشغيل أوالمقام.
 - `tri-security-semantic-admission.schema.json`: عقد v2 بمفتاح ثالث مستقل يربط كل Boundary بالـStage وأدوار المدخلات وPredecessor DAG الدقيقة، مع إبقاء Market Evidence وBacktest وForecast وRecommendation محجوبة.
+- `historical-research-plan.schema.json`: خطة الطبقات التاريخية السنوية الست مع حالة `NOT_COLLECTED` وحدود الادعاء.
+- `historical-event-record.schema.json`: سجل حدث تاريخي ثنائي اللغة مربوط بالزمن والبصمات والتصحيحات والحالة القانونية.
+- `company-annual-history.schema.json`: حالة سنوية effective-dated للشركة وتأسيسها ومؤسسيها ومصيرها، من دون اختلاق حدث لسنة صامتة.
 
 وجود Schema لا يثبت صحة المحتوى المالي أو اكتمال المصادر. مدققات `kubo.source_network` تفحص حزم البحث، و`kubo.research_price_history` يفحص Price History، و`kubo.official_foundation_import` يفرض Current Identity وتقويم السنة، و`kubo.status_corporate_import` يفصل Current Status عن التاريخ. أما `kubo.ca_enrichment_import` فيربط Terms بالإفصاح والسعر الرسميين ويمنع مساواة Reference Adjustment بعائد المستثمر، بينما `kubo.status_history_import` يطلب Opening State وQuery Receipts وNotices كاملة قبل إنشاء Status Intervals قابلة للتدقيق. ويفرض `kubo.benchmark_import` Basis/Scope والتقويم من دون Forward Fill، ويعيد `kubo.official_eod_import` حساب مقام الأسهم والجلسات، ثم يعيد `kubo.data_foundation_reconciliation` فحص كل bytes وhashes ولا يثق بحالة محفوظة وحدها.

@@ -15,10 +15,10 @@ class CodexControlCheckTests(unittest.TestCase):
     def test_repository_control_layer_passes(self) -> None:
         report = validate(ROOT)
         self.assertEqual(report["status"], "PASS", report["errors"])
-        self.assertEqual(report["task_id"], "KU-BO-012")
+        self.assertEqual(report["task_id"], "KU-BO-013")
         self.assertEqual(
             report["expected_branch"],
-            "agent/kuwait-120d-next-session",
+            "agent/kuwait-historical-knowledge-layer",
         )
         self.assertFalse(
             report["claim_boundaries"]["control_check_authorizes_merge"]

@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "layers": [
+    {
+      "layer_id": "KUWAIT_YEARBOOK_1500_PRESENT",
+      "start_rule": "FIXED_1500",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "YEAR",
+      "source_roles": ["NATIONAL_HISTORY", "OFFICIAL_GAZETTE", "WEB_ARCHIVE", "NEWS_ARCHIVE"],
+      "company_enumeration_required": false,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["الكويت {year} أحداث تاريخ", "Kuwait {year} history events"]
+    },
+    {
+      "layer_id": "COMMERCIAL_CRISIS_CHRONOLOGY_1927_PRESENT",
+      "start_rule": "FIXED_1927",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "YEAR",
+      "source_roles": ["ECONOMIC_STATISTICS", "OFFICIAL_GAZETTE", "REGULATORY_ACTION", "NEWS_ARCHIVE"],
+      "company_enumeration_required": false,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["الكويت {year} أزمة تجارية اقتصادية", "Kuwait {year} commercial economic crisis"]
+    },
+    {
+      "layer_id": "COMPANY_LIFECYCLE_1970_PRESENT",
+      "start_rule": "FIXED_1970",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "COMPANY_YEAR",
+      "source_roles": ["COMMERCIAL_REGISTRY", "COMPANY_IDENTITY", "OFFICIAL_GAZETTE", "COMPANY_DISCLOSURE"],
+      "company_enumeration_required": true,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["{company_legal_name} تأسيس مؤسسون حالة {year}", "{company_legal_name} founders annual status {year}"]
+    },
+    {
+      "layer_id": "COMPANY_MEDIA_HISTORY_1980_PRESENT",
+      "start_rule": "FIXED_1980",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "COMPANY_YEAR",
+      "source_roles": ["NEWS_ARCHIVE", "WEB_ARCHIVE", "SOCIAL_ROUTING", "COMMUNITY_ROUTING"],
+      "company_enumeration_required": true,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["{company_legal_name} أخبار الكويت {year}", "{company_alias} Kuwait news {year}"]
+    },
+    {
+      "layer_id": "COMPANY_CASES_ROLLING_20Y",
+      "start_rule": "ROLLING_20_CALENDAR_YEARS",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "COMPANY_YEAR",
+      "source_roles": ["COURT_RECORD", "REGULATORY_ACTION", "OFFICIAL_GAZETTE", "NEWS_ARCHIVE"],
+      "company_enumeration_required": true,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["{company_legal_name} قضية حكم إحالة {year}", "{company_legal_name} Kuwait court regulator case {year}"]
+    },
+    {
+      "layer_id": "RECENT_ECONOMIC_EVENTS_ROLLING_5Y",
+      "start_rule": "ROLLING_5_CALENDAR_YEARS",
+      "end_rule": "AS_OF_YEAR",
+      "grain": "YEAR",
+      "source_roles": ["ECONOMIC_STATISTICS", "OFFICIAL_GAZETTE", "REGULATORY_ACTION", "NEWS_ARCHIVE"],
+      "company_enumeration_required": false,
+      "decision_use": "CONTEXT_ONLY",
+      "query_templates": ["الكويت اقتصاد تجارة شركات {year}", "Kuwait economy business companies {year}"]
+    }
+  ]
+}
