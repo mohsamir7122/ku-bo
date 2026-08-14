@@ -56,6 +56,29 @@ IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 ## Approved decisions
 
 ```text
+DECISION_ID: KU-BO-013-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-14
+TARGET: KU-BO-013 historical knowledge planning layer
+CATEGORY: SCOPE; DEVELOPMENT; DATA_SOURCE
+CURRENT_STATE: The user requested code and ready source definitions for six Kuwait historical research layers, while explicitly stating that the giant collection itself is not the present coding task.
+WHY_A_DECISION_IS_REQUIRED: The requested scope expands beyond KU-BO-012's 120-day market context into annual national, commercial, company, media, and legal history.
+OPTIONS:
+1. Implement planning contracts, source registry, schemas, tests, and documentation without executing the collection.
+2. Attempt to scrape and commit the full corpus now.
+3. Defer the historical layer.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may implement and publish a Draft PR for the bounded planning foundation while all live collection, completeness, privacy, rights, and decision gates remain closed.
+CONSEQUENCE_OF_REJECTION: No historical planning layer is added.
+SAFER_REVERSIBLE_ALTERNATIVE: Documentation-only source list.
+USER_DECISION: APPROVED by the active instruction to program the layers, understand their requirements, and gather ready internet sources without performing the full collection now.
+DECIDED_AT: 2026-08-14
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: No corpus scrape, private data, access-control bypass, copyrighted bulk republication, completeness claim, guilt inference, model training, forecast, recommendation, or merge of KU-BO-013. Publish as Draft until a later explicit merge decision.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/kuwait-historical-knowledge-layer / pending Draft PR
+```
+
+```text
 DECISION_ID: KU-BO-MERGE-004
 STATUS: APPROVED
 DATE_RAISED: 2026-08-13
@@ -71,7 +94,7 @@ USER_DECISION: APPROVED and reconfirmed in the active user session with the expl
 DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No force-push, deletion, credentials, private or licensed data publication, gate weakening, model training, or fabricated accuracy. The merge approval applies only to the new KU-BO-012 branch after complete tests and exact-head CI. PR #2 and PR #3 remain excluded as stale/superseded.
-IMPLEMENTED_IN_BRANCH_OR_PR: agent/kuwait-120d-next-session / Draft PR #14 / exact validated SHA d4759f7840625534ba0f5b91338f1b9c46810a93 / exact-head CI 31735588444 PASS; merge authorized at boundary
+IMPLEMENTED_IN_BRANCH_OR_PR: COMPLETED — PR #14 exact head 73dc3daa994ffd4d41317cf486820264227a85f2 passed CI run 31782243633 and merged to main as bafdda86b44b7603fe4adfa62dcc2a49bff8ae15 on 2026-08-14.
 ```
 
 ```text

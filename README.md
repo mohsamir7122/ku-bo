@@ -120,6 +120,28 @@ kubo --project-root /absolute/path/to/ku-bo validate-source-network
 PYTHONPATH=src python -m kubo validate-source-network
 ```
 
+## طبقة المعرفة التاريخية الكويتية
+
+يضيف `KU-BO-013` عقد تخطيط مستقلًا يغطي ست طبقات سنوية: تاريخ الكويت من 1500،
+الأزمات التجارية من 1927، دورة حياة الشركات من 1970، الأرشيف الإعلامي للشركات
+من 1980، القضايا خلال آخر عشرين سنة تقويمية، والأحداث الاقتصادية خلال آخر خمس
+سنوات تقويمية. سجل المصادر يحتوي 26 تعريفًا مصنفًا حسب السلطة والدور ووسيلة
+الوصول والحقوق، وجميعها `DEFINED_ONLY` إلى أن يثبت جمع فعلي قابل لإعادة التحقق.
+
+```bash
+kubo --project-root . validate-historical-knowledge
+kubo --project-root . plan-historical-research \
+  --as-of 2026-08-14 \
+  --output /absolute/path/to/historical-plan.json
+```
+
+الخطة لا تجمع المحتوى ولا تدّعي اكتمال سنة أو شركة. كل صف يبدأ
+`NOT_COLLECTED`، والشركات تحتاج أولًا تعدادًا رسميًا من السجل التجاري. الصحافة
+للتعضيد، والسوشيال والمنتديات وWikipedia للتوجيه أو المزاج فقط. الإحالة أو
+الاتهام لا يعني الإدانة، لذلك يفرض العقد حالة إجرائية صريحة. هذه المعرفة
+`CONTEXT_ONLY` ولا تولّد شراءً أو Forecast أو Score مباشرة. التفاصيل في
+`docs/KUWAIT_HISTORICAL_KNOWLEDGE_AR.md`.
+
 جسر Source Search إلى Context/Exposure/Factor يعمل على تشغيل محفوظ ومدخلات Parsed صريحة:
 
 ```bash

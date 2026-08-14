@@ -34,6 +34,7 @@ Open this directory as the project root.
 - A caller-provided capability name is never proof that the capability exists. Capabilities must be supported by a validated evidence manifest and capability report.
 - Never bypass login, CAPTCHA, paywalls, rate limits, robots controls, or protected APIs.
 - Treat public Boursa Kuwait trading pages as delayed. They may support delayed detection, but not live execution.
+- Keep the six KU-BO-013 historical layers `CONTEXT_ONLY`. Every planned year begins `NOT_COLLECTED`; company-year work requires official universe enumeration, legal claims require an explicit procedural state and official legal/regulatory evidence, and social/community/Wikipedia sources remain routing or sentiment only.
 - Join securities by official `security_code` and effective-dated identity; ticker-only joins are invalid.
 - Never rewrite an issued forecast. Append a forward-timed event to the ledger.
 - A score is not a probability. `SOURCE_MOSAIC_EVIDENCE_SCORE_NOT_PROBABILITY` can produce only a research candidate, `WATCH`, or `ABSTAIN`. `HIGH_BUY_OPPORTUNITY` requires a bound `PROSPECTIVE_VALIDATED` model card and all applicable gates.

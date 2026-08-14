@@ -14,6 +14,7 @@ from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .foundation_io import prepare_output_root
 from .hashing import canonical_json_bytes, sha256_file
+from .historical_knowledge import HistoricalKnowledgeCatalog, compile_research_plan, parse_as_of
 from .ingestion import PublicHttpConnector
 from .ledger import ForecastLedger
 from .outcome_sessions import OutcomeSessionAuthority
@@ -75,6 +76,8 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-research-workflow",
         "validate-source-network",
         "evaluate-forty-session-replay",
+        "validate-historical-knowledge",
+        "plan-historical-research",
     }
 )
 
@@ -87,6 +90,8 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/source_network.json"),
     Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
+    Path("config/historical_research_layers.json"),
+    Path("config/historical_sources.json"),
 )
 
 
@@ -216,6 +221,11 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("validate-config")
     sub.add_parser("validate-source-network")
     sub.add_parser("validate-research-workflow")
+    sub.add_parser("validate-historical-knowledge")
+
+    historical_plan = sub.add_parser("plan-historical-research")
+    historical_plan.add_argument("--as-of", required=True, help="Research cutoff date (YYYY-MM-DD)")
+    historical_plan.add_argument("--output", type=Path)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -330,14 +340,20 @@ def main(argv: list[str] | None = None) -> int:
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
+    historical_catalog = None
+    if args.command in {"validate-config", "validate-historical-knowledge", "plan-historical-research"}:
+        historical_catalog = HistoricalKnowledgeCatalog(project_root / "config")
+
     if args.command == "validate-config":
         assert network_catalog is not None
+        assert historical_catalog is not None
         workflow = load_research_workflow(project_root / "config")
         report = {
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
             "source_network": network_catalog.report(),
             "research_workflow": asdict(workflow),
+            "historical_knowledge": historical_catalog.report(),
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
@@ -358,6 +374,27 @@ def main(argv: list[str] | None = None) -> int:
                 "recommendation_allowed": False,
             },
         }
+    elif args.command == "validate-historical-knowledge":
+        assert historical_catalog is not None
+        report = historical_catalog.report()
+    elif args.command == "plan-historical-research":
+        assert historical_catalog is not None
+        full_plan = compile_research_plan(historical_catalog, as_of=parse_as_of(args.as_of))
+        if args.output is None:
+            report = full_plan
+        else:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            with args.output.open("xb") as handle:
+                handle.write(canonical_json_bytes(full_plan))
+                handle.flush()
+                os.fsync(handle.fileno())
+            report = {
+                "status": "PLANNED_NOT_EXECUTED",
+                "plan_id": full_plan["plan_id"],
+                "output": str(args.output),
+                "task_count": len(full_plan["tasks"]),
+                "claim_boundaries": full_plan["claim_boundaries"],
+            }
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(
