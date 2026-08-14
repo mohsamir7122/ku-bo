@@ -57,21 +57,21 @@ IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 
 ```text
 DECISION_ID: KU-BO-MERGE-004
-STATUS: APPROVED_CONDITIONAL
+STATUS: APPROVED
 DATE_RAISED: 2026-08-13
 TARGET: KU-BO-012 on agent/kuwait-120d-next-session
 CATEGORY: DEVELOPMENT; HISTORICAL_EVALUATION; MERGE
-CURRENT_STATE: The user requested implementation of the multi-source Kuwait research expansion, verification that all relevant branches are integrated, a retrospective test over the latest forty days, and the resulting agreement percentage. Main is 92b2bdd2460a7508922297a12d85f13264d43acb. PR #1 and PRs #4 through #13 are already ancestors of main. PR #2 and PR #3 are stale, non-mergeable, 127 commits behind, and superseded; they are excluded from literal merge. The task branch contains the bounded fair source search, persisted-run validator, parsed-input integration bridge, content-bound/fresh factor snapshot, execution-grade score-derived replay, and CLI stop result. The latest-40 result remains STOP_BACKTEST with 0/40 scoreable sessions and agreement N/A. Local acceptance passed: targeted 183/183, final current-tree suite 2,067/2,067 in 164.347s, compile/JSON/diff/control/smoke/secret/corpus gates, final wheel, isolated installation, installed CLI, and an installed Data Foundation check with 8 semantic admissions and 8 lineages. The implementation is published as Draft PR #14 at 58a78042d5d509e599d2e273d793856b1dee14dd; exact-head Run 31733924569 passed on Python 3.11 through 3.14. This later control-record head, merge-boundary review, and merge remain pending.
+CURRENT_STATE: The user requested implementation of the multi-source Kuwait research expansion, verification that all relevant branches are integrated, a retrospective test over the latest forty days, and the resulting agreement percentage. Main is 92b2bdd2460a7508922297a12d85f13264d43acb. PR #1 and PRs #4 through #13 are already ancestors of main. PR #2 and PR #3 are stale, non-mergeable, 127 commits behind, and superseded; they are excluded from literal merge. The task branch contains the bounded fair source search, persisted-run validator, parsed-input integration bridge, content-bound/fresh factor snapshot, execution-grade score-derived replay, and CLI stop result. The latest-40 result remains STOP_BACKTEST with 0/40 scoreable sessions and agreement N/A. Local acceptance passed again on 2026-08-14: final current-tree suite 2,067/2,067, compile/control/smoke/secret/corpus gates. Exact-head GitHub Actions Run 31735588444 passed at d4759f7840625534ba0f5b91338f1b9c46810a93 on Python 3.11 through 3.14. The user then explicitly ordered the merge and preparation of the project for the next historical-research layer. The merge boundary is therefore approved at this exact validated head.
 WHY_A_DECISION_IS_REQUIRED: Repository rules require explicit authority for merging and for any historical evaluation that could be misconstrued as a performance claim.
 CODEX_RECOMMENDATION: Implement on a fresh branch, preserve all evidence and stop gates, run a 40-completed-session historical walk-forward only if point-in-time data are admissible, publish a Draft PR, require exact-head CI, then merge the new task branch only if every gate passes. Do not merge PR #2 or PR #3 wholesale.
 CONSEQUENCE_OF_APPROVAL: Codex may develop and test the research/evaluation infrastructure and may calculate a descriptive agreement rate only from a fully reconciled real-evidence run. Missing evidence must produce STOP_BACKTEST with withheld metrics rather than an invented percentage; KU-BO-012 does not expose an unreachable STOP_INFERENCE status.
 CONSEQUENCE_OF_REJECTION: The current main remains unchanged and no historical outcome is calculated.
 SAFER_REVERSIBLE_ALTERNATIVE: Keep the implementation and evidence report in a Draft PR without merging.
-USER_DECISION: APPROVED in the active user session with the instruction to add the requested capabilities, verify integration of all branches, run a retrospective test over the latest forty days, and report the agreement percentage.
-DECIDED_AT: 2026-08-13
+USER_DECISION: APPROVED and reconfirmed in the active user session with the explicit instruction to perform the merge, prepare the project for operation, and then build the next historical-research layer. This approval applies to exact validated PR #14 head d4759f7840625534ba0f5b91338f1b9c46810a93.
+DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No force-push, deletion, credentials, private or licensed data publication, gate weakening, model training, or fabricated accuracy. The merge approval applies only to the new KU-BO-012 branch after complete tests and exact-head CI. PR #2 and PR #3 remain excluded as stale/superseded.
-IMPLEMENTED_IN_BRANCH_OR_PR: agent/kuwait-120d-next-session / Draft PR #14 / implementation SHA 58a78042d5d509e599d2e273d793856b1dee14dd / exact-head CI 31733924569 PASS; merge pending
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/kuwait-120d-next-session / Draft PR #14 / exact validated SHA d4759f7840625534ba0f5b91338f1b9c46810a93 / exact-head CI 31735588444 PASS; merge authorized at boundary
 ```
 
 ```text
