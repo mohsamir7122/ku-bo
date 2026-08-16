@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "HUMANSOFT_FACTOR_REGISTRY_V1",
+  "shard": "event_governance_social.json",
+  "factors": [
+    {
+      "factor_id": "EVENT_MATERIALITY",
+      "category": "event",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:event_keywords",
+        "Factor9:event_power",
+        "KW:event",
+        "ku-bo:events"
+      ],
+      "implementation_disposition": "KEEP_KU_BO_CANONICALIZATION_REBUILD_SCORE",
+      "required_inputs": [
+        "official full-text disclosure",
+        "published and available timestamps",
+        "event cluster",
+        "financial magnitude",
+        "supplements/corrections"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_EVENT_CLUSTER_OR_TIMESTAMP_UNVERIFIED"
+    },
+    {
+      "factor_id": "GOVERNANCE_INSIDER",
+      "category": "governance",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Factor9:governance",
+        "HUMANSOFT company review"
+      ],
+      "implementation_disposition": "NEW_CANONICAL_FACTOR",
+      "required_inputs": [
+        "board history",
+        "CEO roles",
+        "insider trades",
+        "major shareholder history",
+        "treasury shares",
+        "related parties",
+        "regulatory sanctions"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "PRICE_REACTION",
+      "category": "event",
+      "role": "OPTIONAL_POST_EVENT",
+      "historical_lineage": [
+        "Factor9:price_reaction"
+      ],
+      "implementation_disposition": "KEEP_AS_POST_EVENT_ONLY",
+      "required_inputs": [
+        "first eligible post-event close/open",
+        "1/3/5-session total return",
+        "volume and volatility response"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FORBIDDEN",
+      "post_event_role": "OUTCOME_DIAGNOSTIC",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "FORBID_IN_PRE_EVENT_FEATURE_SNAPSHOT"
+    },
+    {
+      "factor_id": "ANALYST_REVISION",
+      "category": "expectations",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "Research:analysts_placeholder",
+        "Factor9:manual_overlay"
+      ],
+      "implementation_disposition": "REJECT_PLACEHOLDER_REBUILD",
+      "required_inputs": [
+        "PIT EPS/revenue estimates",
+        "target-price history",
+        "recommendation changes",
+        "analyst count and dispersion"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_PIT_SOURCE",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "SOCIAL_DIFFUSION",
+      "category": "social",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "Social-media",
+        "KW:telegram_discovery",
+        "ku-bo:source_roles"
+      ],
+      "implementation_disposition": "DISCOVERY_ONLY_UNTIL_PRIMARY_VERIFICATION",
+      "required_inputs": [
+        "message timestamp",
+        "channel/message id",
+        "original versus forward",
+        "reach/engagement",
+        "claim verification link"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_DISCOVERY_ONLY",
+      "missing_data_action": "NEVER_PROMOTE_UNVERIFIED_CLAIM"
+    },
+    {
+      "factor_id": "EVIDENCE_COVERAGE",
+      "category": "governance",
+      "role": "REQUIRED_GATE",
+      "historical_lineage": [
+        "KW:evidence_coverage",
+        "ku-bo:features",
+        "AI-Mincy:collector_diagnostics"
+      ],
+      "implementation_disposition": "KEEP_AS_CONFIDENCE_GATE_NOT_ALPHA",
+      "required_inputs": [
+        "source URL",
+        "retrieval timestamp",
+        "raw hash",
+        "parser version",
+        "effective/published dates",
+        "zero-result receipt"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_INCOMPLETE_OFFICIAL_ARCHIVE",
+      "missing_data_action": "STOP_AND_WITHHOLD_METRICS"
+    }
+  ]
+}

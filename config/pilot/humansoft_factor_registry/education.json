@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "HUMANSOFT_FACTOR_REGISTRY_V1",
+  "shard": "education.json",
+  "factors": [
+    {
+      "factor_id": "STUDENT_COUNT_GROWTH",
+      "category": "education",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "PIT total students",
+        "AUM students",
+        "ACM students",
+        "comparative period",
+        "new-intake count"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "NEW_STUDENT_INTAKE",
+      "category": "education",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "applications",
+        "admissions",
+        "new students",
+        "retention",
+        "program split"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_PIT_SERIES",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "REVENUE_PER_STUDENT",
+      "category": "education",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "PIT education revenue",
+        "average enrolled students",
+        "fee accounting policy",
+        "scholarship adjustments"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_COMPARABLE_SERIES",
+      "missing_data_action": "STOP_IF_ACCOUNTING_BASIS_NOT_COMPARABLE"
+    },
+    {
+      "factor_id": "SCHOLARSHIP_PRIVATE_PAY_MIX",
+      "category": "education",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "internal scholarship students",
+        "private-pay students",
+        "fees by payer",
+        "government fee decisions"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_PIT_MIX",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "CAPACITY_UTILIZATION",
+      "category": "education",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "licensed capacity",
+        "physical/program capacity",
+        "enrolled students",
+        "faculty and lab constraints"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_CAPACITY_DISCLOSURE",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "ACCREDITATION_PROGRAM_EXPANSION",
+      "category": "education",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "HUMANSOFT company review"
+      ],
+      "implementation_disposition": "NEW_SECTOR_EVENT_FACTOR",
+      "required_inputs": [
+        "official accreditation status",
+        "candidate versus full accreditation",
+        "new-program approval",
+        "actual admissions start",
+        "clinical partner when applicable"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "NO_GROWTH_CREDIT_BEFORE_EXECUTION"
+    },
+    {
+      "factor_id": "RECEIVABLES_COLLECTION",
+      "category": "education",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT sector overlay"
+      ],
+      "implementation_disposition": "NEW_SECTOR_FACTOR",
+      "required_inputs": [
+        "receivables aging",
+        "government/private split",
+        "provisions",
+        "write-offs",
+        "days sales outstanding"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_AGING",
+      "missing_data_action": "STOP_IF_COLLECTION_QUALITY_UNRESOLVED"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "HUMANSOFT_FACTOR_REGISTRY_V1",
+  "shard": "market_execution_risk.json",
+  "factors": [
+    {
+      "factor_id": "PRICE_TREND_20_50_200",
+      "category": "market",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:trend",
+        "Factor9:trend_quality",
+        "KW:trend"
+      ],
+      "implementation_disposition": "REWRITE_IN_KU_BO",
+      "required_inputs": [
+        "corporate-action-adjusted daily total-return index",
+        "official session calendar"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_UNADJUSTED_OR_CALENDAR_UNVERIFIED"
+    },
+    {
+      "factor_id": "EXCESS_MOMENTUM_5",
+      "category": "market",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Factor9:relative_strength",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "KEEP_AND_HARDEN",
+      "required_inputs": [
+        "HUMANSOFT total-return index",
+        "Boursa Kuwait market total-return index",
+        "five eligible sessions"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_PIT_BENCHMARK",
+      "missing_data_action": "STOP_IF_BENCHMARK_MISSING"
+    },
+    {
+      "factor_id": "EXCESS_MOMENTUM_20",
+      "category": "market",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Factor9:relative_strength",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "KEEP_AND_HARDEN",
+      "required_inputs": [
+        "HUMANSOFT total-return index",
+        "Boursa Kuwait market total-return index",
+        "twenty eligible sessions"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "BLOCKED_MISSING_PIT_BENCHMARK",
+      "missing_data_action": "STOP_IF_BENCHMARK_MISSING"
+    },
+    {
+      "factor_id": "REVERSAL_STATE",
+      "category": "market",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "ku-bo:method_registry momentum_and_reversal"
+      ],
+      "implementation_disposition": "REWRITE_IN_KU_BO",
+      "required_inputs": [
+        "adjusted 5/20/60-session returns",
+        "drawdown state",
+        "volatility regime"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "TRADING_LIQUIDITY",
+      "category": "execution",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:liquidity_misnamed",
+        "Factor9:liquidity_execution",
+        "KW:trading_liquidity"
+      ],
+      "implementation_disposition": "REWRITE_IN_KU_BO",
+      "required_inputs": [
+        "daily traded value KWD",
+        "volume",
+        "free float history",
+        "zero-volume sessions",
+        "bid-ask spread when licensed"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_EXECUTION_COST_CANNOT_BE_BOUNDED"
+    },
+    {
+      "factor_id": "VOLUME_CONFIRMATION",
+      "category": "market",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "Factor9:liquidity_execution",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "KEEP_AND_HARDEN",
+      "required_inputs": [
+        "5-session mean volume",
+        "prior 20-session mean volume",
+        "corporate-action flags"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "OUTCOME_DIAGNOSTIC",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "VOLATILITY_RISK",
+      "category": "risk",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Factor9:trend_quality",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "KEEP_AND_HARDEN",
+      "required_inputs": [
+        "adjusted daily returns",
+        "20/60-session annualized volatility",
+        "gap and drawdown measures"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "OUTCOME_DIAGNOSTIC",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_PRICE_BASIS_UNVERIFIED"
+    }
+  ]
+}

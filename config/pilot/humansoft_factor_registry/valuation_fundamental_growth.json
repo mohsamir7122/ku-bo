@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "HUMANSOFT_FACTOR_REGISTRY_V1",
+  "shard": "valuation_fundamental_growth.json",
+  "factors": [
+    {
+      "factor_id": "VALUATION_PE",
+      "category": "valuation",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:valuation",
+        "KW:value",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "REWRITE_POINT_IN_TIME",
+      "required_inputs": [
+        "price at decision cutoff",
+        "PIT diluted shares",
+        "PIT normalized TTM earnings"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_FINANCIAL_STATE_POSTDATES_EVENT"
+    },
+    {
+      "factor_id": "VALUATION_EV_EBITDA_FCF",
+      "category": "valuation",
+      "role": "OPTIONAL",
+      "historical_lineage": [
+        "Factor9:valuation",
+        "public-equity review"
+      ],
+      "implementation_disposition": "NEW_CANONICAL_FACTOR",
+      "required_inputs": [
+        "PIT cash",
+        "debt and lease liabilities",
+        "PIT EBITDA",
+        "PIT free cash flow",
+        "diluted shares"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    },
+    {
+      "factor_id": "PROFITABILITY_QUALITY",
+      "category": "fundamental",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:profitability",
+        "Factor9:fundamental_quality",
+        "KW:quality"
+      ],
+      "implementation_disposition": "REWRITE_POINT_IN_TIME",
+      "required_inputs": [
+        "eight to twelve PIT quarters of revenue and operating/net profit",
+        "ROE",
+        "ROIC",
+        "margin history"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_QUARTERLY_BRIDGE_INCOMPLETE"
+    },
+    {
+      "factor_id": "EARNINGS_QUALITY",
+      "category": "fundamental",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Factor9:fundamental_quality"
+      ],
+      "implementation_disposition": "NEW_CANONICAL_FACTOR",
+      "required_inputs": [
+        "PIT net income",
+        "operating cash flow",
+        "free cash flow",
+        "non-recurring items",
+        "receivable provisions"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_CASH_FLOW_OR_ONE_OFF_BRIDGE_MISSING"
+    },
+    {
+      "factor_id": "REVENUE_GROWTH",
+      "category": "growth",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:growth_placeholder",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "REJECT_LEGACY_FORMULA_REBUILD",
+      "required_inputs": [
+        "PIT quarterly and annual revenue",
+        "restatement lineage",
+        "comparable fee-accounting basis"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_COMPARABILITY_BREAK_UNRESOLVED"
+    },
+    {
+      "factor_id": "EPS_GROWTH",
+      "category": "growth",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:growth_placeholder",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "REJECT_LEGACY_FORMULA_REBUILD",
+      "required_inputs": [
+        "PIT normalized earnings",
+        "historical diluted shares",
+        "restatement lineage"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_SHARE_COUNT_OR_ONE_OFFS_MISSING"
+    },
+    {
+      "factor_id": "BALANCE_SHEET_SOLVENCY",
+      "category": "fundamental",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:balance_nonstandard",
+        "Research:liquidity_misnamed",
+        "Factor9:fundamental_quality"
+      ],
+      "implementation_disposition": "REJECT_LEGACY_FORMULA_REBUILD",
+      "required_inputs": [
+        "PIT cash and short-term investments",
+        "debt and leases",
+        "current liabilities",
+        "receivables aging",
+        "contingencies"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_RECEIVABLES_OR_LEASES_UNRESOLVED"
+    },
+    {
+      "factor_id": "DIVIDEND_COVERAGE",
+      "category": "income",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "Research:dividend_keyword",
+        "Factor9:valuation",
+        "HUMANSOFT retrospective ledger"
+      ],
+      "implementation_disposition": "REJECT_KEYWORD_FORMULA_REBUILD",
+      "required_inputs": [
+        "board proposal",
+        "AGM approval",
+        "record/ex/payment dates",
+        "cash dividend",
+        "EPS",
+        "free cash flow",
+        "CA adjustment"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "STOP_IF_CORPORATE_ACTION_LEDGER_INCOMPLETE"
+    },
+    {
+      "factor_id": "CAPITAL_ALLOCATION",
+      "category": "fundamental",
+      "role": "REQUIRED",
+      "historical_lineage": [
+        "HUMANSOFT company review",
+        "Factor9:governance"
+      ],
+      "implementation_disposition": "NEW_CANONICAL_FACTOR",
+      "required_inputs": [
+        "dividends",
+        "buybacks",
+        "insider transactions",
+        "capex",
+        "acquisitions",
+        "cash and net debt",
+        "related-party terms"
+      ],
+      "point_in_time_rule": "All pre-event inputs must have available_at <= event.available_at.",
+      "pre_event_role": "FEATURE_OR_GATE",
+      "post_event_role": "RECOMPUTE_FOR_CHANGE_ANALYSIS",
+      "current_humansoft_data_status": "AVAILABLE_PARTIAL",
+      "missing_data_action": "UNKNOWN_NOT_OBSERVED"
+    }
+  ]
+}
