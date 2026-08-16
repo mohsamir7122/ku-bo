@@ -83,6 +83,42 @@ class EventFactorPanelContractTests(unittest.TestCase):
         self.assertIs(validate_event_factor_panel_result(result), result)
 
 
+    def test_factor_available_after_snapshot_is_rejected(self) -> None:
+        packet = valid_packet()
+        event_at = packet["event"]["available_at"]
+        packet["factor_snapshot"]["snapshot_at"] = event_at.replace(
+            "14:00:00", "13:00:00"
+        )
+        packet["factor_snapshot"]["factors"][0]["available_at"] = event_at.replace(
+            "14:00:00", "13:30:00"
+        )
+        with self.assertRaisesRegex(
+            EventFactorPanelError, "became available after factor snapshot"
+        ):
+            validate_event_factor_panel_packet(packet)
+
+    def test_duplicate_document_cannot_be_studied_as_a_separate_event(self) -> None:
+        packet = valid_packet()
+        packet["event"]["duplicate_of"] = "canonical-event"
+        with self.assertRaisesRegex(EventFactorPanelError, "canonical event"):
+            validate_event_factor_panel_packet(packet)
+
+    def test_packet_created_before_post_observations_is_rejected(self) -> None:
+        packet = valid_packet()
+        packet["created_at"] = packet["event"]["available_at"]
+        with self.assertRaisesRegex(
+            EventFactorPanelError, "precedes an included session observation"
+        ):
+            validate_event_factor_panel_packet(packet)
+
+    def test_credential_query_parameter_is_rejected(self) -> None:
+        packet = valid_packet()
+        packet["event"]["source_url"] = (
+            "https://example.com/disclosure?access_token=secret"
+        )
+        with self.assertRaisesRegex(EventFactorPanelError, "credential"):
+            validate_event_factor_panel_packet(packet)
+
     def test_future_factor_is_rejected(self) -> None:
         packet = valid_packet()
         packet["factor_snapshot"]["factors"][0]["available_at"] = packet["created_at"]

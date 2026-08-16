@@ -82,6 +82,10 @@ def _validate_event(raw: Any) -> dict[str, Any]:
     }
     if duplicate_of == result["event_id"]:
         raise EventFactorPanelError("event.duplicate_of cannot equal event.event_id")
+    if duplicate_of is not None:
+        raise EventFactorPanelError(
+            "event-study packets must contain the canonical event, not a duplicate document"
+        )
     return result
 
 
@@ -118,6 +122,10 @@ def _validate_snapshot(raw: Any, event_available: datetime) -> dict[str, Any]:
         )
         if available > event_available:
             raise EventFactorPanelError(f"factor {factor_id} became available after event")
+        if available > snapshot_at:
+            raise EventFactorPanelError(
+                f"factor {factor_id} became available after factor snapshot"
+            )
         if state == "OBSERVED":
             value: float | None = _number(
                 factor["value"], f"factor_snapshot.factors[{index}].value"
@@ -267,6 +275,14 @@ def validate_event_factor_panel_packet(packet: Mapping[str, Any]) -> dict[str, A
     )
     if pre[-1]["trade_date"] >= post[0]["trade_date"]:
         raise EventFactorPanelError("pre/post windows overlap")
+    latest_observed = max(
+        _aware(row["observed_at"], "session.observed_at")
+        for row in (*pre, *post)
+    )
+    if created_at < latest_observed:
+        raise EventFactorPanelError(
+            "packet.created_at precedes an included session observation"
+        )
 
     receipts = _mapping(packet["evidence_receipts"], "evidence_receipts")
     _fields(receipts, _RECEIPT_FIELDS, "evidence_receipts")

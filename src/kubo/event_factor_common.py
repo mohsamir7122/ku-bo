@@ -7,7 +7,7 @@ import json
 import math
 import re
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 PRODUCT_ID = "HUMANSOFT_EVENT_FACTOR_PANEL_V1"
 PRE_EVENT_SESSIONS = 20
@@ -15,6 +15,33 @@ POST_EVENT_SESSIONS = 20
 MATERIAL_RETURN_THRESHOLD_PCT = 4.0
 
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
+_SENSITIVE_QUERY_KEYS = frozenset(
+    {
+        "access_token",
+        "apikey",
+        "api_key",
+        "auth",
+        "authorization",
+        "awsaccesskeyid",
+        "bearer",
+        "client_secret",
+        "code",
+        "cookie",
+        "googleaccessid",
+        "jwt",
+        "oauth_token",
+        "password",
+        "passwd",
+        "session",
+        "sessionid",
+        "sig",
+        "signature",
+        "token",
+    }
+)
+_SENSITIVE_QUERY_KEYS_COLLAPSED = frozenset(
+    key.replace("_", "") for key in _SENSITIVE_QUERY_KEYS
+)
 _FORBIDDEN_FACTOR_TOKENS = (
     "future",
     "forward_return",
@@ -174,18 +201,43 @@ def _sha(value: Any, field: str) -> str:
     return digest
 
 
+def _sensitive_query_key(value: Any) -> bool:
+    normalized = str(value).strip().casefold().replace("-", "_")
+    collapsed = normalized.replace("_", "")
+    return (
+        normalized in _SENSITIVE_QUERY_KEYS
+        or collapsed in _SENSITIVE_QUERY_KEYS_COLLAPSED
+        or collapsed.startswith(("xamz", "xgoog"))
+        or normalized.startswith(("x_amz_", "x_goog_"))
+        or normalized.endswith(("_token", "_secret", "_credential", "_signature"))
+        or any(marker in normalized for marker in ("access_token", "client_secret"))
+    )
+
+
 def _url(value: Any, field: str) -> str:
     text = _text(value, field, 2048)
-    parsed = urlsplit(text)
+    try:
+        parsed = urlsplit(text)
+        port = parsed.port
+    except ValueError as exc:
+        raise EventFactorPanelError(f"{field} has an invalid host or port") from exc
     if (
         parsed.scheme.lower() != "https"
         or not parsed.hostname
         or parsed.username
         or parsed.password
         or parsed.fragment
+        or port not in (None, 443)
     ):
         raise EventFactorPanelError(
             f"{field} must be an absolute credential-free HTTPS URL"
+        )
+    if any(
+        _sensitive_query_key(key)
+        for key, _ in parse_qsl(parsed.query, keep_blank_values=True)
+    ):
+        raise EventFactorPanelError(
+            f"{field} must not contain credential or signed-URL query parameters"
         )
     return text
 

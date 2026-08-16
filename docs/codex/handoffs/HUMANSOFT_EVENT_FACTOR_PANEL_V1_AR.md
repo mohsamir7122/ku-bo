@@ -105,7 +105,7 @@ Buy/Sell recommendation، ولا تستورد أي Score قديم من المس�
 - أي Factor يصبح متاحًا بعد `event.available_at` يُرفض.
 - Factor IDs التي تشير إلى Future أو Outcome أو Target أو Post-event ممنوعة داخل
   Pre-event snapshot.
-- `PRICE_REACTION` Post-event diagnostic فقط ولا يدخل توقعًا سابقًا للحدث.
+- `PRICE_REACTION` Post-event diagnostic فقط ول٧ يدخل توقعًا سابقًا للحدث.
 - Market وSector benchmarks ليست اختيارية.
 - Session-level evidence hashes يجب أن تطابق Top-level receipts.
 - Unadjusted price history تُرفض.
@@ -121,13 +121,15 @@ PYTHONPATH=src python -m unittest discover -s tests \
 python -m compileall -q src tests
 ```
 
-النتيجة: 14 من 14 PASS.
+النتيجة: 18 من 18 PASS.
 
 الاختبارات تغطي Valid 20/20 packet، JSON Schemas، Future-factor rejection،
 Unadjusted-price rejection، Benchmark and receipt binding، Wrong-window rejection،
 STOP metrics withholding، Mutation resistance، Registry uniqueness، Duplicate
 decision rejection، Fractional-horizon rejection، Aggregate-only CSV output،
-Always-neutral baseline، وConfusion-matrix recomputation.
+Always-neutral baseline، وConfusion-matrix recomputation، ورفض Duplicate documents،
+Credential-bearing URLs، وFactor timestamps التي تتجاوز Snapshot، وإنشاء Packet قبل اكتمال
+Post-event observations.
 
 ## ما لا يفعله هذا التغيير
 
