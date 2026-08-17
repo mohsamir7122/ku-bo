@@ -1,0 +1,52 @@
+{
+  "schema_version": "2.0",
+  "product_id": "HUMANSOFT_DISCLOSURE_REACTION_V2",
+  "security_code": "HUMANSOFT",
+  "user_facing_output": "QUALITATIVE_ONLY",
+  "historical_domains": {
+    "official_disclosures": "HISTORICAL_DISCLOSURE_ARCHIVE",
+    "event_market_windows": "HISTORICAL_EVENT_MARKET_WINDOW",
+    "public_opinion": "HISTORICAL_PUBLIC_OPINION_ARCHIVE"
+  },
+  "current_domains": {
+    "daily_market": "RECENT_DAILY_MARKET_SERIES",
+    "financial_snapshot": "LATEST_FINANCIAL_SNAPSHOT"
+  },
+  "historical_reaction_inputs": [
+    "HISTORICAL_DISCLOSURE_ARCHIVE",
+    "HISTORICAL_EVENT_MARKET_WINDOW",
+    "HISTORICAL_PUBLIC_OPINION_ARCHIVE"
+  ],
+  "historical_reaction_exclusions": [
+    "RECENT_DAILY_MARKET_SERIES",
+    "LATEST_FINANCIAL_SNAPSHOT"
+  ],
+  "price_questions": [
+    "هل كان السهم يرتفع قبل الإفصاح؟",
+    "هل بدأ الارتفاع مباشرة بعد الإفصاح؟",
+    "هل ظهر الارتفاع متأخرًا بعد الإفصاح؟",
+    "هل استمر الارتفاع الذي بدأ قبل الإفصاح؟",
+    "هل كان التفاعل قصيرًا ثم تلاشى؟",
+    "هل لم يظهر ارتفاع واضح؟"
+  ],
+  "public_opinion_questions": [
+    "هل وُجد نقاش عام موثق قبل الإفصاح؟",
+    "هل بدأ النقاش بعد الإفصاح؟",
+    "هل كان الاتجاه إيجابيًا أم سلبيًا أم مختلطًا أم محايدًا؟"
+  ],
+  "non_negotiable_rules": {
+    "historical_disclosure_archive_is_append_only": true,
+    "corrections_are_new_linked_records": true,
+    "historical_market_window_is_frozen": true,
+    "recent_daily_market_is_rolling_current": true,
+    "latest_financial_snapshot_is_replaceable_current_context": true,
+    "current_market_cannot_recompute_historical_reaction": true,
+    "latest_financial_snapshot_cannot_enter_historical_reaction": true,
+    "duplicate_documents_are_not_new_events": true,
+    "prices_are_total_return_adjusted": true,
+    "market_and_sector_benchmarks_are_required": true,
+    "pre_disclosure_discussion_does_not_prove_leakage": true,
+    "post_disclosure_rise_does_not_prove_causality": true,
+    "numeric_market_values_are_not_exposed": true
+  }
+}

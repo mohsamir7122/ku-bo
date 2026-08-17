@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/historical-event-market-window.schema.json",
+  "title": "Frozen historical disclosure market window",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","data_domain","immutability","window_id","security_code","canonical_cluster_id","disclosure_record_id","frozen_at","price_basis","benchmark_basis","corporate_action_status","pre_sessions","post_sessions","evidence_receipts"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "data_domain": {"const": "HISTORICAL_EVENT_MARKET_WINDOW"},
+    "immutability": {"const": "FROZEN"},
+    "window_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "security_code": {"const": "HUMANSOFT"},
+    "canonical_cluster_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "disclosure_record_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "frozen_at": {"type": "string", "format": "date-time"},
+    "price_basis": {"const": "TOTAL_RETURN_INDEX"},
+    "benchmark_basis": {"const": "MARKET_AND_SECTOR_EXCESS"},
+    "corporate_action_status": {"enum": ["ADJUSTED","VERIFIED_NONE"]},
+    "pre_sessions": {"type": "array", "minItems": 20, "maxItems": 20, "items": {"$ref": "#/$defs/session"}},
+    "post_sessions": {"type": "array", "minItems": 20, "maxItems": 20, "items": {"$ref": "#/$defs/session"}},
+    "evidence_receipts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["trading_calendar_sha256","price_history_sha256","market_benchmark_sha256","sector_benchmark_sha256","corporate_actions_sha256"],
+      "properties": {
+        "trading_calendar_sha256": {"$ref": "#/$defs/sha256"},
+        "price_history_sha256": {"$ref": "#/$defs/sha256"},
+        "market_benchmark_sha256": {"$ref": "#/$defs/sha256"},
+        "sector_benchmark_sha256": {"$ref": "#/$defs/sha256"},
+        "corporate_actions_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "session": {
+      "type": "object", "additionalProperties": false,
+      "required": ["trade_date","session_close_at","observed_at","stock_total_return_index","market_total_return_index","sector_total_return_index","calendar_evidence_sha256","price_evidence_sha256","market_benchmark_evidence_sha256","sector_benchmark_evidence_sha256","corporate_action_evidence_sha256"],
+      "properties": {
+        "trade_date": {"type": "string", "format": "date"},
+        "session_close_at": {"type": "string", "format": "date-time"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "stock_total_return_index": {"type": "number", "exclusiveMinimum": 0},
+        "market_total_return_index": {"type": "number", "exclusiveMinimum": 0},
+        "sector_total_return_index": {"type": "number", "exclusiveMinimum": 0},
+        "calendar_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "price_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "market_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "sector_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "corporate_action_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

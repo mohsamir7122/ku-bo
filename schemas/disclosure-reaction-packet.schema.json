@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/disclosure-reaction-packet.schema.json",
+  "title": "Separated historical disclosure reaction request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","packet_id","product_id","timezone","created_at","policy","historical_disclosure","historical_market_window","public_opinion_archive"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "packet_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "product_id": {"const": "HUMANSOFT_DISCLOSURE_REACTION_V2"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["immediate_post_sessions","movement_threshold_pct","numeric_output_rule","causality_rule","current_market_rule","latest_financial_rule"],
+      "properties": {
+        "immediate_post_sessions": {"const": 2},
+        "movement_threshold_pct": {"type": "number", "minimum": 0.01, "maximum": 25},
+        "numeric_output_rule": {"const": "QUALITATIVE_ONLY"},
+        "causality_rule": {"const": "ASSOCIATION_NOT_CAUSATION"},
+        "current_market_rule": {"const": "EXCLUDED_FROM_HISTORICAL_REACTION"},
+        "latest_financial_rule": {"const": "EXCLUDED_FROM_HISTORICAL_REACTION"}
+      }
+    },
+    "historical_disclosure": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/historical-disclosure-record.schema.json"},
+    "historical_market_window": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/historical-event-market-window.schema.json"},
+    "public_opinion_archive": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/public-opinion-archive.schema.json"}
+  }
+}
