@@ -1,44 +1,52 @@
 {
-  "schema_version": "1.0",
-  "product_id": "HUMANSOFT_DISCLOSURE_REACTION_V1",
+  "schema_version": "2.0",
+  "product_id": "HUMANSOFT_DISCLOSURE_REACTION_V2",
   "security_code": "HUMANSOFT",
-  "scope": "OFFICIAL_DISCLOSURES_AND_SOURCE_BACKED_PUBLIC_OPINION_ONLY",
   "user_facing_output": "QUALITATIVE_ONLY",
+  "historical_domains": {
+    "official_disclosures": "HISTORICAL_DISCLOSURE_ARCHIVE",
+    "event_market_windows": "HISTORICAL_EVENT_MARKET_WINDOW",
+    "public_opinion": "HISTORICAL_PUBLIC_OPINION_ARCHIVE"
+  },
+  "current_domains": {
+    "daily_market": "RECENT_DAILY_MARKET_SERIES",
+    "financial_snapshot": "LATEST_FINANCIAL_SNAPSHOT"
+  },
+  "historical_reaction_inputs": [
+    "HISTORICAL_DISCLOSURE_ARCHIVE",
+    "HISTORICAL_EVENT_MARKET_WINDOW",
+    "HISTORICAL_PUBLIC_OPINION_ARCHIVE"
+  ],
+  "historical_reaction_exclusions": [
+    "RECENT_DAILY_MARKET_SERIES",
+    "LATEST_FINANCIAL_SNAPSHOT"
+  ],
   "price_questions": [
     "هل كان السهم يرتفع قبل الإفصاح؟",
-    "هل بدأ الارتفاع فور ظهور الإفصاح؟",
+    "هل بدأ الارتفاع مباشرة بعد الإفصاح؟",
     "هل ظهر الارتفاع متأخرًا بعد الإفصاح؟",
-    "هل استمر اتجاه بدأ قبل الإفصاح؟",
+    "هل استمر الارتفاع الذي بدأ قبل الإفصاح؟",
+    "هل كان التفاعل قصيرًا ثم تلاشى؟",
     "هل لم يظهر ارتفاع واضح؟"
   ],
   "public_opinion_questions": [
-    "هل وجد نقاش عام موثق قبل الإفصاح؟",
-    "هل كان الرأي العام بعد الإفصاح إيجابيًا أم سلبيًا أم مختلطًا؟",
-    "هل ظهر النقاش في الصحف أم الإعلام المالي أم السوشيال ميديا؟"
+    "هل وُجد نقاش عام موثق قبل الإفصاح؟",
+    "هل بدأ النقاش بعد الإفصاح؟",
+    "هل كان الاتجاه إيجابيًا أم سلبيًا أم مختلطًا أم محايدًا؟"
   ],
-  "accepted_public_sources": [
-    "NEWSPAPER",
-    "FINANCIAL_MEDIA",
-    "SOCIAL_MEDIA",
-    "ANALYST_COMMENTARY",
-    "FORUM"
-  ],
-  "price_timing_labels": {
-    "RISE_STARTED_BEFORE_AND_CONTINUED_AFTER": "بدأ الارتفاع قبل الإفصاح واستمر بعده",
-    "RISE_STARTED_BEFORE_DISCLOSURE": "بدأ الارتفاع قبل الإفصاح",
-    "RISE_STARTED_IMMEDIATELY_AFTER_DISCLOSURE": "بدأ الارتفاع بعد الإفصاح مباشرة",
-    "SHORT_RISE_AFTER_DISCLOSURE_THEN_FADED": "ظهر ارتفاع قصير بعد الإفصاح ثم تلاشى",
-    "RISE_APPEARED_LATER_AFTER_DISCLOSURE": "ظهر الارتفاع متأخرًا بعد الإفصاح",
-    "NO_CLEAR_RISE_AROUND_DISCLOSURE": "لم يظهر ارتفاع واضح حول الإفصاح"
-  },
   "non_negotiable_rules": {
-    "official_disclosure_is_canonical_event": true,
+    "historical_disclosure_archive_is_append_only": true,
+    "corrections_are_new_linked_records": true,
+    "historical_market_window_is_frozen": true,
+    "recent_daily_market_is_rolling_current": true,
+    "latest_financial_snapshot_is_replaceable_current_context": true,
+    "current_market_cannot_recompute_historical_reaction": true,
+    "latest_financial_snapshot_cannot_enter_historical_reaction": true,
     "duplicate_documents_are_not_new_events": true,
-    "price_history_must_be_total_return_adjusted": true,
+    "prices_are_total_return_adjusted": true,
     "market_and_sector_benchmarks_are_required": true,
-    "public_opinion_requires_source_and_timestamp": true,
     "pre_disclosure_discussion_does_not_prove_leakage": true,
     "post_disclosure_rise_does_not_prove_causality": true,
-    "numeric_prices_and_returns_are_not_exposed_to_user": true
+    "numeric_market_values_are_not_exposed": true
   }
 }

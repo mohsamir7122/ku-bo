@@ -1,145 +1,59 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/mohsamir7122/ku-bo/schemas/disclosure-reaction-result.schema.json",
-  "title": "HUMANSOFT qualitative disclosure reaction result",
+  "title": "Qualitative separated disclosure reaction result",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "product_id",
-    "status",
-    "input_sha256",
-    "packet_id",
-    "disclosure_id",
-    "disclosure_headline",
-    "official_source_url",
-    "price_behavior",
-    "public_opinion",
-    "narrative_ar",
-    "numbers_exposed",
-    "causality_claim_allowed",
-    "errors",
-    "warnings"
-  ],
+  "required": ["schema_version","product_id","status","input_sha256","packet_id","disclosure_id","disclosure_headline","official_source_url","price_behavior","public_opinion","data_separation","narrative_ar","numbers_exposed","causality_claim_allowed","errors","warnings"],
   "properties": {
     "schema_version": {"const": "1.0"},
-    "product_id": {"const": "HUMANSOFT_DISCLOSURE_REACTION_V1"},
-    "status": {
-      "enum": ["QUALITATIVE_REACTION_READY", "STOP_INSUFFICIENT_EVIDENCE"]
-    },
-    "input_sha256": {
-      "oneOf": [
-        {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        {"type": "null"}
-      ]
-    },
-    "packet_id": {"oneOf": [{"type": "string"}, {"type": "null"}]},
-    "disclosure_id": {"oneOf": [{"type": "string"}, {"type": "null"}]},
-    "disclosure_headline": {"oneOf": [{"type": "string"}, {"type": "null"}]},
-    "official_source_url": {
-      "oneOf": [
-        {"type": "string", "format": "uri", "pattern": "^https://"},
-        {"type": "null"}
-      ]
-    },
-    "price_behavior": {
-      "oneOf": [
-        {"$ref": "#/$defs/price_behavior"},
-        {"type": "null"}
-      ]
-    },
-    "public_opinion": {
-      "oneOf": [
-        {"$ref": "#/$defs/public_opinion"},
-        {"type": "null"}
-      ]
-    },
-    "narrative_ar": {"oneOf": [{"type": "string"}, {"type": "null"}]},
+    "product_id": {"const": "HUMANSOFT_DISCLOSURE_REACTION_V2"},
+    "status": {"enum": ["QUALITATIVE_REACTION_READY","STOP_INSUFFICIENT_EVIDENCE"]},
+    "input_sha256": {"oneOf": [{"type": "string", "pattern": "^[0-9a-f]{64}$"},{"type": "null"}]},
+    "packet_id": {"oneOf": [{"type": "string"},{"type": "null"}]},
+    "disclosure_id": {"oneOf": [{"type": "string"},{"type": "null"}]},
+    "disclosure_headline": {"oneOf": [{"type": "string"},{"type": "null"}]},
+    "official_source_url": {"oneOf": [{"type": "string", "format": "uri", "pattern": "^https://"},{"type": "null"}]},
+    "price_behavior": {"oneOf": [{"$ref": "#/$defs/price_behavior"},{"type": "null"}]},
+    "public_opinion": {"oneOf": [{"$ref": "#/$defs/public_opinion"},{"type": "null"}]},
+    "data_separation": {"oneOf": [{"$ref": "#/$defs/data_separation"},{"type": "null"}]},
+    "narrative_ar": {"oneOf": [{"type": "string"},{"type": "null"}]},
     "numbers_exposed": {"const": false},
     "causality_claim_allowed": {"const": false},
-    "errors": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {"type": "string"}
-    },
-    "warnings": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {"type": "string"}
-    }
+    "errors": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "warnings": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
   },
   "$defs": {
     "price_behavior": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "before_disclosure",
-        "immediately_after_disclosure",
-        "after_disclosure_window",
-        "timing_conclusion",
-        "disclosure_association"
-      ],
+      "type": "object", "additionalProperties": false,
+      "required": ["before_disclosure","immediately_after_disclosure","after_disclosure_window","timing_conclusion","disclosure_association"],
       "properties": {
-        "before_disclosure": {"enum": ["RISING", "FALLING", "NO_CLEAR_MOVE"]},
-        "immediately_after_disclosure": {"enum": ["RISING", "FALLING", "NO_CLEAR_MOVE"]},
-        "after_disclosure_window": {"enum": ["RISING", "FALLING", "NO_CLEAR_MOVE"]},
-        "timing_conclusion": {
-          "enum": [
-            "RISE_STARTED_BEFORE_AND_CONTINUED_AFTER",
-            "RISE_STARTED_BEFORE_DISCLOSURE",
-            "RISE_STARTED_IMMEDIATELY_AFTER_DISCLOSURE",
-            "SHORT_RISE_AFTER_DISCLOSURE_THEN_FADED",
-            "RISE_APPEARED_LATER_AFTER_DISCLOSURE",
-            "NO_CLEAR_RISE_AROUND_DISCLOSURE"
-          ]
-        },
-        "disclosure_association": {
-          "enum": [
-            "MOVE_PRECEDED_DISCLOSURE",
-            "POST_DISCLOSURE_RISE_ASSOCIATED",
-            "TEMPORARY_POST_DISCLOSURE_RISE_ASSOCIATED",
-            "DELAYED_RISE_WEAKLY_ASSOCIATED",
-            "NO_CLEAR_RISE_ASSOCIATION"
-          ]
-        }
+        "before_disclosure": {"enum": ["RISING","FALLING","NO_CLEAR_MOVE"]},
+        "immediately_after_disclosure": {"enum": ["RISING","FALLING","NO_CLEAR_MOVE"]},
+        "after_disclosure_window": {"enum": ["RISING","FALLING","NO_CLEAR_MOVE"]},
+        "timing_conclusion": {"enum": ["RISE_STARTED_BEFORE_AND_CONTINUED_AFTER","RISE_STARTED_BEFORE_DISCLOSURE","RISE_STARTED_IMMEDIATELY_AFTER_DISCLOSURE","SHORT_RISE_AFTER_DISCLOSURE_THEN_FADED","RISE_APPEARED_LATER_AFTER_DISCLOSURE","NO_CLEAR_RISE_AROUND_DISCLOSURE"]},
+        "disclosure_association": {"enum": ["MOVE_PRECEDED_DISCLOSURE","POST_DISCLOSURE_RISE_ASSOCIATED","TEMPORARY_POST_DISCLOSURE_RISE_ASSOCIATED","DELAYED_RISE_WEAKLY_ASSOCIATED","NO_CLEAR_RISE_ASSOCIATION"]}
       }
     },
     "public_opinion": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "before_disclosure",
-        "after_disclosure",
-        "discussion_timing",
-        "source_channels"
-      ],
+      "type": "object", "additionalProperties": false,
+      "required": ["before_disclosure","after_disclosure","discussion_timing","source_channels"],
       "properties": {
-        "before_disclosure": {
-          "enum": ["POSITIVE", "NEGATIVE", "MIXED", "NEUTRAL", "INSUFFICIENT_EVIDENCE"]
-        },
-        "after_disclosure": {
-          "enum": ["POSITIVE", "NEGATIVE", "MIXED", "NEUTRAL", "INSUFFICIENT_EVIDENCE"]
-        },
-        "discussion_timing": {
-          "enum": [
-            "PUBLIC_DISCUSSION_EXISTED_BEFORE_DISCLOSURE",
-            "PUBLIC_DISCUSSION_STARTED_AFTER_DISCLOSURE",
-            "NO_VERIFIED_PUBLIC_DISCUSSION"
-          ]
-        },
-        "source_channels": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "enum": [
-              "NEWSPAPER",
-              "FINANCIAL_MEDIA",
-              "SOCIAL_MEDIA",
-              "ANALYST_COMMENTARY",
-              "FORUM"
-            ]
-          }
-        }
+        "before_disclosure": {"enum": ["POSITIVE","NEGATIVE","MIXED","NEUTRAL","INSUFFICIENT_EVIDENCE"]},
+        "after_disclosure": {"enum": ["POSITIVE","NEGATIVE","MIXED","NEUTRAL","INSUFFICIENT_EVIDENCE"]},
+        "discussion_timing": {"enum": ["PUBLIC_DISCUSSION_EXISTED_BEFORE_DISCLOSURE","PUBLIC_DISCUSSION_STARTED_AFTER_DISCLOSURE","NO_VERIFIED_PUBLIC_DISCUSSION"]},
+        "source_channels": {"type": "array", "uniqueItems": true, "items": {"enum": ["NEWSPAPER","FINANCIAL_MEDIA","SOCIAL_MEDIA","ANALYST_COMMENTARY","FORUM"]}}
+      }
+    },
+    "data_separation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["historical_disclosure_domain","historical_market_domain","public_opinion_domain","recent_daily_market_used","latest_financial_snapshot_used"],
+      "properties": {
+        "historical_disclosure_domain": {"const": "HISTORICAL_DISCLOSURE_ARCHIVE"},
+        "historical_market_domain": {"const": "HISTORICAL_EVENT_MARKET_WINDOW"},
+        "public_opinion_domain": {"const": "HISTORICAL_PUBLIC_OPINION_ARCHIVE"},
+        "recent_daily_market_used": {"const": false},
+        "latest_financial_snapshot_used": {"const": false}
       }
     }
   }

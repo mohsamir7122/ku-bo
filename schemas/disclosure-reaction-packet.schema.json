@@ -1,206 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/mohsamir7122/ku-bo/schemas/disclosure-reaction-packet.schema.json",
-  "title": "HUMANSOFT official disclosure and public reaction packet",
+  "title": "Separated historical disclosure reaction request",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "packet_id",
-    "product_id",
-    "timezone",
-    "created_at",
-    "disclosure",
-    "policy",
-    "pre_sessions",
-    "post_sessions",
-    "public_opinion",
-    "evidence_receipts"
-  ],
+  "required": ["schema_version","packet_id","product_id","timezone","created_at","policy","historical_disclosure","historical_market_window","public_opinion_archive"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "packet_id": {"type": "string", "minLength": 1, "maxLength": 128},
-    "product_id": {"const": "HUMANSOFT_DISCLOSURE_REACTION_V1"},
+    "product_id": {"const": "HUMANSOFT_DISCLOSURE_REACTION_V2"},
     "timezone": {"const": "Asia/Kuwait"},
     "created_at": {"type": "string", "format": "date-time"},
-    "disclosure": {"$ref": "#/$defs/disclosure"},
-    "policy": {"$ref": "#/$defs/policy"},
-    "pre_sessions": {
-      "type": "array",
-      "minItems": 20,
-      "maxItems": 20,
-      "items": {"$ref": "#/$defs/session"}
-    },
-    "post_sessions": {
-      "type": "array",
-      "minItems": 20,
-      "maxItems": 20,
-      "items": {"$ref": "#/$defs/session"}
-    },
-    "public_opinion": {
-      "type": "array",
-      "items": {"$ref": "#/$defs/opinion"}
-    },
-    "evidence_receipts": {"$ref": "#/$defs/receipts"}
-  },
-  "$defs": {
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
     "policy": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "pre_sessions",
-        "post_sessions",
-        "immediate_post_sessions",
-        "movement_threshold_pct",
-        "price_basis",
-        "benchmark_rule",
-        "corporate_action_rule",
-        "public_opinion_rule",
-        "numeric_output_rule",
-        "causality_rule"
-      ],
+      "type": "object", "additionalProperties": false,
+      "required": ["immediate_post_sessions","movement_threshold_pct","numeric_output_rule","causality_rule","current_market_rule","latest_financial_rule"],
       "properties": {
-        "pre_sessions": {"const": 20},
-        "post_sessions": {"const": 20},
         "immediate_post_sessions": {"const": 2},
-        "movement_threshold_pct": {
-          "type": "number",
-          "minimum": 0.01,
-          "maximum": 25
-        },
-        "price_basis": {"const": "TOTAL_RETURN_INDEX"},
-        "benchmark_rule": {"const": "MARKET_AND_SECTOR_EXCESS"},
-        "corporate_action_rule": {"const": "ADJUSTED_OR_EXPLICIT_NONE"},
-        "public_opinion_rule": {"const": "SOURCE_BACKED_INDEPENDENT_GROUPS"},
+        "movement_threshold_pct": {"type": "number", "minimum": 0.01, "maximum": 25},
         "numeric_output_rule": {"const": "QUALITATIVE_ONLY"},
-        "causality_rule": {"const": "ASSOCIATION_NOT_CAUSATION"}
+        "causality_rule": {"const": "ASSOCIATION_NOT_CAUSATION"},
+        "current_market_rule": {"const": "EXCLUDED_FROM_HISTORICAL_REACTION"},
+        "latest_financial_rule": {"const": "EXCLUDED_FROM_HISTORICAL_REACTION"}
       }
     },
-    "disclosure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "disclosure_id",
-        "security_code",
-        "canonical_cluster_id",
-        "disclosure_type",
-        "headline",
-        "published_at",
-        "available_at",
-        "official_source_url",
-        "official_evidence_sha256",
-        "duplicate_of"
-      ],
-      "properties": {
-        "disclosure_id": {"type": "string", "minLength": 1, "maxLength": 128},
-        "security_code": {"const": "HUMANSOFT"},
-        "canonical_cluster_id": {"type": "string", "minLength": 1, "maxLength": 128},
-        "disclosure_type": {"type": "string", "minLength": 1, "maxLength": 128},
-        "headline": {"type": "string", "minLength": 1, "maxLength": 1000},
-        "published_at": {"type": "string", "format": "date-time"},
-        "available_at": {"type": "string", "format": "date-time"},
-        "official_source_url": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://"
-        },
-        "official_evidence_sha256": {"$ref": "#/$defs/sha256"},
-        "duplicate_of": {"type": "null"}
-      }
-    },
-    "session": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "trade_date",
-        "session_close_at",
-        "observed_at",
-        "stock_total_return_index",
-        "market_total_return_index",
-        "sector_total_return_index",
-        "calendar_evidence_sha256",
-        "price_evidence_sha256",
-        "market_benchmark_evidence_sha256",
-        "sector_benchmark_evidence_sha256",
-        "corporate_action_evidence_sha256"
-      ],
-      "properties": {
-        "trade_date": {"type": "string", "format": "date"},
-        "session_close_at": {"type": "string", "format": "date-time"},
-        "observed_at": {"type": "string", "format": "date-time"},
-        "stock_total_return_index": {"type": "number", "exclusiveMinimum": 0},
-        "market_total_return_index": {"type": "number", "exclusiveMinimum": 0},
-        "sector_total_return_index": {"type": "number", "exclusiveMinimum": 0},
-        "calendar_evidence_sha256": {"$ref": "#/$defs/sha256"},
-        "price_evidence_sha256": {"$ref": "#/$defs/sha256"},
-        "market_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
-        "sector_benchmark_evidence_sha256": {"$ref": "#/$defs/sha256"},
-        "corporate_action_evidence_sha256": {"$ref": "#/$defs/sha256"}
-      }
-    },
-    "opinion": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "opinion_id",
-        "published_at",
-        "source_kind",
-        "source_group",
-        "source_url",
-        "stance",
-        "relevance",
-        "evidence_sha256"
-      ],
-      "properties": {
-        "opinion_id": {"type": "string", "minLength": 1, "maxLength": 128},
-        "published_at": {"type": "string", "format": "date-time"},
-        "source_kind": {
-          "enum": [
-            "NEWSPAPER",
-            "FINANCIAL_MEDIA",
-            "SOCIAL_MEDIA",
-            "ANALYST_COMMENTARY",
-            "FORUM"
-          ]
-        },
-        "source_group": {"type": "string", "minLength": 1, "maxLength": 128},
-        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
-        "stance": {"enum": ["POSITIVE", "NEGATIVE", "NEUTRAL", "MIXED"]},
-        "relevance": {
-          "enum": [
-            "DIRECT_DISCLOSURE_REACTION",
-            "COMPANY_CONTEXT",
-            "RUMOR_OR_SPECULATION"
-          ]
-        },
-        "evidence_sha256": {"$ref": "#/$defs/sha256"}
-      }
-    },
-    "receipts": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "official_disclosure_sha256",
-        "trading_calendar_sha256",
-        "price_history_sha256",
-        "market_benchmark_sha256",
-        "sector_benchmark_sha256",
-        "corporate_actions_sha256",
-        "public_opinion_archive_sha256"
-      ],
-      "properties": {
-        "official_disclosure_sha256": {"$ref": "#/$defs/sha256"},
-        "trading_calendar_sha256": {"$ref": "#/$defs/sha256"},
-        "price_history_sha256": {"$ref": "#/$defs/sha256"},
-        "market_benchmark_sha256": {"$ref": "#/$defs/sha256"},
-        "sector_benchmark_sha256": {"$ref": "#/$defs/sha256"},
-        "corporate_actions_sha256": {"$ref": "#/$defs/sha256"},
-        "public_opinion_archive_sha256": {"$ref": "#/$defs/sha256"}
-      }
-    }
+    "historical_disclosure": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/historical-disclosure-record.schema.json"},
+    "historical_market_window": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/historical-event-market-window.schema.json"},
+    "public_opinion_archive": {"$ref": "https://github.com/mohsamir7122/ku-bo/schemas/public-opinion-archive.schema.json"}
   }
 }

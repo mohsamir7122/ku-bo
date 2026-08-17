@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/recent-daily-market-series.schema.json",
+  "title": "Rolling recent daily market series",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","data_domain","mutability","purpose","series_id","security_code","series_as_of","price_basis","records","evidence_sha256","historical_reaction_recompute_allowed"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "data_domain": {"const": "RECENT_DAILY_MARKET_SERIES"},
+    "mutability": {"const": "ROLLING_CURRENT"},
+    "purpose": {"const": "CURRENT_CONTEXT_ONLY"},
+    "series_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "security_code": {"const": "HUMANSOFT"},
+    "series_as_of": {"type": "string", "format": "date-time"},
+    "price_basis": {"const": "TOTAL_RETURN_INDEX"},
+    "records": {"type": "array", "minItems": 1, "maxItems": 120, "items": {"$ref": "#/$defs/record"}},
+    "evidence_sha256": {"$ref": "#/$defs/sha256"},
+    "historical_reaction_recompute_allowed": {"const": false}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["trade_date","observed_at","total_return_index","evidence_sha256"],
+      "properties": {
+        "trade_date": {"type": "string", "format": "date"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "total_return_index": {"type": "number", "exclusiveMinimum": 0},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

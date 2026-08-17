@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/public-opinion-archive.schema.json",
+  "title": "Frozen source-backed public opinion archive",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","data_domain","immutability","archive_id","security_code","canonical_cluster_id","captured_through","items","evidence_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "data_domain": {"const": "HISTORICAL_PUBLIC_OPINION_ARCHIVE"},
+    "immutability": {"const": "FROZEN_AS_OF_CAPTURE"},
+    "archive_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "security_code": {"const": "HUMANSOFT"},
+    "canonical_cluster_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "captured_through": {"type": "string", "format": "date-time"},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/opinion"}},
+    "evidence_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "opinion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["opinion_id","published_at","source_kind","source_group","source_url","stance","relevance","evidence_sha256"],
+      "properties": {
+        "opinion_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "published_at": {"type": "string", "format": "date-time"},
+        "source_kind": {"enum": ["NEWSPAPER","FINANCIAL_MEDIA","SOCIAL_MEDIA","ANALYST_COMMENTARY","FORUM"]},
+        "source_group": {"type": "string", "minLength": 1, "maxLength": 128},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "stance": {"enum": ["POSITIVE","NEGATIVE","NEUTRAL","MIXED"]},
+        "relevance": {"enum": ["DIRECT_DISCLOSURE_REACTION","COMPANY_CONTEXT","RUMOR_OR_SPECULATION"]},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
