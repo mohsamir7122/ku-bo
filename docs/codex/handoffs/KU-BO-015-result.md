@@ -1,17 +1,17 @@
 # KU-BO-015 — Source-access recipes and capability-probe planning
 
 ```text
-FINAL_STATUS: PARTIAL
+FINAL_STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
 TASK_BRANCH: agent/ku-bo-015-source-access-recipes
-FINAL_SHA: PENDING_FIRST_PUBLICATION
-DRAFT_PR: PENDING
+FINAL_SHA: 4da4e03276e105f161cbfdc3d4d7b07b3f2a814c (published implementation head)
+DRAFT_PR: #19 / https://github.com/mohsamir7122/ku-bo/pull/19
 PR_BASE: main
-CI_RUN: PENDING_EXACT_HEAD_GITHUB_ACTIONS
+CI_RUN: 32735784463 / PASS / implementation head / Python 3.11-3.14
 STARTED_AT: 2026-08-24
-COMPLETED_AT: IN_PROGRESS
+COMPLETED_AT: 2026-08-24T17:12:43+03:00
 ```
 
 ## User goal
@@ -78,8 +78,8 @@ RESULT: PASS
 DETAIL: 459184 bytes; SHA-256 d3f2257f1dc4de154033a84c3e36fe4df852cb3f7b5c8a8ec8c95fa9e8e1ac06; installed validate, two-source plan, plan revalidation, and importer help passed
 
 COMMAND_OR_JOB: exact-head GitHub Actions
-RESULT: SKIPPED
-DETAIL: pending first publication of the isolated branch and Draft PR
+RESULT: PASS
+DETAIL: run 32735784463 passed all four Python 3.11-3.14 jobs at published implementation head 4da4e03276e105f161cbfdc3d4d7b07b3f2a814c
 ```
 
 ## Evidence and data status

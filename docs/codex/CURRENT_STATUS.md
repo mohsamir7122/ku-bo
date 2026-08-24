@@ -8,7 +8,9 @@ Repository: `mohsamir7122/ku-bo`
 
 ```text
 main 59833bf73510b3aa3901f628cbf2c13c0d01cf79
-  └── KU-BO-015 / agent/ku-bo-015-source-access-recipes / IN_PROGRESS
+  └── KU-BO-015 / Draft PR #19 / COMPLETED
+      └── implementation head 4da4e03276e105f161cbfdc3d4d7b07b3f2a814c
+          └── exact-head CI 32735784463 PASS / Python 3.11-3.14
 ```
 
 Open PRs observed at task start were Draft PR #17 (`KU-BO-014`), Draft PR #18
@@ -37,13 +39,12 @@ market_evidence_rows:         0
 LIVE_OPERATIONAL:             0
 ```
 
-## Still required
+## External follow-up gates
 
-- publish the isolated branch and Draft PR;
-- pass exact-head GitHub Actions before any later readiness discussion;
 - perform real probes only in a separate authorized runtime task;
 - register an actual broker/vendor domain and entitlement before planning an
-  execution-source probe.
+  execution-source probe;
+- obtain a separate recorded user decision before merge.
 
 ## Local validation checkpoint
 
@@ -55,4 +56,6 @@ LIVE_OPERATIONAL:             0
   SHA-256 `d3f2257f1dc4de154033a84c3e36fe4df852cb3f7b5c8a8ec8c95fa9e8e1ac06`;
 - installed recipe validation, two-source plan generation, plan revalidation,
   and Investing importer help: PASS;
-- exact-head GitHub Actions: pending first Draft publication.
+- Draft PR #19 exact-head GitHub Actions run `32735784463`: PASS on Python 3.11
+  through 3.14 at implementation head
+  `4da4e03276e105f161cbfdc3d4d7b07b3f2a814c`.

@@ -75,7 +75,7 @@ USER_DECISION: APPROVED by the active instruction to proceed with the previously
 DECIDED_AT: 2026-08-24
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No live site collection, credentials, sessions, private identifiers, real or licensed market data, systematic public-page collection, access-control bypass, capability promotion, model training, backtest, forecast, probability, accuracy, recommendation, merge, force-push, or deletion.
-IMPLEMENTED_IN_BRANCH_OR_PR: IN_PROGRESS — agent/ku-bo-015-source-access-recipes; Draft PR pending.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-015-source-access-recipes / Draft PR #19 / implementation head 4da4e03276e105f161cbfdc3d4d7b07b3f2a814c / exact-head CI 32735784463 PASS; no merge authority.
 ```
 
 ```text
