@@ -233,6 +233,29 @@ IMPLEMENTATION_GUARD: Merge only PR #16 after its authorization head passes exac
 IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on PR #16 branch; exact-head CI and merge-boundary execution remain required.
 ```
 
+```text
+DECISION_ID: KU-BO-016-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-24
+TARGET: Codex live bootstrap, private AI Rebuild inventory, Factor 9 admission preparation, and previous-session freeze policy
+CATEGORY: SCOPE
+CURRENT_STATE: The user directed KU-BO to be prepared for a later Codex session, authorized private use of the existing AI Rebuild folder and relevant stock-market material, prioritized continuous development and daily work, and required each day to use the prior approved frozen state.
+WHY_A_DECISION_IS_REQUIRED: The task crosses repository control, private Drive inspection, future daily scheduling, model-development policy, and financial-research boundaries. The authority and its limits must survive outside the active conversation.
+OPTIONS:
+1. Build the fail-closed Codex handoff and private inventory/admission path first, then progress through dry-run, data admission, training, locked test, and prospective gates.
+2. Begin training and daily stock calls immediately from unadmitted Drive material.
+3. Copy the private Drive corpus and raw conversations into GitHub for convenience.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may inspect the authorized AI Rebuild tree privately, create logical folders and private manifests, preserve and assess Factor 9, implement contract-only daily/freeze infrastructure, and propose tested changes in Draft PRs. Training and stock outputs remain blocked until their gates pass.
+CONSEQUENCE_OF_REJECTION: The repository remains a static research foundation without the new Codex handoff or private data-admission workflow.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep scheduling disabled and run only manual contract dry-runs while inventories and rights are reviewed.
+USER_DECISION: APPROVED through the active instruction to review the project conversations and Factor 9 evidence, prepare the repository for Codex, use AI Rebuild as the private data repository, collect relevant material privately, prioritize development, and enforce daily freezing from the prior approved state.
+DECIDED_AT: 2026-08-24
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: No merge, force-push, deletion, paid subscription change, access-control bypass, private-data publication, automatic scheduler enablement, model training on unadmitted data, locked-test tuning, live execution, or buy/sell recommendation is authorized. Drive IDs and raw private bytes remain outside Git. Every code change uses a task branch, tests, and a Draft PR; every model promotion requires locked and prospective gates.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-016-codex-live-bootstrap / Draft PR pending publication
+```
+
 ## Rules
 
 - Do not convert silence into approval.

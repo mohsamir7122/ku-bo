@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/champion-freeze-manifest.schema.json",
+  "title": "KU-BO previous-approved Champion freeze manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "freeze_id",
+    "status",
+    "product_id",
+    "horizon_sessions",
+    "model_version",
+    "policy_version",
+    "source_session_date",
+    "effective_from_session_date",
+    "approved_at",
+    "artifacts",
+    "approval",
+    "outcomes",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "freeze_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+    "status": {"const": "APPROVED_CHAMPION"},
+    "product_id": {
+      "enum": [
+        "three_session_rank",
+        "five_session_weekly_swing",
+        "twenty_one_session_monthly_swing",
+        "sixty_three_session_quarter_rank"
+      ]
+    },
+    "horizon_sessions": {"enum": [3, 5, 21, 63]},
+    "model_version": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "policy_version": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "source_session_date": {"type": "string", "format": "date"},
+    "effective_from_session_date": {"type": "string", "format": "date"},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code_sha256",
+        "model_sha256",
+        "feature_policy_sha256",
+        "training_manifest_sha256"
+      ],
+      "properties": {
+        "code_sha256": {"$ref": "#/$defs/sha256"},
+        "model_sha256": {"$ref": "#/$defs/sha256"},
+        "feature_policy_sha256": {"$ref": "#/$defs/sha256"},
+        "training_manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approved_by_role", "decision_id"],
+      "properties": {
+        "approved_by_role": {"const": "AUTHORIZED_REVIEWER"},
+        "decision_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"}
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available_through", "same_session_outcomes_included"],
+      "properties": {
+        "available_through": {"type": "string", "format": "date-time"},
+        "same_session_outcomes_included": {"const": false}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previous_approved_freeze_only",
+        "same_day_challenger_used",
+        "live_or_accuracy_claim_allowed",
+        "buy_recommendation_claim_allowed",
+        "automatic_promotion_allowed"
+      ],
+      "properties": {
+        "previous_approved_freeze_only": {"const": true},
+        "same_day_challenger_used": {"const": false},
+        "live_or_accuracy_claim_allowed": {"const": false},
+        "buy_recommendation_claim_allowed": {"const": false},
+        "automatic_promotion_allowed": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"product_id": {"const": "three_session_rank"}}},
+      "then": {"properties": {"horizon_sessions": {"const": 3}}}
+    },
+    {
+      "if": {"properties": {"product_id": {"const": "five_session_weekly_swing"}}},
+      "then": {"properties": {"horizon_sessions": {"const": 5}}}
+    },
+    {
+      "if": {"properties": {"product_id": {"const": "twenty_one_session_monthly_swing"}}},
+      "then": {"properties": {"horizon_sessions": {"const": 21}}}
+    },
+    {
+      "if": {"properties": {"product_id": {"const": "sixty_three_session_quarter_rank"}}},
+      "then": {"properties": {"horizon_sessions": {"const": 63}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

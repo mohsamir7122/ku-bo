@@ -1,12 +1,12 @@
-# CURRENT TASK — KU-BO-015
+# CURRENT TASK - KU-BO-017
 
 ```text
-TASK_ID: KU-BO-015
-STATUS: COMPLETED
+TASK_ID: KU-BO-017
+STATUS: READY
 REPOSITORY: mohsamir7122/ku-bo
-CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
-EXPECTED_NEW_BRANCH: agent/ku-bo-015-source-access-recipes
+CONTROL_BASE_BRANCH: agent/ku-bo-016-codex-live-bootstrap
+CONTROL_BASE_SHA: VERIFY_REMOTE_BRANCH_HEAD_AT_START
+EXPECTED_NEW_BRANCH: agent/ku-bo-017-live-dry-run-orchestrator
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -15,48 +15,69 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-LIVE_SOURCE_COLLECTION_REQUESTED: NO
-BLOCKED_ON: LIVE_SITE_PROBES; SOURCE_RIGHTS_OR_ENTITLEMENT; RUNTIME_AUTHORIZATION; OFFICIAL_FULL_UNIVERSE_DATA
+LIVE_SOURCE_COLLECTION_REQUESTED: PRIVATE_DRIVE_INVENTORY_AND_AUTHORIZED_ACCESS_PROBE_ONLY
+BLOCKED_ON: FACTOR9_ADMISSION; OFFICIAL_POINT_IN_TIME_DATA; RIGHTS_REVIEW; APPROVED_CHAMPION_FREEZE; MODEL_VALIDATION
 ```
 
 ## Mission
 
-Translate the reviewed Kuwait-source access lessons into a strict, machine-readable
-recipe registry and a hash-bound capability-probe planning workflow. Reuse the
-existing live access receipt and manual Investing export importer. Do not create a
-parallel source network, run the sites, or promote any source capability.
+Turn the locked Codex handoff into a resumable private-data inventory and a
+fail-closed daily **dry-run** orchestrator. Inspect `AI Rebuild` through the
+authorized connector, admit no Factor 9 artifact without its gates, and prove the
+run order and previous-freeze controls without training a model, collecting an
+unauthorized site, or issuing a stock recommendation.
+
+## Required sequence
+
+1. Verify remote/base/HEAD/PR/CI and run the bootstrap validator before editing.
+2. Discover `AI Rebuild` at runtime without persisting private IDs in Git.
+3. Inventory the KU-BO-relevant Drive candidates privately by hash, size,
+   provenance, source role, rights state, and point-in-time review state.
+4. Write a private Factor 9 admission manifest/report. Preserve existing artifacts;
+   do not recrawl Mubasher or recompute the old Factor 9 score.
+5. Implement a no-network Daily dry-run orchestrator with run locking, explicit
+   stage receipts, resumable checkpoints, no-overwrite output, and fail-closed
+   stage dependencies.
+6. Require `schemas/champion-freeze-manifest.schema.json` and
+   `kubo.champion_freeze` before the Champion stage; reject same-day approval,
+   same-day Challenger use, product/horizon mismatch, and unbound hashes.
+7. Keep source probes inside the existing authorized access-recipe workflow. A
+   probe is access evidence only and never market evidence.
+8. Keep the 15:07/15:37 scheduled shadow disabled by default. Manual dry-run may
+   validate contracts but cannot collect data, train, rank stocks, or publish a
+   daily recommendation.
+9. Produce the proposed KU-BO-018 event-admission/trial-registry task for the 50
+   major plus 200 control events; do not start training in KU-BO-017.
 
 ## Acceptance gates
 
-1. A strict recipe registry binds each covered source to a registered access mode,
-   capture method, purpose, frequency, rights status, stop reasons, and budget.
-2. Public systematic collection and non-display or execution use with public-only
-   rights fail closed.
-3. Plans are deterministic, no-overwrite, `PLANNED_NOT_EXECUTED`, and bound to the
-   exact recipe registry SHA-256 and source-catalog Start URL.
-4. A combined validator revalidates the existing raw-hash-bound probe, requires the
-   exact planned source set and window, and requires controlled reasons for blocked,
-   authentication-required, or error states.
-5. A valid blocked receipt may prove the access-state audit contract only; no recipe,
-   plan, or probe becomes market evidence, historical coverage, or live capability.
-6. The existing Investing importer is registered with a hard
-   `PRICE_IMPORT_READY_ONLY` promotion ceiling.
-7. JSON Schemas, adversarial tests, CLI commands, Arabic documentation, and control
-   records are included.
-8. Compile, targeted and complete tests, smoke, control, Secret Guard, strict JSON
-   and Schema validation, wheel build/install, installed CLI, and exact-head CI pass.
-9. A sanitized handoff and Draft PR are published from the expected branch.
+1. Bootstrap, schema, strict semantic, privacy, and control checks pass.
+2. Private Drive inventory is resumable and hash-bound, with no private identifier
+   or byte committed to Git.
+3. Factor 9 report reconciles 534,135 raw, 533,997 clean, and 138 excluded rows,
+   and keeps 243 issue flags distinct from excluded-row count.
+4. Every Factor 9 blocker and seven admission gates has an explicit status; unknown
+   or failed status cannot promote an artifact.
+5. Dry-run stage order is exact, append-only/no-overwrite, and restart-safe.
+6. A missing, same-day, future-effective, Challenger, or forged freeze stops the
+   Champion stage and yields no research candidate.
+7. Four product/horizon bindings exactly match `config/products.json`.
+8. Adversarial tests cover duplicate keys, stage reordering, path escape, replay,
+   lock conflict, same-day leakage, claim weakening, and private locator leakage.
+9. Compile, complete tests, smoke, control, Secret Guard, schema validation, wheel
+   build/install, installed-module exercise, and exact-head CI pass.
+10. A sanitized handoff and Draft PR are published from the declared task branch.
 
 ## Safety and non-claims
 
-- No network collection, credentials, cookies, sessions, private Drive IDs, or real
-  market data may enter this task.
-- No source is promoted in `config/source_capabilities.json`.
-- No connector, parser, official EOD, execution tape, full-market coverage, backtest,
-  forecast, probability, accuracy, recommendation, or `LIVE_OPERATIONAL` claim is
-  created.
-- Sources without a registered Start URL or rights path remain uncovered.
+- A Drive file is not admitted merely because it exists.
+- Telegram and IndexSignal remain routing/sentiment; Investing requires an
+  authorized user export or valid account path and no access-control bypass.
+- Do not buy, change, or extend a subscription.
+- Do not create entry/exit prices from delayed public pages.
+- No model training, real backtest, forecast, probability, accuracy, buy/sell
+  recommendation, automatic promotion, or `LIVE_OPERATIONAL` claim is allowed.
+- Do not enable the scheduled workflow or merge this task.
 
-Do not merge this task. Record any later authority in
-`docs/codex/USER_DECISIONS.md` and write the result using
-`docs/codex/HANDOFF_TEMPLATE.md`.
+Do not merge. Record any later authority in `docs/codex/USER_DECISIONS.md` and
+write the result using `docs/codex/HANDOFF_TEMPLATE.md`.

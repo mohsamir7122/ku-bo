@@ -1,0 +1,45 @@
+name: Daily Shadow Contract
+
+on:
+  schedule:
+    - cron: "7 12 * * *"
+    - cron: "37 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-daily-shadow-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract-only:
+    if: github.event_name == 'workflow_dispatch' || vars.KUBO_DAILY_SHADOW_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Kuwait
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install contract test dependencies
+        run: python -m pip install --disable-pip-version-check -e ".[test]"
+      - name: Validate handoff and freeze contracts
+        run: |
+          python scripts/validate_codex_live_bootstrap.py --project-root . --json
+          python -m unittest \
+            tests.test_codex_live_bootstrap \
+            tests.test_champion_freeze \
+            -v
+      - name: State non-claims
+        run: |
+          echo "CONTRACT_ONLY"
+          echo "NO_NETWORK_COLLECTION"
+          echo "NO_MODEL_TRAINING"
+          echo "NO_STOCK_RECOMMENDATION"
