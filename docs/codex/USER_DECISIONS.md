@@ -253,7 +253,7 @@ USER_DECISION: APPROVED through the active instruction to review the project con
 DECIDED_AT: 2026-08-24
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: No merge, force-push, deletion, paid subscription change, access-control bypass, private-data publication, automatic scheduler enablement, model training on unadmitted data, locked-test tuning, live execution, or buy/sell recommendation is authorized. Drive IDs and raw private bytes remain outside Git. Every code change uses a task branch, tests, and a Draft PR; every model promotion requires locked and prospective gates.
-IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-016-codex-live-bootstrap / Draft PR pending publication
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-016-codex-live-bootstrap / Draft PR #20 / published implementation head 7f32b7f9e8e71a55977cf834785e53adf7df086d
 ```
 
 ## Rules
