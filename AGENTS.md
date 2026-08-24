@@ -11,6 +11,18 @@ Open this directory as the project root.
 - Raw private conversations stay outside Git. Only sanitized, non-personal technical summaries may enter the repository under `docs/codex/CONVERSATION_IMPORT_POLICY.md`.
 - When a task ends, write a handoff using `docs/codex/HANDOFF_TEMPLATE.md` and distinguish `PROVEN`, `PARTIAL`, `BLOCKED`, `SYNTHETIC_ONLY`, `RECORDED_FIXTURE_ONLY`, and external-data dependencies.
 
+## Codex live bootstrap
+
+- Before every new task, run `python scripts/validate_codex_live_bootstrap.py --project-root . --json`. A failure blocks implementation; do not weaken the contract to continue.
+- Treat `AI Rebuild` as private runtime storage. The repository may contain only its logical paths and sanitized aggregate conclusions, never folder/file IDs, connector identifiers, signed URLs, or private bytes.
+- The canonical private KU-BO root is logically `AI Rebuild/04_Curated_Core/KU_BO`. Index and hash before admission, version instead of overwriting, and quarantine duplicates before any deletion proposal.
+- Preserve Factor 9 raw, clean, excluded, failure, company-master, factor, event-library, and review artifacts. Its current state is `RESEARCH_ASSET_PENDING_ADMISSION`; do not repeat extraction, recompute the old score, train on auto-labels, or call it a validated model.
+- Keep the 50 major plus 200 control events in development only. The locked 500-600-event test is disjoint; development events may appear only in regression replay, never in headline test performance.
+- The default training budget is 30 rounds. Rounds 31-50 require a preregistered new hypothesis; a failed result is not permission to tune on the locked test.
+- At 15:07 Kuwait, a daily research run may use only a previous-session `APPROVED_CHAMPION` freeze that passes `kubo.champion_freeze`. Same-day training happens after output sealing and cannot affect that day's output.
+- Continuous improvement produces a separate Challenger, test evidence, Task branch, and Draft PR. It does not self-promote, auto-merge, rewrite prior outputs, or alter the current Champion in place.
+- Keep the scheduled shadow workflow disabled unless the separate runtime authorization variable is deliberately enabled. The workflow validates contracts only; it does not collect market data or emit stock recommendations.
+
 ## Research-engine rules
 
 - Treat this checkout as version `0.1.0`: an auditable, non-production research foundation, not a live recommendation or execution service.
