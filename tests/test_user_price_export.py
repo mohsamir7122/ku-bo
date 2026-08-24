@@ -125,6 +125,7 @@ class UserPriceExportTests(unittest.TestCase):
                 report["price_history_status"],
                 "RESEARCH_PRICE_HISTORY_READY",
             )
+            self.assertEqual(report["promotion_ceiling"], "PRICE_IMPORT_READY_ONLY")
             self.assertEqual(report["row_count"], 10)
             self.assertEqual(len(report["imported_symbols"]), 5)
             self.assertFalse(report["official_identity_ready"])
@@ -132,6 +133,11 @@ class UserPriceExportTests(unittest.TestCase):
                 (output / "normalized" / "research_price_history.csv").is_file()
             )
             self.assertFalse(list(output.rglob("*.html")))
+            self.assertFalse(
+                report["claim_boundaries"][
+                    "promotion_beyond_price_import_ready_allowed"
+                ]
+            )
             quality = json.loads(
                 (output / "reports" / "data_quality_report.json").read_text(
                     encoding="utf-8"

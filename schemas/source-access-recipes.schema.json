@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-access-recipes.schema.json",
+  "title": "KU-BO source access recipe registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "recipe_set_id", "capability_status", "defaults", "probe_reason_vocabulary", "recipes", "manual_importers", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "recipe_set_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{2,95}$"},
+    "capability_status": {"const": "DEFINED_ONLY"},
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_attempts", "timeout_seconds", "max_bytes", "valid_for_hours"],
+      "properties": {
+        "max_attempts": {"type": "integer", "minimum": 1, "maximum": 3},
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 60},
+        "max_bytes": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "valid_for_hours": {"type": "integer", "minimum": 1, "maximum": 24}
+      }
+    },
+    "probe_reason_vocabulary": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$"}
+    },
+    "recipes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/recipe"}
+    },
+    "manual_importers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/manualImporter"}
+    },
+    "claim_boundaries": {"$ref": "#/$defs/registryBoundaries"}
+  },
+  "$defs": {
+    "sourceId": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,95}$"},
+    "state": {"enum": ["AVAILABLE", "PARTIAL", "BLOCKED", "ERROR", "AUTH_REQUIRED", "UNTESTED"]},
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipe_id", "source_ids", "capability_status", "route_kind", "access_mode", "capture_method", "purpose_class", "collection_frequency", "rights_status", "allowed_states", "terminal_reason_codes", "artifact_policy", "notes"],
+      "properties": {
+        "recipe_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{2,95}$"},
+        "source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/sourceId"}},
+        "capability_status": {"const": "DEFINED_ONLY"},
+        "route_kind": {"enum": ["STABLE_PUBLIC_PAGE", "PUBLIC_DOWNLOAD_INDEX", "DYNAMIC_RENDERED_PAGE", "AUTHORIZED_USER_EXPORT", "AUTHORIZED_ACCOUNT_PAGE", "PUBLIC_ARCHIVE_INDEX", "LICENSED_OR_BROKER_EXPORT"]},
+        "access_mode": {"enum": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD", "AUTHORIZED_BROWSER", "AUTHORIZED_ACCOUNT", "USER_EXPORT", "PUBLIC_INDEX", "SEARCH_INDEX_ONLY", "LICENSED_VENDOR", "BROKER_AUTHENTICATED_EXPORT"]},
+        "capture_method": {"enum": ["HTTP_GET", "BROWSER_RENDERED", "USER_EXPORT", "SEARCH_QUERY", "LICENSED_EXPORT"]},
+        "purpose_class": {"enum": ["DISPLAY_OR_DISTRIBUTION", "NON_DISPLAY", "EXECUTION", "ROUTING_ONLY"]},
+        "collection_frequency": {"enum": ["ONE_OFF", "SYSTEMATIC"]},
+        "rights_status": {"enum": ["PUBLIC_ACCESS_ONLY", "AUTHORIZED", "LICENSED", "USER_SUPPLIED_AUTHORIZED_EXPORT"]},
+        "allowed_states": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/state"}},
+        "terminal_reason_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$"}},
+        "artifact_policy": {"const": "REQUIRED_WHEN_READABLE"},
+        "notes": {"type": "string", "minLength": 1, "maxLength": 2000}
+      }
+    },
+    "manualImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["importer_id", "source_id", "input_mode", "cli_command", "required_manifest", "promotion_ceiling", "claim_boundaries"],
+      "properties": {
+        "importer_id": {"const": "INVESTING_USER_PRICE_EXPORT_V1"},
+        "source_id": {"const": "investing_history"},
+        "input_mode": {"const": "USER_EXPORT"},
+        "cli_command": {"const": "kubo-data-foundation import-user-price-exports"},
+        "required_manifest": {"const": "price_collection_manifest.csv"},
+        "promotion_ceiling": {"const": "PRICE_IMPORT_READY_ONLY"},
+        "claim_boundaries": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["official_identity_ready", "official_eod_ready", "execution_ready", "forecast_ready"],
+          "properties": {
+            "official_identity_ready": {"const": false},
+            "official_eod_ready": {"const": false},
+            "execution_ready": {"const": false},
+            "forecast_ready": {"const": false}
+          }
+        }
+      }
+    },
+    "registryBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipe_is_connector", "plan_executes_network_access", "access_probe_is_market_evidence", "access_probe_is_live_operational", "manual_export_is_official_eod", "manual_export_is_execution_tape", "price_import_ready_is_forecast_ready"],
+      "properties": {
+        "recipe_is_connector": {"const": false},
+        "plan_executes_network_access": {"const": false},
+        "access_probe_is_market_evidence": {"const": false},
+        "access_probe_is_live_operational": {"const": false},
+        "manual_export_is_official_eod": {"const": false},
+        "manual_export_is_execution_tape": {"const": false},
+        "price_import_ready_is_forecast_ready": {"const": false}
+      }
+    }
+  }
+}

@@ -29,6 +29,8 @@ Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي ق
 - `parser-plan.schema.json`: عقد مصالحة الهوية ومهام Parser المربوطة ببصمات Raw Artifacts.
 - `source-capabilities.schema.json`: مصفوفة فصل تعريف المصدر وCapture وParser واختبار Fixture والتشغيل الحي.
 - `live-source-probe.schema.json`: إيصال وصول حديث محدود الصلاحية ومربوط بملفات Raw وبصماتها.
+- `source-access-recipes.schema.json`: سجل وصفات الوصول وحقوقها وحدودها وسقف الاستيراد اليدوي.
+- `source-access-probe-plan.schema.json`: خطة Capability Probe لا تنفذ اتصالًا وتربط المهام ببصمة سجل الوصفات.
 - `network-manifest.schema.json`: فهرس البايتات الخام وHash ومصدرها وتوقيت جمعها.
 - `source-observations.schema.json`: حالة كل مصدر ونتيجة الاستعلام والأدوار المتاحة.
 - `universe.schema.json`: هوية الأسهم وعضوية النطاق بصورة Effective-dated ومربوطة بدليل رسمي.

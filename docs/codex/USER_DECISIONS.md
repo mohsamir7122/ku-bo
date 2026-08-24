@@ -56,6 +56,29 @@ IMPLEMENTED_IN_BRANCH_OR_PR: build/benchmark-official-eod-v0.2
 ## Approved decisions
 
 ```text
+DECISION_ID: KU-BO-015-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-24
+TARGET: KU-BO-015 source-access recipes and capability-probe planning layer
+CATEGORY: SCOPE; DEVELOPMENT; DATA_SOURCE
+CURRENT_STATE: The source network has 68 definitions but only fixture-tested parser paths for two sources and no LIVE_OPERATIONAL source. Prior site work identified distinct public-page, rendered-page, authorized-export, community-routing, archive, and licensed-access constraints that were not yet encoded as one reusable recipe contract.
+WHY_A_DECISION_IS_REQUIRED: This adds a new repository contract, CLI workflow, Schemas, tests, and documentation while deliberately excluding live collection and capability promotion.
+OPTIONS:
+1. Implement the bounded recipe registry and access-only probe workflow on a separate Draft branch.
+2. Run live sites and promote sources during the same task.
+3. Leave the lessons only in prose.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may implement and publish a Draft PR containing code, contracts, tests, source URLs already in the catalog, and sanitized source-access rules only.
+CONSEQUENCE_OF_REJECTION: The source-access lessons remain dispersed across existing documentation and manual notes.
+SAFER_REVERSIBLE_ALTERNATIVE: Documentation-only source matrix.
+USER_DECISION: APPROVED by the active instruction to proceed with the previously described repository improvement.
+DECIDED_AT: 2026-08-24
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: No live site collection, credentials, sessions, private identifiers, real or licensed market data, systematic public-page collection, access-control bypass, capability promotion, model training, backtest, forecast, probability, accuracy, recommendation, merge, force-push, or deletion.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-015-source-access-recipes / Draft PR #19 / implementation head 4da4e03276e105f161cbfdc3d4d7b07b3f2a814c / exact-head CI 32735784463 PASS; no merge authority.
+```
+
+```text
 DECISION_ID: KU-BO-013-D01
 STATUS: APPROVED
 DATE_RAISED: 2026-08-14
