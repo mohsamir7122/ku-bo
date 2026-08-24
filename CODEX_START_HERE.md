@@ -1,22 +1,31 @@
-# KU-BO — Codex Start Here
+# KU-BO - Codex Start Here
 
-This file is the repository-native entrypoint for a new Codex session.
+This is the repository-native entrypoint for every new Codex session.
 
 ## One-sentence instruction
 
-Inspect `mohsamir7122/ku-bo`, read the control files below in order, execute the single active task to its acceptance gates, push only a task branch, open or update a Draft PR, and never merge or delete without an explicit recorded user decision.
+Validate the locked bootstrap, verify the exact Git state, execute the single
+active task through its acceptance gates, use `AI Rebuild` only as private runtime
+storage, push only a task branch, open a Draft PR, and never merge, delete, or
+publish private data without a separately recorded user decision.
 
-## Required read order
+## Required read and validation order
 
 1. `AGENTS.md`
-2. `docs/codex/PROJECT_RULES.md`
-3. `docs/codex/CURRENT_STATUS.md`
-4. `docs/codex/CURRENT_TASK.md`
-5. `docs/codex/ACCEPTANCE_GATES.md`
-6. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
-7. `docs/codex/USER_DECISIONS.md`
+2. `config/codex_live_bootstrap.json`
+3. run `python scripts/validate_codex_live_bootstrap.py --project-root . --json`
+4. `docs/codex/PROJECT_RULES.md`
+5. `docs/codex/CURRENT_STATUS.md`
+6. `docs/codex/CURRENT_TASK.md`
+7. `docs/PROJECT_CONVERSATION_SYNTHESIS_AR.md`
+8. `docs/FACTOR9_DRIVE_ADMISSION_AR.md`
+9. `docs/CODEX_LIVE_HANDOFF_AR.md`
+10. `docs/codex/ACCEPTANCE_GATES.md`
+11. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
+12. `docs/codex/USER_DECISIONS.md`
 
-Do not start implementation before resolving the repository, base branch, current HEAD SHA, stacked PR chain, and current CI state.
+Do not edit code before the bootstrap passes and the remote, base branch, current
+HEAD, open PR dependency chain, and current CI state have been verified.
 
 ## Operating context
 
@@ -26,62 +35,55 @@ Repository:
 mohsamir7122/ku-bo
 ```
 
-Current development chain at the time this control layer was created:
+Active bootstrap branch:
 
 ```text
-PR #4  Research Price History
-PR #5  Current Official Identity + 2026 Trading Calendar
-PR #6  Current Security Status + Corporate Action Schedule
-PR #7  Corporate Action Enrichment + Historical Status Intervals
+agent/ku-bo-016-codex-live-bootstrap
 ```
 
-PR #7 head when this file was created:
+The exact head and Draft PR state are recorded in `docs/codex/CURRENT_STATUS.md`.
+Always verify them live. `KU-BO-015` is the dependency for this bootstrap, and the
+active next task is defined in `docs/codex/CURRENT_TASK.md`.
 
-```text
-build/ca-enrichment-status-history-v0.2
-570cfda44eedfea91220a500c494f493eed49763
-```
+## Locked runtime meaning
 
-The control layer branch is:
-
-```text
-ops/codex-control-center-v0.1
-```
-
-Always verify live GitHub state; never treat the values above as current merely because they appear in this file.
+- `READY_FOR_CODEX_EXECUTION` means the handoff contract is ready, not that a live
+  collector, model, scheduler, or recommendation service exists.
+- `AI Rebuild` is private storage. Discover Drive identifiers at runtime and never
+  commit them.
+- Factor 9 is `RESEARCH_ASSET_PENDING_ADMISSION`; preserve it and do not repeat its
+  extraction or call it training truth.
+- A daily report may use only a previous-session `APPROVED_CHAMPION` freeze.
+- A same-day Challenger cannot issue that day's output or promote itself.
+- Allowed pre-validation decisions are `RESEARCH_CANDIDATE`, `WATCH`, and `ABSTAIN`.
+- The 15:07 and 15:37 Kuwait schedules are best-effort and disabled by default.
 
 ## Git permissions
 
-Codex may:
+Codex may fetch, inspect, create the declared task branch, edit within task scope,
+run checks, push without force, and open or update a Draft PR. It may also write
+sanitized manifests and reports while private evidence remains in Drive.
 
-- fetch and inspect the repository and open PRs;
-- create a task branch from the verified active control/development head;
-- edit code, tests, schemas, and documentation within the declared task;
-- run local checks and inspect GitHub Actions;
-- commit and push the task branch;
-- open or update a Draft PR;
-- write a sanitized handoff report.
-
-Codex may not:
-
-- merge any PR;
-- force-push;
-- rewrite shared history;
-- delete `main`, tags, PR branches, evidence, or user files;
-- run broad destructive commands such as unscoped `git clean`, `git reset --hard`, or recursive deletion;
-- commit credentials, cookies, sessions, tokens, Drive identifiers, licensed datasets, raw private conversations, or runtime market evidence;
-- claim real backtest readiness, forecast accuracy, probability, recommendation, or `LIVE_OPERATIONAL` status without the required gates and evidence.
+Codex may not merge or enable auto-merge; force-push; rewrite shared history;
+delete branches, tags, evidence, conversations, or user files; commit credentials,
+Drive identifiers, raw private conversations, licensed/private datasets, freezes,
+or daily market evidence; or claim backtest readiness, accuracy, probability,
+recommendation, or `LIVE_OPERATIONAL` status without the applicable gates.
 
 ## Completion behavior
 
-Continue through edit, test, inspect, fix, and rerun cycles until one of these applies:
+Continue through inspect, edit, test, fix, rerun, package, and Draft PR publication
+until every active acceptance gate passes or a genuine external dependency is
+recorded. Never fabricate evidence or weaken a gate. Use
+`docs/codex/HANDOFF_TEMPLATE.md` for the result and propose the smallest next task.
 
-- every acceptance gate for `CURRENT_TASK.md` passes;
-- an external dependency is genuinely unavailable;
-- the task would require credentials, licensed data, destructive action, or a user decision.
+## Home activation prompt
 
-When blocked, do not fabricate or silently weaken a gate. Record the blocker, exact evidence, the smallest recovery action, and any decision required in `docs/codex/USER_DECISIONS.md` and the handoff report.
+The user can start the next Codex session with:
 
-## Drive control center
-
-A private Google Drive folder named `KU-BO Codex Control` contains the user-facing command archive and private conversation area. The repository copy is sufficient to start work if Drive is not connected. Raw conversations remain private on Drive; only sanitized technical summaries may enter GitHub under the policy in `docs/codex/CONVERSATION_IMPORT_POLICY.md`.
+```text
+Read CODEX_START_HERE.md and execute CURRENT_TASK end to end. Start with the locked
+bootstrap validator, keep AI Rebuild private, preserve and admit Factor 9, build the
+daily dry-run and previous-freeze controls, run all gates, and open a Draft PR. Do
+not merge or publish private data.
+```

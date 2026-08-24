@@ -27,6 +27,13 @@ jobs:
         run: python -m compileall -q src tests scripts
       - name: Codex control integrity
         run: python scripts/codex_control_check.py --root .
+      - name: Codex live bootstrap and previous-freeze contracts
+        run: |
+          python scripts/validate_codex_live_bootstrap.py --project-root . --json
+          python -m unittest \
+            tests.test_codex_live_bootstrap \
+            tests.test_champion_freeze \
+            -v
       - name: KU-BO-011 deterministic acceptance-corpus audit
         run: |
           python scripts/generate_ku_bo_011_corpus.py --check
@@ -128,6 +135,8 @@ jobs:
           "$installed_foundation" issue-tri-security-semantic-admission --help \
             | grep -q -- "--operation-decision-at"
           "$installed_python" - <<'PY'
+          from kubo.champion_freeze import validate_champion_freeze
+          from kubo.codex_live_bootstrap import validate_codex_live_bootstrap
           from kubo.tri_security_lineage import (
               LINEAGE_FILE,
               materialize_boundary_lineage,
@@ -139,6 +148,8 @@ jobs:
           assert callable(materialize_boundary_lineage)
           assert callable(verify_boundary_lineage)
           assert callable(verify_final_predecessor_lineages)
+          assert callable(validate_champion_freeze)
+          assert callable(validate_codex_live_bootstrap)
           PY
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
             --output-root "$RUNNER_TEMP/kubo-official-workspace" \

@@ -11,10 +11,20 @@ The repository must retain the technical knowledge without publishing the privat
 Raw conversation transcripts belong only in the private Google Drive folder:
 
 ```text
-KU-BO Codex Control/PRIVATE_CONVERSATION_ARCHIVE
+AI Rebuild/02_Google_Drive/KU_BO/PRIVATE_CONVERSATION_ARCHIVE
 ```
 
 Raw transcripts must not be committed to GitHub.
+
+Authorized user exports that contain private or market material belong under:
+
+```text
+AI Rebuild/02_Google_Drive/KU_BO/AUTHORIZED_EXPORTS
+```
+
+Curated technical evidence may move to `AI Rebuild/04_Curated_Core/KU_BO` only
+after a hash-bound provenance and rights review. Drive identifiers remain runtime
+only; Git stores logical paths and sanitized conclusions.
 
 ## Permitted repository imports
 
