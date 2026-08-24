@@ -599,6 +599,7 @@ def _import_investing_user_exports_unchecked(
         "schema_version": "1.0",
         "status": status,
         "price_history_status": price_history_status,
+        "promotion_ceiling": "PRICE_IMPORT_READY_ONLY",
         "capture_mode": "USER_EXPORT",
         "decision_at": decision.isoformat(),
         "observed_at": observed.isoformat(),
@@ -644,6 +645,7 @@ def _import_investing_user_exports_unchecked(
             "recommendation_generated": False,
             "accuracy_claimed": False,
             "backtest_ready": False,
+            "promotion_beyond_price_import_ready_allowed": False,
         },
     }
     report_path = report_dir / "user_export_import_report.json"

@@ -30,6 +30,11 @@ from .forty_session_replay import evaluate_forty_session_replay
 from .kuwait_research_pipeline import build_integrated_research_bundle
 from .research_workflow import load_research_workflow
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
+from .source_access_recipes import (
+    SourceAccessRecipeCatalog,
+    compile_source_probe_plan,
+    validate_access_probe_against_plan,
+)
 from .source_orchestrator import (
     SourceSearchOrchestrator,
     validate_source_search_report,
@@ -75,6 +80,9 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-pack",
         "validate-research-workflow",
         "validate-source-network",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
         "evaluate-forty-session-replay",
         "validate-historical-knowledge",
         "plan-historical-research",
@@ -88,6 +96,7 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/research_workflows.json"),
     Path("config/source_capabilities.json"),
     Path("config/source_network.json"),
+    Path("config/source_access_recipes.json"),
     Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
     Path("config/historical_research_layers.json"),
@@ -220,6 +229,7 @@ def parser() -> argparse.ArgumentParser:
 
     sub.add_parser("validate-config")
     sub.add_parser("validate-source-network")
+    sub.add_parser("validate-source-access-recipes")
     sub.add_parser("validate-research-workflow")
     sub.add_parser("validate-historical-knowledge")
 
@@ -251,6 +261,15 @@ def parser() -> argparse.ArgumentParser:
 
     probe = sub.add_parser("validate-live-probe")
     probe.add_argument("--probe", type=Path, required=True)
+
+    source_probe_plan = sub.add_parser("plan-source-access-probe")
+    source_probe_plan.add_argument("--planned-at", required=True)
+    source_probe_plan.add_argument("--source", action="append", dest="source_ids")
+    source_probe_plan.add_argument("--output", type=Path)
+
+    source_probe_validate = sub.add_parser("validate-source-access-probe")
+    source_probe_validate.add_argument("--plan", type=Path, required=True)
+    source_probe_validate.add_argument("--probe", type=Path, required=True)
 
     plan = sub.add_parser("plan")
     plan.add_argument("--product", required=True)
@@ -327,6 +346,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in {
         "validate-config",
         "validate-source-network",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
         "validate-research-workflow",
         "evaluate-forty-session-replay",
         "run-source-search",
@@ -340,6 +362,19 @@ def main(argv: list[str] | None = None) -> int:
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
+    recipe_catalog = None
+    if args.command in {
+        "validate-config",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
+    }:
+        assert network_catalog is not None
+        recipe_catalog = SourceAccessRecipeCatalog(
+            project_root / "config" / "source_access_recipes.json",
+            network_catalog,
+        )
+
     historical_catalog = None
     if args.command in {"validate-config", "validate-historical-knowledge", "plan-historical-research"}:
         historical_catalog = HistoricalKnowledgeCatalog(project_root / "config")
@@ -347,17 +382,23 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate-config":
         assert network_catalog is not None
         assert historical_catalog is not None
+        assert recipe_catalog is not None
         workflow = load_research_workflow(project_root / "config")
         report = {
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
             "source_network": network_catalog.report(),
+            "source_access_recipes": recipe_catalog.report(network_catalog),
             "research_workflow": asdict(workflow),
             "historical_knowledge": historical_catalog.report(),
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
         report = network_catalog.report()
+    elif args.command == "validate-source-access-recipes":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        report = recipe_catalog.report(network_catalog)
     elif args.command == "validate-research-workflow":
         assert network_catalog is not None
         spec = load_research_workflow(project_root / "config")
@@ -464,6 +505,39 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "validate-live-probe":
         assert network_catalog is not None
         report = validate_live_probe(args.probe, network_catalog)
+    elif args.command == "plan-source-access-probe":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        full_plan = compile_source_probe_plan(
+            recipe_catalog,
+            network_catalog,
+            planned_at=parse_aware(args.planned_at, "planned_at"),
+            source_ids=args.source_ids,
+        )
+        if args.output is None:
+            report = full_plan
+        else:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            with args.output.open("xb") as handle:
+                handle.write(canonical_json_bytes(full_plan))
+                handle.flush()
+                os.fsync(handle.fileno())
+            report = {
+                "status": "PLANNED_NOT_EXECUTED",
+                "plan_id": full_plan["plan_id"],
+                "output": str(args.output),
+                "task_count": len(full_plan["tasks"]),
+                "claim_boundaries": full_plan["claim_boundaries"],
+            }
+    elif args.command == "validate-source-access-probe":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        report = validate_access_probe_against_plan(
+            probe_path=args.probe,
+            plan_path=args.plan,
+            recipes=recipe_catalog,
+            source_catalog=network_catalog,
+        )
     elif args.command == "validate-pack":
         report = PackValidator(args.pack, Catalog(project_root / "config")).validate().to_dict()
     elif args.command == "plan":

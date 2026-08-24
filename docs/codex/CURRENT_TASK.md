@@ -1,12 +1,12 @@
-# CURRENT TASK — KU-BO-013
+# CURRENT TASK — KU-BO-015
 
 ```text
-TASK_ID: KU-BO-013
+TASK_ID: KU-BO-015
 STATUS: IN_PROGRESS
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: bafdda86b44b7603fe4adfa62dcc2a49bff8ae15
-EXPECTED_NEW_BRANCH: agent/kuwait-historical-knowledge-layer
+CONTROL_BASE_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
+EXPECTED_NEW_BRANCH: agent/ku-bo-015-source-access-recipes
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -15,58 +15,48 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-HISTORICAL_CORPUS_COLLECTION_REQUESTED: NO
-BLOCKED_ON: LIVE_COLLECTION; OFFICIAL_COMPANY_UNIVERSE_ENUMERATION; SOURCE_RIGHTS_REVIEW
+LIVE_SOURCE_COLLECTION_REQUESTED: NO
+BLOCKED_ON: LIVE_SITE_PROBES; SOURCE_RIGHTS_OR_ENTITLEMENT; RUNTIME_AUTHORIZATION; OFFICIAL_FULL_UNIVERSE_DATA
 ```
 
 ## Mission
 
-Program, document, and test the planning foundation for six deep Kuwait
-historical-research layers. Register credible starting sources and strict claim
-roles now; do not execute the centuries-long collection or claim completeness.
-
-## Required layers
-
-1. Annual Kuwait history from 1500 through the as-of year.
-2. Annual commercial events and crises from 1927.
-3. Effective-dated registered-company lifecycle history from 1970.
-4. Company news and media history from 1980, including later-created social
-   platforms only after they existed.
-5. Company, founder, and owner legal/economic cases for the rolling latest 20
-   calendar years.
-6. Important Kuwait commercial/economic events for the rolling latest 5
-   calendar years.
+Translate the reviewed Kuwait-source access lessons into a strict, machine-readable
+recipe registry and a hash-bound capability-probe planning workflow. Reuse the
+existing live access receipt and manual Investing export importer. Do not create a
+parallel source network, run the sites, or promote any source capability.
 
 ## Acceptance gates
 
-1. A strict source registry records authority tier, allowed roles, earliest
-   year, access method, rights constraint, automation limitation, and explicit
-   capability status.
-2. All six layers compile into deterministic, gap-free annual tasks through a
-   supplied as-of date; every task starts `NOT_COLLECTED`.
-3. Company-year work remains blocked on official company-universe enumeration.
-4. Founders, registration, and company status require primary identity
-   evidence. News can corroborate but cannot replace it.
-5. Legal records preserve allegation/procedural/finality status and never infer
-   guilt. Social/community/Wikipedia evidence is routing or sentiment only.
-6. Schemas cover the plan, historical event, and company annual history.
-7. CLI validates the registry and can write a no-overwrite plan artifact.
-8. Targeted tests, complete suite, compile, smoke, secret guard, JSON/Schema,
-   control check, wheel, and exact-head CI pass.
-9. A sanitized KU-BO-013 handoff and Draft PR are published. No merge occurs
-   without a new explicit merge decision.
+1. A strict recipe registry binds each covered source to a registered access mode,
+   capture method, purpose, frequency, rights status, stop reasons, and budget.
+2. Public systematic collection and non-display or execution use with public-only
+   rights fail closed.
+3. Plans are deterministic, no-overwrite, `PLANNED_NOT_EXECUTED`, and bound to the
+   exact recipe registry SHA-256 and source-catalog Start URL.
+4. A combined validator revalidates the existing raw-hash-bound probe, requires the
+   exact planned source set and window, and requires controlled reasons for blocked,
+   authentication-required, or error states.
+5. A valid blocked receipt may prove the access-state audit contract only; no recipe,
+   plan, or probe becomes market evidence, historical coverage, or live capability.
+6. The existing Investing importer is registered with a hard
+   `PRICE_IMPORT_READY_ONLY` promotion ceiling.
+7. JSON Schemas, adversarial tests, CLI commands, Arabic documentation, and control
+   records are included.
+8. Compile, targeted and complete tests, smoke, control, Secret Guard, strict JSON
+   and Schema validation, wheel build/install, installed CLI, and exact-head CI pass.
+9. A sanitized handoff and Draft PR are published from the expected branch.
+
+## Safety and non-claims
+
+- No network collection, credentials, cookies, sessions, private Drive IDs, or real
+  market data may enter this task.
+- No source is promoted in `config/source_capabilities.json`.
+- No connector, parser, official EOD, execution tape, full-market coverage, backtest,
+  forecast, probability, accuracy, recommendation, or `LIVE_OPERATIONAL` claim is
+  created.
+- Sources without a registered Start URL or rights path remain uncovered.
 
 Do not merge this task. Record any later authority in
 `docs/codex/USER_DECISIONS.md` and write the result using
 `docs/codex/HANDOFF_TEMPLATE.md`.
-
-## Safety and non-claims
-
-- This task writes code, contracts, tests, documentation, and source URLs only.
-- It does not scrape or reproduce the historical corpus.
-- Source registration is `DEFINED_ONLY`, never `LIVE_OPERATIONAL`.
-- No source absence proves that an event did not happen.
-- The layer is `CONTEXT_ONLY`; it cannot directly emit a forecast, probability,
-  rank, buy/sell recommendation, or execution instruction.
-- Authentication, CAPTCHA, paywalls, robots controls, platform terms, privacy,
-  and copyright must not be bypassed.
