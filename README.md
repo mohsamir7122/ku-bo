@@ -120,6 +120,70 @@ kubo --project-root /absolute/path/to/ku-bo validate-source-network
 PYTHONPATH=src python -m kubo validate-source-network
 ```
 
+عقود `KU-BO-017` الخاصة بجودة المصادر والبرنامج المتكيف والـdry-run:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-config
+PYTHONPATH=src python -m kubo --project-root . validate-market-scope
+PYTHONPATH=src python -m kubo --project-root . validate-source-quality-policy
+PYTHONPATH=src python -m kubo --project-root . validate-source-fallback-policy
+PYTHONPATH=src python -m kubo --project-root . validate-predecessor-capability-parity
+PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
+```
+
+يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لأربع عشرة
+وظيفة مستخدم فقط؛ لا يدمج تاريخ Git خاصًا، ولا يشغّل محركًا ثانيًا، ولا ينقل
+بيانات أو نتائج أو ادعاءات جاهزية. ويخطط `plan-source-fallback` للمحاولة التالية
+من إيصالات محفوظة من دون تنفيذ اتصال شبكي أو تجاوز تسجيل الدخول أو جدار دفع:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . plan-source-fallback \
+  --request /absolute/path/to/source-fallback-request.json
+```
+
+كما يفحص `validate-portfolio-state` Snapshot المحفظة وسجل الأوامر مقابل بايتات
+دليل خاصة فعلية وSHA-256 ووقت قرار، لكنه لا يتصل بالوسيط ولا يرسل أمرًا ولا
+يحوّل نجاح البنية إلى توصية:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-portfolio-state \
+  --snapshot /private/path/portfolio-snapshot.json \
+  --orders /private/path/order-ledger.json \
+  --evidence-root /private/path/evidence \
+  --decision-at 2026-08-25T09:30:00+03:00
+```
+
+هذه الأوامر تثبت العقود أوتفحص مدخلات خاصة فقط. تفاصيل الجرد الخاص وFactor 9 وإيصالات المراحل في
+`docs/KU_BO_017_LIVE_DRY_RUN_AR.md`، والأساس البحثي في
+`docs/RESEARCH_METHOD_FOUNDATIONS_AR.md`.
+
+## وصفات الوصول وفحص القدرة
+
+يضيف `KU-BO-015` طبقة تخطيط لاختبار الوصول إلى المصادر قبل أي جمع أو Parser.
+السجل الحالي يعرّف 14 وصفة تغطي 30 مصدرًا ذا أولوية من أصل 68، ويترك بقية
+المصادر غير مغطاة بدل افتراض صلاحيتها. كل الوصفات `DEFINED_ONLY`، والخطة
+`CAPABILITY_PROBE_ONLY` ولا تنفذ طلب شبكة.
+
+```bash
+kubo --project-root . validate-source-access-recipes
+kubo --project-root . plan-source-access-probe \
+  --planned-at 2026-08-24T09:00:00+03:00 \
+  --source boursa_current \
+  --source investing_history \
+  --output /absolute/path/to/source-probe-plan.json
+kubo --project-root . validate-source-access-probe \
+  --plan /absolute/path/to/source-probe-plan.json \
+  --probe /absolute/path/to/access-probe.json
+```
+
+يربط المدقق الإيصال ببصمة سجل الوصفات وبـ Start URL والنافذة والحقوق والميزانية
+المعلنة. حالات `PAYWALL` و`LOGIN_REQUIRED` و`JAVASCRIPT_REQUIRED` و`HTTP_BLOCKED`
+تُسجل كأسباب مضبوطة ولا يجوز تجاوزها. نجاح الإيصال يعني فقط أن وصف حالة الوصول
+قابل للتدقيق؛ لا يعني Market Evidence أو Parser success أو `LIVE_OPERATIONAL`.
+استيراد Investing اليدوي يبقى عند سقف `PRICE_IMPORT_READY_ONLY` ويحتاج Manifest
+و Hash ووحدة و Raw/Adjusted checks. التفاصيل في
+`docs/SOURCE_ACCESS_RECIPES_AR.md`.
+
 ## طبقة المعرفة التاريخية الكويتية
 
 يضيف `KU-BO-013` عقد تخطيط مستقلًا يغطي ست طبقات سنوية: تاريخ الكويت من 1500،
@@ -379,10 +443,12 @@ Admission على الحدود الثمانية واختبارات خصومية �
 
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
 - `config/source_capabilities.json`: حالة Capture/Parser/Fixture/Live لكل مصدر من دون استنتاج القدرة من مجرد وجوده في الكتالوج.
+- `config/source_access_recipes.json`: وصفات الوصول المحدودة، الحقوق، أسباب التوقف، وسقف الاستيراد اليدوي.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `config/research_workflows.json`: نوافذ وميزانيات وموجات `KUWAIT_120D_NEXT_SESSION_RESEARCH` وعقد الأربعين قرارًا.
 - `config/source_query_strategies.json`: استراتيجيات الاستعلام المميزة وسياسة المحاولة المحدودة.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
+- `src/kubo/source_access_recipes.py`: مدقق الوصفات، مولد خطة الفحص، وربط إيصال الوصول بالخطة والبصمة.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
 - `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
 - `src/kubo/kuwait_research_pipeline.py`: التحقق من Source Search المحفوظ وربطه بمدخلات Parser الصارمة وإخراج حزمة Context/Exposure/Factor ذرية.

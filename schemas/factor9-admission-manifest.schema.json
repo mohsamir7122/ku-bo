@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/factor9-admission-manifest.schema.json",
+  "title": "Private Factor 9 admission manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "inventory_id",
+    "generated_at",
+    "asset",
+    "counts",
+    "artifacts",
+    "gates",
+    "blockers",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "inventory_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "promotion_ceiling"],
+      "properties": {
+        "status": {"const": "RESEARCH_ASSET_PENDING_ADMISSION"},
+        "promotion_ceiling": {"const": "RESEARCH_INPUT_ONLY"}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "company_master_rows",
+        "price_tickers",
+        "original_price_rows",
+        "clean_price_rows",
+        "excluded_price_rows",
+        "reported_validation_issues"
+      ],
+      "properties": {
+        "company_master_rows": {"type": "integer", "minimum": 1},
+        "price_tickers": {"type": "integer", "minimum": 1},
+        "original_price_rows": {"type": "integer", "minimum": 1},
+        "clean_price_rows": {"type": "integer", "minimum": 1},
+        "excluded_price_rows": {"type": "integer", "minimum": 0},
+        "reported_validation_issues": {"type": "integer", "minimum": 0}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {"$ref": "#/$defs/gate"}
+    },
+    "blockers": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/blocker"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storage_presence_grants_rights",
+        "asset_is_training_truth",
+        "asset_is_validated_model",
+        "probability_allowed",
+        "recommendation_allowed",
+        "automatic_promotion_allowed"
+      ],
+      "properties": {
+        "storage_presence_grants_rights": {"const": false},
+        "asset_is_training_truth": {"const": false},
+        "asset_is_validated_model": {"const": false},
+        "probability_allowed": {"const": false},
+        "recommendation_allowed": {"const": false},
+        "automatic_promotion_allowed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logical_path",
+        "sha256",
+        "size_bytes",
+        "artifact_role",
+        "original_source",
+        "capture_method",
+        "rights_status",
+        "point_in_time_status",
+        "review_status",
+        "duplicate_disposition"
+      ],
+      "properties": {
+        "logical_path": {"type": "string", "minLength": 3, "maxLength": 512},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "artifact_role": {
+          "enum": [
+            "RAW_PRICE_FILES",
+            "CLEAN_PRICE_FILE",
+            "EXCLUDED_ROW_FILE",
+            "FAILURE_LEDGER",
+            "COMPANY_MASTER",
+            "PRICE_FACTOR_OUTPUTS",
+            "EVENT_LIBRARY",
+            "REVIEW_QUEUE"
+          ]
+        },
+        "original_source": {
+          "enum": ["MUBASHER_SECONDARY", "USER_AUTHORIZED_EXPORT", "OFFICIAL_DISCLOSURE", "INTERNAL_DERIVED", "UNKNOWN"]
+        },
+        "capture_method": {
+          "enum": ["AUTHORIZED_EXPORT", "HISTORICAL_PROJECT_ARTIFACT", "OFFICIAL_DOWNLOAD", "UNKNOWN"]
+        },
+        "rights_status": {
+          "enum": ["AUTHORIZED", "LICENSED", "PUBLIC_ACCESS_ONLY", "REQUIRES_RUNTIME_REVIEW", "UNKNOWN"]
+        },
+        "point_in_time_status": {"enum": ["PROVEN", "PARTIAL", "UNPROVEN"]},
+        "review_status": {"enum": ["APPROVED", "REVIEW_REQUIRED", "REJECTED"]},
+        "duplicate_disposition": {"enum": ["CANONICAL_CANDIDATE", "QUARANTINE_DUPLICATE"]}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence_sha256"],
+      "properties": {
+        "gate_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "status": {"enum": ["PASS", "FAIL", "UNKNOWN", "NOT_REVIEWED"]},
+        "evidence_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/sha256"}}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_id", "status", "evidence_sha256"],
+      "properties": {
+        "blocker_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+        "status": {"enum": ["OPEN", "RESOLVED", "UNKNOWN"]},
+        "evidence_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/sha256"}}
+      }
+    }
+  }
+}

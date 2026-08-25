@@ -54,6 +54,19 @@ jobs:
             tests.test_forty_session_replay \
             tests.test_kuwait_workflow_cli \
             -v
+      - name: KU-BO-017 market, fallback, parity, portfolio, and dry-run gates
+        run: |
+          python -m unittest \
+            tests.test_market_scope \
+            tests.test_source_quality \
+            tests.test_source_fallback \
+            tests.test_capability_parity \
+            tests.test_portfolio_state \
+            tests.test_factor9_admission \
+            tests.test_ku_bo_live_program \
+            tests.test_live_dry_run \
+            tests.test_local_skill \
+            -v
       - name: Source parser and fresh-probe contract gates
         run: python -m unittest tests.test_source_parsers tests.test_live_probe -v
       - name: Official identity and calendar contract gates
@@ -124,10 +137,21 @@ jobs:
           installed_kubo="$installed_venv/bin/kubo"
           installed_foundation="$installed_venv/bin/kubo-data-foundation"
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-source-network
+          "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-config
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-research-workflow
           "$installed_kubo" --help | grep -q "run-source-search"
           "$installed_kubo" --help | grep -q "build-kuwait-research-bundle"
           "$installed_kubo" --help | grep -q "evaluate-forty-session-replay"
+          "$installed_kubo" --help | grep -q "validate-source-quality-policy"
+          "$installed_kubo" --help | grep -q "validate-source-fallback-policy"
+          "$installed_kubo" --help | grep -q "plan-source-fallback"
+          "$installed_kubo" --help | grep -q "validate-market-scope"
+          "$installed_kubo" --help | grep -q "validate-predecessor-capability-parity"
+          "$installed_kubo" --help | grep -q "validate-portfolio-state"
+          "$installed_kubo" --help | grep -q "validate-ku-bo-live-program"
+          "$installed_kubo" --help | grep -q "validate-factor9-admission"
+          "$installed_kubo" --help | grep -q "run-live-dry-run"
+          "$installed_kubo" --help | grep -q "validate-live-dry-run"
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-pilot-config
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry
@@ -141,6 +165,14 @@ jobs:
           "$installed_python" - <<'PY'
           from kubo.champion_freeze import validate_champion_freeze
           from kubo.codex_live_bootstrap import validate_codex_live_bootstrap
+          from kubo.factor9_admission import validate_factor9_admission_manifest
+          from kubo.capability_parity import validate_predecessor_capability_parity
+          from kubo.ku_bo_live_program import validate_ku_bo_live_program
+          from kubo.live_dry_run import run_daily_dry_run, validate_live_dry_run
+          from kubo.market_scope import validate_market_scope
+          from kubo.portfolio_state import validate_portfolio_state
+          from kubo.source_fallback import plan_source_fallback, validate_source_fallback_policy
+          from kubo.source_quality import validate_source_quality_policy
           from kubo.tri_security_lineage import (
               LINEAGE_FILE,
               materialize_boundary_lineage,
@@ -154,6 +186,16 @@ jobs:
           assert callable(verify_final_predecessor_lineages)
           assert callable(validate_champion_freeze)
           assert callable(validate_codex_live_bootstrap)
+          assert callable(validate_factor9_admission_manifest)
+          assert callable(validate_predecessor_capability_parity)
+          assert callable(validate_ku_bo_live_program)
+          assert callable(run_daily_dry_run)
+          assert callable(validate_live_dry_run)
+          assert callable(validate_market_scope)
+          assert callable(validate_portfolio_state)
+          assert callable(plan_source_fallback)
+          assert callable(validate_source_fallback_policy)
+          assert callable(validate_source_quality_policy)
           PY
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" prepare-official-foundation \
             --output-root "$RUNNER_TEMP/kubo-official-workspace" \

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/portfolio-state.schema.json",
+  "title": "KU-BO point-in-time portfolio state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "portfolio_id",
+    "as_of",
+    "timezone",
+    "currency",
+    "source_type",
+    "completeness",
+    "evidence",
+    "cash",
+    "positions",
+    "reconciliation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "portfolio_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "currency": {"const": "KWD"},
+    "source_type": {"enum": ["BROKER_EXPORT", "USER_AUTHORIZED_EXPORT", "MANUAL_RECONCILIATION"]},
+    "completeness": {"enum": ["COMPLETE", "PARTIAL"]},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "cash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "settled", "reserved"],
+      "properties": {
+        "available": {"type": "number", "minimum": 0},
+        "settled": {"type": "number", "minimum": 0},
+        "reserved": {"type": "number", "minimum": 0}
+      }
+    },
+    "positions": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["security_code", "quantity", "available_quantity", "average_cost", "market_value"],
+        "properties": {
+          "security_code": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$"},
+          "quantity": {"type": "number", "minimum": 0},
+          "available_quantity": {"type": "number", "minimum": 0},
+          "average_cost": {"type": "number", "minimum": 0},
+          "market_value": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["broker_total_equity", "computed_total_equity", "difference", "status"],
+      "properties": {
+        "broker_total_equity": {"type": "number", "minimum": 0},
+        "computed_total_equity": {"type": "number", "minimum": 0},
+        "difference": {"type": "number"},
+        "status": {"enum": ["MATCHED", "UNRESOLVED"]}
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "captured_at", "source_id"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "source_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"}
+      }
+    }
+  }
+}

@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 
 from . import __version__
+from .capability_parity import validate_predecessor_capability_parity
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
 from .foundation_io import prepare_output_root
@@ -27,9 +28,24 @@ from .reporting import build_report, render_report
 from .request_contracts import AnalysisRequest
 from .runtime_trust import RuntimeTrustRegistry, load_runtime_trust_registry
 from .forty_session_replay import evaluate_forty_session_replay
+from .factor9_admission import (
+    validate_factor9_admission_manifest,
+    write_factor9_admission_report,
+)
+from .ku_bo_live_program import validate_ku_bo_live_program
 from .kuwait_research_pipeline import build_integrated_research_bundle
+from .live_dry_run import run_daily_dry_run, validate_live_dry_run
+from .market_scope import validate_market_scope
+from .portfolio_state import validate_portfolio_state
 from .research_workflow import load_research_workflow
 from .source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
+from .source_access_recipes import (
+    SourceAccessRecipeCatalog,
+    compile_source_probe_plan,
+    validate_access_probe_against_plan,
+)
+from .source_quality import validate_source_quality_policy
+from .source_fallback import plan_source_fallback, validate_source_fallback_policy
 from .source_orchestrator import (
     SourceSearchOrchestrator,
     validate_source_search_report,
@@ -59,6 +75,9 @@ BLOCKING_STATUSES = {
     "MODEL_CARD_BLOCKED",
     "UNVALIDATED_RESEARCH_ONLY",
     "DEGRADED",
+    "CAPABILITY_FALLBACK_REQUIRED",
+    "CAPABILITY_EXHAUSTED_ABSTAIN",
+    "PARTIAL_STRUCTURAL_NON_ACTIONABLE",
 }
 
 PROJECT_CONFIG_COMMANDS = frozenset(
@@ -75,6 +94,18 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-pack",
         "validate-research-workflow",
         "validate-source-network",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
+        "validate-source-quality-policy",
+        "validate-source-fallback-policy",
+        "plan-source-fallback",
+        "validate-market-scope",
+        "validate-predecessor-capability-parity",
+        "validate-portfolio-state",
+        "validate-ku-bo-live-program",
+        "validate-factor9-admission",
+        "run-live-dry-run",
         "evaluate-forty-session-replay",
         "validate-historical-knowledge",
         "plan-historical-research",
@@ -82,12 +113,19 @@ PROJECT_CONFIG_COMMANDS = frozenset(
 )
 
 REQUIRED_PROJECT_CONFIG = (
+    Path("config/ku_bo_018_event_admission_task.json"),
+    Path("config/ku_bo_live_program.json"),
     Path("config/methods.json"),
+    Path("config/market_scope.json"),
+    Path("config/predecessor_capability_parity.json"),
     Path("config/products.json"),
     Path("config/research_policies.json"),
     Path("config/research_workflows.json"),
     Path("config/source_capabilities.json"),
     Path("config/source_network.json"),
+    Path("config/source_access_recipes.json"),
+    Path("config/source_fallback_policy.json"),
+    Path("config/source_quality_policy.json"),
     Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
     Path("config/historical_research_layers.json"),
@@ -161,6 +199,18 @@ def _load_strict_json_object(path: Path, field: str) -> dict[str, object]:
     return payload
 
 
+def _parse_champion_freezes(values: list[str] | None) -> dict[str, Path]:
+    result: dict[str, Path] = {}
+    for value in values or []:
+        product_id, separator, path = value.partition("=")
+        if not separator or not product_id or not path or product_id in result:
+            raise ValueError(
+                "--champion-freeze must be a unique PRODUCT_ID=PRIVATE_RELATIVE_PATH binding"
+            )
+        result[product_id] = Path(path)
+    return result
+
+
 def _runtime_trust_hmac_key() -> bytes:
     value = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY", "")
     if not value:
@@ -209,7 +259,7 @@ def _load_cli_runtime_trust_registry(
 
 def parser() -> argparse.ArgumentParser:
     root = _root()
-    value = argparse.ArgumentParser(description="KU-BO Research Engine — auditable multi-source research")
+    value = argparse.ArgumentParser(description="KU-BO Research Engine - auditable multi-source research")
     value.add_argument(
         "--project-root",
         type=Path,
@@ -220,6 +270,12 @@ def parser() -> argparse.ArgumentParser:
 
     sub.add_parser("validate-config")
     sub.add_parser("validate-source-network")
+    sub.add_parser("validate-source-access-recipes")
+    sub.add_parser("validate-source-quality-policy")
+    sub.add_parser("validate-source-fallback-policy")
+    sub.add_parser("validate-market-scope")
+    sub.add_parser("validate-predecessor-capability-parity")
+    sub.add_parser("validate-ku-bo-live-program")
     sub.add_parser("validate-research-workflow")
     sub.add_parser("validate-historical-knowledge")
 
@@ -251,6 +307,51 @@ def parser() -> argparse.ArgumentParser:
 
     probe = sub.add_parser("validate-live-probe")
     probe.add_argument("--probe", type=Path, required=True)
+
+    source_probe_plan = sub.add_parser("plan-source-access-probe")
+    source_probe_plan.add_argument("--planned-at", required=True)
+    source_probe_plan.add_argument("--source", action="append", dest="source_ids")
+    source_probe_plan.add_argument("--output", type=Path)
+
+    source_probe_validate = sub.add_parser("validate-source-access-probe")
+    source_probe_validate.add_argument("--plan", type=Path, required=True)
+    source_probe_validate.add_argument("--probe", type=Path, required=True)
+
+    factor9 = sub.add_parser("validate-factor9-admission")
+    factor9.add_argument("--manifest", type=Path, required=True)
+    factor9.add_argument("--output", type=Path)
+
+    fallback = sub.add_parser("plan-source-fallback")
+    fallback.add_argument("--request", type=Path, required=True)
+
+    portfolio = sub.add_parser("validate-portfolio-state")
+    portfolio.add_argument("--snapshot", type=Path, required=True)
+    portfolio.add_argument("--orders", type=Path, required=True)
+    portfolio.add_argument("--evidence-root", type=Path, required=True)
+    portfolio.add_argument("--decision-at", required=True)
+    portfolio.add_argument("--max-age-minutes", type=int, default=30)
+
+    live_dry_run = sub.add_parser("run-live-dry-run")
+    live_dry_run.add_argument("--private-runtime-root", type=Path, required=True)
+    live_dry_run.add_argument("--output-root", type=Path, required=True)
+    live_dry_run.add_argument("--run-id", required=True)
+    live_dry_run.add_argument("--decision-session-date", required=True)
+    live_dry_run.add_argument(
+        "--source-probe-receipt", action="append", dest="source_probe_receipts"
+    )
+    live_dry_run.add_argument("--raw-evidence-manifest", type=Path)
+    live_dry_run.add_argument("--normalized-snapshot", type=Path)
+    live_dry_run.add_argument("--factor-snapshot", type=Path)
+    live_dry_run.add_argument(
+        "--champion-freeze",
+        action="append",
+        dest="champion_freezes",
+        help="PRODUCT_ID=PRIVATE_RELATIVE_PATH; repeat once per product",
+    )
+    live_dry_run.add_argument("--recorded-at")
+
+    validate_dry_run = sub.add_parser("validate-live-dry-run")
+    validate_dry_run.add_argument("--run-root", type=Path, required=True)
 
     plan = sub.add_parser("plan")
     plan.add_argument("--product", required=True)
@@ -327,6 +428,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in {
         "validate-config",
         "validate-source-network",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
         "validate-research-workflow",
         "evaluate-forty-session-replay",
         "run-source-search",
@@ -340,6 +444,19 @@ def main(argv: list[str] | None = None) -> int:
     }:
         network_catalog = SourceNetworkCatalog(project_root / "config")
 
+    recipe_catalog = None
+    if args.command in {
+        "validate-config",
+        "validate-source-access-recipes",
+        "plan-source-access-probe",
+        "validate-source-access-probe",
+    }:
+        assert network_catalog is not None
+        recipe_catalog = SourceAccessRecipeCatalog(
+            project_root / "config" / "source_access_recipes.json",
+            network_catalog,
+        )
+
     historical_catalog = None
     if args.command in {"validate-config", "validate-historical-knowledge", "plan-historical-research"}:
         historical_catalog = HistoricalKnowledgeCatalog(project_root / "config")
@@ -347,17 +464,51 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate-config":
         assert network_catalog is not None
         assert historical_catalog is not None
+        assert recipe_catalog is not None
         workflow = load_research_workflow(project_root / "config")
         report = {
             "status": "PASS",
             "legacy_catalog": Catalog(project_root / "config").report(),
+            "market_scope": validate_market_scope(project_root),
             "source_network": network_catalog.report(),
+            "source_access_recipes": recipe_catalog.report(network_catalog),
+            "source_quality_policy": validate_source_quality_policy(project_root),
+            "source_fallback_policy": validate_source_fallback_policy(project_root),
+            "predecessor_capability_parity": validate_predecessor_capability_parity(
+                project_root
+            ),
             "research_workflow": asdict(workflow),
             "historical_knowledge": historical_catalog.report(),
+            "live_program": validate_ku_bo_live_program(project_root),
         }
     elif args.command == "validate-source-network":
         assert network_catalog is not None
         report = network_catalog.report()
+    elif args.command == "validate-source-access-recipes":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        report = recipe_catalog.report(network_catalog)
+    elif args.command == "validate-source-quality-policy":
+        report = validate_source_quality_policy(project_root)
+    elif args.command == "validate-source-fallback-policy":
+        report = validate_source_fallback_policy(project_root)
+    elif args.command == "plan-source-fallback":
+        report = plan_source_fallback(project_root, args.request)
+    elif args.command == "validate-market-scope":
+        report = validate_market_scope(project_root)
+    elif args.command == "validate-predecessor-capability-parity":
+        report = validate_predecessor_capability_parity(project_root)
+    elif args.command == "validate-portfolio-state":
+        validate_market_scope(project_root)
+        report = validate_portfolio_state(
+            args.snapshot,
+            args.orders,
+            evidence_root=args.evidence_root,
+            decision_at=args.decision_at,
+            max_age_minutes=args.max_age_minutes,
+        )
+    elif args.command == "validate-ku-bo-live-program":
+        report = validate_ku_bo_live_program(project_root)
     elif args.command == "validate-research-workflow":
         assert network_catalog is not None
         spec = load_research_workflow(project_root / "config")
@@ -464,6 +615,61 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "validate-live-probe":
         assert network_catalog is not None
         report = validate_live_probe(args.probe, network_catalog)
+    elif args.command == "plan-source-access-probe":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        full_plan = compile_source_probe_plan(
+            recipe_catalog,
+            network_catalog,
+            planned_at=parse_aware(args.planned_at, "planned_at"),
+            source_ids=args.source_ids,
+        )
+        if args.output is None:
+            report = full_plan
+        else:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            with args.output.open("xb") as handle:
+                handle.write(canonical_json_bytes(full_plan))
+                handle.flush()
+                os.fsync(handle.fileno())
+            report = {
+                "status": "PLANNED_NOT_EXECUTED",
+                "plan_id": full_plan["plan_id"],
+                "output": str(args.output),
+                "task_count": len(full_plan["tasks"]),
+                "claim_boundaries": full_plan["claim_boundaries"],
+            }
+    elif args.command == "validate-source-access-probe":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        report = validate_access_probe_against_plan(
+            probe_path=args.probe,
+            plan_path=args.plan,
+            recipes=recipe_catalog,
+            source_catalog=network_catalog,
+        )
+    elif args.command == "validate-factor9-admission":
+        if args.output is None:
+            report = validate_factor9_admission_manifest(args.manifest)
+        else:
+            report = write_factor9_admission_report(args.manifest, args.output)
+    elif args.command == "run-live-dry-run":
+        validate_market_scope(project_root)
+        validate_ku_bo_live_program(project_root)
+        report = run_daily_dry_run(
+            private_runtime_root=args.private_runtime_root,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            decision_session_date=args.decision_session_date,
+            source_probe_receipts=[Path(value) for value in args.source_probe_receipts or []],
+            raw_evidence_manifest=args.raw_evidence_manifest,
+            normalized_snapshot=args.normalized_snapshot,
+            factor_snapshot=args.factor_snapshot,
+            champion_freezes=_parse_champion_freezes(args.champion_freezes),
+            recorded_at=args.recorded_at,
+        )
+    elif args.command == "validate-live-dry-run":
+        report = validate_live_dry_run(args.run_root)
     elif args.command == "validate-pack":
         report = PackValidator(args.pack, Catalog(project_root / "config")).validate().to_dict()
     elif args.command == "plan":

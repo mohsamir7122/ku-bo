@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -113,6 +114,7 @@ class FoundationIoTests(unittest.TestCase):
             self.assertEqual(content, b'{"status":"PASS"}\n')
             self.assertTrue(sibling.is_file())
 
+    @unittest.skipIf(os.name == "nt", "Windows blocks replacement of an open file")
     def test_safe_reader_still_rejects_leaf_replacement_during_read(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             parent = Path(directory) / "authority"
@@ -136,6 +138,10 @@ class FoundationIoTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "changed while being read"):
                     safe_regular_file(path, field="receipt")
 
+    @unittest.skipIf(
+        os.name == "nt",
+        "Windows blocks replacement of a directory containing an open file",
+    )
     def test_safe_reader_still_rejects_ancestor_replacement_during_read(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

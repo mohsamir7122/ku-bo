@@ -44,16 +44,6 @@
       "local_verification_required": ["kuwait_event_taxonomy", "publication_time_cutoff", "corporate_action_adjustment"]
     },
     {
-      "project_id": "arabic_saudi_sentiment_2026",
-      "name": "Arabic financial sentiment corpus for the Saudi market",
-      "url": "https://arxiv.org/abs/2605.19714",
-      "evidence_type": "research_preprint",
-      "verified_claim": "Reports an Arabic financial corpus and pipeline including cleaning, deduplication, entity linkage, and multi-class sentiment.",
-      "adopt": ["arabic_normalization", "semantic_deduplication", "canonical_company_linkage", "multi_class_annotations"],
-      "reject_or_defer": ["treating_saudi_corpus_as_kuwait_ground_truth"],
-      "local_verification_required": ["kuwait_corpus", "annotator_agreement", "dialect_and_abbreviation_errors"]
-    },
-    {
       "project_id": "econ",
       "name": "ECON",
       "url": "https://arxiv.org/abs/2312.03758",

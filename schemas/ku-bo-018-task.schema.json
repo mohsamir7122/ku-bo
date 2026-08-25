@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/ku-bo-018-task.schema.json",
+  "title": "KU-BO-018 proposed event admission task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "task_id", "status", "mission", "development_set", "locked_test", "training", "required_artifacts", "claim_boundaries"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "task_id": {"const": "KU-BO-018"},
+    "status": {"const": "PROPOSED_NOT_STARTED"},
+    "mission": {"const": "EVENT_ADMISSION_AND_TRIAL_REGISTRY"},
+    "development_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["major_events", "control_events", "locked_test_overlap_allowed"],
+      "properties": {
+        "major_events": {"const": 50},
+        "control_events": {"const": 200},
+        "locked_test_overlap_allowed": {"const": false}
+      }
+    },
+    "locked_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_events", "maximum_events", "split_policy"],
+      "properties": {
+        "minimum_events": {"const": 500},
+        "maximum_events": {"const": 600},
+        "split_policy": {"const": "PURGED_EMBARGOED_WALK_FORWARD"}
+      }
+    },
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_rounds", "maximum_rounds", "rounds_above_default_require_preregistered_hypothesis", "allowed_in_task"],
+      "properties": {
+        "default_rounds": {"const": 30},
+        "maximum_rounds": {"const": 50},
+        "rounds_above_default_require_preregistered_hypothesis": {"const": true},
+        "allowed_in_task": {"const": false}
+      }
+    },
+    "required_artifacts": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string"}},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_started", "training_allowed", "locked_test_visible_to_development", "accuracy_claim_allowed", "recommendation_allowed"],
+      "properties": {
+        "task_started": {"const": false},
+        "training_allowed": {"const": false},
+        "locked_test_visible_to_development": {"const": false},
+        "accuracy_claim_allowed": {"const": false},
+        "recommendation_allowed": {"const": false}
+      }
+    }
+  }
+}

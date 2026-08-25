@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/source-fallback-policy.schema.json",
+  "title": "KU-BO semantic source fallback policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "status",
+    "market_scope_id",
+    "capabilities",
+    "semantic_rules",
+    "original_source_verification",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "ku-bo-semantic-source-fallback-v1"},
+    "status": {"const": "CONTRACT_ONLY_NO_NETWORK"},
+    "market_scope_id": {"const": "ku-bo-kuwait-only-v1"},
+    "capabilities": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capability_id", "source_chain", "verified_zero_result_can_satisfy"],
+        "properties": {
+          "capability_id": {
+            "enum": [
+              "security_identity",
+              "market_calendar",
+              "completed_eod_history",
+              "corporate_actions",
+              "official_disclosures",
+              "fundamentals",
+              "news_context",
+              "community_attention",
+              "execution_context"
+            ]
+          },
+          "source_chain": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"}
+          },
+          "verified_zero_result_can_satisfy": {"type": "boolean"}
+        }
+      }
+    },
+    "semantic_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transport_success_proves_semantic_success",
+        "zero_rows_requires_verified_zero_result",
+        "blocked_source_ends_capability_attempt",
+        "access_controls_may_be_bypassed",
+        "fallback_changes_claim_grade"
+      ],
+      "properties": {
+        "transport_success_proves_semantic_success": {"const": false},
+        "zero_rows_requires_verified_zero_result": {"const": true},
+        "blocked_source_ends_capability_attempt": {"const": false},
+        "access_controls_may_be_bypassed": {"const": false},
+        "fallback_changes_claim_grade": {"const": false}
+      }
+    },
+    "original_source_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "secondary_and_community_leads_require_original_check",
+        "search_result_is_evidence",
+        "unregistered_origin_requires_source_admission"
+      ],
+      "properties": {
+        "secondary_and_community_leads_require_original_check": {"const": true},
+        "search_result_is_evidence": {"const": false},
+        "unregistered_origin_requires_source_admission": {"const": true}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planner_performs_network_access",
+        "fallback_result_satisfies_product_quorum",
+        "source_certainty_is_analytical_certainty",
+        "fallback_result_is_probability",
+        "fallback_result_is_recommendation",
+        "automatic_source_promotion_allowed"
+      ],
+      "properties": {
+        "planner_performs_network_access": {"const": false},
+        "fallback_result_satisfies_product_quorum": {"const": false},
+        "source_certainty_is_analytical_certainty": {"const": false},
+        "fallback_result_is_probability": {"const": false},
+        "fallback_result_is_recommendation": {"const": false},
+        "automatic_source_promotion_allowed": {"const": false}
+      }
+    }
+  }
+}

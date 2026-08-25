@@ -37,6 +37,22 @@ roles now; do not execute the centuries-long collection or claim completeness.
 6. Important Kuwait commercial/economic events for the rolling latest 5
    calendar years.
 
+## User-authorized scope extension - 2026-08-25
+
+1. Lock KU-BO to Boursa Kuwait only. Do not include an additional market adapter,
+   corpus, methodology entry, training path, evaluation path, or runtime override.
+2. Inspect the private predecessor read-only and translate useful user jobs into
+   the canonical `kubo` package. Do not merge its Git history, execute its engine,
+   copy private data, or publish its locator or revision details.
+3. Bind the admitted user jobs through a sanitized capability-parity manifest and
+   callable-resolution tests.
+4. Add semantic source fallback that separates transport success from usable
+   evidence, preserves access controls, and queues original-source verification.
+5. Add point-in-time portfolio and order validation with evidence-byte hashes,
+   freshness, and reconciliation. Keep it structurally non-actionable.
+6. Add one repository-local Codex routing skill rather than parallel copies of
+   predecessor skills.
+
 ## Acceptance gates
 
 1. A strict source registry records authority tier, allowed roles, earliest
