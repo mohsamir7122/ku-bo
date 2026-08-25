@@ -1,84 +1,94 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-24
+Status date: 2026-08-25
 
 Repository: `mohsamir7122/ku-bo`
 
-## Development chain
+## Active public development chain
 
 ```text
 main 59833bf73510b3aa3901f628cbf2c13c0d01cf79
-  `-- KU-BO-015 / Draft PR #19 / COMPLETED
-      `-- source-access head 6aa50ac
-          `-- KU-BO-016 / Draft PR #20 / COMPLETED
-              `-- implementation head 7f32b7f9e8e71a55977cf834785e53adf7df086d
-                  `-- exact-head CI 32753584069 PASS / Python 3.11-3.14
+  `-- KU-BO-015 / Draft PR #19
+      `-- agent/ku-bo-015-source-access-recipes 6aa50ac83112d0e3a2e4440e3a6676115b9fbe4a
+          `-- KU-BO-016 / Draft PR #20
+              `-- agent/ku-bo-016-codex-live-bootstrap 6e9ab870e727494d5eb9e1ec9fa98829d6391d68
+                  `-- KU-BO-MIG-001 / migration branch and Draft PR pending publication
 ```
 
-Open or stale PRs outside this chain must be inspected live and left unchanged.
-This branch does not merge PR #19 or any other PR.
+CI run `32755116575` was independently verified successful for exact public base
+head `6e9ab870` on Python 3.11 through 3.14. The migration preparation is stacked
+on that head so it preserves the public source-access recipes, bootstrap/freeze
+controls, Factor 9 admission rules, and private logical storage contract.
 
-## KU-BO-016 checkpoint
+Open PRs outside this chain remain unchanged. No content is silently imported
+merely because another PR or repository exists.
 
-- one locked machine-readable Codex bootstrap contract;
-- strict semantic validation independent of `jsonschema`;
-- a previous-session Champion freeze schema and runtime validator;
-- exact 3, 5, 21, and 63-session product bindings;
-- a sanitized project-conversation synthesis;
-- a Factor 9 Drive review and admission policy;
-- a logical `AI Rebuild` manifest with no private IDs;
-- a disabled-by-default scheduled shadow contract;
-- `KU-BO-017` prepared as the next Codex task.
-
-## Private Drive checkpoint
-
-The authorized `AI Rebuild` root was inspected and the following KU-BO logical
-areas were prepared: indexes, private imports, authorized exports, manifests,
-Factor 9 research, event evidence, market data, model freezes, daily reports,
-quarantine, and reports. Private folder IDs and file bytes are intentionally not
-recorded in this repository. The sanitized, versioned runtime manifest was uploaded
-to `AI Rebuild/00_Indexes/KU_BO` and its presence was verified.
-
-## Factor 9 checkpoint
+## Active task
 
 ```text
-company master rows:       140
-price tickers:             137
-original price rows:       534135
-clean price rows:          533997
-excluded unique rows:      138
-reported issue flags:      243
-status:                    RESEARCH_ASSET_PENDING_ADMISSION
-promotion ceiling:         RESEARCH_INPUT_ONLY
+task:                         KU-BO-MIG-001
+goal:                         complete private-predecessor capability migration
+canonical target:             KU-BO
+private source alias:         PRIVATE_PREDECESSOR_SOURCE
+private source read scope:    REPOSITORY CODE + GIT METADATA ONLY
+migration mode:               COMPLETE_CAPABILITY_REIMPLEMENTATION
+task branch:                  agent/private-predecessor-capability-migration-v1
+implementation status:        NOT_STARTED
+private inventory status:     NOT_STARTED
+public capability seeds:      14 OPAQUE / NOT DEFINITIONS
+completion validator status:  NOT_IMPLEMENTED
+merge allowed:                NO
 ```
 
-OCR/auto event labels, rights, official identity, Corporate Action adjustments,
-point-in-time availability, and final Fundamental fields remain blocked.
+The previous KU-BO-017 live dry-run task is preserved at
+`docs/codex/backlog/KU-BO-017-live-dry-run-orchestrator.md` and deferred by the
+user's new priority. It is not deleted or authorized.
 
-## Runtime and claim status
+## Private-source boundary
+
+Exact private repository/ref/commit/tree locators, counts, paths, capability names,
+and audit findings are intentionally absent from this public repository. Codex
+must resolve them through the authorized connector, store them in uncommitted
+private runtime state, and expose only privacy-reviewed sanitized contracts and
+opaque bindings.
+
+Read-only inspection of the configured private source repository code and Git
+metadata is authorized. Unrelated private/runtime data, credentials, secret
+material, source writes, archive/delete operations, and history merge are not.
+
+## Preparation-control checkpoint
+
+- repository-native task and phase-by-phase ExecPlan;
+- explicit private-source read authority and narrower prohibited-data boundary;
+- privacy-safe opaque source/ref/capability controls;
+- preparation validator that cannot claim inventory, parity, or completion;
+- mandatory dedicated completion validator that must verify private source,
+  exact target/test paths, package gates, exact-head CI, Draft-PR state, and handoff;
+- preserved KU-BO-017 backlog;
+- adversarial tests for permission drift, locator/OID leakage, false completion,
+  missing seeds, and live promotion; and
+- explicit no-merge, no-source-write, no-private-publication, no-training,
+  no-real-backtest, and no-live-promotion boundaries.
+
+## Current evidence and claim status
 
 ```text
-Codex handoff contract:    PASS_HANDOFF_CONTRACT
-live collector:            NOT_IMPLEMENTED
-daily orchestrator:        NOT_IMPLEMENTED
-scheduled runtime:         DISABLED_UNTIL_AUTHORIZED
-approved Champion freeze:  NOT_PRESENT
-model training:            NOT_STARTED
-locked 500-600 test:       NOT_STARTED
-stock recommendations:     NOT_ALLOWED
+preparation control:          READY
+private source inventoried:   NOT PROVEN
+user jobs enumerated:         NOT PROVEN
+capabilities defined:         0 (opaque seeds are placeholders)
+capabilities implemented:     0
+capabilities parity proven:   0
+live operational:             0
+migration complete:           NO
 ```
 
-Passing KU-BO-016 proves the handoff and freeze contracts only. It does not prove
-market evidence, predictive skill, accuracy, or readiness for investment use.
+This checkpoint proves preparation only. It does not prove source access,
+inventory, user-job denominator, implementation, parity, package completion,
+exact-head CI for the migration branch, Draft-PR state, or financial validity.
 
-## Local validation checkpoint
+## Publication state
 
-- focused bootstrap, freeze, and control tests: 29/29 PASS;
-- complete unit and adversarial suite: 2,129/2,129 PASS in 162.181 seconds;
-- compile, strict JSON/Schema, control, corpus, smoke, Secret Guard, and diff
-  checks: PASS;
-- isolated wheel build and installed-module validation: PASS; wheel size 467110
-  bytes, SHA-256
-  `518b2245d5ba5b587cbc7f1168c94d9573012ae2d41f672ed9b827530b58bc54`;
-- Draft PR #20 exact-head GitHub Actions run `32753584069`: PASS on Python 3.11
-  through 3.14 at published implementation head `7f32b7f`.
+The privacy-safe migration branch and Draft PR are prepared for publication. After
+publication, record the exact public head, PR number, and exact-head CI here and in
+the migration status. Do not merge or enable auto-merge.
