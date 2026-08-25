@@ -9,6 +9,8 @@ TARGET_REPOSITORY: mohsamir7122/ku-bo
 SOURCE_ALIAS: PRIVATE_PREDECESSOR_SOURCE
 TASK_BRANCH: agent/private-predecessor-capability-migration-v1
 PR_MODE: DRAFT
+TASK_PR: 21
+INITIAL_PUBLISHED_IMPLEMENTATION_HEAD: 435d28503a60ae9316909304537f7c42e937d066
 MERGE_ALLOWED: NO
 SOURCE_WRITE_ALLOWED: NO
 PRIVATE_SOURCE_CODE_READ_ALLOWED: YES
@@ -22,6 +24,12 @@ The preparation branch is based on public KU-BO branch
 `6e9ab870e727494d5eb9e1ec9fa98829d6391d68`, stacked on Draft PR #19. CI run
 `32755116575` was independently verified successful for that exact public base
 head. Codex must verify the chain again at execution start.
+
+The preparation control is published as Draft PR #21 from
+`agent/private-predecessor-capability-migration-v1`. Its initial published
+implementation head is `435d28503a60ae9316909304537f7c42e937d066`.
+The latest PR head still requires exact-head CI before it may be treated as a
+validated execution base.
 
 ## Private-source status
 
