@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/predecessor-capability-parity.schema.json",
+  "title": "KU-BO sanitized predecessor capability parity manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "source_alias",
+    "target_package",
+    "market_scope_id",
+    "migration_rules",
+    "capabilities",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "manifest_id": {"const": "ku-bo-private-predecessor-capability-parity-v1"},
+    "source_alias": {"const": "PRIVATE_PREDECESSOR_SOURCE"},
+    "target_package": {"const": "kubo"},
+    "market_scope_id": {"const": "ku-bo-kuwait-only-v1"},
+    "migration_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_repository_read_only",
+        "git_history_merge_allowed",
+        "second_engine_allowed",
+        "direct_source_script_execution_allowed",
+        "raw_private_data_copy_allowed",
+        "source_locator_publication_allowed",
+        "reimplementation_through_kubo_required"
+      ],
+      "properties": {
+        "source_repository_read_only": {"const": true},
+        "git_history_merge_allowed": {"const": false},
+        "second_engine_allowed": {"const": false},
+        "direct_source_script_execution_allowed": {"const": false},
+        "raw_private_data_copy_allowed": {"const": false},
+        "source_locator_publication_allowed": {"const": false},
+        "reimplementation_through_kubo_required": {"const": true}
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "user_job",
+          "target_module",
+          "target_callable",
+          "cli_command",
+          "software_status",
+          "operational_ceiling"
+        ],
+        "properties": {
+          "capability_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+          "user_job": {"type": "string", "minLength": 10, "maxLength": 256},
+          "target_module": {"type": "string", "pattern": "^kubo\\.[a-z][a-z0-9_]+$"},
+          "target_callable": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+          "cli_command": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^kubo(?:-data-foundation)? [a-z][a-z0-9-]+$"}]},
+          "software_status": {"enum": ["BOUND_TO_EXISTING_CORE", "REIMPLEMENTED_IN_CANONICAL_CORE", "CONTRACT_BOUND_ONLY"]},
+          "operational_ceiling": {
+            "enum": [
+              "EVIDENCE_IMPORT_ONLY",
+              "NO_NETWORK_PLANNING_ONLY",
+              "STRUCTURAL_VALIDATION_ONLY",
+              "RESEARCH_ONLY",
+              "DATASET_CONSTRUCTION_ONLY",
+              "NO_TRAINING",
+              "ADMISSION_ONLY",
+              "ABSTAIN_ONLY",
+              "EVALUATION_ONLY"
+            ]
+          }
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "software_binding_proves_operational_readiness",
+        "predecessor_claims_transfer_validation",
+        "private_source_detail_is_public",
+        "additional_market_support_imported",
+        "training_authorized",
+        "recommendations_authorized",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "software_binding_proves_operational_readiness": {"const": false},
+        "predecessor_claims_transfer_validation": {"const": false},
+        "private_source_detail_is_public": {"const": false},
+        "additional_market_support_imported": {"const": false},
+        "training_authorized": {"const": false},
+        "recommendations_authorized": {"const": false},
+        "live_execution_authorized": {"const": false}
+      }
+    }
+  }
+}

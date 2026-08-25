@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/execution-order-ledger.schema.json",
+  "title": "KU-BO point-in-time execution order ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "portfolio_id",
+    "as_of",
+    "timezone",
+    "currency",
+    "source_type",
+    "completeness",
+    "evidence",
+    "orders"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "portfolio_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "currency": {"const": "KWD"},
+    "source_type": {"enum": ["BROKER_EXPORT", "USER_AUTHORIZED_EXPORT", "MANUAL_RECONCILIATION"]},
+    "completeness": {"enum": ["COMPLETE", "PARTIAL"]},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "portfolio-state.schema.json#/$defs/evidence"}
+    },
+    "orders": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order_id",
+          "security_code",
+          "side",
+          "order_type",
+          "quantity",
+          "filled_quantity",
+          "limit_price",
+          "status",
+          "submitted_at",
+          "updated_at"
+        ],
+        "properties": {
+          "order_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+          "security_code": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$"},
+          "side": {"enum": ["BUY", "SELL"]},
+          "order_type": {"enum": ["MARKET", "LIMIT"]},
+          "quantity": {"type": "number", "exclusiveMinimum": 0},
+          "filled_quantity": {"type": "number", "minimum": 0},
+          "limit_price": {"oneOf": [{"type": "null"}, {"type": "number", "exclusiveMinimum": 0}]},
+          "status": {"enum": ["OPEN", "PARTIALLY_FILLED", "FILLED", "CANCELLED", "REJECTED", "EXPIRED"]},
+          "submitted_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  }
+}

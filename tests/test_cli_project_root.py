@@ -31,6 +31,18 @@ class CliProjectRootTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn('"status": "PASS"', output.getvalue())
 
+    def test_validate_config_includes_locked_scope_and_migrated_capabilities(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = main(["--project-root", str(ROOT), "validate-config"])
+
+        rendered = output.getvalue()
+        self.assertEqual(code, 0)
+        self.assertIn('"market_scope": {', rendered)
+        self.assertIn('"source_fallback_policy": {', rendered)
+        self.assertIn('"predecessor_capability_parity": {', rendered)
+        self.assertIn('"resolved_callable_count": 14', rendered)
+
 
 if __name__ == "__main__":
     unittest.main()

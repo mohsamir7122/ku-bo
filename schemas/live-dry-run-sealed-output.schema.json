@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/live-dry-run-sealed-output.schema.json",
+  "title": "KU-BO sealed dry-run abstention output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "decision_session_date",
+    "products",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "SEALED_DRY_RUN_ABSTAIN"},
+    "decision_session_date": {"type": "string", "format": "date"},
+    "products": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/product3"},
+        {"$ref": "#/$defs/product5"},
+        {"$ref": "#/$defs/product21"},
+        {"$ref": "#/$defs/product63"}
+      ],
+      "items": false
+    },
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "$defs": {
+    "product3": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "three_session_rank"}, "horizon_sessions": {"const": 3}}}
+      ]
+    },
+    "product5": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "five_session_weekly_swing"}, "horizon_sessions": {"const": 5}}}
+      ]
+    },
+    "product21": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "twenty_one_session_monthly_swing"}, "horizon_sessions": {"const": 21}}}
+      ]
+    },
+    "product63": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "sixty_three_session_quarter_rank"}, "horizon_sessions": {"const": 63}}}
+      ]
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_id",
+        "horizon_sessions",
+        "decision",
+        "candidates",
+        "entry_price",
+        "exit_price"
+      ],
+      "properties": {
+        "product_id": {"type": "string"},
+        "horizon_sessions": {"type": "integer"},
+        "decision": {"const": "ABSTAIN"},
+        "candidates": {"type": "array", "maxItems": 0},
+        "entry_price": {"type": "null"},
+        "exit_price": {"type": "null"}
+      }
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_collection_performed",
+        "model_training_performed",
+        "research_candidate_emitted",
+        "recommendation_emitted"
+      ],
+      "properties": {
+        "network_collection_performed": {"const": false},
+        "model_training_performed": {"const": false},
+        "research_candidate_emitted": {"const": false},
+        "recommendation_emitted": {"const": false}
+      }
+    }
+  }
+}

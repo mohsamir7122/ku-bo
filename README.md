@@ -120,6 +120,43 @@ kubo --project-root /absolute/path/to/ku-bo validate-source-network
 PYTHONPATH=src python -m kubo validate-source-network
 ```
 
+عقود `KU-BO-017` الخاصة بجودة المصادر والبرنامج المتكيف والـdry-run:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-config
+PYTHONPATH=src python -m kubo --project-root . validate-market-scope
+PYTHONPATH=src python -m kubo --project-root . validate-source-quality-policy
+PYTHONPATH=src python -m kubo --project-root . validate-source-fallback-policy
+PYTHONPATH=src python -m kubo --project-root . validate-predecessor-capability-parity
+PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
+```
+
+يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لأربع عشرة
+وظيفة مستخدم فقط؛ لا يدمج تاريخ Git خاصًا، ولا يشغّل محركًا ثانيًا، ولا ينقل
+بيانات أو نتائج أو ادعاءات جاهزية. ويخطط `plan-source-fallback` للمحاولة التالية
+من إيصالات محفوظة من دون تنفيذ اتصال شبكي أو تجاوز تسجيل الدخول أو جدار دفع:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . plan-source-fallback \
+  --request /absolute/path/to/source-fallback-request.json
+```
+
+كما يفحص `validate-portfolio-state` Snapshot المحفظة وسجل الأوامر مقابل بايتات
+دليل خاصة فعلية وSHA-256 ووقت قرار، لكنه لا يتصل بالوسيط ولا يرسل أمرًا ولا
+يحوّل نجاح البنية إلى توصية:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-portfolio-state \
+  --snapshot /private/path/portfolio-snapshot.json \
+  --orders /private/path/order-ledger.json \
+  --evidence-root /private/path/evidence \
+  --decision-at 2026-08-25T09:30:00+03:00
+```
+
+هذه الأوامر تثبت العقود أوتفحص مدخلات خاصة فقط. تفاصيل الجرد الخاص وFactor 9 وإيصالات المراحل في
+`docs/KU_BO_017_LIVE_DRY_RUN_AR.md`، والأساس البحثي في
+`docs/RESEARCH_METHOD_FOUNDATIONS_AR.md`.
+
 ## وصفات الوصول وفحص القدرة
 
 يضيف `KU-BO-015` طبقة تخطيط لاختبار الوصول إلى المصادر قبل أي جمع أو Parser.

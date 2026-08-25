@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/live-dry-run-report.schema.json",
+  "title": "KU-BO no-network daily dry-run report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_id",
+    "decision_session_date",
+    "stage_count",
+    "receipt_count",
+    "last_receipt_sha256",
+    "blocked_stage",
+    "products",
+    "candidate_count",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["DRY_RUN_COMPLETE_NO_RECOMMENDATION", "DRY_RUN_BLOCKED"]},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"},
+    "decision_session_date": {"type": "string", "format": "date"},
+    "stage_count": {"const": 10},
+    "receipt_count": {"const": 10},
+    "last_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "blocked_stage": {"oneOf": [{"type": "null"}, {"type": "string"}]},
+    "products": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["product_id", "horizon_sessions"],
+        "properties": {
+          "product_id": {"type": "string"},
+          "horizon_sessions": {"type": "integer", "enum": [3, 5, 21, 63]}
+        }
+      }
+    },
+    "candidate_count": {"const": 0},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network_collection_performed", "model_training_performed", "research_candidate_emitted", "recommendation_emitted"],
+      "properties": {
+        "network_collection_performed": {"const": false},
+        "model_training_performed": {"const": false},
+        "research_candidate_emitted": {"const": false},
+        "recommendation_emitted": {"const": false}
+      }
+    }
+  }
+}

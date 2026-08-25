@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/live-dry-run-contract.schema.json",
+  "title": "KU-BO no-network daily dry-run contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "decision_session_date",
+    "mode",
+    "stages",
+    "products",
+    "input_bindings",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"},
+    "decision_session_date": {"type": "string", "format": "date"},
+    "mode": {"const": "NO_NETWORK_DRY_RUN"},
+    "stages": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "prefixItems": [
+        {"const": "VERIFY_SESSION_AND_ACQUIRE_RUN_LOCK"},
+        {"const": "PROBE_AUTHORIZED_SOURCE_ACCESS"},
+        {"const": "COLLECT_AND_HASH_RAW_EVIDENCE"},
+        {"const": "VALIDATE_AND_NORMALIZE_POINT_IN_TIME"},
+        {"const": "BUILD_EVENT_AND_FACTOR_SNAPSHOT"},
+        {"const": "RUN_PREVIOUS_APPROVED_CHAMPION"},
+        {"const": "SEAL_DAILY_RESEARCH_OUTPUT"},
+        {"const": "MATURE_AND_SCORE_PRIOR_OUTCOMES"},
+        {"const": "TRAIN_CHALLENGERS"},
+        {"const": "EMIT_DRAFT_CHANGE_PROPOSALS"}
+      ],
+      "items": false
+    },
+    "products": {"$ref": "#/$defs/products"},
+    "input_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_probe_sha256",
+        "raw_evidence_manifest_sha256",
+        "normalized_snapshot_sha256",
+        "factor_snapshot_sha256",
+        "champion_freeze_sha256"
+      ],
+      "properties": {
+        "source_probe_sha256": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sha256"}
+        },
+        "raw_evidence_manifest_sha256": {"$ref": "#/$defs/optionalSha256"},
+        "normalized_snapshot_sha256": {"$ref": "#/$defs/optionalSha256"},
+        "factor_snapshot_sha256": {"$ref": "#/$defs/optionalSha256"},
+        "champion_freeze_sha256": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "three_session_rank",
+            "five_session_weekly_swing",
+            "twenty_one_session_monthly_swing",
+            "sixty_three_session_quarter_rank"
+          ],
+          "properties": {
+            "three_session_rank": {"$ref": "#/$defs/optionalSha256"},
+            "five_session_weekly_swing": {"$ref": "#/$defs/optionalSha256"},
+            "twenty_one_session_monthly_swing": {"$ref": "#/$defs/optionalSha256"},
+            "sixty_three_session_quarter_rank": {"$ref": "#/$defs/optionalSha256"}
+          }
+        }
+      }
+    },
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "optionalSha256": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/sha256"}
+      ]
+    },
+    "products": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/product3"},
+        {"$ref": "#/$defs/product5"},
+        {"$ref": "#/$defs/product21"},
+        {"$ref": "#/$defs/product63"}
+      ],
+      "items": false
+    },
+    "product3": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "three_session_rank"}, "horizon_sessions": {"const": 3}}}
+      ]
+    },
+    "product5": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "five_session_weekly_swing"}, "horizon_sessions": {"const": 5}}}
+      ]
+    },
+    "product21": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "twenty_one_session_monthly_swing"}, "horizon_sessions": {"const": 21}}}
+      ]
+    },
+    "product63": {
+      "allOf": [
+        {"$ref": "#/$defs/product"},
+        {"properties": {"product_id": {"const": "sixty_three_session_quarter_rank"}, "horizon_sessions": {"const": 63}}}
+      ]
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product_id", "horizon_sessions"],
+      "properties": {
+        "product_id": {"type": "string"},
+        "horizon_sessions": {"type": "integer"}
+      }
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_collection_performed",
+        "model_training_performed",
+        "research_candidate_emitted",
+        "recommendation_emitted"
+      ],
+      "properties": {
+        "network_collection_performed": {"const": false},
+        "model_training_performed": {"const": false},
+        "research_candidate_emitted": {"const": false},
+        "recommendation_emitted": {"const": false}
+      }
+    }
+  }
+}
