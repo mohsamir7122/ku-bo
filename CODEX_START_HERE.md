@@ -17,12 +17,16 @@ publish private data without a separately recorded user decision.
 4. `docs/codex/PROJECT_RULES.md`
 5. `docs/codex/CURRENT_STATUS.md`
 6. `docs/codex/CURRENT_TASK.md`
-7. `docs/PROJECT_CONVERSATION_SYNTHESIS_AR.md`
-8. `docs/FACTOR9_DRIVE_ADMISSION_AR.md`
-9. `docs/CODEX_LIVE_HANDOFF_AR.md`
-10. `docs/codex/ACCEPTANCE_GATES.md`
-11. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
-12. `docs/codex/USER_DECISIONS.md`
+7. `docs/codex/PRIVATE_PREDECESSOR_MIGRATION_EXECPLAN.md`
+8. `docs/codex/migrations/private-predecessor-to-ku-bo/STATUS.md`
+9. `docs/codex/migrations/private-predecessor-to-ku-bo/PRIVATE_SOURCE_ORIENTATION.md`
+10. run `python scripts/validate_private_predecessor_migration_control.py --project-root . --json`
+11. `docs/PROJECT_CONVERSATION_SYNTHESIS_AR.md`
+12. `docs/FACTOR9_DRIVE_ADMISSION_AR.md`
+13. `docs/CODEX_LIVE_HANDOFF_AR.md`
+14. `docs/codex/ACCEPTANCE_GATES.md`
+15. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
+16. `docs/codex/USER_DECISIONS.md`
 
 Do not edit code before the bootstrap passes and the remote, base branch, current
 HEAD, open PR dependency chain, and current CI state have been verified.
@@ -35,15 +39,36 @@ Repository:
 mohsamir7122/ku-bo
 ```
 
-Active bootstrap branch:
+Active migration branch:
 
 ```text
-agent/ku-bo-016-codex-live-bootstrap
+agent/private-predecessor-capability-migration-v1
 ```
 
-The exact head and Draft PR state are recorded in `docs/codex/CURRENT_STATUS.md`.
-Always verify them live. `KU-BO-015` is the dependency for this bootstrap, and the
-active next task is defined in `docs/codex/CURRENT_TASK.md`.
+The branch is stacked on `agent/ku-bo-016-codex-live-bootstrap`, which is stacked
+on `agent/ku-bo-015-source-access-recipes`. The exact heads and Draft PR state are
+recorded in `docs/codex/CURRENT_STATUS.md`; always verify them live. Continue on
+the existing migration branch when it exists. Do not create a duplicate branch.
+
+## Active migration meaning
+
+- The goal is complete user-job and capability parity, not a blind file or Git
+  history merge.
+- KU-BO remains the single canonical package, engine, CLI, evidence model, and
+  decision boundary.
+- The configured private predecessor is a read-only source. Resolve its exact
+  repository and refs only in uncommitted private runtime storage; inspect every
+  materially unique ref before declaring the private census complete.
+- Treat source paths as potentially sensitive. Publish normal repository paths
+  only after review; represent sensitive ones by opaque IDs and reconcile the
+  census with Git-tree/blob counts and object-multiset digests.
+- Do not port unsafe self-asserted authorization, fixed confidence, look-ahead,
+  fabricated labels, or other behavior that conflicts with KU-BO gates. Preserve
+  the user job through safe reimplementation and retain the old behavior only as
+  a negative test or documented rejection.
+- Keep skills thin and discoverable; put shared logic in `src/kubo`.
+- A software migration may be complete while external data capabilities remain
+  `LIVE_DEPENDENT` or `LICENSED_FEED_DEPENDENT`.
 
 ## Locked runtime meaning
 
@@ -82,8 +107,14 @@ recorded. Never fabricate evidence or weaken a gate. Use
 The user can start the next Codex session with:
 
 ```text
-Read CODEX_START_HERE.md and execute CURRENT_TASK end to end. Start with the locked
-bootstrap validator, keep AI Rebuild private, preserve and admit Factor 9, build the
-daily dry-run and previous-freeze controls, run all gates, and open a Draft PR. Do
-not merge or publish private data.
+Open `mohsamir7122/ku-bo`, check out the existing branch
+`agent/private-predecessor-capability-migration-v1`, and read
+`CODEX_START_HERE.md`. Resolve `PRIVATE_PREDECESSOR_SOURCE` only from the private
+source locator supplied in this ChatGPT session. Run both locked validators,
+verify the stacked PR chain, and execute `docs/codex/CURRENT_TASK.md` plus the
+migration ExecPlan. Keep exact source metadata private, inventory every source
+item and user job, safely reimplement them on KU-BO core, add the dedicated
+evidence-verifying completion validator, run all gates, and update the same Draft
+PR. Do not merge, modify the source, publish private metadata, train, run a real
+backtest, or claim live/financial readiness.
 ```

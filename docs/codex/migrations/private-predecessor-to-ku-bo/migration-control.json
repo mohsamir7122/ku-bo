@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.1",
+  "migration_id": "KU-BO-MIG-001",
+  "status": "READY_FOR_PRIVATE_SOURCE_ORIENTATION",
+  "target": {
+    "repository": "mohsamir7122/ku-bo",
+    "canonical_single_codebase": true,
+    "control_base_branch": "agent/ku-bo-016-codex-live-bootstrap",
+    "control_base_sha": "6e9ab870e727494d5eb9e1ec9fa98829d6391d68",
+    "task_branch": "agent/private-predecessor-capability-migration-v1",
+    "expected_pr_base": "agent/ku-bo-016-codex-live-bootstrap",
+    "package_root": "src/kubo",
+    "cli": "kubo",
+    "pr_mode": "DRAFT"
+  },
+  "source": {
+    "public_alias": "PRIVATE_PREDECESSOR_SOURCE",
+    "repository_locator_storage": "PRIVATE_RUNTIME_ONLY",
+    "write_allowed": false,
+    "git_history_merge_allowed": false,
+    "discover_additional_unique_refs": true,
+    "required_ref_roles": [
+      {
+        "ref_id": "private-ref-primary",
+        "role": "PRIMARY_REF_AT_EXECUTION",
+        "locator_storage": "PRIVATE_RUNTIME_ONLY"
+      },
+      {
+        "ref_id": "private-ref-known-reference",
+        "role": "KNOWN_UNMERGED_REFERENCE_AT_EXECUTION",
+        "locator_storage": "PRIVATE_RUNTIME_ONLY"
+      }
+    ],
+    "inventory_scope": "ALL_GIT_BLOB_PATH_OCCURRENCES_AND_USER_JOBS",
+    "sensitive_locator_policy": "OPAQUE_PUBLIC_ID_PRIVATE_RUNTIME_LOCATOR"
+  },
+  "authorized_read_scope": {
+    "private_source_repository_read_allowed": true,
+    "repository_code_and_git_metadata_only": true,
+    "runtime_private_data_read_allowed": false,
+    "credentials_or_secret_material_read_allowed": false,
+    "private_locator_publication_allowed": false
+  },
+  "architecture": {
+    "migration_mode": "COMPLETE_CAPABILITY_REIMPLEMENTATION",
+    "blind_file_merge_allowed": false,
+    "second_engine_allowed": false,
+    "second_package_allowed": false,
+    "conflicting_registry_allowed": false,
+    "skills_policy": "THIN_WRAPPERS_OVER_KUBO_CORE",
+    "unsafe_behavior_policy": "NEGATIVE_CONTROL_AND_SAFE_REIMPLEMENTATION"
+  },
+  "permissions": {
+    "main_write_allowed": false,
+    "merge_allowed": false,
+    "force_push_allowed": false,
+    "permanent_delete_or_archive_allowed": false,
+    "source_repository_write_allowed": false,
+    "private_runtime_data_access_allowed": false,
+    "credential_export_allowed": false,
+    "licensed_or_paid_source_activation_allowed": false,
+    "real_data_commit_allowed": false,
+    "model_training_allowed": false,
+    "real_backtest_allowed": false,
+    "live_activation_allowed": false,
+    "financial_execution_allowed": false
+  },
+  "phase_order": [
+    "SAFE_ORIENTATION_AND_BASELINE",
+    "PRIVATE_SOURCE_CENSUS_AND_RECEIPT",
+    "USER_JOB_DENOMINATOR_AND_ARCHITECTURE_MAP",
+    "SHARED_MIGRATION_FOUNDATION",
+    "CAPABILITY_REIMPLEMENTATION",
+    "COMPLETE_PARITY_PACKAGING_AND_DRAFT_PUBLICATION"
+  ],
+  "required_seed_capabilities": [
+    "private-cap-001",
+    "private-cap-002",
+    "private-cap-003",
+    "private-cap-004",
+    "private-cap-005",
+    "private-cap-006",
+    "private-cap-007",
+    "private-cap-008",
+    "private-cap-009",
+    "private-cap-010",
+    "private-cap-011",
+    "private-cap-012",
+    "private-cap-013",
+    "private-cap-014"
+  ],
+  "required_artifacts": [
+    "docs/codex/migrations/private-predecessor-to-ku-bo/manifest.json",
+    "docs/codex/migrations/private-predecessor-to-ku-bo/capability-parity.json",
+    "docs/codex/migrations/private-predecessor-to-ku-bo/PRIVATE_SOURCE_ORIENTATION.md",
+    "docs/codex/migrations/private-predecessor-to-ku-bo/STATUS.md",
+    "docs/codex/handoffs/KU-BO-MIG-001-result.md"
+  ],
+  "completion_evidence_contract": {
+    "preparation_validator_can_claim_migration_complete": false,
+    "dedicated_completion_validator_required": true,
+    "private_source_runtime_receipt_required": true,
+    "source_tree_and_blob_reconciliation_required": true,
+    "sanitized_user_job_denominator_required": true,
+    "semantic_and_negative_parity_receipts_required": true,
+    "full_test_and_package_receipt_required": true,
+    "exact_head_ci_receipt_required": true,
+    "draft_pr_state_receipt_required": true,
+    "merge_not_performed_required": true
+  },
+  "claim_boundaries": {
+    "preparation_is_migration_complete": false,
+    "capability_parity_is_live_operational": false,
+    "software_migration_is_real_backtest_ready": false,
+    "synthetic_tests_prove_predictive_skill": false,
+    "score_is_probability": false,
+    "research_candidate_is_buy_recommendation": false,
+    "source_definition_proves_access_or_rights": false
+  }
+}

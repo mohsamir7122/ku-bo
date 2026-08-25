@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "migration_id": "KU-BO-MIG-001",
+  "public_summary_status": "NOT_STARTED",
+  "source_alias": "PRIVATE_PREDECESSOR_SOURCE",
+  "declared_source_ref_roles": [
+    {
+      "ref_id": "private-ref-primary",
+      "role": "PRIMARY_REF_AT_EXECUTION",
+      "locator_storage": "PRIVATE_RUNTIME_ONLY"
+    },
+    {
+      "ref_id": "private-ref-known-reference",
+      "role": "KNOWN_UNMERGED_REFERENCE_AT_EXECUTION",
+      "locator_storage": "PRIVATE_RUNTIME_ONLY"
+    }
+  ],
+  "private_inventory_receipt_id": null,
+  "private_inventory_receipt_storage": "UNCOMMITTED_RUNTIME_ONLY",
+  "sanitized_items": [],
+  "public_item_contract": {
+    "normal_source_locator_allowed_after_privacy_review": true,
+    "sensitive_source_locator_allowed": false,
+    "sensitive_item_public_id_format": "opaque-LOWERCASE_TOKEN",
+    "source_commit_or_tree_oid_publication_allowed": false,
+    "private_inventory_count_publication_allowed": false
+  },
+  "completion_claim_allowed": false,
+  "claim_boundaries": {
+    "empty_public_summary_proves_inventory": false,
+    "private_receipt_id_alone_proves_inventory": false,
+    "preparation_validator_proves_source_access": false,
+    "preparation_validator_proves_migration_completion": false
+  }
+}
