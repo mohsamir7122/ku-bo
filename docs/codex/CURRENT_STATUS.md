@@ -12,7 +12,9 @@ main 59833bf73510b3aa3901f628cbf2c13c0d01cf79
       `-- agent/ku-bo-015-source-access-recipes 6aa50ac83112d0e3a2e4440e3a6676115b9fbe4a
           `-- KU-BO-016 / Draft PR #20
               `-- agent/ku-bo-016-codex-live-bootstrap 6e9ab870e727494d5eb9e1ec9fa98829d6391d68
-                  `-- KU-BO-MIG-001 / migration branch and Draft PR pending publication
+                  `-- KU-BO-MIG-001 / Draft PR #21
+                      `-- agent/private-predecessor-capability-migration-v1
+                          initial published implementation head 435d28503a60ae9316909304537f7c42e937d066
 ```
 
 CI run `32755116575` was independently verified successful for exact public base
@@ -89,6 +91,8 @@ exact-head CI for the migration branch, Draft-PR state, or financial validity.
 
 ## Publication state
 
-The privacy-safe migration branch and Draft PR are prepared for publication. After
-publication, record the exact public head, PR number, and exact-head CI here and in
-the migration status. Do not merge or enable auto-merge.
+The privacy-safe preparation control is published as Draft PR #21 on
+`agent/private-predecessor-capability-migration-v1`. Its initial published
+implementation head is `435d28503a60ae9316909304537f7c42e937d066`.
+Exact-head CI for the latest PR head remains required before any readiness claim.
+Do not merge or enable auto-merge.

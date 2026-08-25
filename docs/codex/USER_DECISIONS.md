@@ -276,7 +276,7 @@ USER_DECISION: APPROVED by the active user instruction to prepare KU-BO so Codex
 DECIDED_AT: 2026-08-25
 DECIDED_BY: Active repository owner via current ChatGPT instruction
 IMPLEMENTATION_GUARD: The read grant is limited to repository code and Git metadata through the normal authorized connector. Exact repository/ref/commit/tree locators, counts, sensitive paths/findings, and reversible opaque mappings remain uncommitted private runtime data. No unrelated private access, credential export, source write/history merge, main write, PR merge/auto-merge, force-push, deletion/archive, paid/licensed activation, training, real backtest, live promotion, recommendation, or execution.
-IMPLEMENTED_IN_BRANCH_OR_PR: agent/private-predecessor-capability-migration-v1 / Draft PR pending publication
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/private-predecessor-capability-migration-v1 / Draft PR #21 / initial published implementation head 435d28503a60ae9316909304537f7c42e937d066 / preparation only; no migration or merge performed
 ```
 
 ```text
