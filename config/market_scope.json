@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "scope_id": "ku-bo-kuwait-only-v1",
+  "status": "LOCKED_SINGLE_MARKET",
+  "jurisdiction_code": "KW",
+  "market_name": "BOURSA_KUWAIT",
+  "currency": "KWD",
+  "timezone": "Asia/Kuwait",
+  "identity_key": "security_code",
+  "policy": {
+    "single_market_only": true,
+    "additional_market_adapters_allowed": false,
+    "runtime_market_override_allowed": false,
+    "cross_market_training_allowed": false,
+    "cross_market_evaluation_allowed": false
+  },
+  "claim_boundaries": {
+    "external_research_transfers_market_validity": false,
+    "generic_adapter_proves_market_support": false,
+    "scope_change_requires_new_version_and_user_approval": true
+  }
+}

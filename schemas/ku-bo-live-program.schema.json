@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/ku-bo-live-program.schema.json",
+  "title": "KU-BO private research operating program",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "program_id",
+    "status",
+    "timezone",
+    "research_cycles",
+    "improvement_cycles",
+    "existing_shadow_contract",
+    "products",
+    "research_views",
+    "delivery",
+    "required_gates",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "program_id": {"const": "ku-bo-moh-adaptive-research-v1"},
+    "status": {"const": "DISABLED_UNTIL_AUTHORIZED_AND_GATED"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "research_cycles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/$defs/timedCycle"}
+    },
+    "improvement_cycles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cycle_id", "start_local"],
+        "properties": {
+          "cycle_id": {"type": "string", "minLength": 3},
+          "start_local": {"type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"}
+        }
+      }
+    },
+    "existing_shadow_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_local", "watchdog_local", "status"],
+      "properties": {
+        "primary_local": {"const": "15:07"},
+        "watchdog_local": {"const": "15:37"},
+        "status": {"const": "DISABLED_CONTRACT_ONLY"}
+      }
+    },
+    "products": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["product_id", "horizon_sessions"],
+        "properties": {
+          "product_id": {"type": "string"},
+          "horizon_sessions": {"type": "integer", "enum": [3, 5, 21, 63]}
+        }
+      }
+    },
+    "research_views": {"type": "array", "minItems": 4, "uniqueItems": true, "items": {"type": "string"}},
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["drive_logical_folder", "email_mode", "recipient_resolution"],
+      "properties": {
+        "drive_logical_folder": {"const": "PRIVATE_REPORT_DESTINATION"},
+        "email_mode": {"const": "SEALED_RESULT_OR_BLOCKER_NOTICE"},
+        "recipient_resolution": {"const": "AUTHORIZED_RUNTIME_ACCOUNT"}
+      }
+    },
+    "required_gates": {"type": "array", "minItems": 7, "uniqueItems": true, "items": {"type": "string"}},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 8,
+      "maxProperties": 8,
+      "patternProperties": {"^[a-z][a-z0-9_]+$": {"const": false}}
+    }
+  },
+  "$defs": {
+    "timedCycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cycle_id", "start_local", "target_local"],
+      "properties": {
+        "cycle_id": {"type": "string", "minLength": 3},
+        "start_local": {"type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"},
+        "target_local": {"type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"}
+      }
+    }
+  }
+}

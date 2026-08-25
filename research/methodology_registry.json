@@ -51,8 +51,7 @@
         {"title": "When Is a Liability Not a Liability?", "url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.2010.01625.x", "kind": "peer_reviewed_paper"},
         {"title": "FinBERT", "url": "https://arxiv.org/abs/1908.10063", "kind": "research_paper"},
         {"title": "FinAraT5", "url": "https://aclanthology.org/2023.ldk-1.25.pdf", "kind": "peer_reviewed_paper"},
-        {"title": "Assessing Look-Ahead Bias in GPT Sentiment", "url": "https://arxiv.org/abs/2309.17322", "kind": "research_paper"},
-        {"title": "LLM-Based Financial Sentiment Analysis in Arabic: Evidence from Saudi Markets", "url": "https://arxiv.org/abs/2605.19714", "kind": "research_paper"}
+        {"title": "Assessing Look-Ahead Bias in GPT Sentiment", "url": "https://arxiv.org/abs/2309.17322", "kind": "research_paper"}
       ],
       "production_state": "BLOCKED_UNTIL_KUWAIT_GOLD_SET",
       "rules": ["tone_not_truth", "tone_not_market_probability", "kuwait_arabic_gold_set", "regional_corpus_requires_kuwait_transfer_validation", "out_of_time_evaluation", "company_name_mask_ablation", "author_reliability_from_resolved_claims"],

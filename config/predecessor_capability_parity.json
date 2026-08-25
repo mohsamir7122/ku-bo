@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0",
+  "manifest_id": "ku-bo-private-predecessor-capability-parity-v1",
+  "source_alias": "PRIVATE_PREDECESSOR_SOURCE",
+  "target_package": "kubo",
+  "market_scope_id": "ku-bo-kuwait-only-v1",
+  "migration_rules": {
+    "source_repository_read_only": true,
+    "git_history_merge_allowed": false,
+    "second_engine_allowed": false,
+    "direct_source_script_execution_allowed": false,
+    "raw_private_data_copy_allowed": false,
+    "source_locator_publication_allowed": false,
+    "reimplementation_through_kubo_required": true
+  },
+  "capabilities": [
+    {
+      "capability_id": "official_evidence_acquisition",
+      "user_job": "Import official identity and calendar evidence with provenance receipts.",
+      "target_module": "kubo.official_foundation_import",
+      "target_callable": "import_official_foundation",
+      "cli_command": "kubo-data-foundation import-official-foundation",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "EVIDENCE_IMPORT_ONLY"
+    },
+    {
+      "capability_id": "user_authorized_price_import",
+      "user_job": "Import user-authorized historical price exports without provider impersonation.",
+      "target_module": "kubo.user_price_export",
+      "target_callable": "import_investing_user_exports",
+      "cli_command": "kubo-data-foundation import-user-price-exports",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "EVIDENCE_IMPORT_ONLY"
+    },
+    {
+      "capability_id": "semantic_source_fallback",
+      "user_job": "Continue an evidence capability after transport or semantic source failure.",
+      "target_module": "kubo.source_fallback",
+      "target_callable": "plan_source_fallback",
+      "cli_command": "kubo plan-source-fallback",
+      "software_status": "REIMPLEMENTED_IN_CANONICAL_CORE",
+      "operational_ceiling": "NO_NETWORK_PLANNING_ONLY"
+    },
+    {
+      "capability_id": "source_health_validation",
+      "user_job": "Distinguish source transport reachability from usable semantic evidence.",
+      "target_module": "kubo.source_network",
+      "target_callable": "validate_live_probe",
+      "cli_command": "kubo validate-live-probe",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "STRUCTURAL_VALIDATION_ONLY"
+    },
+    {
+      "capability_id": "research_candidate_ranking",
+      "user_job": "Rank research candidates only after source coverage and conflict checks.",
+      "target_module": "kubo.research_rank",
+      "target_callable": "rank_research_candidates",
+      "cli_command": null,
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "RESEARCH_ONLY"
+    },
+    {
+      "capability_id": "catalyst_context_deduplication",
+      "user_job": "Deduplicate catalyst and context claims by evidence origin.",
+      "target_module": "kubo.context_research",
+      "target_callable": "deduplicate_context_events",
+      "cli_command": null,
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "RESEARCH_ONLY"
+    },
+    {
+      "capability_id": "momentum_event_dataset",
+      "user_job": "Canonicalize event records for later momentum and event-study work.",
+      "target_module": "kubo.events",
+      "target_callable": "canonicalize_events",
+      "cli_command": null,
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "DATASET_CONSTRUCTION_ONLY"
+    },
+    {
+      "capability_id": "portfolio_order_reconciliation",
+      "user_job": "Validate point-in-time portfolio and order exports against evidence bytes.",
+      "target_module": "kubo.portfolio_state",
+      "target_callable": "validate_portfolio_state",
+      "cli_command": "kubo validate-portfolio-state",
+      "software_status": "REIMPLEMENTED_IN_CANONICAL_CORE",
+      "operational_ceiling": "STRUCTURAL_VALIDATION_ONLY"
+    },
+    {
+      "capability_id": "training_event_admission",
+      "user_job": "Validate the proposed event-development and locked-test program contract.",
+      "target_module": "kubo.ku_bo_live_program",
+      "target_callable": "validate_ku_bo_live_program",
+      "cli_command": "kubo validate-ku-bo-live-program",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "NO_TRAINING"
+    },
+    {
+      "capability_id": "factor9_admission",
+      "user_job": "Admit Factor9 research assets only after evidence and leakage gates.",
+      "target_module": "kubo.factor9_admission",
+      "target_callable": "validate_factor9_admission_manifest",
+      "cli_command": "kubo validate-factor9-admission",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "ADMISSION_ONLY"
+    },
+    {
+      "capability_id": "market_regime_research",
+      "user_job": "Build point-in-time factor snapshots for regime-oriented research.",
+      "target_module": "kubo.context_research",
+      "target_callable": "build_factor_snapshot",
+      "cli_command": null,
+      "software_status": "CONTRACT_BOUND_ONLY",
+      "operational_ceiling": "RESEARCH_ONLY"
+    },
+    {
+      "capability_id": "resumable_daily_pipeline",
+      "user_job": "Run a receipt-backed resumable daily dry-run with previous-session champion freezes.",
+      "target_module": "kubo.live_dry_run",
+      "target_callable": "run_daily_dry_run",
+      "cli_command": "kubo run-live-dry-run",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "ABSTAIN_ONLY"
+    },
+    {
+      "capability_id": "daily_monitor_validation",
+      "user_job": "Revalidate a completed or interrupted dry-run from immutable receipts.",
+      "target_module": "kubo.live_dry_run",
+      "target_callable": "validate_live_dry_run",
+      "cli_command": "kubo validate-live-dry-run",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "ABSTAIN_ONLY"
+    },
+    {
+      "capability_id": "backtest_evaluation",
+      "user_job": "Evaluate a sealed forty-session replay without changing its frozen decisions.",
+      "target_module": "kubo.forty_session_replay",
+      "target_callable": "evaluate_forty_session_replay",
+      "cli_command": "kubo evaluate-forty-session-replay",
+      "software_status": "BOUND_TO_EXISTING_CORE",
+      "operational_ceiling": "EVALUATION_ONLY"
+    }
+  ],
+  "claim_boundaries": {
+    "software_binding_proves_operational_readiness": false,
+    "predecessor_claims_transfer_validation": false,
+    "private_source_detail_is_public": false,
+    "additional_market_support_imported": false,
+    "training_authorized": false,
+    "recommendations_authorized": false,
+    "live_execution_authorized": false
+  }
+}

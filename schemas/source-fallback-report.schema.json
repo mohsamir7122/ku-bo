@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/source-fallback-report.schema.json",
+  "title": "KU-BO source fallback planning report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "request_id",
+    "capability_id",
+    "decision_at",
+    "policy_sha256",
+    "attempts",
+    "selected_source",
+    "next_source",
+    "original_source_verification_queue",
+    "source_certainty_state",
+    "analytical_certainty_state",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {
+      "enum": [
+        "CAPABILITY_EVIDENCE_AVAILABLE",
+        "CAPABILITY_VERIFIED_ZERO_RESULT",
+        "CAPABILITY_FALLBACK_REQUIRED",
+        "CAPABILITY_EXHAUSTED_ABSTAIN"
+      ]
+    },
+    "request_id": {"type": "string"},
+    "capability_id": {"type": "string"},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "policy_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}},
+    "selected_source": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sourceReceipt"}]},
+    "next_source": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sourceReceipt"}]},
+    "original_source_verification_queue": {"type": "array", "items": {"$ref": "#/$defs/originalVerification"}},
+    "source_certainty_state": {
+      "enum": ["DIRECT_PRIMARY_RECEIPT", "NON_PRIMARY_RECEIPT_PENDING_CONFIRMATION", "VERIFIED_ZERO_RECEIPT", "NO_USABLE_RECEIPT"]
+    },
+    "analytical_certainty_state": {"const": "NOT_COMPUTED"},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_access_performed",
+        "product_quorum_satisfied",
+        "probability_computed",
+        "recommendation_generated",
+        "access_control_bypassed",
+        "source_promoted_automatically"
+      ],
+      "properties": {
+        "network_access_performed": {"const": false},
+        "product_quorum_satisfied": {"const": false},
+        "probability_computed": {"const": false},
+        "recommendation_generated": {"const": false},
+        "access_control_bypassed": {"const": false},
+        "source_promoted_automatically": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "attempted_at",
+        "transport_status",
+        "semantic_status",
+        "qualified_row_count",
+        "zero_result_verified",
+        "cited_original_urls",
+        "disposition"
+      ],
+      "properties": {
+        "source_id": {"type": "string"},
+        "attempted_at": {"type": "string", "format": "date-time"},
+        "transport_status": {"enum": ["SUCCESS", "HTTP_ERROR", "TIMEOUT", "ACCESS_BLOCKED", "ENTITLEMENT_REQUIRED", "NETWORK_ERROR"]},
+        "semantic_status": {"enum": ["ROWS_PRESENT", "ZERO_ROWS", "VERIFIED_ZERO_RESULT", "PARSE_FAILED", "ACCESS_BLOCKED", "NOT_EVALUATED"]},
+        "qualified_row_count": {"type": "integer", "minimum": 0},
+        "zero_result_verified": {"type": "boolean"},
+        "cited_original_urls": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "uri"}},
+        "disposition": {"enum": ["AVAILABLE_ROWS", "VERIFIED_ZERO_RESULT", "UNVERIFIED_ZERO_RESULT", "SEMANTIC_FAILURE", "SOURCE_ACCESS_TERMINAL"]}
+      }
+    },
+    "sourceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_class", "enabled_by_default", "requires_entitlement", "requires_runtime_domain_registry", "implementation_status", "live_operational"],
+      "properties": {
+        "source_id": {"type": "string"},
+        "source_class": {"type": "string"},
+        "enabled_by_default": {"type": "boolean"},
+        "requires_entitlement": {"type": "boolean"},
+        "requires_runtime_domain_registry": {"type": "boolean"},
+        "implementation_status": {"type": "string"},
+        "live_operational": {"type": "boolean"}
+      }
+    },
+    "originalVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["discovered_by_source_id", "original_url", "matched_registered_source_ids", "status"],
+      "properties": {
+        "discovered_by_source_id": {"type": "string"},
+        "original_url": {"type": "string", "format": "uri"},
+        "matched_registered_source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "status": {"enum": ["REGISTERED_ORIGINAL_REQUIRES_VERIFICATION", "UNREGISTERED_ORIGINAL_REQUIRES_ADMISSION"]}
+      }
+    }
+  }
+}

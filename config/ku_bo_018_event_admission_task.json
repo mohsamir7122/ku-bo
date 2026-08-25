@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "task_id": "KU-BO-018",
+  "status": "PROPOSED_NOT_STARTED",
+  "mission": "EVENT_ADMISSION_AND_TRIAL_REGISTRY",
+  "development_set": {
+    "major_events": 50,
+    "control_events": 200,
+    "locked_test_overlap_allowed": false
+  },
+  "locked_test": {
+    "minimum_events": 500,
+    "maximum_events": 600,
+    "split_policy": "PURGED_EMBARGOED_WALK_FORWARD"
+  },
+  "training": {
+    "default_rounds": 30,
+    "maximum_rounds": 50,
+    "rounds_above_default_require_preregistered_hypothesis": true,
+    "allowed_in_task": false
+  },
+  "required_artifacts": [
+    "EVENT_EVIDENCE_MANIFEST",
+    "CONTROL_MATCHING_REPORT",
+    "POINT_IN_TIME_REVIEW",
+    "TRIAL_REGISTRY",
+    "LOCKED_TEST_SEAL"
+  ],
+  "claim_boundaries": {
+    "task_started": false,
+    "training_allowed": false,
+    "locked_test_visible_to_development": false,
+    "accuracy_claim_allowed": false,
+    "recommendation_allowed": false
+  }
+}
