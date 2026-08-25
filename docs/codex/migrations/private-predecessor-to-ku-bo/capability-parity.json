@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.1",
+  "migration_id": "KU-BO-MIG-001",
+  "denominator_status": "PRIVATE_DISCOVERY_NOT_STARTED",
+  "source_binding": "PRIVATE_RUNTIME_ONLY",
+  "capabilities": [
+    {
+      "capability_id": "private-cap-001",
+      "private_source_binding_id": "private-binding-001",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-002",
+      "private_source_binding_id": "private-binding-002",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-003",
+      "private_source_binding_id": "private-binding-003",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-004",
+      "private_source_binding_id": "private-binding-004",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-005",
+      "private_source_binding_id": "private-binding-005",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-006",
+      "private_source_binding_id": "private-binding-006",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-007",
+      "private_source_binding_id": "private-binding-007",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-008",
+      "private_source_binding_id": "private-binding-008",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-009",
+      "private_source_binding_id": "private-binding-009",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-010",
+      "private_source_binding_id": "private-binding-010",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-011",
+      "private_source_binding_id": "private-binding-011",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-012",
+      "private_source_binding_id": "private-binding-012",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-013",
+      "private_source_binding_id": "private-binding-013",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    },
+    {
+      "capability_id": "private-cap-014",
+      "private_source_binding_id": "private-binding-014",
+      "mapping_status": "NOT_STARTED",
+      "implementation_status": "NOT_STARTED",
+      "contract_parity_status": "NOT_RUN",
+      "user_job_parity_status": "NOT_RUN",
+      "runtime_capability_status": "DEFINED_ONLY",
+      "evidence_status": "PRIVATE_SOURCE_DISCOVERY_REQUIRED",
+      "required_test_classes": ["HAPPY_PATH", "ADVERSARIAL_PATH", "CLAIM_BOUNDARY"]
+    }
+  ],
+  "user_jobs": [],
+  "completion_claim_allowed": false,
+  "claim_boundaries": {
+    "opaque_seed_is_capability_definition": false,
+    "empty_user_jobs_is_complete_denominator": false,
+    "preparation_matrix_proves_parity": false,
+    "preparation_matrix_proves_live_operation": false
+  }
+}

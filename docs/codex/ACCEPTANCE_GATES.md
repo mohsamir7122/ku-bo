@@ -152,6 +152,38 @@ Pass only when:
 - a handoff result is written;
 - deletion candidates and user decisions are recorded rather than executed.
 
+## Gate 12 — Private-source capability migration integrity
+
+This gate applies to `KU-BO-MIG-001` and any later private-source migration phase.
+Pass only when:
+
+- a private runtime receipt revalidates every exact source ref/tree/blob occurrence
+  with zero unaccounted items without publishing private locators, Git OIDs,
+  sensitive counts, findings, or source bytes;
+- public manifests contain only privacy-reviewed sanitized rows and opaque source
+  bindings;
+- every legitimate source user job has one canonical KU-BO target or a precise
+  external operational blocker;
+- every required capability has semantic happy-path and adversarial parity evidence;
+- unsafe legacy behavior is rejected by a negative test and replaced safely rather
+  than copied;
+- no second package, engine, CLI, source registry, evidence model, or decision
+  system competes with KU-BO;
+- Skills are thin discoverable wrappers over shared KU-BO logic;
+- the private predecessor remains unchanged and no source Git-history merge occurs;
+- capability parity remains separate from operational evidence and does not promote
+  any row to `LIVE_OPERATIONAL`;
+- the manifest, parity matrix, migration status, tests, README/control docs, and
+  handoff reconcile to identical exact counts;
+- a dedicated completion validator reopens the private receipt; verifies actual
+  target/test paths, full package gates, exact-head CI, and Draft-PR state; and
+  rejects self-reported evidence IDs or status strings as proof;
+- the final handoff states `MERGE_NOT_PERFORMED` and the PR remains Draft.
+
+A source capability may remain `LIVE_DEPENDENT` or `LICENSED_FEED_DEPENDENT` while
+software parity is proven. This is not permission to invent evidence, reduce the
+denominator, or hide a missing software user job behind an external blocker.
+
 ## Final decision
 
 A task is `COMPLETED` only when all applicable gates pass.
