@@ -48,7 +48,7 @@ USER_DECISION: APPROVED by the active master execution contract.
 DECIDED_AT: 2026-08-26
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: This authority is conditional, not absolute. It excludes force-push, protected-history rewrite, deletion, secret disclosure, paid access, private/licensed publication, trading or money movement, credential-scope expansion, and gate weakening. No merge has occurred under this record yet.
-IMPLEMENTED_IN_BRANCH_OR_PR: codex/kuwait-engine-integration-v1; future validated PR exact head only
+IMPLEMENTED_IN_BRANCH_OR_PR: PR #23 exact head 3fc478f4b656c80e4951e70410884efebb2bd09e; merged to main as 0f64d322ad7f1d089c05fbd75ad6b7020986d91c on 2026-08-26
 ```
 
 ## Open decisions

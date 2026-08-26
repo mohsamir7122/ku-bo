@@ -16,7 +16,8 @@ PR #20 head:                  6e9ab870e727494d5eb9e1ec9fa98829d6391d68
 PR #21 head:                  459fb45cd162b0acb967fad8d783b5f68ef7424e
 PR #22 head:                  d71314e15864c081af98da502bdcc21a4f259fa0
 PR #19-22 CI:                 PASS on their recorded exact heads
-current candidate head:       local, pending commit
+candidate head:               3fc478f4b656c80e4951e70410884efebb2bd09e
+merged main:                  0f64d322ad7f1d089c05fbd75ad6b7020986d91c
 ```
 
 ## Integrated capabilities
@@ -45,8 +46,8 @@ main smoke:                   PASS
 main full suite:              PASS — 2,086 tests, jsonschema 4.25.1
 candidate tests:              PASS — 2,243 tests
 candidate dry-run:            PASS_VALIDATED_BLOCKED — no authorized probe
-candidate exact-head CI:      PENDING
-merge receipt:                PENDING
+candidate exact-head CI:      PASS — run 32986143100, Python 3.11–3.14
+merge receipt:                PRIVATE PASS — 0f64d322ad7f1d089c05fbd75ad6b7020986d91c
 ```
 
 The current task is intentionally resumable. Any failed dependent stage must
