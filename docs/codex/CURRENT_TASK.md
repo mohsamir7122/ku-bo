@@ -1,12 +1,12 @@
-# CURRENT TASK — KU-BO-013
+# CURRENT TASK — KU-BO-2026-08-26-INTEGRATION
 
 ```text
-TASK_ID: KU-BO-013
+TASK_ID: KU-BO-2026-08-26-INTEGRATION
 STATUS: IN_PROGRESS
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: bafdda86b44b7603fe4adfa62dcc2a49bff8ae15
-EXPECTED_NEW_BRANCH: agent/kuwait-historical-knowledge-layer
+CONTROL_BASE_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
+EXPECTED_NEW_BRANCH: codex/kuwait-engine-integration-v1
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -16,73 +16,59 @@ PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
 HISTORICAL_CORPUS_COLLECTION_REQUESTED: NO
-BLOCKED_ON: LIVE_COLLECTION; OFFICIAL_COMPANY_UNIVERSE_ENUMERATION; SOURCE_RIGHTS_REVIEW
+BLOCKED_ON: EXACT_HEAD_CI; SECTION_8_GATE_REVIEW; MERGE_RECEIPT
+CONTROL_FILES: docs/codex/HANDOFF_TEMPLATE.md; docs/codex/USER_DECISIONS.md
+MERGE_GUARD: Do not merge until exact-head CI and every Section 8 gate pass.
+MIGRATION_CONTROL_REFERENCE: KU-BO-MIG-001
+LEGACY_MIGRATION_CONTROL_BRANCH: agent/private-predecessor-capability-migration-v1
+EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
+PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES
+PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
 ```
 
 ## Mission
 
-Program, document, and test the planning foundation for six deep Kuwait
-historical-research layers. Register credible starting sources and strict claim
-roles now; do not execute the centuries-long collection or claim completeness.
+Integrate the unique, auditable capabilities of Kuwait PRs #19 and #20, then
+the migration controls in #21 and guarded orchestration in #22, into one
+canonical KU-BO branch above the verified `main` SHA. Preserve the existing
+fail-closed research boundaries and leave old repositories as migration-only
+sources.
 
-## Required layers
+## Required integration
 
-1. Annual Kuwait history from 1500 through the as-of year.
-2. Annual commercial events and crises from 1927.
-3. Effective-dated registered-company lifecycle history from 1970.
-4. Company news and media history from 1980, including later-created social
-   platforms only after they existed.
-5. Company, founder, and owner legal/economic cases for the rolling latest 20
-   calendar years.
-6. Important Kuwait commercial/economic events for the rolling latest 5
-   calendar years.
-
-## User-authorized scope extension - 2026-08-25
-
-1. Lock KU-BO to Boursa Kuwait only. Do not include an additional market adapter,
-   corpus, methodology entry, training path, evaluation path, or runtime override.
-2. Inspect the private predecessor read-only and translate useful user jobs into
-   the canonical `kubo` package. Do not merge its Git history, execute its engine,
-   copy private data, or publish its locator or revision details.
-3. Bind the admitted user jobs through a sanitized capability-parity manifest and
-   callable-resolution tests.
-4. Add semantic source fallback that separates transport success from usable
-   evidence, preserves access controls, and queues original-source verification.
-5. Add point-in-time portfolio and order validation with evidence-byte hashes,
-   freshness, and reconciliation. Keep it structurally non-actionable.
-6. Add one repository-local Codex routing skill rather than parallel copies of
-   predecessor skills.
+1. Recreate the clean #19 → #20 path.
+2. Compare #21 and #22 against #20 and retain only unique, non-conflicting
+   capabilities; do not perform a blind PR merge.
+3. Review PRs #17, #18, #2, and #3 for unique capability only and leave them
+   unchanged.
+4. Keep private source locators, credentials, raw market evidence, and Drive
+   identifiers outside this public repository.
+5. Run deterministic synthetic dry-run, unit/integration/property tests,
+   package checks, Secret Guard, and exact-head CI.
 
 ## Acceptance gates
 
-1. A strict source registry records authority tier, allowed roles, earliest
-   year, access method, rights constraint, automation limitation, and explicit
-   capability status.
-2. All six layers compile into deterministic, gap-free annual tasks through a
-   supplied as-of date; every task starts `NOT_COLLECTED`.
-3. Company-year work remains blocked on official company-universe enumeration.
-4. Founders, registration, and company status require primary identity
-   evidence. News can corroborate but cannot replace it.
-5. Legal records preserve allegation/procedural/finality status and never infer
-   guilt. Social/community/Wikipedia evidence is routing or sentiment only.
-6. Schemas cover the plan, historical event, and company annual history.
-7. CLI validates the registry and can write a no-overwrite plan artifact.
-8. Targeted tests, complete suite, compile, smoke, secret guard, JSON/Schema,
-   control check, wheel, and exact-head CI pass.
-9. A sanitized KU-BO-013 handoff and Draft PR are published. No merge occurs
-   without a new explicit merge decision.
-
-Do not merge this task. Record any later authority in
-`docs/codex/USER_DECISIONS.md` and write the result using
-`docs/codex/HANDOFF_TEMPLATE.md`.
+1. Every migrated capability is locked to repository, branch, PR, and exact
+   source SHA in private runtime evidence and summarized without secrets.
+2. `git diff` is reviewed and contains no unintended files or credentials.
+3. Baseline and candidate tests are recorded; no gate is weakened.
+4. The dry-run produces a valid, replayable receipt and preserves failures.
+5. Exact-head CI is green on the candidate SHA.
+6. Privacy, licensing, robots/access, and claim-boundary checks pass.
+7. A rollback path, changelog/status update, and merge receipt are prepared.
 
 ## Safety and non-claims
 
-- This task writes code, contracts, tests, documentation, and source URLs only.
-- It does not scrape or reproduce the historical corpus.
-- Source registration is `DEFINED_ONLY`, never `LIVE_OPERATIONAL`.
-- No source absence proves that an event did not happen.
-- The layer is `CONTEXT_ONLY`; it cannot directly emit a forecast, probability,
-  rank, buy/sell recommendation, or execution instruction.
-- Authentication, CAPTCHA, paywalls, robots controls, platform terms, privacy,
-  and copyright must not be bypassed.
+- This remains a research and analysis system; it does not place orders or
+  move money.
+- No live source is promoted merely because it is catalogued or reachable.
+- Synthetic fixtures prove software behavior only, not prediction quality,
+  accuracy, full-market coverage, or live readiness.
+- Do not bypass login, CAPTCHA, paywalls, robots controls, rate limits, or
+  licensing restrictions.
+- Do not merge, force-push, delete, expose secrets, or weaken gates while this
+  control surface says `MERGE_ALLOWED: NO`; the separate user decision permits
+  only a conditional merge after all contract gates pass.
+
+Write the final result using `docs/codex/HANDOFF_TEMPLATE.md` and record the
+exact candidate SHA, CI, receipts, unresolved blockers, and status.
