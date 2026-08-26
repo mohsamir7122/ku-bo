@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "status": "CODE_AND_SYNTHETIC_CONTRACT_ONLY",
+  "market": "KUWAIT",
+  "integration_branch": "codex/kuwait-engine-integration-v1",
+  "base_branch": "main",
+  "base_sha": "59833bf73510b3aa3901f628cbf2c13c0d01cf79",
+  "method": "compare_against_pr20_then_port_unique_capabilities",
+  "sources": [
+    {"pr": 19, "head_sha": "6aa50ac83112d0e3a2e4440e3a6676115b9fbe4a", "disposition": "PORTED", "capability": "source_access_recipes_and_probe_planning"},
+    {"pr": 20, "head_sha": "6e9ab870e727494d5eb9e1ec9fa98829d6391d68", "disposition": "PORTED", "capability": "live_bootstrap_and_champion_freeze_contracts"},
+    {"pr": 21, "head_sha": "459fb45cd162b0acb967fad8d783b5f68ef7424e", "disposition": "PORTED_UNIQUE", "capability": "private_predecessor_migration_controls"},
+    {"pr": 22, "head_sha": "d71314e15864c081af98da502bdcc21a4f259fa0", "disposition": "PORTED_UNIQUE", "capability": "guarded_daily_orchestration_source_fallback_quality_and_portfolio_validation"},
+    {"pr": 17, "head_sha": "b9145b20531d50d32168152eb1a682d631ab3e91", "disposition": "REVIEW_ONLY", "capability": "overlapping_bootstrap_archive_scaffold"},
+    {"pr": 18, "head_sha": "7a74058eaf2dc3dc1738bdefde7b25fb5d2d82ed", "disposition": "REVIEW_ONLY", "capability": "unrelated_project_separation"},
+    {"pr": 2, "head_sha": "a71af92526147e21079dc7e7d1e8bae3a122b914", "disposition": "REVIEW_ONLY", "capability": "stale_superseded_implementation"},
+    {"pr": 3, "head_sha": "d0bf6ff981314ca63f629ff68e9d64e867f17366", "disposition": "REVIEW_ONLY", "capability": "stale_superseded_price_capture"}
+  ],
+  "claim_boundaries": {
+    "live_collection": false,
+    "model_training": false,
+    "real_backtest": false,
+    "recommendation": false,
+    "execution": false
+  },
+  "rollback": "revert_or_close_the_candidate_pr;_leave_old_repositories_unchanged"
+}

@@ -76,27 +76,6 @@
 
 - حجم corpus أو taxonomy أو النتائج المنشورة لا تثبت أداءً في الكويت.
 
-## الدراسة العربية على السوق السعودي
-
-المفيد:
-
-- تنظيف النص العربي.
-- إزالة التكرار Exact/Semantic.
-- Entity linking إلى شركة Canonical.
-- Sentiment متعدد الدرجات ومصادر متعددة.
-
-المطبق:
-
-- Canonical security identity.
-- Event deduplication وsource diversity.
-- Social كطبقة Ablation وانتشار.
-
-ما يحتاج عملًا لاحقًا:
-
-- Corpus كويتي مشروح يدويًا.
-- قياس inter-annotator agreement.
-- اختبار أخطاء الأسماء العربية والاختصارات والشركات المتشابهة.
-
 ## ECON
 
 المفيد:

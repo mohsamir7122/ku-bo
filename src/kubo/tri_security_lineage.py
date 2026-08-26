@@ -219,6 +219,8 @@ def _write_exclusive(path: Path, content: bytes) -> None:
     reports = require_real_directory(path.parent, field="TRI_SECURITY_LINEAGE_REPORTS")
     target = reports / path.name
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     descriptor: int | None = None

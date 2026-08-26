@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/codex-live-bootstrap.schema.json",
+  "title": "KU-BO Codex live bootstrap contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mission_id",
+    "mission_status",
+    "repository",
+    "runtime",
+    "drive",
+    "factor9",
+    "event_training",
+    "daily_runtime",
+    "source_roles",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "mission_id": {"const": "ku-bo-live-adaptive-v4"},
+    "mission_status": {"const": "READY_FOR_CODEX_EXECUTION"},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "single_codebase", "required_entrypoint", "active_task_file", "merge_policy"],
+      "properties": {
+        "slug": {"const": "mohsamir7122/ku-bo"},
+        "single_codebase": {"const": true},
+        "required_entrypoint": {"const": "CODEX_START_HERE.md"},
+        "active_task_file": {"const": "docs/codex/CURRENT_TASK.md"},
+        "merge_policy": {"const": "DRAFT_PR_ONLY_UNTIL_USER_APPROVAL"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timezone", "primary_activation_local", "watchdog_activation_local", "activation_window_name", "non_session_mode", "scheduled_runtime_default", "manual_entry_command"],
+      "properties": {
+        "timezone": {"const": "Asia/Kuwait"},
+        "primary_activation_local": {"const": "15:07"},
+        "watchdog_activation_local": {"const": "15:37"},
+        "activation_window_name": {"const": "THREE_PM_KUWAIT"},
+        "non_session_mode": {"const": "MAINTENANCE_ONLY"},
+        "scheduled_runtime_default": {"const": "DISABLED_UNTIL_AUTHORIZED"},
+        "manual_entry_command": {"const": "python scripts/validate_codex_live_bootstrap.py --project-root ."}
+      }
+    },
+    "drive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_root_name", "storage_class", "canonical_data_root", "private_import_root", "quarantine_root", "report_root", "required_canonical_subpaths", "unique_file_policy", "duplicate_policy", "overwrite_policy", "repository_may_store_drive_ids", "repository_may_store_private_bytes"],
+      "properties": {
+        "logical_root_name": {"const": "AI Rebuild"},
+        "storage_class": {"const": "PRIVATE_RUNTIME_ONLY"},
+        "canonical_data_root": {"const": "04_Curated_Core/KU_BO"},
+        "private_import_root": {"const": "02_Google_Drive/KU_BO"},
+        "quarantine_root": {"const": "90_Quarantine_Duplicates/KU_BO"},
+        "report_root": {"const": "99_Reports/KU_BO"},
+        "required_canonical_subpaths": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {"enum": ["00_Manifests", "01_Factor9_Research", "02_Event_Evidence", "03_Market_Data", "04_Model_Freezes", "05_Daily_Reports"]}
+        },
+        "unique_file_policy": {"const": "HASH_AND_PROVENANCE_BEFORE_CANONICAL_ADMISSION"},
+        "duplicate_policy": {"const": "QUARANTINE_BEFORE_ANY_DELETE"},
+        "overwrite_policy": {"const": "VERSIONED_NO_OVERWRITE"},
+        "repository_may_store_drive_ids": {"const": false},
+        "repository_may_store_private_bytes": {"const": false}
+      }
+    },
+    "factor9": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_status", "promotion_ceiling", "company_master_rows", "price_tickers", "original_price_rows", "clean_price_rows", "excluded_price_rows", "reported_validation_issues", "primary_historical_price_origin", "historical_price_rights_status", "event_label_status", "preserve_without_recomputing", "known_blockers", "admission_gates"],
+      "properties": {
+        "asset_status": {"const": "RESEARCH_ASSET_PENDING_ADMISSION"},
+        "promotion_ceiling": {"const": "RESEARCH_INPUT_ONLY"},
+        "company_master_rows": {"const": 140},
+        "price_tickers": {"const": 137},
+        "original_price_rows": {"const": 534135},
+        "clean_price_rows": {"const": 533997},
+        "excluded_price_rows": {"const": 138},
+        "reported_validation_issues": {"const": 243},
+        "primary_historical_price_origin": {"const": "MUBASHER_SECONDARY"},
+        "historical_price_rights_status": {"const": "REQUIRES_RUNTIME_REVIEW"},
+        "event_label_status": {"const": "OCR_AUTO_LABELS_MEDIUM_CONFIDENCE_REVIEW_REQUIRED"},
+        "preserve_without_recomputing": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "known_blockers": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "admission_gates": {"$ref": "#/$defs/nonEmptyUniqueCodes"}
+      }
+    },
+    "event_training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["development_major_events", "development_control_events", "default_training_rounds", "maximum_training_rounds", "extra_round_requires_preregistered_hypothesis", "development_events_allowed_in_regression_replay", "locked_test_minimum_events", "locked_test_maximum_events", "locked_test_may_overlap_development", "split_policy", "control_matching", "missing_data_policy", "trial_registry_required"],
+      "properties": {
+        "development_major_events": {"const": 50},
+        "development_control_events": {"const": 200},
+        "default_training_rounds": {"const": 30},
+        "maximum_training_rounds": {"const": 50},
+        "extra_round_requires_preregistered_hypothesis": {"const": true},
+        "development_events_allowed_in_regression_replay": {"const": true},
+        "locked_test_minimum_events": {"const": 500},
+        "locked_test_maximum_events": {"const": 600},
+        "locked_test_may_overlap_development": {"const": false},
+        "split_policy": {"const": "PURGED_EMBARGOED_WALK_FORWARD"},
+        "control_matching": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "missing_data_policy": {"const": "RECOVER_THEN_PROXY_FLAG_THEN_ABSTAIN"},
+        "trial_registry_required": {"const": true}
+      }
+    },
+    "daily_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["champion_policy", "challenger_same_day_output_allowed", "champion_freeze_path", "daily_report_path", "stages", "products", "allowed_decisions", "code_change_policy", "model_promotion_policy"],
+      "properties": {
+        "champion_policy": {"const": "PREVIOUS_APPROVED_FREEZE_ONLY"},
+        "challenger_same_day_output_allowed": {"const": false},
+        "champion_freeze_path": {"const": "AI Rebuild/04_Curated_Core/KU_BO/04_Model_Freezes"},
+        "daily_report_path": {"const": "AI Rebuild/04_Curated_Core/KU_BO/05_Daily_Reports"},
+        "stages": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "products": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["product_id", "horizon_sessions"],
+            "properties": {
+              "product_id": {"type": "string", "minLength": 3},
+              "horizon_sessions": {"enum": [3, 5, 21, 63]}
+            }
+          }
+        },
+        "allowed_decisions": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"enum": ["RESEARCH_CANDIDATE", "WATCH", "ABSTAIN"]}
+        },
+        "code_change_policy": {"const": "TASK_BRANCH_TESTS_DRAFT_PR_NO_AUTO_MERGE"},
+        "model_promotion_policy": {"const": "PROMOTE_ONLY_AFTER_LOCKED_VALIDATION_AND_PROSPECTIVE_GATES"}
+      }
+    },
+    "source_roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["official_truth", "secondary_research", "community_routing_only", "private_storage_only", "execution_required"],
+      "properties": {
+        "official_truth": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "secondary_research": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "community_routing_only": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "private_storage_only": {"$ref": "#/$defs/nonEmptyUniqueCodes"},
+        "execution_required": {"$ref": "#/$defs/nonEmptyUniqueCodes"}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bootstrap_is_live_runtime", "drive_presence_grants_data_rights", "factor9_is_training_truth", "factor9_is_validated_model", "challenger_may_issue_same_day_output", "scheduled_time_is_exactly_guaranteed", "automatic_code_merge_allowed", "research_candidate_is_buy_recommendation", "delayed_public_price_is_execution_quote", "structural_test_proves_predictive_skill"],
+      "properties": {
+        "bootstrap_is_live_runtime": {"const": false},
+        "drive_presence_grants_data_rights": {"const": false},
+        "factor9_is_training_truth": {"const": false},
+        "factor9_is_validated_model": {"const": false},
+        "challenger_may_issue_same_day_output": {"const": false},
+        "scheduled_time_is_exactly_guaranteed": {"const": false},
+        "automatic_code_merge_allowed": {"const": false},
+        "research_candidate_is_buy_recommendation": {"const": false},
+        "delayed_public_price_is_execution_quote": {"const": false},
+        "structural_test_proves_predictive_skill": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyUniqueCodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z0-9_]+$"}
+    }
+  }
+}

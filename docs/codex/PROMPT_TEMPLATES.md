@@ -37,3 +37,9 @@ Review the active KU-BO Draft PR against its CURRENT_TASK, AGENTS.md, acceptance
 ```text
 Inspect the named private conversation or command document under the Drive control folder. Do not copy it into GitHub. Extract only unique technical decisions or requirements, compare them with current code/docs/tests, classify each item under the conversation policy, and prepare a sanitized summary. Put deletion or ambiguous retention proposals in USER_DECISIONS.md. Never expose personal or unrelated material.
 ```
+
+## Private predecessor complete-capability migration template
+
+```text
+Open mohsamir7122/ku-bo and continue the existing branch agent/private-predecessor-capability-migration-v1. Read CODEX_START_HERE.md, run the locked bootstrap and preparation-control validators, and resolve PRIVATE_PREDECESSOR_SOURCE only from the private locator supplied in this ChatGPT session. Keep exact source metadata in uncommitted private runtime storage. Execute CURRENT_TASK plus PRIVATE_PREDECESSOR_MIGRATION_EXECPLAN.md: reconcile every Git-blob occurrence privately, derive every user job, publish only privacy-reviewed sanitized target contracts and opaque bindings, reimplement safe behavior under src/kubo, keep Skills thin, add semantic/negative tests and the dedicated evidence-verifying completion validator, and update the one Draft PR. Do not merge, force-push, modify/archive the source, broaden private access, publish private metadata, train, run a real backtest, or promote anything to LIVE_OPERATIONAL.
+```

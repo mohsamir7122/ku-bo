@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ku-bo.local/schemas/market-scope.schema.json",
+  "title": "KU-BO locked market scope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scope_id",
+    "status",
+    "jurisdiction_code",
+    "market_name",
+    "currency",
+    "timezone",
+    "identity_key",
+    "policy",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scope_id": {"const": "ku-bo-kuwait-only-v1"},
+    "status": {"const": "LOCKED_SINGLE_MARKET"},
+    "jurisdiction_code": {"const": "KW"},
+    "market_name": {"const": "BOURSA_KUWAIT"},
+    "currency": {"const": "KWD"},
+    "timezone": {"const": "Asia/Kuwait"},
+    "identity_key": {"const": "security_code"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "single_market_only",
+        "additional_market_adapters_allowed",
+        "runtime_market_override_allowed",
+        "cross_market_training_allowed",
+        "cross_market_evaluation_allowed"
+      ],
+      "properties": {
+        "single_market_only": {"const": true},
+        "additional_market_adapters_allowed": {"const": false},
+        "runtime_market_override_allowed": {"const": false},
+        "cross_market_training_allowed": {"const": false},
+        "cross_market_evaluation_allowed": {"const": false}
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_research_transfers_market_validity",
+        "generic_adapter_proves_market_support",
+        "scope_change_requires_new_version_and_user_approval"
+      ],
+      "properties": {
+        "external_research_transfers_market_validity": {"const": false},
+        "generic_adapter_proves_market_support": {"const": false},
+        "scope_change_requires_new_version_and_user_approval": {"const": true}
+      }
+    }
+  }
+}

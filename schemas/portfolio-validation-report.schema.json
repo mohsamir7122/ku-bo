@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/portfolio-validation-report.schema.json",
+  "title": "KU-BO non-actionable portfolio validation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "portfolio_id",
+    "decision_at",
+    "snapshot_as_of",
+    "orders_as_of",
+    "snapshot_sha256",
+    "orders_sha256",
+    "evidence_files",
+    "position_count",
+    "order_count",
+    "active_order_count",
+    "reconciliation_status",
+    "warnings",
+    "actionable",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["PASS_STRUCTURAL_NON_ACTIONABLE", "PARTIAL_STRUCTURAL_NON_ACTIONABLE"]},
+    "portfolio_id": {"type": "string"},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "snapshot_as_of": {"type": "string", "format": "date-time"},
+    "orders_as_of": {"type": "string", "format": "date-time"},
+    "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "orders_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+    "position_count": {"type": "integer", "minimum": 0},
+    "order_count": {"type": "integer", "minimum": 0},
+    "active_order_count": {"type": "integer", "minimum": 0},
+    "reconciliation_status": {"enum": ["MATCHED", "UNRESOLVED"]},
+    "warnings": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "actionable": {"const": false},
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "broker_connected",
+        "order_submitted",
+        "portfolio_optimized",
+        "recommendation_generated",
+        "market_prices_verified",
+        "structural_validation_is_execution_readiness"
+      ],
+      "properties": {
+        "broker_connected": {"const": false},
+        "order_submitted": {"const": false},
+        "portfolio_optimized": {"const": false},
+        "recommendation_generated": {"const": false},
+        "market_prices_verified": {"const": false},
+        "structural_validation_is_execution_readiness": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "captured_at", "source_id"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "source_id": {"type": "string"}
+      }
+    }
+  }
+}

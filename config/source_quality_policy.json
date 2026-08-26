@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "ku-bo-adaptive-source-quality-v1",
+  "status": "CONTRACT_ONLY",
+  "dimensions": [
+    {
+      "dimension_id": "authority",
+      "weight": 0.24
+    },
+    {
+      "dimension_id": "rights_and_access",
+      "weight": 0.18
+    },
+    {
+      "dimension_id": "point_in_time_integrity",
+      "weight": 0.18
+    },
+    {
+      "dimension_id": "identity_binding",
+      "weight": 0.14
+    },
+    {
+      "dimension_id": "parser_stability",
+      "weight": 0.1
+    },
+    {
+      "dimension_id": "coverage_completeness",
+      "weight": 0.1
+    },
+    {
+      "dimension_id": "publisher_independence",
+      "weight": 0.06
+    }
+  ],
+  "thresholds": {
+    "admit": 0.8,
+    "corroboration_only": 0.6,
+    "quarantine_below": 0.6
+  },
+  "hard_blocks": [
+    "ACCESS_CONTROL_BYPASS",
+    "RIGHTS_UNKNOWN_FOR_SYSTEMATIC_REUSE",
+    "PRIVATE_LOCATOR_LEAK",
+    "UNBOUND_SECURITY_IDENTITY",
+    "POINT_IN_TIME_UNPROVEN",
+    "PARSER_DRIFT",
+    "HASH_MISMATCH"
+  ],
+  "adaptive_actions": {
+    "ADMIT": "MONITOR_AND_REVALIDATE",
+    "CORROBORATION_ONLY": "ADD_INDEPENDENT_PRIMARY_OR_OFFICIAL_SOURCE",
+    "QUARANTINE": "RECOVER_RIGHTS_IDENTITY_TIME_AND_HASH_BEFORE_RETRY",
+    "BLOCK": "STOP_ROUTE_AND_RECORD_FAILURE"
+  },
+  "role_limits": {
+    "OFFICIAL_TRUTH": [
+      "OFFICIAL_FACT",
+      "OFFICIAL_IDENTITY",
+      "OFFICIAL_EVENT"
+    ],
+    "SECONDARY_RESEARCH": [
+      "PRICE_CONTEXT",
+      "NEWS_CORROBORATION",
+      "RESEARCH_CONTEXT"
+    ],
+    "COMMUNITY_ROUTING_ONLY": [
+      "SENTIMENT",
+      "ROUTING"
+    ],
+    "PRIVATE_STORAGE_ONLY": []
+  },
+  "claim_boundaries": {
+    "catalog_presence_proves_quality": false,
+    "drive_presence_grants_rights": false,
+    "single_source_can_prove_market_view": false,
+    "community_can_create_official_fact": false,
+    "quality_score_is_probability": false,
+    "automatic_source_promotion_allowed": false
+  }
+}

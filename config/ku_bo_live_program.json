@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "program_id": "ku-bo-moh-adaptive-research-v1",
+  "status": "DISABLED_UNTIL_AUTHORIZED_AND_GATED",
+  "timezone": "Asia/Kuwait",
+  "research_cycles": [
+    {
+      "cycle_id": "morning-research",
+      "start_local": "08:00",
+      "target_local": "10:00"
+    },
+    {
+      "cycle_id": "midday-refresh",
+      "start_local": "10:00",
+      "target_local": "12:00"
+    }
+  ],
+  "improvement_cycles": [
+    {
+      "cycle_id": "evening-evaluation",
+      "start_local": "18:00"
+    },
+    {
+      "cycle_id": "midnight-evaluation",
+      "start_local": "00:00"
+    }
+  ],
+  "existing_shadow_contract": {
+    "primary_local": "15:07",
+    "watchdog_local": "15:37",
+    "status": "DISABLED_CONTRACT_ONLY"
+  },
+  "products": [
+    {
+      "product_id": "three_session_rank",
+      "horizon_sessions": 3
+    },
+    {
+      "product_id": "five_session_weekly_swing",
+      "horizon_sessions": 5
+    },
+    {
+      "product_id": "twenty_one_session_monthly_swing",
+      "horizon_sessions": 21
+    },
+    {
+      "product_id": "sixty_three_session_quarter_rank",
+      "horizon_sessions": 63
+    }
+  ],
+  "research_views": [
+    "SHORT_HORIZON_CANDIDATES",
+    "MEDIUM_HORIZON_CANDIDATES",
+    "LONG_TERM_RESEARCH_CANDIDATES",
+    "NEAR_BOTTOM_REVIEW_QUEUE"
+  ],
+  "delivery": {
+    "drive_logical_folder": "PRIVATE_REPORT_DESTINATION",
+    "email_mode": "SEALED_RESULT_OR_BLOCKER_NOTICE",
+    "recipient_resolution": "AUTHORIZED_RUNTIME_ACCOUNT"
+  },
+  "required_gates": [
+    "AUTHORIZED_SOURCE_ACCESS",
+    "OFFICIAL_POINT_IN_TIME_DATA",
+    "FACTOR9_ADMISSION",
+    "APPROVED_PREVIOUS_SESSION_CHAMPION",
+    "LOCKED_MODEL_VALIDATION",
+    "PROSPECTIVE_VALIDATION",
+    "DELIVERY_AUTHORIZATION"
+  ],
+  "claim_boundaries": {
+    "schedule_enabled": false,
+    "live_collection_enabled": false,
+    "model_training_enabled": false,
+    "same_day_challenger_output_allowed": false,
+    "entry_exit_quotes_allowed": false,
+    "buy_sell_recommendations_allowed": false,
+    "automatic_merge_allowed": false,
+    "email_delivery_guaranteed": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/source-fallback-request.schema.json",
+  "title": "KU-BO source fallback planning request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request_id", "capability_id", "decision_at", "observations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "capability_id": {
+      "enum": [
+        "security_identity",
+        "market_calendar",
+        "completed_eod_history",
+        "corporate_actions",
+        "official_disclosures",
+        "fundamentals",
+        "news_context",
+        "community_attention",
+        "execution_context"
+      ]
+    },
+    "decision_at": {"type": "string", "format": "date-time"},
+    "observations": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "attempted_at",
+          "transport_status",
+          "semantic_status",
+          "qualified_row_count",
+          "zero_result_verified",
+          "cited_original_urls"
+        ],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+          "attempted_at": {"type": "string", "format": "date-time"},
+          "transport_status": {
+            "enum": ["SUCCESS", "HTTP_ERROR", "TIMEOUT", "ACCESS_BLOCKED", "ENTITLEMENT_REQUIRED", "NETWORK_ERROR"]
+          },
+          "semantic_status": {
+            "enum": ["ROWS_PRESENT", "ZERO_ROWS", "VERIFIED_ZERO_RESULT", "PARSE_FAILED", "ACCESS_BLOCKED", "NOT_EVALUATED"]
+          },
+          "qualified_row_count": {"type": "integer", "minimum": 0},
+          "zero_result_verified": {"type": "boolean"},
+          "cited_original_urls": {
+            "type": "array",
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {"type": "string", "format": "uri", "pattern": "^https://"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -28,6 +28,29 @@ DECIDED_BY:
 IMPLEMENTED_IN_BRANCH_OR_PR:
 ```
 
+```text
+DECISION_ID: KU-BO-2026-08-26-MERGE-COND-001
+STATUS: APPROVED
+DATE_RAISED: 2026-08-26
+TARGET: Kuwait integration of PRs #19, #20, #21, and #22, followed by later gated engineering merges
+CATEGORY: MERGE
+CURRENT_STATE: The owner has authorized Codex to merge engineering changes without asking again, but only after every merge gate in the master Kuwait/Saudi execution contract passes on the exact head SHA.
+WHY_A_DECISION_IS_REQUIRED: Repository-local controls require the merge authority and its limits to be recorded before the first merge.
+OPTIONS:
+1. Permit conditional merge after all section-8 gates pass on the exact head SHA.
+2. Require a new owner confirmation for every otherwise-gated engineering merge.
+3. Permit unconditional merge.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may merge only the validated exact head after provenance, diff, tests, dry-run, CI, privacy/licensing, rollback, changelog, decision, and status gates pass.
+CONSEQUENCE_OF_REJECTION: Validated work remains in a branch/Draft PR until a later decision.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep every change unmerged and publish receipts only.
+USER_DECISION: APPROVED by the active master execution contract.
+DECIDED_AT: 2026-08-26
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: This authority is conditional, not absolute. It excludes force-push, protected-history rewrite, deletion, secret disclosure, paid access, private/licensed publication, trading or money movement, credential-scope expansion, and gate weakening. No merge has occurred under this record yet.
+IMPLEMENTED_IN_BRANCH_OR_PR: codex/kuwait-engine-integration-v1; future validated PR exact head only
+```
+
 ## Open decisions
 
 ```text
@@ -208,6 +231,96 @@ DECIDED_AT: 2026-08-14
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: Merge only PR #16 after its authorization head passes exact-head CI and a final mergeability check. No force-push, deletion, credential use, private or licensed-data publication, corpus-completeness claim, gate weakening, forecast, probability, recommendation, or production execution.
 IMPLEMENTED_IN_BRANCH_OR_PR: PENDING — authorization recorded on PR #16 branch; exact-head CI and merge-boundary execution remain required.
+```
+
+```text
+DECISION_ID: KU-BO-016-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-24
+TARGET: Codex live bootstrap, private AI Rebuild inventory, Factor 9 admission preparation, and previous-session freeze policy
+CATEGORY: SCOPE
+CURRENT_STATE: The user directed KU-BO to be prepared for a later Codex session, authorized private use of the existing AI Rebuild folder and relevant stock-market material, prioritized continuous development and daily work, and required each day to use the prior approved frozen state.
+WHY_A_DECISION_IS_REQUIRED: The task crosses repository control, private Drive inspection, future daily scheduling, model-development policy, and financial-research boundaries. The authority and its limits must survive outside the active conversation.
+OPTIONS:
+1. Build the fail-closed Codex handoff and private inventory/admission path first, then progress through dry-run, data admission, training, locked test, and prospective gates.
+2. Begin training and daily stock calls immediately from unadmitted Drive material.
+3. Copy the private Drive corpus and raw conversations into GitHub for convenience.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex may inspect the authorized AI Rebuild tree privately, create logical folders and private manifests, preserve and assess Factor 9, implement contract-only daily/freeze infrastructure, and propose tested changes in Draft PRs. Training and stock outputs remain blocked until their gates pass.
+CONSEQUENCE_OF_REJECTION: The repository remains a static research foundation without the new Codex handoff or private data-admission workflow.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep scheduling disabled and run only manual contract dry-runs while inventories and rights are reviewed.
+USER_DECISION: APPROVED through the active instruction to review the project conversations and Factor 9 evidence, prepare the repository for Codex, use AI Rebuild as the private data repository, collect relevant material privately, prioritize development, and enforce daily freezing from the prior approved state.
+DECIDED_AT: 2026-08-24
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: No merge, force-push, deletion, paid subscription change, access-control bypass, private-data publication, automatic scheduler enablement, model training on unadmitted data, locked-test tuning, live execution, or buy/sell recommendation is authorized. Drive IDs and raw private bytes remain outside Git. Every code change uses a task branch, tests, and a Draft PR; every model promotion requires locked and prospective gates.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/ku-bo-016-codex-live-bootstrap / Draft PR #20 / published implementation head 7f32b7f9e8e71a55977cf834785e53adf7df086d
+```
+
+```text
+DECISION_ID: KU-BO-MIG-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-25
+TARGET: Complete private-predecessor capability migration into KU-BO on one task branch and Draft PR
+CATEGORY: SCOPE; DEVELOPMENT; NARROW_PRIVATE_SOURCE_READ
+CURRENT_STATE: KU-BO is the canonical public target. The predecessor source is private and has not been exhaustively inventoried or reimplemented in KU-BO.
+WHY_A_DECISION_IS_REQUIRED: The task requires read-only cross-repository inspection, a private census, safe reimplementation, Skill integration, and behavioral parity while preventing private-source metadata from entering public history.
+OPTIONS:
+1. Execute one capability-migration Draft PR with a private runtime census and privacy-safe public controls.
+2. Continue the deferred dry-run task first.
+3. Blindly merge files or Git histories.
+CODEX_RECOMMENDATION: Option 1 with KU-BO canonical, exhaustive private inventory before broad porting, semantic/negative tests, and evidence-verifying completion gates.
+CONSEQUENCE_OF_APPROVAL: Codex may read the configured private source repository code and Git metadata, privately inventory its refs/items/user jobs, reimplement safe capabilities on KU-BO core, add thin Skills and tests, and maintain one Draft PR.
+CONSEQUENCE_OF_REJECTION: KU-BO remains on the prior dry-run roadmap and the private predecessor remains separate.
+SAFER_REVERSIBLE_ALTERNATIVE: Private read-only inventory without implementation or public metadata.
+USER_DECISION: APPROVED by the active user instruction to prepare KU-BO so Codex can begin the complete migration from home.
+DECIDED_AT: 2026-08-25
+DECIDED_BY: Active repository owner via current ChatGPT instruction
+IMPLEMENTATION_GUARD: The read grant is limited to repository code and Git metadata through the normal authorized connector. Exact repository/ref/commit/tree locators, counts, sensitive paths/findings, and reversible opaque mappings remain uncommitted private runtime data. No unrelated private access, credential export, source write/history merge, main write, PR merge/auto-merge, force-push, deletion/archive, paid/licensed activation, training, real backtest, live promotion, recommendation, or execution.
+IMPLEMENTED_IN_BRANCH_OR_PR: agent/private-predecessor-capability-migration-v1 / Draft PR #21 / initial published implementation head 435d28503a60ae9316909304537f7c42e937d066 / preparation only; no migration or merge performed
+```
+
+```text
+DECISION_ID: KU-BO-MIG-D02
+STATUS: OPEN
+DATE_RAISED: 2026-08-25
+TARGET: Final merge of KU-BO-MIG-001 into its dependency chain and ultimately main
+CATEGORY: MERGE
+CURRENT_STATE: Only a preparation control exists. No verified private census, complete denominator, implementation, dedicated completion receipt, or migration-branch exact-head CI exists.
+WHY_A_DECISION_IS_REQUIRED: Development and narrow source-read authority do not imply merge authority.
+OPTIONS:
+1. After dedicated completion validation and review, authorize a separate dependency-order merge.
+2. Keep the completed migration as a Draft PR.
+3. Merge early or bypass evidence gates.
+CODEX_RECOMMENDATION: Option 2 until a verified sanitized handoff exists, then raise a fresh bounded merge review.
+CONSEQUENCE_OF_APPROVAL: No consequence now; this OPEN entry grants no merge authority.
+CONSEQUENCE_OF_REJECTION: The migration remains available on its Draft branch.
+SAFER_REVERSIBLE_ALTERNATIVE: Keep the Draft PR open without merging.
+USER_DECISION:
+DECIDED_AT:
+DECIDED_BY:
+IMPLEMENTED_IN_BRANCH_OR_PR: NOT AUTHORIZED
+```
+
+```text
+DECISION_ID: KU-BO-MIG-D03
+STATUS: OPEN
+DATE_RAISED: 2026-08-25
+TARGET: Archive, delete, or write to the configured private predecessor after migration
+CATEGORY: ARCHIVE; DELETE; SOURCE_WRITE
+CURRENT_STATE: The private predecessor remains an independent historical source. This task permits narrow read-only inspection only.
+WHY_A_DECISION_IS_REQUIRED: Migration does not prove preservation or recovery completeness, and source mutation is outside development scope.
+OPTIONS:
+1. Leave the source unchanged.
+2. After a separate preservation audit, archive it read-only.
+3. Delete or rewrite it.
+CODEX_RECOMMENDATION: Option 1. Revisit archive only after verified migration and a new explicit decision.
+CONSEQUENCE_OF_APPROVAL: No consequence now; this OPEN entry grants no archive, delete, or write authority.
+CONSEQUENCE_OF_REJECTION: The source remains unchanged.
+SAFER_REVERSIBLE_ALTERNATIVE: Retain it as a read-only private reference.
+USER_DECISION:
+DECIDED_AT:
+DECIDED_BY:
+IMPLEMENTED_IN_BRANCH_OR_PR: NOT AUTHORIZED
 ```
 
 ## Rules
