@@ -7,8 +7,10 @@ Repository: `mohsamir7122/ku-bo`
 ## Live orientation
 
 ```text
-main:                         59833bf73510b3aa3901f628cbf2c13c0d01cf79
-task branch:                  codex/kuwait-engine-integration-v1
+base main:                    59833bf73510b3aa3901f628cbf2c13c0d01cf79
+current main merge commit:    0f64d322ad7f1d089c05fbd75ad6b7020986d91c
+post-merge status commit:     c5edb9f506cde3d3942f2b3d4334b6c308021fe2
+task branch retained:          codex/kuwait-engine-integration-v1
 integration base:             main at the SHA above
 worktree before integration:  clean
 PR #19 head:                  6aa50ac83112d0e3a2e4440e3a6676115b9fbe4a
@@ -50,6 +52,6 @@ candidate exact-head CI:      PASS — run 32986143100, Python 3.11–3.14
 merge receipt:                PRIVATE PASS — 0f64d322ad7f1d089c05fbd75ad6b7020986d91c
 ```
 
-The current task is intentionally resumable. Any failed dependent stage must
-retain its successful artifacts and record root cause and recovery action in
-the private workout/blocked area.
+The integration task is complete. Subsequent data collection, training, and
+live research remain separate resumable phases and must retain artifacts and
+record root causes in the private workout/blocked area.
