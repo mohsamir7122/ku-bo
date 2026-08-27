@@ -14,3 +14,7 @@ PRE-FLIGHT and source-policy inspection do not count as market-data collection.
 No company file, market row, disclosure, news item, or corporate action has been
 claimed. Collection begins only after the Kuwait universe and source-admission
 contracts are validated. Missing data will remain explicitly missing.
+
+The Stage 1 reconciliation dry run used `SYNTHETIC_FIXTURE` only. Its single
+synthetic expected cell and observation are excluded from every company/event
+count above.

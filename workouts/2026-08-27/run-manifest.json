@@ -38,14 +38,37 @@
     "duration_seconds": 601.17
   },
   "candidate_focused_validation": {
-    "completed_at_utc": "2026-08-27T02:41:58Z",
+    "completed_at_utc": "2026-08-27T03:51:15Z",
     "control_validator": "pass",
-    "control_tests_total": 4,
-    "control_tests_passed": 4,
+    "targeted_consistency_tests_total": 57,
+    "targeted_consistency_tests_passed": 57,
+    "source_evidence_tests_total": 30,
+    "source_evidence_tests_passed": 30,
     "json_parse": "pass",
     "diff_check": "pass",
     "private_drive_link_scan": "pass",
-    "secret_guard": "pass"
+    "secret_guard": "pass",
+    "compileall": "pass"
+  },
+  "candidate_full_validation": {
+    "recorded_at_utc": "2026-08-27T03:51:15Z",
+    "tests_total": 2273,
+    "tests_passed": 2273,
+    "tests_failures": 0,
+    "tests_errors": 0,
+    "duration_seconds": 490.736
+  },
+  "stage_1_artifacts": {
+    "source_evidence_input_schema": "source-evidence-lifecycle-v1",
+    "source_evidence_report_schema": "source-evidence-reconciliation-report-v1",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "report_status": "STRUCTURE_AND_RECONCILIATION_VALID_ONLY",
+    "report_file_sha256": "5ae248159d5e60a15184ffee978a3e1bd92e8faf5460ff8149fbbbc81f12125f",
+    "report_internal_sha256": "74514ea6d6fbf6b36f9a74de59582817720ddcc626bbf9aba8c01e8f9a954b5f",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
+    "package_install_cli_smoke": "pass",
+    "stage_commit_sha": null
   },
   "repository_audit": {
     "completed_at_utc": "2026-08-27T02:53:38Z",

@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-evidence-lifecycle.schema.json",
+  "title": "KU-BO point-in-time source evidence lifecycle input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_class",
+    "capture_mode",
+    "decision_at",
+    "max_zero_yield_attempts_per_family",
+    "critical_fields",
+    "expected_cells",
+    "attempts",
+    "observations"
+  ],
+  "properties": {
+    "schema_version": {"const": "source-evidence-lifecycle-v1"},
+    "evidence_class": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "capture_mode": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME"]},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "max_zero_yield_attempts_per_family": {"type": "integer", "minimum": 1},
+    "critical_fields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonemptyString"}
+    },
+    "expected_cells": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "items": {"$ref": "#/$defs/expectedCell"}
+    },
+    "attempts": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {"$ref": "#/$defs/attempt"}
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {"$ref": "#/$defs/observation"}
+    }
+  },
+  "$defs": {
+    "nonemptyString": {"type": "string", "minLength": 1, "maxLength": 65536},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "expectedCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_id", "field_name", "effective_at"],
+      "properties": {
+        "entity_id": {"$ref": "#/$defs/nonemptyString"},
+        "field_name": {"$ref": "#/$defs/nonemptyString"},
+        "effective_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id",
+        "source_id",
+        "publisher",
+        "source_family",
+        "source_url",
+        "access_mode",
+        "started_at",
+        "finished_at",
+        "http_status",
+        "outcome",
+        "content_class",
+        "qualified_rows",
+        "byte_count",
+        "raw_sha256",
+        "parser_version",
+        "schema_fingerprint",
+        "expected_schema_fingerprint",
+        "rights_status",
+        "robots_status"
+      ],
+      "properties": {
+        "attempt_id": {"$ref": "#/$defs/nonemptyString"},
+        "source_id": {"$ref": "#/$defs/nonemptyString"},
+        "publisher": {"$ref": "#/$defs/nonemptyString"},
+        "source_family": {"$ref": "#/$defs/nonemptyString"},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "access_mode": {
+          "enum": [
+            "OFFICIAL_API",
+            "OFFICIAL_DOWNLOAD",
+            "PUBLIC_WEB",
+            "USER_AUTHORIZED_EXPORT",
+            "RECORDED_FIXTURE"
+          ]
+        },
+        "started_at": {"type": "string", "format": "date-time"},
+        "finished_at": {"type": "string", "format": "date-time"},
+        "http_status": {
+          "oneOf": [
+            {"type": "integer", "minimum": 100, "maximum": 599},
+            {"type": "null"}
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "COLLECTED",
+            "EMPTY",
+            "BLOCKED_ACCESS",
+            "ROBOTS_DENIED",
+            "PAYWALL",
+            "RATE_LIMITED",
+            "NETWORK_ERROR",
+            "PARSER_DRIFT",
+            "SKIPPED_DISABLED"
+          ]
+        },
+        "content_class": {
+          "enum": [
+            "DATA",
+            "EMPTY",
+            "ACCESS_DENIED",
+            "CHALLENGE",
+            "PAYWALL",
+            "ERROR_PAGE",
+            "NOT_FETCHED"
+          ]
+        },
+        "qualified_rows": {"type": "integer", "minimum": 0},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "raw_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "parser_version": {"$ref": "#/$defs/nonemptyString"},
+        "schema_fingerprint": {"$ref": "#/$defs/nullableSha256"},
+        "expected_schema_fingerprint": {"$ref": "#/$defs/nullableSha256"},
+        "rights_status": {"enum": ["PERMITTED", "USER_AUTHORIZED", "UNKNOWN", "FORBIDDEN"]},
+        "robots_status": {"enum": ["ALLOWED", "DISALLOWED", "NOT_APPLICABLE", "UNKNOWN"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"outcome": {"const": "COLLECTED"}}, "required": ["outcome"]},
+          "then": {
+            "properties": {
+              "content_class": {"const": "DATA"},
+              "qualified_rows": {"minimum": 1},
+              "byte_count": {"minimum": 1},
+              "raw_sha256": {"$ref": "#/$defs/sha256"},
+              "schema_fingerprint": {"$ref": "#/$defs/sha256"},
+              "expected_schema_fingerprint": {"$ref": "#/$defs/sha256"},
+              "rights_status": {"enum": ["PERMITTED", "USER_AUTHORIZED"]},
+              "robots_status": {"enum": ["ALLOWED", "NOT_APPLICABLE"]}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"outcome": {"const": "PARSER_DRIFT"}}, "required": ["outcome"]},
+          "then": {
+            "properties": {
+              "content_class": {"const": "DATA"},
+              "qualified_rows": {"const": 0},
+              "byte_count": {"minimum": 1},
+              "raw_sha256": {"$ref": "#/$defs/sha256"},
+              "schema_fingerprint": {"$ref": "#/$defs/sha256"},
+              "expected_schema_fingerprint": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        }
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "attempt_id",
+        "artifact_id",
+        "source_id",
+        "publisher",
+        "source_family",
+        "origin_id",
+        "source_record_id",
+        "entity_id",
+        "field_name",
+        "value",
+        "unit",
+        "effective_at",
+        "published_at",
+        "available_at",
+        "retrieved_at",
+        "availability_evidence_status",
+        "revision",
+        "source_grade",
+        "verification_status",
+        "evidence_role",
+        "source_url",
+        "raw_sha256",
+        "parser_version"
+      ],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/nonemptyString"},
+        "attempt_id": {"$ref": "#/$defs/nonemptyString"},
+        "artifact_id": {"$ref": "#/$defs/nonemptyString"},
+        "source_id": {"$ref": "#/$defs/nonemptyString"},
+        "publisher": {"$ref": "#/$defs/nonemptyString"},
+        "source_family": {"$ref": "#/$defs/nonemptyString"},
+        "origin_id": {"$ref": "#/$defs/nonemptyString"},
+        "source_record_id": {"$ref": "#/$defs/nonemptyString"},
+        "entity_id": {"$ref": "#/$defs/nonemptyString"},
+        "field_name": {"$ref": "#/$defs/nonemptyString"},
+        "value": {"type": ["string", "number"]},
+        "unit": {"$ref": "#/$defs/nonemptyString"},
+        "effective_at": {"type": "string", "format": "date-time"},
+        "published_at": {"type": "string", "format": "date-time"},
+        "available_at": {"type": "string", "format": "date-time"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "availability_evidence_status": {
+          "enum": ["CAPTURED_BEFORE_CUTOFF", "VERIFIED_ARCHIVE", "UNVERIFIED"]
+        },
+        "revision": {"type": "integer", "minimum": 1},
+        "source_grade": {"enum": ["A", "B", "C", "D"]},
+        "verification_status": {"enum": ["CONFIRMED", "UNVERIFIED", "INFERRED", "REJECTED"]},
+        "evidence_role": {
+          "enum": [
+            "EXCHANGE_OFFICIAL",
+            "REGULATOR_OFFICIAL",
+            "CLEARING_OFFICIAL",
+            "ISSUER_PRIMARY",
+            "FINANCIAL_CONTEXT",
+            "NEWS_CONTEXT",
+            "SOCIAL_CONTEXT_LEAD_ONLY",
+            "ROUTING_ONLY"
+          ]
+        },
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "parser_version": {"$ref": "#/$defs/nonemptyString"}
+      }
+    }
+  }
+}

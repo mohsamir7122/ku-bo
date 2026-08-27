@@ -35,3 +35,8 @@ and URLs remain runtime-only and are intentionally absent from this file.
 
 These repository tests prove software behavior only. They do not grant source
 rights, establish current access, or turn bundled data into admitted evidence.
+
+Stage 1 now provides the canonical source-attempt/observation reconciliation
+boundary and records rights/robots/access outcomes without converting failures
+into data. It has been tested only with synthetic inputs; every real source in
+the table remains unadmitted and uncollected in this run.

@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T02:53:38Z (2026-08-27T05:53:38+03:00, Asia/Kuwait)
+Updated: 2026-08-27T03:51:15Z (2026-08-27T06:51:15+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: REPOSITORY_AUDIT_COMPLETE_STAGE_1_IN_PROGRESS
+STAGE: STAGE_1_SOURCE_EVIDENCE_LIFECYCLE_COMPLETE
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -42,14 +42,34 @@ WORKTREE_AT_START: CLEAN
   archived Kuwait implementation passed 33/33. Every source worktree is clean.
 - Published a staged integration plan. The first selected gap is canonical
   source-evidence lifecycle reconciliation; no bulk source merge is allowed.
+- Reimplemented source-evidence lifecycle reconciliation inside canonical
+  `kubo`, with strict input/report schemas and an exclusive-output CLI. It binds
+  observations to permitted attempts, frozen bytes, parsers, timestamps, and an
+  expected-cell denominator; rejects temporal leakage and blocked bytes; handles
+  revisions, duplicates, conflicts, missing cells, parser drift, and source
+  failures; and never authorizes fitting, backtesting, recommendations, or trades.
+- Added a non-reflective quarantine boundary: rejected rows are represented only
+  by bounded identifiers and a digest so rejected signed URLs or credentials are
+  not copied into reports.
+- Final candidate suite passed 2,273/2,273 tests in 490.736 seconds. The new
+  lifecycle suite passed 30/30 tests, and control, migration-control, JSON,
+  compile, whitespace, and Secret Guard checks pass.
+- Repeated synthetic reconciliation produced byte-identical reports. File SHA-256
+  is `5ae248159d5e60a15184ffee978a3e1bd92e8faf5460ff8149fbbbc81f12125f`;
+  internal report SHA-256 is
+  `74514ea6d6fbf6b36f9a74de59582817720ddcc626bbf9aba8c01e8f9a954b5f`.
+- Built and installed the candidate wheel in a fresh temporary environment and
+  ran `validate-config` plus reconciliation from outside the checkout. Wheel
+  SHA-256 is `18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad`.
+- Existing live dry work was replayed fail-closed with zero candidates and no
+  sealed output because authorized source access is not configured. This is the
+  expected `ABSTAIN / NO-TRADE` result, not live readiness.
 
-## In progress
+## Next active stage
 
-- Reimplement the selected source-evidence lifecycle capability inside `kubo`
-  with strict schema, provenance, cutoff, revision, duplicate, conflict,
-  missing-cell, parser-drift, and source-failure tests.
-- Execute the existing deterministic synthetic live dry run and then rerun the
-  full target suite.
+- Define the effective-dated Kuwait issuer universe and company dossier contracts
+  before any real collection. Source admission, rights, robots, provenance,
+  missing-data, and point-in-time gates remain mandatory.
 
 ## Not started or not yet evidenced
 
@@ -68,9 +88,9 @@ WORKTREE_AT_START: CLEAN
   jobs as bound/reimplemented while the preparation manifest and parity matrix
   still say all fourteen are not started. Filesystem audit confirms canonical
   gaps, so predecessor migration completion is not claimed.
-- Latest `main` CI is red only because its completed task says `main` while the
-  control unit test expects the prior integration branch. The day-one task uses
-  a real work branch and keeps the assertion strict.
+- The stale local task/branch control mismatch was repaired without weakening
+  the assertion. Exact-head GitHub CI for the unpushed Stage 1 commit is still
+  pending; merge remains forbidden.
 - PRoot exposes phone storage through existing binds. All writes in this run are
   restricted to the project workspace; no external storage is used.
 - Synthetic fixtures are software evidence only. No return, accuracy,

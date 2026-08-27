@@ -1,6 +1,6 @@
 # Day-One Execution Plan
 
-Status: IN_PROGRESS
+Status: STAGE_1_COMPLETE; STAGE_2_NEXT
 
 1. Complete PRE-FLIGHT and record immutable starting SHAs, resources, tools,
    auth state, clean worktrees, Drive structure, baseline tests, and blockers.
@@ -9,11 +9,11 @@ Status: IN_PROGRESS
 3. **Completed:** audit final, legacy, experimental, and archived repositories
    at exact private-runtime SHAs; publish a sanitized capability/gap/duplication
    matrix and staged integration plan.
-4. Reimplement the selected source-evidence lifecycle capability in canonical
-   `kubo`, then run the existing synthetic dry-work path and all relevant gates. A
-   synthetic pass may prove plumbing only.
-5. Implement the smallest missing Kuwait capability, test it, and commit it as a
-   separate stage. Never bulk-copy or rewrite history.
+4. **Completed and tested synthetically:** reimplement the selected
+   source-evidence lifecycle capability in canonical `kubo`, run deterministic
+   dry work, and pass all applicable local gates. The pass proves plumbing only.
+5. **Completed for Stage 1:** implement the smallest missing Kuwait capability
+   without bulk-copying or rewriting history; prepare an isolated commit.
 6. Prepare but do not activate sequential scheduled workflows until secrets,
    calendars, source admission, and dry-run gates are satisfied.
 7. Define issuer, source, provenance, event, split, blind-test, metrics, and live

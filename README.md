@@ -131,7 +131,7 @@ PYTHONPATH=src python -m kubo --project-root . validate-predecessor-capability-p
 PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
 ```
 
-يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لأربع عشرة
+يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لخمس عشرة
 وظيفة مستخدم فقط؛ لا يدمج تاريخ Git خاصًا، ولا يشغّل محركًا ثانيًا، ولا ينقل
 بيانات أو نتائج أو ادعاءات جاهزية. ويخطط `plan-source-fallback` للمحاولة التالية
 من إيصالات محفوظة من دون تنفيذ اتصال شبكي أو تجاوز تسجيل الدخول أو جدار دفع:
@@ -139,6 +139,16 @@ PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
 ```bash
 PYTHONPATH=src python -m kubo --project-root . plan-source-fallback \
   --request /absolute/path/to/source-fallback-request.json
+```
+
+وتعيد `reconcile-source-evidence` مصالحة محاولات المصدر والبايتات والمراجعات
+والتعارضات والنسخ والمقام الزمني من ملف JSON صارم. يظل ناتجها Structural فقط،
+ويمنع التدريب والـBacktest والتوصية والتنفيذ حتى لو اكتملت الخلايا المتوقعة:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . reconcile-source-evidence \
+  --input examples/synthetic_source_evidence_lifecycle.json \
+  --output /private/runtime/source-evidence-report.json
 ```
 
 كما يفحص `validate-portfolio-state` Snapshot المحفظة وسجل الأوامر مقابل بايتات
@@ -450,6 +460,7 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
 - `src/kubo/source_access_recipes.py`: مدقق الوصفات، مولد خطة الفحص، وربط إيصال الوصول بالخطة والبصمة.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
+- `src/kubo/source_evidence_lifecycle.py`: مصالحة Point-in-Time للمحاولات والحقوق والـrobots والـlineage والمراجعات والتعارضات والنسخ والفجوات مع منع أي ادعاء تشغيلي.
 - `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
 - `src/kubo/kuwait_research_pipeline.py`: التحقق من Source Search المحفوظ وربطه بمدخلات Parser الصارمة وإخراج حزمة Context/Exposure/Factor ذرية.
 - `src/kubo/forty_session_replay.py`: تقييم 40 قرارًا/41 جلسة مع Stop gates قبل المقاييس.
@@ -469,6 +480,8 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `src/kubo/pipeline.py`: المسار الافتراضي الجديد والمسار التاريخي المنفصل.
 - `src/kubo/cli_v3.py`: واجهة الأوامر.
 - `schemas/parsed-research-inputs.schema.json`: عقد الانتقال الصريح من البايتات المتحققة إلى الأحداث والتعرضات ومدخلات العوامل والتصرفات.
+- `schemas/source-evidence-lifecycle.schema.json`: عقد مدخلات دورة حياة الدليل والمقام الصريح.
+- `schemas/source-evidence-reconciliation-report.schema.json`: عقد تقرير المصالحة وحدود الادعاء.
 - `schemas/`: عقود JSON Schema القابلة للقراءة الآلية.
 - `research/methodology_registry.json`: الأبحاث والقواعد والاختبارات المنهجية.
 - `.github/workflows/ci.yml`: Compile وUnit/Adversarial Tests وSmoke Check وSecret Guard.

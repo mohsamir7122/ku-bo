@@ -51,6 +51,10 @@ from .source_orchestrator import (
     validate_source_search_report,
     validate_source_search_run,
 )
+from .source_evidence_lifecycle import (
+    reconcile_source_evidence_file,
+    write_reconciliation_report,
+)
 from .strict import parse_aware
 
 
@@ -78,6 +82,7 @@ BLOCKING_STATUSES = {
     "CAPABILITY_FALLBACK_REQUIRED",
     "CAPABILITY_EXHAUSTED_ABSTAIN",
     "PARTIAL_STRUCTURAL_NON_ACTIONABLE",
+    "DEGRADED_STRUCTURE_VALID_ONLY",
 }
 
 PROJECT_CONFIG_COMMANDS = frozenset(
@@ -109,6 +114,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "evaluate-forty-session-replay",
         "validate-historical-knowledge",
         "plan-historical-research",
+        "reconcile-source-evidence",
     }
 )
 
@@ -282,6 +288,10 @@ def parser() -> argparse.ArgumentParser:
     historical_plan = sub.add_parser("plan-historical-research")
     historical_plan.add_argument("--as-of", required=True, help="Research cutoff date (YYYY-MM-DD)")
     historical_plan.add_argument("--output", type=Path)
+
+    evidence_reconciliation = sub.add_parser("reconcile-source-evidence")
+    evidence_reconciliation.add_argument("--input", type=Path, required=True)
+    evidence_reconciliation.add_argument("--output", type=Path)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -546,6 +556,10 @@ def main(argv: list[str] | None = None) -> int:
                 "task_count": len(full_plan["tasks"]),
                 "claim_boundaries": full_plan["claim_boundaries"],
             }
+    elif args.command == "reconcile-source-evidence":
+        report = reconcile_source_evidence_file(args.input)
+        if args.output is not None:
+            write_reconciliation_report(args.output, report)
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(

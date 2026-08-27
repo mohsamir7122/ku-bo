@@ -41,7 +41,7 @@ class CliProjectRootTests(unittest.TestCase):
         self.assertIn('"market_scope": {', rendered)
         self.assertIn('"source_fallback_policy": {', rendered)
         self.assertIn('"predecessor_capability_parity": {', rendered)
-        self.assertIn('"resolved_callable_count": 14', rendered)
+        self.assertIn('"resolved_callable_count": 15', rendered)
 
 
 if __name__ == "__main__":

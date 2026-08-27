@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T02:53:38Z",
-  "updated_at_kuwait": "2026-08-27T05:53:38+03:00",
+  "updated_at_utc": "2026-08-27T03:51:15Z",
+  "updated_at_kuwait": "2026-08-27T06:51:15+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "REPOSITORY_AUDIT_COMPLETE_STAGE_1_IN_PROGRESS",
+  "stage": "STAGE_1_SOURCE_EVIDENCE_LIFECYCLE_COMPLETE",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -19,7 +19,7 @@
     {"name": "pre_flight", "status": "completed"},
     {"name": "repository_audit", "status": "completed"},
     {"name": "integration_plan", "status": "completed"},
-    {"name": "source_evidence_lifecycle", "status": "in_progress"},
+    {"name": "source_evidence_lifecycle", "status": "completed_tested_synthetic"},
     {"name": "kuwait_collection", "status": "not_started"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
@@ -39,12 +39,36 @@
   },
   "candidate_focused_validation": {
     "control_validator": "pass",
-    "control_tests_total": 4,
-    "control_tests_passed": 4,
+    "targeted_consistency_tests_total": 57,
+    "targeted_consistency_tests_passed": 57,
+    "source_evidence_tests_total": 30,
+    "source_evidence_tests_passed": 30,
     "json_parse": "pass",
     "diff_check": "pass",
     "private_drive_link_scan": "pass",
-    "secret_guard": "pass"
+    "secret_guard": "pass",
+    "compileall": "pass",
+    "package_build_install_cli_smoke": "pass"
+  },
+  "candidate_full_validation": {
+    "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
+    "total": 2273,
+    "passed": 2273,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 490.736
+  },
+  "source_evidence_lifecycle": {
+    "implementation_status": "implemented_tested_synthetic",
+    "input_schema": "source-evidence-lifecycle-v1",
+    "report_schema": "source-evidence-reconciliation-report-v1",
+    "synthetic_report_status": "STRUCTURE_AND_RECONCILIATION_VALID_ONLY",
+    "synthetic_report_file_sha256": "5ae248159d5e60a15184ffee978a3e1bd92e8faf5460ff8149fbbbc81f12125f",
+    "synthetic_report_internal_sha256": "74514ea6d6fbf6b36f9a74de59582817720ddcc626bbf9aba8c01e8f9a954b5f",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
+    "real_evidence_validated": false,
+    "model_or_backtest_authorized": false
   },
   "repository_audit": {
     "private_runtime_receipt_sha256": "9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5",

@@ -51,6 +51,15 @@
       "operational_ceiling": "STRUCTURAL_VALIDATION_ONLY"
     },
     {
+      "capability_id": "source_evidence_lifecycle_reconciliation",
+      "user_job": "Reconcile point-in-time source attempts, revisions, conflicts, duplicates, and missing cells.",
+      "target_module": "kubo.source_evidence_lifecycle",
+      "target_callable": "reconcile_source_evidence",
+      "cli_command": "kubo reconcile-source-evidence",
+      "software_status": "REIMPLEMENTED_IN_CANONICAL_CORE",
+      "operational_ceiling": "STRUCTURAL_VALIDATION_ONLY"
+    },
+    {
       "capability_id": "research_candidate_ranking",
       "user_job": "Rank research candidates only after source coverage and conflict checks.",
       "target_module": "kubo.research_rank",

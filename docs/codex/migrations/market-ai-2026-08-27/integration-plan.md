@@ -20,6 +20,8 @@ control mismatch are recorded. This stage does not claim market capability.
 
 ### Stage 1 — source-evidence lifecycle reconciliation
 
+Status: **COMPLETED AND TESTED WITH SYNTHETIC EVIDENCE ON THE WORK BRANCH.**
+
 Reimplement the predecessor's unique reconciliation user job as a canonical
 `kubo` module and schema. It must:
 
@@ -40,6 +42,11 @@ Entry gate: PRE-FLIGHT commit and private runtime audit digest exist.
 Exit gate: focused happy/adversarial tests, schema validation, source/provenance,
 temporal leakage, duplicate, missing-data, source-failure, Secret Guard, full
 suite, package/CLI smoke, deterministic fixture dry run, and reviewed diff pass.
+
+Exit evidence: 30/30 lifecycle tests and 2,273/2,273 full repository tests pass;
+the deterministic report file SHA-256 is
+`5ae248159d5e60a15184ffee978a3e1bd92e8faf5460ff8149fbbbc81f12125f`.
+This does not prove source rights, real-market coverage, or predictive quality.
 
 ### Stage 2 — issuer universe and company dossier
 

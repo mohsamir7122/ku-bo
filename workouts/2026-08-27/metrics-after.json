@@ -1,8 +1,17 @@
 {
   "schema_version": "1.0",
   "run_id": "market-ai-20260827T020635Z-kuwait",
-  "measurement_status": "PENDING_SAME_LOCKED_TEST",
+  "measurement_status": "NO_ADMITTED_LOCKED_MARKET_TEST",
   "evidence_class": "NO_ADMITTED_MARKET_TEST_SET",
+  "repository_candidate": {
+    "tests_total": 2273,
+    "tests_passed": 2273,
+    "tests_failed": 0,
+    "tests_errors": 0,
+    "duration_seconds": 490.736,
+    "source_evidence_tests": 30,
+    "package_build_install_cli_smoke": "pass"
+  },
   "investment_metrics": {
     "hit_rate": null,
     "precision": null,
@@ -13,5 +22,5 @@
     "calibration": null
   },
   "improvement_percent": null,
-  "reason": "No before/after model comparison has been executed."
+  "reason": "Software gates pass, but no before/after model comparison on the same locked market test has been executed."
 }

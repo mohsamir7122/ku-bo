@@ -1,13 +1,16 @@
 # Improvement Cycle
 
 ```text
-STATUS: NOT_STARTED_FOR_MODEL_PERFORMANCE
+STATUS: ENGINEERING_CYCLE_COMPLETE; MODEL_PERFORMANCE_NOT_STARTED
 MEASURED_IMPROVEMENT_PERCENT: NOT_AVAILABLE
 ```
 
-The first engineering weakness is a stale task/branch control record. Its repair
-will be measured by the same focused and full repository tests, but it is not a
-claim of improved investment performance.
+Two engineering weaknesses were corrected: the stale task/branch control record,
+and reflection of invalid raw row content in quarantine output. The final full
+suite passes 2,273/2,273 versus the baseline's one control failure, and a new
+negative test proves the quarantine does not reproduce a rejected credential
+marker. Because the test denominator changed and no locked market set exists,
+no percentage improvement is calculated.
 
 No model, feature, ranking, or risk improvement has been accepted. A later
 improvement percentage may be reported only when `metrics-before.json` and
