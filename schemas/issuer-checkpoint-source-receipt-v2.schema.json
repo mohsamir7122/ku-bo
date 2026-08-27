@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-checkpoint-source-receipt-v2.schema.json",
+  "title": "KU-BO immutable one-security checkpoint v2 terminal source receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checkpoint_id",
+    "run_id",
+    "plan_sha256",
+    "identity_sha256",
+    "issuer_id",
+    "security_code",
+    "source_ordinal",
+    "wave_ordinal",
+    "wave_id",
+    "source_id",
+    "terminal_status",
+    "attempted_at",
+    "completed_at",
+    "artifact_count",
+    "observation_count",
+    "artifact_manifest_path",
+    "artifact_manifest_sha256",
+    "raw_size_bytes",
+    "limitation",
+    "previous_terminal_receipt_sha256",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-checkpoint-source-receipt-v2"},
+    "receipt_id": {"$ref": "#/$defs/identifier"},
+    "checkpoint_id": {"$ref": "#/$defs/identifier"},
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "issuer_id": {"$ref": "#/$defs/identifier"},
+    "security_code": {"$ref": "#/$defs/securityCode"},
+    "source_ordinal": {"type": "integer", "minimum": 1, "maximum": 29},
+    "wave_ordinal": {"type": "integer", "minimum": 1, "maximum": 7},
+    "wave_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+    "source_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]{0,127}$"},
+    "terminal_status": {"$ref": "#/$defs/terminalStatus"},
+    "attempted_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "artifact_count": {"type": "integer", "minimum": 0},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "artifact_manifest_path": {
+      "type": "string",
+      "pattern": "^receipts/[0-9]{3}-[a-z0-9][a-z0-9_]*/manifest\\.json$"
+    },
+    "artifact_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "raw_size_bytes": {"type": "integer", "minimum": 0},
+    "limitation": {"type": "string", "maxLength": 2000},
+    "previous_terminal_receipt_sha256": {"$ref": "#/$defs/nullableSha256"},
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "terminal_status": {
+            "enum": ["COLLECTED", "VERIFIED_ZERO", "REVIEWED_NOT_APPLICABLE"]
+          }
+        },
+        "required": ["terminal_status"]
+      },
+      "then": {"properties": {"artifact_count": {"minimum": 1}}}
+    },
+    {
+      "if": {
+        "properties": {"terminal_status": {"not": {"const": "COLLECTED"}}},
+        "required": ["terminal_status"]
+      },
+      "then": {"properties": {"observation_count": {"const": 0}}}
+    },
+    {
+      "if": {
+        "properties": {"artifact_count": {"const": 0}},
+        "required": ["artifact_count"]
+      },
+      "then": {"properties": {"raw_size_bytes": {"const": 0}}}
+    },
+    {
+      "if": {
+        "properties": {"source_ordinal": {"const": 1}},
+        "required": ["source_ordinal"]
+      },
+      "then": {"properties": {"previous_terminal_receipt_sha256": {"type": "null"}}},
+      "else": {"properties": {"previous_terminal_receipt_sha256": {"$ref": "#/$defs/sha256"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "securityCode": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+    "terminalStatus": {
+      "enum": [
+        "COLLECTED",
+        "VERIFIED_ZERO",
+        "REVIEWED_NOT_APPLICABLE",
+        "BLOCKED_RIGHTS",
+        "BLOCKED_ROBOTS",
+        "BLOCKED_ACCESS",
+        "AUTH_REQUIRED",
+        "ENTITLEMENT_REQUIRED",
+        "PAYWALL",
+        "RATE_LIMITED_EXHAUSTED",
+        "NETWORK_ERROR_EXHAUSTED",
+        "PARSER_DRIFT",
+        "ISSUER_OFFICIAL_SITE_UNRESOLVED"
+      ]
+    }
+  }
+}

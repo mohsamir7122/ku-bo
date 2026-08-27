@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-checkpoint-reconciliation-v2.schema.json",
+  "title": "KU-BO exact one-security checkpoint v2 reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "checkpoint_id",
+    "run_id",
+    "issuer_id",
+    "security_code",
+    "plan_sha256",
+    "issuer_universe_sha256",
+    "identity_sha256",
+    "source_plan_sha256",
+    "reconciled_at",
+    "evidence_class",
+    "status",
+    "expected_source_count",
+    "terminal_source_count",
+    "expected_wave_count",
+    "reconciled_wave_count",
+    "receipt_inventory",
+    "wave_reconciliation",
+    "terminal_status_counts",
+    "retained_manifest_count",
+    "reopened_manifest_count",
+    "raw_artifact_count",
+    "reopened_raw_artifact_count",
+    "raw_size_bytes",
+    "reconciled_checkpoint_digest",
+    "claim_boundaries",
+    "reconciliation_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-checkpoint-reconciliation-v2"},
+    "checkpoint_id": {"$ref": "#/$defs/identifier"},
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "issuer_id": {"$ref": "#/$defs/identifier"},
+    "security_code": {"$ref": "#/$defs/securityCode"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "issuer_universe_sha256": {"$ref": "#/$defs/sha256"},
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "source_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "reconciled_at": {"type": "string", "format": "date-time"},
+    "evidence_class": {"const": "SYNTHETIC_FIXTURE"},
+    "status": {"const": "EXACT_29_SOURCES_7_WAVES"},
+    "expected_source_count": {"const": 29},
+    "terminal_source_count": {"const": 29},
+    "expected_wave_count": {"const": 7},
+    "reconciled_wave_count": {"const": 7},
+    "receipt_inventory": {
+      "type": "array",
+      "minItems": 29,
+      "maxItems": 29,
+      "uniqueItems": true,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 1}, "wave_ordinal": {"const": 1}, "wave_id": {"const": "OFFICIAL_IDENTITY"}, "source_id": {"const": "boursa_current"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 2}, "wave_ordinal": {"const": 1}, "wave_id": {"const": "OFFICIAL_IDENTITY"}, "source_id": {"const": "cma_ifsah"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 3}, "wave_ordinal": {"const": 2}, "wave_id": {"const": "ISSUER_PRIMARY"}, "source_id": {"const": "issuer_ir_verified"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 4}, "wave_ordinal": {"const": 3}, "wave_id": {"const": "OFFICIAL_MARKET_FILINGS_AND_ACTIONS"}, "source_id": {"const": "boursa_disclosure_archive"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 5}, "wave_ordinal": {"const": 3}, "wave_id": {"const": "OFFICIAL_MARKET_FILINGS_AND_ACTIONS"}, "source_id": {"const": "boursa_reports_archive"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 6}, "wave_ordinal": {"const": 3}, "wave_id": {"const": "OFFICIAL_MARKET_FILINGS_AND_ACTIONS"}, "source_id": {"const": "kcc_maqasa_official"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 7}, "wave_ordinal": {"const": 4}, "wave_id": {"const": "LICENSED_AND_AUTHORIZED_MARKET_DATA"}, "source_id": {"const": "authorized_broker_feed"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 8}, "wave_ordinal": {"const": 4}, "wave_id": {"const": "LICENSED_AND_AUTHORIZED_MARKET_DATA"}, "source_id": {"const": "lseg_workspace_authorized"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 9}, "wave_ordinal": {"const": 4}, "wave_id": {"const": "LICENSED_AND_AUTHORIZED_MARKET_DATA"}, "source_id": {"const": "ice_kuwait_archive"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 10}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "investing_history"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 11}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "yahoo_finance_kw"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 12}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "mubasher_kuwait"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 13}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "argaam_kuwait"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 14}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "tradingview_screeners"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 15}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "marketscreener_kuwait"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 16}, "wave_ordinal": {"const": 5}, "wave_id": {"const": "STRUCTURED_SECONDARY"}, "source_id": {"const": "alphastocks_authorized_connector"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 17}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "reuters_middle_east"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 18}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "kuna"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 19}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "alqabas_economy"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 20}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "alanba_economy"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 21}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "alrai_economy"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 22}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "aljarida_economy"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 23}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "zawya"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 24}, "wave_ordinal": {"const": 6}, "wave_id": {"const": "EDITORIAL_CONTEXT"}, "source_id": {"const": "asharq_business"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 25}, "wave_ordinal": {"const": 7}, "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"}, "source_id": {"const": "indexsignal_forum"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 26}, "wave_ordinal": {"const": 7}, "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"}, "source_id": {"const": "telegram_boursakw"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 27}, "wave_ordinal": {"const": 7}, "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"}, "source_id": {"const": "telegram_kuwaitstockex"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 28}, "wave_ordinal": {"const": 7}, "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"}, "source_id": {"const": "telegram_kuwaitse"}}}]},
+        {"allOf": [{"$ref": "#/$defs/receiptInventoryRow"}, {"properties": {"source_ordinal": {"const": 29}, "wave_ordinal": {"const": 7}, "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"}, "source_id": {"const": "web_search_router"}}}]}
+      ],
+      "items": false
+    },
+    "wave_reconciliation": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 1},
+                "wave_id": {"const": "OFFICIAL_IDENTITY"},
+                "expected_source_ordinals": {"minItems": 2, "maxItems": 2, "prefixItems": [{"const": 1}, {"const": 2}], "items": false},
+                "terminal_source_ordinals": {"minItems": 2, "maxItems": 2, "prefixItems": [{"const": 1}, {"const": 2}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 2},
+                "wave_id": {"const": "ISSUER_PRIMARY"},
+                "expected_source_ordinals": {"minItems": 1, "maxItems": 1, "prefixItems": [{"const": 3}], "items": false},
+                "terminal_source_ordinals": {"minItems": 1, "maxItems": 1, "prefixItems": [{"const": 3}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 3},
+                "wave_id": {"const": "OFFICIAL_MARKET_FILINGS_AND_ACTIONS"},
+                "expected_source_ordinals": {"minItems": 3, "maxItems": 3, "prefixItems": [{"const": 4}, {"const": 5}, {"const": 6}], "items": false},
+                "terminal_source_ordinals": {"minItems": 3, "maxItems": 3, "prefixItems": [{"const": 4}, {"const": 5}, {"const": 6}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 4},
+                "wave_id": {"const": "LICENSED_AND_AUTHORIZED_MARKET_DATA"},
+                "expected_source_ordinals": {"minItems": 3, "maxItems": 3, "prefixItems": [{"const": 7}, {"const": 8}, {"const": 9}], "items": false},
+                "terminal_source_ordinals": {"minItems": 3, "maxItems": 3, "prefixItems": [{"const": 7}, {"const": 8}, {"const": 9}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 5},
+                "wave_id": {"const": "STRUCTURED_SECONDARY"},
+                "expected_source_ordinals": {"minItems": 7, "maxItems": 7, "prefixItems": [{"const": 10}, {"const": 11}, {"const": 12}, {"const": 13}, {"const": 14}, {"const": 15}, {"const": 16}], "items": false},
+                "terminal_source_ordinals": {"minItems": 7, "maxItems": 7, "prefixItems": [{"const": 10}, {"const": 11}, {"const": 12}, {"const": 13}, {"const": 14}, {"const": 15}, {"const": 16}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 6},
+                "wave_id": {"const": "EDITORIAL_CONTEXT"},
+                "expected_source_ordinals": {"minItems": 8, "maxItems": 8, "prefixItems": [{"const": 17}, {"const": 18}, {"const": 19}, {"const": 20}, {"const": 21}, {"const": 22}, {"const": 23}, {"const": 24}], "items": false},
+                "terminal_source_ordinals": {"minItems": 8, "maxItems": 8, "prefixItems": [{"const": 17}, {"const": 18}, {"const": 19}, {"const": 20}, {"const": 21}, {"const": 22}, {"const": 23}, {"const": 24}], "items": false}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/waveReconciliation"},
+            {
+              "properties": {
+                "wave_ordinal": {"const": 7},
+                "wave_id": {"const": "DISCOVERY_AND_SENTIMENT_ONLY"},
+                "expected_source_ordinals": {"minItems": 5, "maxItems": 5, "prefixItems": [{"const": 25}, {"const": 26}, {"const": 27}, {"const": 28}, {"const": 29}], "items": false},
+                "terminal_source_ordinals": {"minItems": 5, "maxItems": 5, "prefixItems": [{"const": 25}, {"const": 26}, {"const": 27}, {"const": 28}, {"const": 29}], "items": false}
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "terminal_status_counts": {"$ref": "#/$defs/terminalStatusCounts"},
+    "retained_manifest_count": {"const": 29},
+    "reopened_manifest_count": {"const": 29},
+    "raw_artifact_count": {"type": "integer", "minimum": 0},
+    "reopened_raw_artifact_count": {"type": "integer", "minimum": 0},
+    "raw_size_bytes": {"type": "integer", "minimum": 0},
+    "reconciled_checkpoint_digest": {"$ref": "#/$defs/sha256"},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"},
+    "reconciliation_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "securityCode": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+    "terminalStatus": {
+      "enum": [
+        "COLLECTED",
+        "VERIFIED_ZERO",
+        "REVIEWED_NOT_APPLICABLE",
+        "BLOCKED_RIGHTS",
+        "BLOCKED_ROBOTS",
+        "BLOCKED_ACCESS",
+        "AUTH_REQUIRED",
+        "ENTITLEMENT_REQUIRED",
+        "PAYWALL",
+        "RATE_LIMITED_EXHAUSTED",
+        "NETWORK_ERROR_EXHAUSTED",
+        "PARSER_DRIFT",
+        "ISSUER_OFFICIAL_SITE_UNRESOLVED"
+      ]
+    },
+    "receiptInventoryRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ordinal",
+        "wave_ordinal",
+        "wave_id",
+        "source_id",
+        "terminal_status",
+        "receipt_sha256",
+        "manifest_sha256"
+      ],
+      "properties": {
+        "source_ordinal": {"type": "integer", "minimum": 1, "maximum": 29},
+        "wave_ordinal": {"type": "integer", "minimum": 1, "maximum": 7},
+        "wave_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+        "source_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]{0,127}$"},
+        "terminal_status": {"$ref": "#/$defs/terminalStatus"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "waveReconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wave_ordinal",
+        "wave_id",
+        "expected_source_ordinals",
+        "terminal_source_ordinals",
+        "status"
+      ],
+      "properties": {
+        "wave_ordinal": {"type": "integer", "minimum": 1, "maximum": 7},
+        "wave_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+        "expected_source_ordinals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1, "maximum": 29}
+        },
+        "terminal_source_ordinals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1, "maximum": 29}
+        },
+        "status": {"const": "EXACT"}
+      }
+    },
+    "terminalStatusCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 13,
+      "properties": {
+        "COLLECTED": {"type": "integer", "minimum": 1, "maximum": 29},
+        "VERIFIED_ZERO": {"type": "integer", "minimum": 1, "maximum": 29},
+        "REVIEWED_NOT_APPLICABLE": {"type": "integer", "minimum": 1, "maximum": 29},
+        "BLOCKED_RIGHTS": {"type": "integer", "minimum": 1, "maximum": 29},
+        "BLOCKED_ROBOTS": {"type": "integer", "minimum": 1, "maximum": 29},
+        "BLOCKED_ACCESS": {"type": "integer", "minimum": 1, "maximum": 29},
+        "AUTH_REQUIRED": {"type": "integer", "minimum": 1, "maximum": 29},
+        "ENTITLEMENT_REQUIRED": {"type": "integer", "minimum": 1, "maximum": 29},
+        "PAYWALL": {"type": "integer", "minimum": 1, "maximum": 29},
+        "RATE_LIMITED_EXHAUSTED": {"type": "integer", "minimum": 1, "maximum": 29},
+        "NETWORK_ERROR_EXHAUSTED": {"type": "integer", "minimum": 1, "maximum": 29},
+        "PARSER_DRIFT": {"type": "integer", "minimum": 1, "maximum": 29},
+        "ISSUER_OFFICIAL_SITE_UNRESOLVED": {"type": "integer", "minimum": 1, "maximum": 29}
+      }
+    },
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generated_fixture_is_real_market_evidence",
+        "checkpoint_structure_proves_production_durability",
+        "terminal_receipts_prove_live_source_access",
+        "terminal_receipts_prove_source_rights",
+        "terminal_seal_proves_market_completeness",
+        "sealed_fixture_unlocks_training_or_backtest",
+        "sealed_fixture_proves_forecast_or_recommendation_quality",
+        "sealed_fixture_authorizes_financial_execution"
+      ],
+      "properties": {
+        "generated_fixture_is_real_market_evidence": {"const": false},
+        "checkpoint_structure_proves_production_durability": {"const": false},
+        "terminal_receipts_prove_live_source_access": {"const": false},
+        "terminal_receipts_prove_source_rights": {"const": false},
+        "terminal_seal_proves_market_completeness": {"const": false},
+        "sealed_fixture_unlocks_training_or_backtest": {"const": false},
+        "sealed_fixture_proves_forecast_or_recommendation_quality": {"const": false},
+        "sealed_fixture_authorizes_financial_execution": {"const": false}
+      }
+    }
+  }
+}

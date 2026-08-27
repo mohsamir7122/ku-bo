@@ -22,6 +22,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PrivatePredecessorMigrationControlTests(unittest.TestCase):
+    @staticmethod
+    def _task_metadata(task_text: str) -> dict[str, str]:
+        """Read the active metadata block without coupling tests to an old task."""
+        blocks = task_text.split("```text", 1)
+        if len(blocks) != 2:
+            raise AssertionError("CURRENT_TASK is missing its metadata block")
+        body = blocks[1].split("```", 1)[0]
+        metadata: dict[str, str] = {}
+        for line in body.splitlines():
+            if ": " not in line:
+                continue
+            key, value = line.split(": ", 1)
+            metadata[key] = value
+        return metadata
+
+    @staticmethod
+    def _replace_metadata(task_text: str, key: str, value: str) -> str:
+        metadata = PrivatePredecessorMigrationControlTests._task_metadata(task_text)
+        current = metadata.get(key)
+        if current is None:
+            block_start = task_text.find("```text")
+            block_end = task_text.find("\n```", block_start + len("```text"))
+            if block_start < 0 or block_end < 0:
+                raise AssertionError("CURRENT_TASK is missing its metadata block")
+            return task_text[:block_end] + f"\n{key}: {value}" + task_text[block_end:]
+        return task_text.replace(f"{key}: {current}", f"{key}: {value}", 1)
+
     def test_locked_preparation_package_passes_without_completion_claim(self) -> None:
         report = validate(ROOT)
         self.assertEqual(report["status"], "PASS_PREPARATION_CONTROL")
@@ -43,10 +70,10 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             root = Path(directory)
             self._copy_control(root)
             task_path = root / TASK
-            task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
-                "TASK_ID: KU-BO-MIG-001",
-                1,
+            task_text = self._replace_metadata(
+                task_path.read_text(encoding="utf-8"),
+                "TASK_ID",
+                "KU-BO-MIG-001",
             )
             task_path.write_text(task_text, encoding="utf-8")
             with self.assertRaisesRegex(
@@ -71,21 +98,15 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
 
             migration_task_text = task_path.read_text(encoding="utf-8")
             replacements = {
-                "CONTROL_BASE_BRANCH: main": (
-                    "CONTROL_BASE_BRANCH: agent/ku-bo-016-codex-live-bootstrap"
-                ),
-                "CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499": (
-                    "CONTROL_BASE_SHA: 6e9ab870e727494d5eb9e1ec9fa98829d6391d68"
-                ),
-                "EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1": (
-                    "EXPECTED_NEW_BRANCH: agent/private-predecessor-capability-migration-v1"
-                ),
-                "EXPECTED_PR_BASE: main": (
-                    "EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap"
-                ),
+                "CONTROL_BASE_BRANCH": "agent/ku-bo-016-codex-live-bootstrap",
+                "CONTROL_BASE_SHA": "6e9ab870e727494d5eb9e1ec9fa98829d6391d68",
+                "EXPECTED_NEW_BRANCH": "agent/private-predecessor-capability-migration-v1",
+                "EXPECTED_PR_BASE": "agent/ku-bo-016-codex-live-bootstrap",
             }
-            for current, expected in replacements.items():
-                migration_task_text = migration_task_text.replace(current, expected, 1)
+            for key, expected in replacements.items():
+                migration_task_text = self._replace_metadata(
+                    migration_task_text, key, expected
+                )
             task_path.write_text(migration_task_text, encoding="utf-8")
             report = validate(root)
             self.assertTrue(report["migration_task_active"])
@@ -117,10 +138,10 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             root = Path(directory)
             self._copy_control(root)
             task_path = root / TASK
-            task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
-                "TASK_ID: KU-BO-MIG-001",
-                1,
+            task_text = self._replace_metadata(
+                task_path.read_text(encoding="utf-8"),
+                "TASK_ID",
+                "KU-BO-MIG-001",
             )
             task_path.write_text(
                 task_text
@@ -134,15 +155,18 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
                 validate(root)
 
     def test_duplicate_task_metadata_keys_are_rejected(self) -> None:
-        for key_line in (
-            "TASK_ID: KU-BO-2026-08-27-DAY1",
-            "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
+        for key in (
+            "TASK_ID",
+            "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED",
         ):
-            with self.subTest(key_line=key_line), tempfile.TemporaryDirectory() as directory:
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 self._copy_control(root)
                 task_path = root / TASK
-                task_text = task_path.read_text(encoding="utf-8").replace(
+                task_text = task_path.read_text(encoding="utf-8")
+                metadata = self._task_metadata(task_text)
+                key_line = f"{key}: {metadata[key]}"
+                task_text = task_text.replace(
                     key_line,
                     f"{key_line}\n{key_line}",
                     1,

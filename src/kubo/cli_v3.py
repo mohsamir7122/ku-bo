@@ -20,6 +20,7 @@ from .company_dossier import (
 from .foundation_io import prepare_output_root, safe_regular_file
 from .hashing import canonical_json_bytes, sha256_file
 from .historical_knowledge import HistoricalKnowledgeCatalog, compile_research_plan, parse_as_of
+from .issuer_checkpoint_v2 import IssuerCheckpointV2Store
 from .issuer_sequential_collection import (
     compile_issuer_sequential_collection_plan,
     validate_issuer_sequential_collection_plan,
@@ -98,6 +99,8 @@ BLOCKING_STATUSES = {
     "DEGRADED_STRUCTURE_VALID_ONLY",
 }
 
+ISSUER_CHECKPOINT_V2_HMAC_ENV = "KUBO_TEST_ONLY_ISSUER_CHECKPOINT_V2_HMAC_KEY"
+
 PROJECT_CONFIG_COMMANDS = frozenset(
     {
         "capture",
@@ -134,6 +137,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-issuer-sequential-collection-plan",
         "validate-issuer-sequential-collection-run",
         "plan-issuer-sequential-collection",
+        "validate-issuer-checkpoint-v2",
     }
 )
 
@@ -194,6 +198,33 @@ def _runtime_hmac_key() -> bytes | None:
     except (ValueError, binascii.Error) as exc:
         raise ValueError("KUBO_LEDGER_HMAC_KEY is not valid encoded bytes") from exc
     raise ValueError("KUBO_LEDGER_HMAC_KEY must start with hex: or base64:")
+
+
+def _issuer_checkpoint_v2_hmac_key() -> bytes:
+    value = os.environ.get(ISSUER_CHECKPOINT_V2_HMAC_ENV, "")
+    if not value:
+        raise ValueError(
+            f"{ISSUER_CHECKPOINT_V2_HMAC_ENV} is required to authenticate "
+            "an issuer Checkpoint v2 terminal seal"
+        )
+    try:
+        if value.startswith("hex:"):
+            key = bytes.fromhex(value[4:])
+        elif value.startswith("base64:"):
+            key = base64.b64decode(value[7:], validate=True)
+        else:
+            raise ValueError(
+                f"{ISSUER_CHECKPOINT_V2_HMAC_ENV} must start with hex: or base64:"
+            )
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError(
+            f"{ISSUER_CHECKPOINT_V2_HMAC_ENV} is not valid encoded bytes"
+        ) from exc
+    if len(key) < 32:
+        raise ValueError(
+            f"{ISSUER_CHECKPOINT_V2_HMAC_ENV} must decode to at least 32 bytes"
+        )
+    return key
 
 
 def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -344,6 +375,13 @@ def parser() -> argparse.ArgumentParser:
     sequential_plan.add_argument("--generated-at", required=True)
     sequential_plan.add_argument("--runtime-trust-registry", type=Path)
     sequential_plan.add_argument("--output", type=Path)
+
+    checkpoint_v2 = sub.add_parser(
+        "validate-issuer-checkpoint-v2",
+        help="Authenticate and reopen a synthetic one-security Checkpoint v2 bundle",
+    )
+    checkpoint_v2.add_argument("--checkpoint-root", type=Path, required=True)
+    checkpoint_v2.add_argument("--expected-key-id", required=True)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -723,6 +761,32 @@ def main(argv: list[str] | None = None) -> int:
                 "plan_sha256": full_plan["plan_sha256"],
                 "claim_boundaries": full_plan["claim_boundaries"],
             }
+    elif args.command == "validate-issuer-checkpoint-v2":
+        store = IssuerCheckpointV2Store(
+            args.checkpoint_root,
+            project_root=project_root,
+        )
+        try:
+            validated = store.validate_terminal_seal(
+                key=_issuer_checkpoint_v2_hmac_key(),
+                expected_key_id=args.expected_key_id,
+            )
+        finally:
+            store.close()
+        report = {
+            "status": validated["status"],
+            "checkpoint_id": validated["checkpoint_id"],
+            "security_code": validated["security_code"],
+            "plan_sha256": validated["plan_sha256"],
+            "generation": validated["generation"],
+            "revision": validated["revision"],
+            "terminal_receipt_count": validated["terminal_receipt_count"],
+            "wave_count": validated["wave_count"],
+            "reconciliation_sha256": validated["reconciliation_sha256"],
+            "terminal_seal_sha256": validated["terminal_seal_sha256"],
+            "authenticated_key_id": validated["authenticated_key_id"],
+            "claim_boundaries": validated["claim_boundaries"],
+        }
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(

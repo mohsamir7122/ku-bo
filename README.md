@@ -490,6 +490,14 @@ kubo validate-issuer-sequential-collection-run \
   --universe /private/runtime/issuer-universe.json
 ```
 
+يضيف `issuer_checkpoint_v2` عقدًا منفصلًا، اصطناعيًا فقط، لحفظ 29 إيصالًا
+نهائيًا بترتيب الموجات السبع، وإعادة فتح الـManifest والبايتات، ثم المصالحة
+وختم HMAC. يتحقق الأمر المثبت `validate-issuer-checkpoint-v2` من حزمة مختومة؛
+يُمرر جذر الحزمة و`key_id` فقط في سطر الأوامر، بينما تُقرأ بايتات مفتاح
+الاختبار من `KUBO_TEST_ONLY_ISSUER_CHECKPOINT_V2_HMAC_KEY` بصيغة `hex:` أو
+`base64:`. لا يفعّل هذا العقد Google Drive أوالجمع الحي، ولا يثبت متانة تخزين
+إنتاجي أووجود دليل سوق حقيقي.
+
 المقام التشغيلي لهذا المسار هو `config/source_network.json`؛ أما
 `config/sources.json` فهو سجل Legacy ولا يحدد مصادر الخطة الجديدة. صحة الخطة
 لا تثبت أن الـUniverse يضم السوق كله، ولا تجعل Connector حيًا. يلزم Universe
@@ -514,6 +522,7 @@ kubo validate-issuer-sequential-collection-run \
 - `config/source_query_strategies.json`: استراتيجيات الاستعلام المميزة وسياسة المحاولة المحدودة.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
 - `src/kubo/issuer_sequential_collection.py`: بناء خطة السهم الواحد وتنفيذ حدود الأسهم وإيصالات المصادر وسلسلة الـSeals.
+- `src/kubo/issuer_checkpoint_v2.py`: Checkpoint اصطناعي create-exclusive مع CAS، واستعادة معاملات غير مكتملة، ومصالحة 29/7، وختم HMAC قبل السهم التالي.
 - `src/kubo/source_access_recipes.py`: مدقق الوصفات، مولد خطة الفحص، وربط إيصال الوصول بالخطة والبصمة.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
 - `src/kubo/source_evidence_lifecycle.py`: مصالحة Point-in-Time للمحاولات والحقوق والـrobots والـlineage والمراجعات والتعارضات والنسخ والفجوات مع منع أي ادعاء تشغيلي.
