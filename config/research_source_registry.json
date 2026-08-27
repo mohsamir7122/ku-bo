@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "registry_id": "ku-bo-kuwait-trusted-source-roles-v1",
+  "market": "KUWAIT",
+  "class_role_map": {
+    "PRIMARY_OFFICIAL": "OFFICIAL_PRIMARY",
+    "PRIMARY_ISSUER": "OFFICIAL_PRIMARY",
+    "LICENSED": "LICENSED_MARKET_DATA",
+    "STRUCTURED_SECONDARY": "STRUCTURED_SECONDARY",
+    "EDITORIAL": "RELIABLE_NEWS",
+    "COMMUNITY": "COMMUNITY_DISCOVERY"
+  },
+  "excluded_source_classes": [
+    "SEARCH_ROUTER",
+    "STORAGE",
+    "WEB_ARCHIVE"
+  ],
+  "required_named_sources": [
+    {"source_id": "boursa_current", "source_role": "OFFICIAL_PRIMARY"},
+    {"source_id": "cma_ifsah", "source_role": "OFFICIAL_PRIMARY"},
+    {"source_id": "kcc_maqasa_official", "source_role": "OFFICIAL_PRIMARY"},
+    {"source_id": "issuer_ir_verified", "source_role": "OFFICIAL_PRIMARY"},
+    {"source_id": "ice_kuwait_archive", "source_role": "LICENSED_MARKET_DATA"},
+    {"source_id": "authorized_broker_feed", "source_role": "LICENSED_MARKET_DATA"},
+    {"source_id": "mubasher_kuwait", "source_role": "STRUCTURED_SECONDARY"},
+    {"source_id": "investing_history", "source_role": "STRUCTURED_SECONDARY"},
+    {"source_id": "reuters_middle_east", "source_role": "RELIABLE_NEWS"},
+    {"source_id": "kuna", "source_role": "RELIABLE_NEWS"},
+    {"source_id": "indexsignal_forum", "source_role": "COMMUNITY_DISCOVERY"}
+  ],
+  "role_policies": {
+    "OFFICIAL_PRIMARY": {
+      "credibility_ceiling": 98,
+      "allowed_claim_types": ["OFFICIAL_FACT", "PRICE", "FUNDAMENTAL", "NEWS_EVENT", "MARKET_CONTEXT", "RISK_SIGNAL"]
+    },
+    "LICENSED_MARKET_DATA": {
+      "credibility_ceiling": 95,
+      "allowed_claim_types": ["PRICE", "FUNDAMENTAL", "MARKET_CONTEXT", "RISK_SIGNAL"]
+    },
+    "STRUCTURED_SECONDARY": {
+      "credibility_ceiling": 72,
+      "allowed_claim_types": ["PRICE", "FUNDAMENTAL", "NEWS_EVENT", "MARKET_CONTEXT", "DISCOVERY", "RISK_SIGNAL"]
+    },
+    "RELIABLE_NEWS": {
+      "credibility_ceiling": 82,
+      "allowed_claim_types": ["NEWS_EVENT", "MARKET_CONTEXT", "DISCOVERY", "RISK_SIGNAL"]
+    },
+    "COMMUNITY_DISCOVERY": {
+      "credibility_ceiling": 30,
+      "allowed_claim_types": ["DISCOVERY", "SENTIMENT", "RISK_SIGNAL"]
+    }
+  },
+  "source_credibility_caps": {
+    "indexsignal_forum": 25
+  },
+  "claim_boundaries": {
+    "caller_supplied_source_role_is_authoritative": false,
+    "registry_role_grants_access_rights": false,
+    "credibility_score_is_stock_probability": false,
+    "community_can_confirm_official_fact_or_price": false,
+    "copied_news_counts_as_independent_confirmation": false,
+    "conflicting_values_may_be_averaged": false,
+    "research_network_may_unlock_strict_forecast": false
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-observation.schema.json",
+  "title": "KU-BO claim-level research observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "observation_id", "market", "source_id", "source_role",
+    "source_independence_group", "rights_status", "security_code", "claim_id",
+    "claim_key", "claim_type", "field_name", "claim_value", "claim_text",
+    "publisher", "canonical_url", "published_at", "event_at", "observed_at",
+    "fetched_at", "provider_as_of", "known_at", "content_hash", "access_method",
+    "transformation_history", "transformed_content_hash", "origin_id",
+    "credibility_score", "credibility_components",
+    "credibility_score_is_stock_probability", "admission_status", "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "observation_id": {"$ref": "#/$defs/identifier"},
+    "market": {"const": "KUWAIT"},
+    "source_id": {"$ref": "#/$defs/identifier"},
+    "source_role": {"enum": ["OFFICIAL_PRIMARY", "LICENSED_MARKET_DATA", "STRUCTURED_SECONDARY", "RELIABLE_NEWS", "COMMUNITY_DISCOVERY"]},
+    "source_independence_group": {"type": "string", "minLength": 1, "maxLength": 128},
+    "rights_status": {"enum": ["TERMS_REVIEW_REQUIRED", "ENTITLEMENT_REQUIRED", "RUNTIME_AUTHORITY_REQUIRED"]},
+    "security_code": {"type": "string", "minLength": 1, "maxLength": 64},
+    "claim_id": {"$ref": "#/$defs/identifier"},
+    "claim_key": {"$ref": "#/$defs/identifier"},
+    "claim_type": {"enum": ["OFFICIAL_FACT", "PRICE", "FUNDAMENTAL", "NEWS_EVENT", "MARKET_CONTEXT", "DISCOVERY", "SENTIMENT", "RISK_SIGNAL"]},
+    "field_name": {"type": "string", "minLength": 1, "maxLength": 128},
+    "claim_value": {},
+    "claim_text": {"type": "string", "minLength": 1, "maxLength": 20000},
+    "publisher": {"type": "string", "minLength": 1, "maxLength": 512},
+    "canonical_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "published_at": {"$ref": "#/$defs/nullableTimestamp"},
+    "event_at": {"$ref": "#/$defs/nullableTimestamp"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "fetched_at": {"type": "string", "format": "date-time"},
+    "provider_as_of": {"$ref": "#/$defs/nullableTimestamp"},
+    "known_at": {"type": "string", "format": "date-time"},
+    "content_hash": {"$ref": "#/$defs/sha256"},
+    "access_method": {"type": "string", "minLength": 1, "maxLength": 128},
+    "transformation_history": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step_id", "tool_version", "applied_at", "input_sha256", "output_sha256"],
+        "properties": {
+          "step_id": {"$ref": "#/$defs/identifier"},
+          "tool_version": {"type": "string", "minLength": 1, "maxLength": 128},
+          "applied_at": {"type": "string", "format": "date-time"},
+          "input_sha256": {"$ref": "#/$defs/sha256"},
+          "output_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "transformed_content_hash": {"$ref": "#/$defs/sha256"},
+    "origin_id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "credibility_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "credibility_components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role_ceiling", "source_cap", "rights_deduction", "temporal_completeness_deduction", "provenance_deduction"],
+      "properties": {
+        "role_ceiling": {"type": "integer", "minimum": 0, "maximum": 100},
+        "source_cap": {"type": "integer", "minimum": 0, "maximum": 100},
+        "rights_deduction": {"type": "integer", "minimum": 0, "maximum": 100},
+        "temporal_completeness_deduction": {"type": "integer", "minimum": 0, "maximum": 100},
+        "provenance_deduction": {"type": "integer", "minimum": 0, "maximum": 100}
+      }
+    },
+    "credibility_score_is_stock_probability": {"const": false},
+    "admission_status": {"enum": ["RESEARCH_ONLY", "WATCH_ONLY", "QUARANTINED"]},
+    "claim_boundaries": {
+      "const": {
+        "market_direction_probability_computed": false,
+        "strict_forecast_unlocked": false,
+        "access_rights_inferred_from_registry": false,
+        "independent_confirmation_established_by_observation": false
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "nullableTimestamp": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ]
+    }
+  }
+}
