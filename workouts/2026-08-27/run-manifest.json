@@ -85,7 +85,7 @@
     "wheel_sha256": "86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9",
     "package_install_cli_smoke": "pass",
     "real_company_count": 0,
-    "stage_commit_sha": null
+    "stage_commit_sha": "2a37ac81e440bd1ce609abdfab61993e118ccb57"
   },
   "repository_audit": {
     "completed_at_utc": "2026-08-27T02:53:38Z",

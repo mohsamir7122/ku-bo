@@ -8,9 +8,8 @@ Updated: 2026-08-27T04:24:26Z
 2. Design the sequential UTC GitHub Actions schedule with concurrency, timeout,
    bounded retries, market calendars, and a hard activation gate. Do not enable
    it while required Secrets/variables are absent.
-3. Commit Stage 2 independently after the final cached diff review, then push
-   the work branch and use exact-head CI. Keep any PR draft-only and do not merge
-   while gates remain open.
+3. Push the work branch and use exact-head CI. Keep any PR draft-only and do not
+   merge while gates remain open.
 4. Begin real Kuwait collection only after source admission succeeds. Record the
    actual company and unique-event counts; never fill gaps with invented data.
 5. Build the deduplicated historical event library and purged train/validation/

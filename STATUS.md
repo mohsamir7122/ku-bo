@@ -66,7 +66,7 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
   sealed output because authorized source access is not configured. This is the
   expected `ABSTAIN / NO-TRADE` result, not live readiness.
 - Stage 1 is preserved in commit
-  `23895a19f18f87ddb1f61489dd4bcef13fe6e88a`; it has not been pushed or merged.
+  `23895a19f18f87ddb1f61489dd4bcef13fe6e88a`; it has not been merged.
 - Implemented Stage 2 effective-dated issuer-universe and company-dossier
   contracts above the existing identity/history foundation. The validator
   enforces exact security/issuer denominators, interval/ISIN/ticker collision
@@ -83,6 +83,8 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
   `8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9`.
 - A fresh wheel/install/CLI smoke passed for the new command. Wheel SHA-256 is
   `86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9`.
+- Stage 2 is preserved in commit
+  `2a37ac81e440bd1ce609abdfab61993e118ccb57`; it has not been merged.
 
 ## Next active stage
 

@@ -17,7 +17,8 @@
   "stage_commits": {
     "preflight": "899c0376c92d28d03efe6f038764c366df085b7c",
     "repository_audit": "e590e2c5c4c70b837b83a16525659ed206ea1594",
-    "source_evidence_lifecycle": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a"
+    "source_evidence_lifecycle": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a",
+    "issuer_universe_and_company_dossier": "2a37ac81e440bd1ce609abdfab61993e118ccb57"
   },
   "stages": [
     {"name": "contract_read", "status": "completed"},
