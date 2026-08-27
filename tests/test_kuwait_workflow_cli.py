@@ -174,7 +174,7 @@ class KuwaitWorkflowCliTests(unittest.TestCase):
         )
         self.assertEqual(report["workflow"]["context_calendar_days"], 120)
         self.assertEqual(report["workflow"]["decision_sessions"], 40)
-        self.assertEqual(report["source_capabilities"]["DEFINED_ONLY"], 66)
+        self.assertEqual(report["source_capabilities"]["DEFINED_ONLY"], 69)
         self.assertEqual(report["live_operational_sources"], [])
         self.assertFalse(report["claim_boundaries"]["operational_ready"])
         self.assertFalse(report["claim_boundaries"]["backtest_ready"])

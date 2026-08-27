@@ -1,0 +1,115 @@
+name: KU-BO Kuwait Recovery Controller
+
+on:
+  workflow_run:
+    workflows:
+      - Kuwait Market Pipeline
+      - CI
+    types:
+      - completed
+  schedule:
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+    - cron: "13,43 * * * *"
+  workflow_dispatch:
+    inputs:
+      incident_id:
+        description: Optional validated incident to probe or resume
+        required: false
+        type: string
+      force_probe:
+        description: Run only the permitted lightweight health probe
+        required: true
+        default: false
+        type: boolean
+  repository_dispatch:
+    types:
+      - market-recovery-request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-kuwait-market-ai
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Validate fail-closed recovery policy
+        run: python scripts/recovery_controller.py --project-root . validate-policy
+      - name: Process one bounded recovery event
+        id: recovery
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PATH: ${{ github.event_path }}
+          EVENT_ACTOR: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_SHA: ${{ github.sha }}
+          INCIDENT_ID: ${{ github.event.client_payload.incident_id || inputs.incident_id || '' }}
+          FORCE_PROBE: ${{ github.event.client_payload.force_probe || inputs.force_probe || false }}
+          REQUIRED_SECRETS_PRESENT: ${{ secrets.KUBO_AUTHORIZED_SOURCE_ACCESS != '' && secrets.KUBO_DRIVE_RUNTIME_CONFIG != '' }}
+        run: |
+          set -uo pipefail
+          mkdir -p runtime/recovery-state
+          set +e
+          python scripts/recovery_controller.py \
+            --project-root . \
+            github-control \
+            --repository "$REPOSITORY" \
+            --default-ref main \
+            --current-code-sha "$CURRENT_SHA" \
+            --event-name "$EVENT_NAME" \
+            --event-path "$EVENT_PATH" \
+            --actor "$EVENT_ACTOR" \
+            --required-secrets-present "$REQUIRED_SECRETS_PRESENT" \
+            --incident-id "$INCIDENT_ID" \
+            --force-probe "$FORCE_PROBE" \
+            --output runtime/recovery-controller-report.json \
+            --state-output-root runtime/recovery-state
+          controller_exit_code=$?
+          set -e
+          echo "exit_code=$controller_exit_code" >> "$GITHUB_OUTPUT"
+          exit "$controller_exit_code"
+      - name: Write sanitized recovery summary
+        if: always()
+        run: |
+          echo "actual_execution_time_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_STEP_SUMMARY"
+          echo "DIRECT_EMAIL_NOT_CONFIGURED" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f runtime/recovery-controller-report.json ]]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            sed -n '1,240p' runtime/recovery-controller-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "RECOVERY_CONTROLLER_BLOCKED; inspect the sanitized step error." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload sanitized controller diagnostics and state
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-state-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve controller failure exit code
+        if: ${{ steps.recovery.outcome == 'failure' }}
+        env:
+          CONTROLLER_EXIT_CODE: ${{ steps.recovery.outputs.exit_code || '2' }}
+        run: exit "$CONTROLLER_EXIT_CODE"

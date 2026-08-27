@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import json
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .catalog import Catalog
-from .hashing import sha256_file
+from .foundation_io import load_strict_json_object, safe_regular_file
 from .strict import domain_matches, parse_aware, require_sha256, safe_relative_path
 
 
@@ -71,8 +71,12 @@ class EvidenceManifest:
         artifacts: list[Artifact] = []
         cutoff_at = parse_aware(cutoff, "cutoff") if cutoff is not None else None
         try:
-            payload = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+            payload, _ = load_strict_json_object(
+                self.path,
+                field="evidence file manifest",
+                max_bytes=16 * 1024 * 1024,
+            )
+        except ValueError as exc:
             return ManifestResult("BLOCKED", (), (f"INVALID_FILE_MANIFEST:{exc}",))
         if payload.get("schema_version") != "2.0":
             errors.append("UNSUPPORTED_MANIFEST_SCHEMA")
@@ -117,12 +121,15 @@ class EvidenceManifest:
                 content_type = str(row.get("content_type", ""))
                 if not content_type:
                     raise ValueError("content_type is required")
-                full_path = (self.pack_root / relative).resolve()
-                if self.pack_root not in full_path.parents or not full_path.is_file():
-                    raise ValueError("artifact file is missing or outside the pack")
-                if full_path.stat().st_size != size:
+                full_path = self.pack_root / relative
+                content = safe_regular_file(
+                    full_path,
+                    field=f"evidence artifact {relative_text}",
+                    max_bytes=512 * 1024 * 1024,
+                )
+                if len(content) != size:
                     raise ValueError("artifact size mismatch")
-                if sha256_file(full_path) != digest:
+                if hashlib.sha256(content).hexdigest() != digest:
                     raise ValueError("artifact hash mismatch")
                 artifacts.append(
                     Artifact(

@@ -55,18 +55,21 @@ class SourceQualityTests(unittest.TestCase):
         report = assess_source_quality(
             ROOT,
             source_id="boursa_current",
-            source_role="OFFICIAL_TRUTH",
             requested_fact_role="OFFICIAL_FACT",
             dimension_scores=_scores(0.95),
         )
         self.assertEqual(report["disposition"], "ADMIT")
+        self.assertEqual(report["source_role"], "OFFICIAL_TRUTH")
+        self.assertEqual(report["trusted_source_role"], "OFFICIAL_PRIMARY")
+        self.assertTrue(report["source_role_resolved_from_registry"])
+        self.assertFalse(report["access_authorized"])
         self.assertFalse(report["automatic_promotion_allowed"])
         self.assertFalse(report["quality_score_is_probability"])
 
     def test_corroboration_band(self) -> None:
         report = assess_source_quality(
             ROOT,
-            source_id="secondary",
+            source_id="mubasher_kuwait",
             source_role="SECONDARY_RESEARCH",
             requested_fact_role="NEWS_CORROBORATION",
             dimension_scores=_scores(0.7),
@@ -76,7 +79,7 @@ class SourceQualityTests(unittest.TestCase):
     def test_low_quality_is_quarantined(self) -> None:
         report = assess_source_quality(
             ROOT,
-            source_id="secondary",
+            source_id="mubasher_kuwait",
             source_role="SECONDARY_RESEARCH",
             requested_fact_role="RESEARCH_CONTEXT",
             dimension_scores=_scores(0.2),
@@ -86,7 +89,7 @@ class SourceQualityTests(unittest.TestCase):
     def test_hard_block_overrides_high_score(self) -> None:
         report = assess_source_quality(
             ROOT,
-            source_id="secondary",
+            source_id="mubasher_kuwait",
             source_role="SECONDARY_RESEARCH",
             requested_fact_role="PRICE_CONTEXT",
             dimension_scores=_scores(1.0),
@@ -97,7 +100,7 @@ class SourceQualityTests(unittest.TestCase):
     def test_community_cannot_create_official_fact(self) -> None:
         report = assess_source_quality(
             ROOT,
-            source_id="telegram",
+            source_id="indexsignal_forum",
             source_role="COMMUNITY_ROUTING_ONLY",
             requested_fact_role="OFFICIAL_FACT",
             dimension_scores=_scores(1.0),
@@ -111,7 +114,7 @@ class SourceQualityTests(unittest.TestCase):
         with self.assertRaises(SourceQualityError):
             assess_source_quality(
                 ROOT,
-                source_id="source",
+                source_id="mubasher_kuwait",
                 source_role="SECONDARY_RESEARCH",
                 requested_fact_role="PRICE_CONTEXT",
                 dimension_scores=values,
@@ -123,7 +126,7 @@ class SourceQualityTests(unittest.TestCase):
         with self.assertRaises(SourceQualityError):
             assess_source_quality(
                 ROOT,
-                source_id="source",
+                source_id="mubasher_kuwait",
                 source_role="SECONDARY_RESEARCH",
                 requested_fact_role="PRICE_CONTEXT",
                 dimension_scores=values,
@@ -133,7 +136,7 @@ class SourceQualityTests(unittest.TestCase):
         with self.assertRaises(SourceQualityError):
             assess_source_quality(
                 ROOT,
-                source_id="source",
+                source_id="mubasher_kuwait",
                 source_role="SECONDARY_RESEARCH",
                 requested_fact_role="PRICE_CONTEXT",
                 dimension_scores=_scores(1.0),
@@ -188,7 +191,7 @@ class SourceQualityTests(unittest.TestCase):
         with self.assertRaises(SourceQualityError):
             assess_source_quality(
                 ROOT,
-                source_id="official-test",
+                source_id="boursa_current",
                 source_role="OFFICIAL_TRUTH",
                 requested_fact_role="OFFICIAL_FACT",
                 dimension_scores=_scores(1.0),

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "market": "SAUDI_ARABIA",
+  "status": "DESIGN_ONLY_BLOCKED_UNTIL_KUWAIT_GATES_PASS",
+  "implementation_started": false,
+  "activation_gate": {
+    "required_market": "KUWAIT",
+    "required_results": [
+      "TRAINING_VALIDATED",
+      "LOCKED_BLIND_TEST_PASSED",
+      "MEASUREMENT_REPORT_PUBLISHED"
+    ]
+  },
+  "invariants": [
+    {
+      "gate_id": "SAUDI_TRUSTED_SOURCE_REGISTRY",
+      "requirement": "Resolve source_role and rights_status from a trusted source_id registry; caller-authored roles or rights are rejected.",
+      "violation_status": "BLOCKED"
+    },
+    {
+      "gate_id": "SAUDI_SUSPENDED_DENOMINATOR",
+      "requirement": "Retain suspended securities in the point-in-time universe denominator with tradable=false.",
+      "violation_status": "BLOCKED"
+    },
+    {
+      "gate_id": "SAUDI_GLOBAL_TEMPORAL_CUTOFF",
+      "requirement": "Apply one global known_at cutoff across every cohort and reject temporal leakage.",
+      "violation_status": "BLOCKED"
+    },
+    {
+      "gate_id": "SAUDI_OFFICIAL_HOLIDAY_CALENDAR",
+      "requirement": "Treat an absent or uncovered official holiday calendar as BLOCKED, never as an empty calendar.",
+      "violation_status": "BLOCKED"
+    },
+    {
+      "gate_id": "SAUDI_OBSERVATION_KNOWN_AT",
+      "requirement": "Reject every observation whose observed_at is later than the request known_at.",
+      "violation_status": "BLOCKED"
+    }
+  ],
+  "claim_boundaries": {
+    "saudi_collection_runtime_started": false,
+    "saudi_training_started": false,
+    "saudi_promotion_allowed": false
+  }
+}

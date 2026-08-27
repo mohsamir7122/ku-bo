@@ -4,7 +4,7 @@
   "capability_status": "DEFINED_ONLY",
   "defaults": {
     "max_attempts": 1,
-    "timeout_seconds": 10,
+    "timeout_seconds": 9,
     "max_bytes": 4194304,
     "valid_for_hours": 24
   },
@@ -69,6 +69,21 @@
       "terminal_reason_codes": ["HTTP_BLOCKED", "JAVASCRIPT_REQUIRED", "CAPTCHA_PRESENT", "ROBOTS_DENIED", "RATE_LIMITED", "EMPTY_RESPONSE", "PARSER_DRIFT", "NETWORK_ERROR"],
       "artifact_policy": "REQUIRED_WHEN_READABLE",
       "notes": "Probe the public regulator route only. Preserve the filing identity and document graph; do not promote a filing from a filename or search snippet."
+    },
+    {
+      "recipe_id": "kcc-maqasa-public-v1",
+      "source_ids": ["kcc_maqasa_official"],
+      "capability_status": "DEFINED_ONLY",
+      "route_kind": "STABLE_PUBLIC_PAGE",
+      "access_mode": "PUBLIC_PAGE",
+      "capture_method": "HTTP_GET",
+      "purpose_class": "DISPLAY_OR_DISTRIBUTION",
+      "collection_frequency": "ONE_OFF",
+      "rights_status": "PUBLIC_ACCESS_ONLY",
+      "allowed_states": ["AVAILABLE", "PARTIAL", "BLOCKED", "AUTH_REQUIRED", "ERROR", "UNTESTED"],
+      "terminal_reason_codes": ["HTTP_BLOCKED", "LOGIN_REQUIRED", "JAVASCRIPT_REQUIRED", "CAPTCHA_PRESENT", "ROBOTS_DENIED", "RATE_LIMITED", "EMPTY_RESPONSE", "PARSER_DRIFT", "DATA_QUALITY_REJECTED", "NETWORK_ERROR"],
+      "artifact_policy": "REQUIRED_WHEN_READABLE",
+      "notes": "One-off capability access only. Preserve the public bytes and timestamps; dividends, assemblies, ownership, and rules remain unparsed until separately admitted as point-in-time evidence."
     },
     {
       "recipe_id": "investing-authorized-export-v1",
@@ -222,7 +237,7 @@
     },
     {
       "recipe_id": "licensed-archive-export-v1",
-      "source_ids": ["ice_kuwait_archive"],
+      "source_ids": ["ice_kuwait_archive", "lseg_workspace_authorized"],
       "capability_status": "DEFINED_ONLY",
       "route_kind": "LICENSED_OR_BROKER_EXPORT",
       "access_mode": "LICENSED_VENDOR",
@@ -233,7 +248,7 @@
       "allowed_states": ["AVAILABLE", "PARTIAL", "BLOCKED", "AUTH_REQUIRED", "ERROR", "UNTESTED"],
       "terminal_reason_codes": ["LOGIN_REQUIRED", "USER_EXPORT_REQUIRED", "NETWORK_ERROR", "AUTHORIZATION_MISSING", "ENTITLEMENT_MISSING"],
       "artifact_policy": "REQUIRED_WHEN_READABLE",
-      "notes": "Requires external entitlement and an authorized-host binding. Catalog presence, a tool account, or packet-authored receipt is not a root of trust."
+      "notes": "Requires external entitlement, licensed retention rights, and an authorized-host binding. Catalog presence, a tool account, or packet-authored receipt is not a root of trust. Reuters content delivered by LSEG retains its Reuters origin."
     }
   ],
   "manual_importers": [

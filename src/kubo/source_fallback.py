@@ -8,10 +8,16 @@ import re
 from typing import Any, Mapping
 from urllib.parse import urlsplit
 
-from .foundation_io import load_strict_json_object
+from .foundation_io import (
+    load_strict_json_object,
+    require_real_directory,
+    safe_regular_file,
+    strict_json_object,
+)
+from .hashing import canonical_json_bytes
 from .market_scope import validate_market_scope
 from .source_network import NetworkSource, SourceNetworkCatalog
-from .strict import https_url, parse_aware, strict_bool
+from .strict import https_url, parse_aware, require_sha256, safe_relative_path, strict_bool
 
 
 POLICY_PATH = Path("config/source_fallback_policy.json")
@@ -88,6 +94,32 @@ REPORT_BOUNDARIES = {
     "source_promoted_automatically": False,
 }
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_ZERO_RECEIPT_KEYS = frozenset(
+    {
+        "schema_version",
+        "receipt_id",
+        "canonical_query",
+        "query_time",
+        "pagination_coverage",
+        "source_id",
+        "strategy_id",
+        "raw_artifact",
+        "qualified_row_count",
+        "receipt_digest",
+    }
+)
+_ZERO_RECEIPT_REFERENCE_KEYS = frozenset({"logical_path", "sha256"})
+_PAGINATION_KEYS = frozenset(
+    {
+        "requested_pages",
+        "received_pages",
+        "first_page",
+        "last_page",
+        "terminal_page_reached",
+        "next_page_token_present",
+    }
+)
+_RAW_ARTIFACT_KEYS = frozenset({"logical_path", "sha256", "size_bytes"})
 
 
 class SourceFallbackError(ValueError):
@@ -251,12 +283,247 @@ def _observation_disposition(row: Mapping[str, Any]) -> str:
     return "SOURCE_ACCESS_TERMINAL"
 
 
+def zero_result_receipt_digest(receipt: Mapping[str, Any]) -> str:
+    """Hash canonical receipt content while excluding its self-digest field."""
+
+    material = dict(receipt)
+    material.pop("receipt_digest", None)
+    return hashlib.sha256(canonical_json_bytes(material)).hexdigest()
+
+
+def _trusted_strategy_ids(project_root: Path) -> frozenset[str]:
+    try:
+        payload, _ = load_strict_json_object(
+            project_root / "config" / "source_query_strategies.json",
+            field="trusted source query strategies",
+            max_bytes=1024 * 1024,
+        )
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    rows = payload.get("strategies")
+    if not isinstance(rows, list) or not rows:
+        raise SourceFallbackError("trusted strategy registry is empty")
+    identifiers: list[str] = []
+    for index, raw in enumerate(rows, start=1):
+        if not isinstance(raw, Mapping) or frozenset(raw) != {
+            "strategy_id",
+            "ordinal",
+            "query_params",
+        }:
+            raise SourceFallbackError("trusted strategy registry row is malformed")
+        strategy_id = raw.get("strategy_id")
+        if not isinstance(strategy_id, str) or not _ID_RE.fullmatch(strategy_id):
+            raise SourceFallbackError("trusted strategy ID is invalid")
+        if raw.get("ordinal") != index or not isinstance(raw.get("query_params"), Mapping):
+            raise SourceFallbackError("trusted strategy order or parameters are invalid")
+        identifiers.append(strategy_id)
+    if len(identifiers) != len(set(identifiers)):
+        raise SourceFallbackError("trusted strategy IDs must be unique")
+    return frozenset(identifiers)
+
+
+def _rooted_content(
+    artifact_root: Path,
+    logical_path: Any,
+    *,
+    field: str,
+    max_bytes: int,
+) -> tuple[str, bytes]:
+    if not isinstance(logical_path, str) or "\\" in logical_path:
+        raise SourceFallbackError(f"{field} must use relative POSIX separators")
+    try:
+        relative = safe_relative_path(logical_path, field)
+        content = safe_regular_file(
+            artifact_root.joinpath(*relative.parts),
+            field=field,
+            max_bytes=max_bytes,
+        )
+    except ValueError as exc:
+        raise SourceFallbackError(f"cannot reopen {field} from trusted artifact root") from exc
+    return relative.as_posix(), content
+
+
+def _canonical_query(value: Any) -> str:
+    if not isinstance(value, str):
+        raise SourceFallbackError("zero receipt canonical_query must be a string")
+    text = " ".join(value.split())
+    if not text or len(text) > 4096 or text != value:
+        raise SourceFallbackError("zero receipt canonical_query is not canonical")
+    lowered = text.casefold()
+    sensitive_markers = (
+        "access_token=",
+        "api_key=",
+        "authorization:",
+        "cookie:",
+        "password=",
+        "signature=",
+        "x-amz-credential=",
+        "x-goog-credential=",
+    )
+    if any(marker in lowered for marker in sensitive_markers):
+        raise SourceFallbackError("zero receipt canonical_query contains sensitive material")
+    if "://" in text:
+        try:
+            https_url(text, "zero receipt canonical_query")
+        except ValueError as exc:
+            raise SourceFallbackError(str(exc)) from exc
+    return text
+
+
+def _validate_zero_result_receipt(
+    reference: Any,
+    *,
+    project_root: Path,
+    artifact_root: Path | None,
+    source_id: str,
+    capability_id: str,
+    attempted_at: Any,
+    index: int,
+) -> dict[str, Any]:
+    if artifact_root is None:
+        raise SourceFallbackError(
+            "VERIFIED_ZERO_RESULT requires a trusted artifact_root"
+        )
+    row = _exact(
+        reference,
+        _ZERO_RECEIPT_REFERENCE_KEYS,
+        f"observations[{index}].zero_result_receipt",
+    )
+    receipt_path, receipt_content = _rooted_content(
+        artifact_root,
+        row["logical_path"],
+        field=f"observations[{index}] zero-result receipt",
+        max_bytes=4 * 1024 * 1024,
+    )
+    try:
+        expected_receipt_sha = require_sha256(
+            row["sha256"], f"observations[{index}].zero_result_receipt.sha256"
+        )
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    actual_receipt_sha = hashlib.sha256(receipt_content).hexdigest()
+    if actual_receipt_sha != expected_receipt_sha:
+        raise SourceFallbackError("zero-result receipt file hash mismatch")
+    try:
+        receipt = strict_json_object(receipt_content, "zero-result receipt")
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    _exact(receipt, _ZERO_RECEIPT_KEYS, "zero-result receipt")
+    if receipt["schema_version"] != "1.0":
+        raise SourceFallbackError("zero-result receipt schema_version must be 1.0")
+    receipt_id = receipt["receipt_id"]
+    if not isinstance(receipt_id, str) or not _ID_RE.fullmatch(receipt_id):
+        raise SourceFallbackError("zero-result receipt_id is invalid")
+    canonical_query = _canonical_query(receipt["canonical_query"])
+    try:
+        query_time = parse_aware(receipt["query_time"], "zero receipt query_time")
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    if query_time > attempted_at:
+        raise SourceFallbackError("zero receipt query_time occurs after attempted_at")
+    if receipt["source_id"] != source_id:
+        raise SourceFallbackError("zero receipt source_id differs from observation")
+    strategy_id = receipt["strategy_id"]
+    if strategy_id not in _trusted_strategy_ids(project_root):
+        raise SourceFallbackError("zero receipt strategy_id is not trusted")
+    pagination = _exact(
+        receipt["pagination_coverage"],
+        _PAGINATION_KEYS,
+        "zero receipt pagination_coverage",
+    )
+    requested = pagination["requested_pages"]
+    received = pagination["received_pages"]
+    first_page = pagination["first_page"]
+    last_page = pagination["last_page"]
+    for field, value in (
+        ("requested_pages", requested),
+        ("received_pages", received),
+        ("first_page", first_page),
+        ("last_page", last_page),
+    ):
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 10000:
+            raise SourceFallbackError(f"zero receipt pagination.{field} is invalid")
+    terminal = strict_bool(
+        pagination["terminal_page_reached"],
+        "zero receipt pagination.terminal_page_reached",
+    )
+    next_token = strict_bool(
+        pagination["next_page_token_present"],
+        "zero receipt pagination.next_page_token_present",
+    )
+    if (
+        requested != received
+        or first_page != 1
+        or last_page != received
+        or not terminal
+        or next_token
+    ):
+        raise SourceFallbackError("zero receipt pagination coverage is incomplete")
+    raw = _exact(receipt["raw_artifact"], _RAW_ARTIFACT_KEYS, "zero receipt raw_artifact")
+    raw_path, raw_content = _rooted_content(
+        artifact_root,
+        raw["logical_path"],
+        field=f"observations[{index}] zero-result raw artifact",
+        max_bytes=512 * 1024 * 1024,
+    )
+    if raw_path == receipt_path:
+        raise SourceFallbackError("zero receipt cannot be its own raw artifact")
+    try:
+        expected_raw_sha = require_sha256(raw["sha256"], "zero receipt raw_artifact.sha256")
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    if hashlib.sha256(raw_content).hexdigest() != expected_raw_sha:
+        raise SourceFallbackError("zero-result raw artifact hash mismatch")
+    raw_size = raw["size_bytes"]
+    if isinstance(raw_size, bool) or not isinstance(raw_size, int) or raw_size <= 0:
+        raise SourceFallbackError("zero receipt raw artifact size is invalid")
+    if len(raw_content) != raw_size:
+        raise SourceFallbackError("zero-result raw artifact size mismatch")
+    if receipt["qualified_row_count"] != 0 or type(receipt["qualified_row_count"]) is not int:
+        raise SourceFallbackError("zero receipt must declare exactly zero qualified rows")
+    try:
+        submitted_digest = require_sha256(
+            receipt["receipt_digest"], "zero receipt receipt_digest"
+        )
+    except ValueError as exc:
+        raise SourceFallbackError(str(exc)) from exc
+    actual_digest = zero_result_receipt_digest(receipt)
+    if submitted_digest != actual_digest:
+        raise SourceFallbackError("zero-result receipt digest mismatch")
+    query_bindings = (
+        f"capability={capability_id}",
+        f"source={source_id}",
+        f"strategy={strategy_id}",
+    )
+    if any(binding not in canonical_query for binding in query_bindings):
+        raise SourceFallbackError(
+            "canonical_query is not bound to capability, source, and strategy"
+        )
+    return {
+        "receipt_logical_path": receipt_path,
+        "receipt_sha256": actual_receipt_sha,
+        "receipt_digest": actual_digest,
+        "raw_artifact_logical_path": raw_path,
+        "raw_artifact_sha256": expected_raw_sha,
+        "raw_artifact_size_bytes": raw_size,
+        "canonical_query_sha256": hashlib.sha256(canonical_query.encode("utf-8")).hexdigest(),
+        "query_time": query_time.isoformat(),
+        "source_id": source_id,
+        "strategy_id": strategy_id,
+        "pagination_coverage": dict(pagination),
+        "validation_status": "PASS_REOPENED_AND_HASHED",
+    }
+
+
 def _validate_observation(
     raw: Any,
     *,
     index: int,
     decision_at: Any,
     chain: tuple[str, ...],
+    capability_id: str,
+    project_root: Path,
+    artifact_root: Path | None,
 ) -> dict[str, Any]:
     row = _exact(
         raw,
@@ -267,7 +534,7 @@ def _validate_observation(
                 "transport_status",
                 "semantic_status",
                 "qualified_row_count",
-                "zero_result_verified",
+                "zero_result_receipt",
                 "cited_original_urls",
             }
         ),
@@ -286,23 +553,35 @@ def _validate_observation(
     count = row.get("qualified_row_count")
     if isinstance(count, bool) or not isinstance(count, int) or count < 0:
         raise SourceFallbackError("qualified_row_count must be a non-negative integer")
-    verified_zero = strict_bool(
-        row.get("zero_result_verified"),
-        f"observations[{index}].zero_result_verified",
-    )
+    receipt_reference = row.get("zero_result_receipt")
+    zero_receipt = None
+    if semantic == "VERIFIED_ZERO_RESULT":
+        zero_receipt = _validate_zero_result_receipt(
+            receipt_reference,
+            project_root=project_root,
+            artifact_root=artifact_root,
+            source_id=source_id,
+            capability_id=capability_id,
+            attempted_at=attempted_at,
+            index=index,
+        )
+    elif receipt_reference is not None:
+        raise SourceFallbackError(
+            "zero_result_receipt is allowed only for VERIFIED_ZERO_RESULT"
+        )
     if transport == "SUCCESS":
-        if semantic == "ROWS_PRESENT" and (count <= 0 or verified_zero):
+        if semantic == "ROWS_PRESENT" and (count <= 0 or zero_receipt is not None):
             raise SourceFallbackError("ROWS_PRESENT requires positive qualified rows")
-        if semantic == "VERIFIED_ZERO_RESULT" and (count != 0 or not verified_zero):
-            raise SourceFallbackError("VERIFIED_ZERO_RESULT requires an explicit zero receipt")
-        if semantic == "ZERO_ROWS" and (count != 0 or verified_zero):
+        if semantic == "VERIFIED_ZERO_RESULT" and (count != 0 or zero_receipt is None):
+            raise SourceFallbackError("VERIFIED_ZERO_RESULT requires a validated external receipt")
+        if semantic == "ZERO_ROWS" and (count != 0 or zero_receipt is not None):
             raise SourceFallbackError("ZERO_ROWS must remain unverified")
         if semantic in {"ACCESS_BLOCKED", "NOT_EVALUATED"}:
             raise SourceFallbackError("successful transport requires a semantic evaluation")
-        if semantic == "PARSE_FAILED" and (count != 0 or verified_zero):
+        if semantic == "PARSE_FAILED" and (count != 0 or zero_receipt is not None):
             raise SourceFallbackError("PARSE_FAILED cannot declare qualified rows")
     else:
-        if semantic not in {"ACCESS_BLOCKED", "NOT_EVALUATED"} or count != 0 or verified_zero:
+        if semantic not in {"ACCESS_BLOCKED", "NOT_EVALUATED"} or count != 0 or zero_receipt is not None:
             raise SourceFallbackError("failed transport cannot claim semantic data")
     urls = row.get("cited_original_urls")
     if not isinstance(urls, list) or len(urls) > 32 or len(urls) != len(set(urls)):
@@ -317,7 +596,7 @@ def _validate_observation(
         "transport_status": transport,
         "semantic_status": semantic,
         "qualified_row_count": count,
-        "zero_result_verified": verified_zero,
+        "zero_result_receipt": zero_receipt,
         "cited_original_urls": safe_urls,
         "disposition": _observation_disposition(row),
     }
@@ -350,10 +629,20 @@ def _matching_sources(url: str, catalog: SourceNetworkCatalog) -> list[str]:
 def plan_source_fallback(
     project_root: Path | str,
     request: Path | str | Mapping[str, Any],
+    *,
+    artifact_root: Path | str | None = None,
 ) -> dict[str, Any]:
     """Plan the next authorized source attempt from bounded observation receipts."""
 
     root = Path(project_root).resolve()
+    trusted_artifact_root: Path | None = None
+    if artifact_root is not None:
+        try:
+            trusted_artifact_root = require_real_directory(
+                Path(artifact_root), field="source fallback trusted artifact root"
+            )
+        except ValueError as exc:
+            raise SourceFallbackError(str(exc)) from exc
     _, policy_content, catalog, capabilities = _validated_policy(root)
     payload = _request(request)
     _exact(
@@ -380,6 +669,9 @@ def plan_source_fallback(
             index=index,
             decision_at=decision_at,
             chain=chain,
+            capability_id=str(capability_id),
+            project_root=root,
+            artifact_root=trusted_artifact_root,
         )
         for index, raw in enumerate(raw_observations)
     ]
@@ -482,5 +774,6 @@ __all__ = [
     "CAPABILITY_ROLES",
     "SourceFallbackError",
     "plan_source_fallback",
+    "zero_result_receipt_digest",
     "validate_source_fallback_policy",
 ]

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/rights-aware-blocked-record.schema.json",
+  "title": "KU-BO rights-aware blocked source range",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "record_type",
+    "classification",
+    "market",
+    "source_attempt_id",
+    "source_id",
+    "source_role",
+    "rights_status",
+    "partition_from",
+    "partition_to",
+    "partition_day_count",
+    "blocked_at",
+    "blocker_code",
+    "retry_allowed_in_same_run",
+    "health_probe_later_allowed",
+    "fallback_order",
+    "required_user_action",
+    "publish_allowed",
+    "record_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "record_id": {"type": "string", "pattern": "^BLOCK-[A-F0-9]{24}$"},
+    "record_type": {"const": "SOURCE_RANGE_BLOCK"},
+    "classification": {
+      "enum": ["BLOCKED_RIGHTS", "BLOCKED_ROBOTS", "BLOCKED_ACCESS"]
+    },
+    "market": {"const": "KUWAIT"},
+    "source_attempt_id": {"type": "string", "pattern": "^SRCATT-[A-F0-9]{24}$"},
+    "source_id": {"$ref": "#/$defs/identifier"},
+    "source_role": {
+      "enum": [
+        "OFFICIAL_PRIMARY",
+        "LICENSED_MARKET_DATA",
+        "STRUCTURED_SECONDARY",
+        "RELIABLE_NEWS",
+        "COMMUNITY_DISCOVERY"
+      ]
+    },
+    "rights_status": {
+      "enum": [
+        "TERMS_REVIEW_REQUIRED",
+        "ENTITLEMENT_REQUIRED",
+        "RUNTIME_AUTHORITY_REQUIRED"
+      ]
+    },
+    "partition_from": {"const": "2026-05-30"},
+    "partition_to": {"const": "2026-08-27"},
+    "partition_day_count": {"const": 90},
+    "blocked_at": {"type": "string", "format": "date-time"},
+    "blocker_code": {"$ref": "#/$defs/identifier"},
+    "retry_allowed_in_same_run": {"const": false},
+    "health_probe_later_allowed": {"type": "boolean"},
+    "fallback_order": {
+      "const": [
+        "official_documented_api_or_export",
+        "alternate_official_page_or_repository",
+        "issuer_official_disclosures",
+        "regulator_official_records",
+        "user_supplied_authorized_export",
+        "secondary_discovery_only"
+      ]
+    },
+    "required_user_action": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "publish_allowed": {"const": false},
+    "record_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

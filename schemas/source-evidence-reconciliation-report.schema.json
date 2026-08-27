@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/source-evidence-reconciliation-report.schema.json",
+  "title": "KU-BO source evidence reconciliation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "evidence_class",
+    "capture_mode",
+    "decision_at",
+    "attempt_summary",
+    "quality",
+    "accepted",
+    "conflicts",
+    "missing_expected_cells",
+    "quarantine",
+    "claim_boundaries",
+    "limitations",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "source-evidence-reconciliation-report-v1"},
+    "status": {
+      "enum": [
+        "STRUCTURE_AND_RECONCILIATION_VALID_ONLY",
+        "DEGRADED_STRUCTURE_VALID_ONLY",
+        "BLOCKED"
+      ]
+    },
+    "evidence_class": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "capture_mode": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME"]},
+    "decision_at": {"type": "string", "format": "date-time"},
+    "attempt_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "submitted_attempts",
+        "valid_attempts",
+        "successful_attempts",
+        "outcome_counts",
+        "source_failure_count",
+        "zero_yield_by_family",
+        "stop_source_families"
+      ],
+      "properties": {
+        "submitted_attempts": {"type": "integer", "minimum": 0},
+        "valid_attempts": {"type": "integer", "minimum": 0},
+        "successful_attempts": {"type": "integer", "minimum": 0},
+        "outcome_counts": {"$ref": "#/$defs/countMap"},
+        "source_failure_count": {"type": "integer", "minimum": 0},
+        "zero_yield_by_family": {"$ref": "#/$defs/countMap"},
+        "stop_source_families": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_cell_count",
+        "resolved_expected_cell_count",
+        "data_coverage_score",
+        "accepted_cell_count",
+        "missing_cell_count",
+        "missing_critical_cell_count",
+        "unresolved_conflict_count",
+        "exact_duplicate_observation_count",
+        "same_value_distinct_confirmed_origin_support_count",
+        "quarantine_count"
+      ],
+      "properties": {
+        "expected_cell_count": {"type": "integer", "minimum": 1},
+        "resolved_expected_cell_count": {"type": "integer", "minimum": 0},
+        "data_coverage_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "accepted_cell_count": {"type": "integer", "minimum": 0},
+        "missing_cell_count": {"type": "integer", "minimum": 0},
+        "missing_critical_cell_count": {"type": "integer", "minimum": 0},
+        "unresolved_conflict_count": {"type": "integer", "minimum": 0},
+        "exact_duplicate_observation_count": {"type": "integer", "minimum": 0},
+        "same_value_distinct_confirmed_origin_support_count": {"type": "integer", "minimum": 0},
+        "quarantine_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "accepted": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/accepted"}
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/conflict"}
+    },
+    "missing_expected_cells": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/missingCell"}
+    },
+    "quarantine": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reason_code", "detail", "row"],
+        "properties": {
+          "reason_code": {"type": "string", "minLength": 1},
+          "detail": {"type": "string", "minLength": 1},
+          "row": {"$ref": "#/$defs/quarantineRowReference"}
+        }
+      }
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_rights_proven_by_reconciliation",
+        "semantic_truth_proven",
+        "complete_market_coverage_proven",
+        "model_fitting_permitted",
+        "backtest_permitted",
+        "recommendation_permitted",
+        "financial_execution_permitted"
+      ],
+      "properties": {
+        "source_rights_proven_by_reconciliation": {"const": false},
+        "semantic_truth_proven": {"const": false},
+        "complete_market_coverage_proven": {"const": false},
+        "model_fitting_permitted": {"const": false},
+        "backtest_permitted": {"const": false},
+        "recommendation_permitted": {"const": false},
+        "financial_execution_permitted": {"const": false}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "countMap": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "quarantineRowReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_sha256", "identifiers"],
+      "properties": {
+        "record_sha256": {
+          "anyOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "identifiers": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "attempt_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "observation_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "source_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "source_family": {"type": "string", "minLength": 1, "maxLength": 256},
+            "origin_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "source_record_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "entity_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "field_name": {"type": "string", "minLength": 1, "maxLength": 256},
+            "outcome": {"type": "string", "minLength": 1, "maxLength": 256},
+            "content_class": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_id", "field_name", "effective_at"],
+      "properties": {
+        "entity_id": {"type": "string", "minLength": 1},
+        "field_name": {"type": "string", "minLength": 1},
+        "effective_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "accepted": {
+      "type": "object",
+      "required": [
+        "observation_id",
+        "attempt_id",
+        "artifact_id",
+        "source_id",
+        "publisher",
+        "source_family",
+        "origin_id",
+        "source_record_id",
+        "entity_id",
+        "field_name",
+        "value",
+        "unit",
+        "effective_at",
+        "published_at",
+        "available_at",
+        "retrieved_at",
+        "availability_evidence_status",
+        "revision",
+        "source_grade",
+        "verification_status",
+        "evidence_role",
+        "source_url",
+        "raw_sha256",
+        "parser_version",
+        "fact_status",
+        "supporting_observation_ids",
+        "independent_origin_count",
+        "resolution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "observation_id": {"type": "string"},
+        "attempt_id": {"type": "string"},
+        "artifact_id": {"type": "string"},
+        "source_id": {"type": "string"},
+        "publisher": {"type": "string"},
+        "source_family": {"type": "string"},
+        "origin_id": {"type": "string"},
+        "source_record_id": {"type": "string"},
+        "entity_id": {"type": "string"},
+        "field_name": {"type": "string"},
+        "value": {"type": ["string", "integer", "number"]},
+        "unit": {"type": "string"},
+        "effective_at": {"type": "string", "format": "date-time"},
+        "published_at": {"type": "string", "format": "date-time"},
+        "available_at": {"type": "string", "format": "date-time"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "availability_evidence_status": {"type": "string"},
+        "revision": {"type": "integer", "minimum": 1},
+        "source_grade": {"enum": ["A", "B", "C", "D"]},
+        "verification_status": {"enum": ["CONFIRMED", "UNVERIFIED", "INFERRED"]},
+        "evidence_role": {"type": "string"},
+        "source_url": {"type": "string", "format": "uri"},
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "parser_version": {"type": "string"},
+        "fact_status": {"enum": ["confirmed", "unverified", "inferred"]},
+        "supporting_observation_ids": {"type": "array", "items": {"type": "string"}},
+        "independent_origin_count": {"type": "integer", "minimum": 1},
+        "resolution": {"enum": ["AGREED_OR_SINGLE_VALUE", "UNIQUE_AUTHORITATIVE_VALUE"]}
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell",
+        "candidate_observation_ids",
+        "independent_origin_count",
+        "status",
+        "selected_observation_id"
+      ],
+      "properties": {
+        "cell": {"$ref": "#/$defs/cell"},
+        "candidate_observation_ids": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+        "independent_origin_count": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["RESOLVED_BY_UNIQUE_AUTHORITATIVE_VALUE", "UNRESOLVED_CONFLICT"]},
+        "selected_observation_id": {"type": ["string", "null"]}
+      }
+    },
+    "missingCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_id", "field_name", "effective_at", "fact_status", "critical", "reason_code"],
+      "properties": {
+        "entity_id": {"type": "string", "minLength": 1},
+        "field_name": {"type": "string", "minLength": 1},
+        "effective_at": {"type": "string", "format": "date-time"},
+        "fact_status": {"const": "missing"},
+        "critical": {"type": "boolean"},
+        "reason_code": {"const": "NO_ADMISSIBLE_RECONCILED_VALUE"}
+      }
+    }
+  }
+}

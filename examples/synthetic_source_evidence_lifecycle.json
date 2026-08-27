@@ -1,0 +1,68 @@
+{
+  "schema_version": "source-evidence-lifecycle-v1",
+  "evidence_class": "SYNTHETIC_FIXTURE",
+  "capture_mode": "PROSPECTIVE",
+  "decision_at": "2026-08-03T14:00:00+03:00",
+  "max_zero_yield_attempts_per_family": 2,
+  "critical_fields": [
+    "close_fils"
+  ],
+  "expected_cells": [
+    {
+      "entity_id": "SYN1",
+      "field_name": "close_fils",
+      "effective_at": "2026-08-03T13:15:00+03:00"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt_id": "synthetic-attempt-1",
+      "source_id": "synthetic-exchange",
+      "publisher": "Synthetic Official Exchange",
+      "source_family": "synthetic-exchange",
+      "source_url": "https://example.test/synthetic-exchange",
+      "access_mode": "RECORDED_FIXTURE",
+      "started_at": "2026-08-03T13:24:00+03:00",
+      "finished_at": "2026-08-03T13:25:00+03:00",
+      "http_status": null,
+      "outcome": "COLLECTED",
+      "content_class": "DATA",
+      "qualified_rows": 1,
+      "byte_count": 100,
+      "raw_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "parser_version": "synthetic-parser-v1",
+      "schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_schema_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "rights_status": "USER_AUTHORIZED",
+      "robots_status": "NOT_APPLICABLE"
+    }
+  ],
+  "observations": [
+    {
+      "observation_id": "synthetic-observation-1",
+      "attempt_id": "synthetic-attempt-1",
+      "artifact_id": "synthetic-artifact-1",
+      "source_id": "synthetic-exchange",
+      "publisher": "Synthetic Official Exchange",
+      "source_family": "synthetic-exchange",
+      "origin_id": "synthetic-origin-1",
+      "source_record_id": "synthetic-record-1",
+      "entity_id": "SYN1",
+      "field_name": "close_fils",
+      "value": 100,
+      "unit": "FILS",
+      "effective_at": "2026-08-03T13:15:00+03:00",
+      "published_at": "2026-08-03T13:20:00+03:00",
+      "available_at": "2026-08-03T13:20:00+03:00",
+      "retrieved_at": "2026-08-03T13:25:00+03:00",
+      "availability_evidence_status": "CAPTURED_BEFORE_CUTOFF",
+      "revision": 1,
+      "source_grade": "A",
+      "verification_status": "CONFIRMED",
+      "evidence_role": "EXCHANGE_OFFICIAL",
+      "source_url": "https://example.test/synthetic-exchange",
+      "raw_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "parser_version": "synthetic-parser-v1"
+    }
+  ]
+}

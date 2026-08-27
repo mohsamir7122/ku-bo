@@ -24,16 +24,16 @@
 
 يسجل الكتالوج شبكة قابلة للتوسع من المصادر وعائلات الناشرين، موزعة على أدوار لا على قائمة ثقة عمياء:
 
-الحالة الحالية على فرع `KU-BO-012` هي **68 تعريف مصدر** تُحتسب ضمن **62 مجموعة استقلال**؛ عدد الروابط أوالأسطح لا يساوي عدد الناشرين المستقلين. بعد استبعاد أسطح البحث والتخزين يوجد **59 نطاقًا مرشحًا**، منها **53 نطاقًا مصرحًا في الكتالوج كعام ومفعّل افتراضيًا**، وتتحول Start URLs المنفذة إلى **52 نطاقًا مميزًا** قبل الحجز العادل. الخطة الافتراضية تختار 50 نطاقًا بالضبط، بمساهمات جديدة حسب الموجات `17/0/29/4`، وتحجز الأربعة الأخيرة للأرشيف/المجتمع بما يضمن محاولة `t.me` و`indexsignal.com`. البقية تحتاج تفعيلًا أوحق استخدام؛ ولا يمثل أي رقم تأكيدات مستقلة.
+الحالة الحالية هي **71 تعريف مصدر** تُحتسب ضمن **65 مجموعة استقلال**؛ عدد الروابط أوالأسطح لا يساوي عدد الناشرين المستقلين. بعد استبعاد أسطح البحث والتخزين يوجد **61 نطاقًا مرشحًا**، منها **54 نطاقًا عامًا ومفعّلًا افتراضيًا**، وتتحول Start URLs العامة المنفذة إلى **53 نطاقًا مميزًا** قبل الحجز العادل. الخطة الافتراضية تختار 50 نطاقًا بالضبط، بمساهمات جديدة حسب الموجات `17/0/29/4`، وتحجز الأربعة الأخيرة للأرشيف/المجتمع بما يضمن محاولة `t.me` و`indexsignal.com`. البقية تحتاج تفعيلًا أوحق استخدام؛ ولا يمثل أي رقم تأكيدات مستقلة.
 
-حالة القدرة منفصلة عن التسجيل: **66** تعريفًا `DEFINED_ONLY`، و**2** فقط `END_TO_END_TESTED` على Fixtures مولدة، و**0** `LIVE_OPERATIONAL`. لا يُرقّى مصدر لأن اسمه موجود أولأن صفحته قابلة للفتح يدويًا.
+حالة القدرة منفصلة عن التسجيل: **69** تعريفًا `DEFINED_ONLY`، و**2** فقط `END_TO_END_TESTED` على Fixtures مولدة، و**0** `LIVE_OPERATIONAL`. لا يُرقّى مصدر لأن اسمه موجود أولأن صفحته قابلة للفتح يدويًا.
 
 - رسمي/جهة إصدار: بورصة الكويت، تقاريرها وإفصاحاتها، هيئة أسواق المال/iFSAH، ومواقع علاقات المستثمرين الموثقة.
 - سوق وتاريخ سعري: Investing.com، TradingView، Argaam، MarketScreener، Mubasher، Yahoo Finance، وTradingEconomics.
 - أخبار وأرشيف صحفي: KUNA، Reuters، Zawya، Asharq Business، الراي، الأنباء، الجريدة، والقبس.
 - مجتمع ومنتديات: IndexSignal، قنوات تليغرام العامة، وTradingView Ideas.
 - أرشيف ويب وتوجيه: Wayback Machine، Common Crawl، والبحث على الويب.
-- بيانات مرخّصة: ICE أو Broker/Market Feed مصرح به عند وجود Entitlement حقيقي.
+- بيانات مرخّصة: LSEG وICE أو Broker/Market Feed مصرح به عند وجود Entitlement حقيقي. AlphaStocks يظل Connector خارجيًا معطلًا حتى ربط هويته وحقوقه Runtime.
 
 كل مصدر يملك عقدًا يحدد أدواره، نطاقاته، مجموعة استقلاله، أقصى درجة لتوقيت الدليل، وما إذا كان يستطيع إنشاء Finding أم لا.
 
@@ -131,7 +131,7 @@ PYTHONPATH=src python -m kubo --project-root . validate-predecessor-capability-p
 PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
 ```
 
-يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لأربع عشرة
+يثبت `validate-predecessor-capability-parity` تكافؤًا برمجيًا معقمًا لخمس عشرة
 وظيفة مستخدم فقط؛ لا يدمج تاريخ Git خاصًا، ولا يشغّل محركًا ثانيًا، ولا ينقل
 بيانات أو نتائج أو ادعاءات جاهزية. ويخطط `plan-source-fallback` للمحاولة التالية
 من إيصالات محفوظة من دون تنفيذ اتصال شبكي أو تجاوز تسجيل الدخول أو جدار دفع:
@@ -139,6 +139,27 @@ PYTHONPATH=src python -m kubo --project-root . validate-ku-bo-live-program
 ```bash
 PYTHONPATH=src python -m kubo --project-root . plan-source-fallback \
   --request /absolute/path/to/source-fallback-request.json
+```
+
+وتعيد `reconcile-source-evidence` مصالحة محاولات المصدر والبايتات والمراجعات
+والتعارضات والنسخ والمقام الزمني من ملف JSON صارم. يظل ناتجها Structural فقط،
+ويمنع التدريب والـBacktest والتوصية والتنفيذ حتى لو اكتملت الخلايا المتوقعة:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . reconcile-source-evidence \
+  --input examples/synthetic_source_evidence_lifecycle.json \
+  --output /private/runtime/source-evidence-report.json
+```
+
+ويبني `validate-company-dossier-bundle` فوق هوية الأوراق الحالية مقام الشركات
+وملفاتها اليومية ذات الأقسام الثمانية والفجوات الصريحة وربط Point-in-Time. المثال
+اصطناعي فقط ولا يعدّ شركة مغطاة أوبيانات سوق حقيقية:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-company-dossier-bundle \
+  --universe examples/synthetic_issuer_universe.json \
+  --dossier examples/synthetic_company_dossier.json \
+  --output /private/runtime/company-dossier-report.json
 ```
 
 كما يفحص `validate-portfolio-state` Snapshot المحفظة وسجل الأوامر مقابل بايتات
@@ -160,7 +181,7 @@ PYTHONPATH=src python -m kubo --project-root . validate-portfolio-state \
 ## وصفات الوصول وفحص القدرة
 
 يضيف `KU-BO-015` طبقة تخطيط لاختبار الوصول إلى المصادر قبل أي جمع أو Parser.
-السجل الحالي يعرّف 14 وصفة تغطي 30 مصدرًا ذا أولوية من أصل 68، ويترك بقية
+السجل الحالي يعرّف 15 وصفة تغطي 32 مصدرًا ذا أولوية من أصل 71، ويترك بقية
 المصادر غير مغطاة بدل افتراض صلاحيتها. كل الوصفات `DEFINED_ONLY`، والخطة
 `CAPABILITY_PROBE_ONLY` ولا تنفذ طلب شبكة.
 
@@ -174,6 +195,9 @@ kubo --project-root . plan-source-access-probe \
 kubo --project-root . validate-source-access-probe \
   --plan /absolute/path/to/source-probe-plan.json \
   --probe /absolute/path/to/access-probe.json
+kubo --project-root . execute-public-source-access-probe \
+  --plan /absolute/path/to/source-probe-plan.json \
+  --output-root /private/path/to/fresh-probe-bundle
 ```
 
 يربط المدقق الإيصال ببصمة سجل الوصفات وبـ Start URL والنافذة والحقوق والميزانية
@@ -183,6 +207,14 @@ kubo --project-root . validate-source-access-probe \
 استيراد Investing اليدوي يبقى عند سقف `PRICE_IMPORT_READY_ONLY` ويحتاج Manifest
 و Hash ووحدة و Raw/Adjusted checks. التفاصيل في
 `docs/SOURCE_ACCESS_RECIPES_AR.md`.
+
+## جدولة الكويت الآمنة
+
+تُثبت النوافذ السبع المطلوبة بتوقيت الكويت وتحويلاتها إلى UTC في
+`config/kuwait_automation_schedule.json`، ويربطها المدقق بالـworkflow المتتابع
+`.github/workflows/kuwait-market-ai.yml`. يسجل التشغيل الوقت الفعلي، ويطبق
+تقويم السوق والعطلات، لكنه يبقى محجوبًا حتى قبول مصدر حقيقي وتوفير controls
+الخاصة. التفاصيل وأوامر الـdry run في `docs/AUTOMATION_SCHEDULE_AR.md`.
 
 ## طبقة المعرفة التاريخية الكويتية
 
@@ -435,6 +467,38 @@ Admission على الحدود الثمانية واختبارات خصومية �
 أوForecast. دليل الإيصالات في `docs/TRI_SECURITY_RUN_RECEIPT_V0_1_AR.md`،
 والحالة المتراكمة في `docs/CURRENT_DATA_FOUNDATION_STATUS_AR.md`.
 
+## جمع الكويت سهمًا بسهم
+
+يضيف عقد `issuer_sequential_collection` طابورًا حتميًا عند مستوى
+`security_code`: يخطط 29 مصدرًا للسهم الحالي، ويلزم إيصالًا نهائيًا لكل مصدر،
+ثم يختم السهم قبل بدء السهم التالي. موقع الشركة الرسمي عنصر مستقل وإلزامي لكل
+ورقة مالية، ويرتبط فقط من سجل ثقة Runtime مصدق؛ لا يُخمن النظام نطاق الشركة.
+
+```bash
+kubo validate-issuer-sequential-collection-policy
+kubo plan-issuer-sequential-collection \
+  --universe /private/runtime/issuer-universe.json \
+  --run-id kuwait-security-collection-001 \
+  --generated-at 2026-08-27T15:07:00+03:00 \
+  --output /private/runtime/security-collection-plan.json
+kubo validate-issuer-sequential-collection-plan \
+  --plan /private/runtime/security-collection-plan.json \
+  --universe /private/runtime/issuer-universe.json
+kubo validate-issuer-sequential-collection-run \
+  --plan /private/runtime/security-collection-plan.json \
+  --run /private/runtime/security-collection-run.json \
+  --universe /private/runtime/issuer-universe.json
+```
+
+المقام التشغيلي لهذا المسار هو `config/source_network.json`؛ أما
+`config/sources.json` فهو سجل Legacy ولا يحدد مصادر الخطة الجديدة. صحة الخطة
+لا تثبت أن الـUniverse يضم السوق كله، ولا تجعل Connector حيًا. يلزم Universe
+رسمي كامل، وAdapters وحقوق وصول وتخزين دائم قبل أي جمع حقيقي. نتيجة حساسة
+موجبة أو `VERIFIED_ZERO` تحتاج سجل ثقة HMAC يُعاد فتحه وManifest SHA-256؛
+والـRun Receipt يظل `ADAPTER_ASSERTED_RECEIPTS`، ومدققه يثبت الاتساق الداخلي
+فقط؛ فلا تُعد Content hashes توقيعًا ولا تثبت البايتات وحدها. التفاصيل
+والحدود في `docs/SECURITY_BY_SECURITY_COLLECTION_AR.md`.
+
 تشغّل GitHub Actions هذه البوابات على Python `3.11` و`3.12` و`3.13` و`3.14`. لا تثبت الوثائق عدد اختبارات ثابتًا؛ نتيجة CI الخاصة بالـCommit هي المرجع.
 
 تغطي الاختبارات حالات غياب بورصة الكويت، فتح قناة رسمية بلا Finding، المجتمع وحده، Finding مستقبلي، Hash تابع لمصدر آخر، Artifact جُمع بعد القرار، Access Receipt أوSearch Snippet كدليل، تضارب مستقل، إعادة النشر، Counts بلا Universe Receipt، Probability غير مدعومة، السيولة الصفرية، التعليق، Limit Queue، وPartial Fill.
@@ -442,14 +506,18 @@ Admission على الحدود الثمانية واختبارات خصومية �
 ## خريطة الملفات
 
 - `config/source_network.json`: سجل المصادر والأدوار والاستقلال وحدود الحقيقة.
+- `config/issuer_sequential_collection_policy.json`: ترتيب سهمي وحيد النشاط وسبع موجات/29 مصدرًا لكل سهم.
 - `config/source_capabilities.json`: حالة Capture/Parser/Fixture/Live لكل مصدر من دون استنتاج القدرة من مجرد وجوده في الكتالوج.
 - `config/source_access_recipes.json`: وصفات الوصول المحدودة، الحقوق، أسباب التوقف، وسقف الاستيراد اليدوي.
 - `config/research_policies.json`: نصاب كل أفق وأوزان Research Rank.
 - `config/research_workflows.json`: نوافذ وميزانيات وموجات `KUWAIT_120D_NEXT_SESSION_RESEARCH` وعقد الأربعين قرارًا.
 - `config/source_query_strategies.json`: استراتيجيات الاستعلام المميزة وسياسة المحاولة المحدودة.
 - `src/kubo/source_network.py`: مدقق كتالوج الشبكة وحزمة التشغيل والـLive Probe.
+- `src/kubo/issuer_sequential_collection.py`: بناء خطة السهم الواحد وتنفيذ حدود الأسهم وإيصالات المصادر وسلسلة الـSeals.
 - `src/kubo/source_access_recipes.py`: مدقق الوصفات، مولد خطة الفحص، وربط إيصال الوصول بالخطة والبصمة.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
+- `src/kubo/source_evidence_lifecycle.py`: مصالحة Point-in-Time للمحاولات والحقوق والـrobots والـlineage والمراجعات والتعارضات والنسخ والفجوات مع منع أي ادعاء تشغيلي.
+- `src/kubo/company_dossier.py`: تحقق هوية Issuer effective-dated ومقام ملفات الشركة والأقسام والفجوات وجودة المصدر من دون ملء افتراضي أوادعاء جمع حقيقي.
 - `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
 - `src/kubo/kuwait_research_pipeline.py`: التحقق من Source Search المحفوظ وربطه بمدخلات Parser الصارمة وإخراج حزمة Context/Exposure/Factor ذرية.
 - `src/kubo/forty_session_replay.py`: تقييم 40 قرارًا/41 جلسة مع Stop gates قبل المقاييس.
@@ -469,6 +537,11 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `src/kubo/pipeline.py`: المسار الافتراضي الجديد والمسار التاريخي المنفصل.
 - `src/kubo/cli_v3.py`: واجهة الأوامر.
 - `schemas/parsed-research-inputs.schema.json`: عقد الانتقال الصريح من البايتات المتحققة إلى الأحداث والتعرضات ومدخلات العوامل والتصرفات.
+- `schemas/source-evidence-lifecycle.schema.json`: عقد مدخلات دورة حياة الدليل والمقام الصريح.
+- `schemas/source-evidence-reconciliation-report.schema.json`: عقد تقرير المصالحة وحدود الادعاء.
+- `schemas/issuer-universe.schema.json`: عقد مقام Issuer/Security effective-dated للكويت.
+- `schemas/company-dossier.schema.json`: عقد ملف الشركة Point-in-Time بأقسامه الثمانية والفجوات الصريحة.
+- `schemas/company-dossier-validation-report.schema.json`: عقد تقرير تغطية ملفات الشركات وحدود الادعاء.
 - `schemas/`: عقود JSON Schema القابلة للقراءة الآلية.
 - `research/methodology_registry.json`: الأبحاث والقواعد والاختبارات المنهجية.
 - `.github/workflows/ci.yml`: Compile وUnit/Adversarial Tests وSmoke Check وSecret Guard.

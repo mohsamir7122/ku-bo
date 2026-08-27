@@ -60,6 +60,11 @@ AI Rebuild/04_Curated_Core/KU_BO/01_Factor9_Research
 لا يعيد Codex Crawling أو Cleaning أو Score نفسه قبل بناء Manifest ببصمات الملفات
 والتحقق من أن Artifact ناقص أو تالف فعلًا.
 
+وجود الـManifest أو الملف في Drive ليس دليل سلامة. يلزم جذر Artifact محلي موثوق؛
+يُعاد فتح كل ملف منه دون اتباع symlinks، ثم يعاد حساب الحجم وSHA-256 ومقارنتهما
+بالـManifest. الملف المفقود أو المتغير وpath traversal تمنع القبول، وأدلة البوابات
+المحلولة يجب أن تطابق hashes لملفات أعيد فتحها بالفعل.
+
 ## المخاطر المكتشفة
 
 - الهوية الرسمية effective-dated غير مثبتة لكل صف.

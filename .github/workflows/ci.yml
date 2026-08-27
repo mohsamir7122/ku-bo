@@ -39,6 +39,10 @@ jobs:
             tests.test_codex_live_bootstrap \
             tests.test_champion_freeze \
             -v
+      - name: Fail-closed Kuwait automation schedule contract
+        run: |
+          python scripts/validate_kuwait_automation_schedule.py --project-root .
+          python -m unittest tests.test_automation_schedule -v
       - name: KU-BO-011 deterministic acceptance-corpus audit
         run: |
           python scripts/generate_ku_bo_011_corpus.py --check
@@ -141,6 +145,7 @@ jobs:
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-config
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-research-workflow
           "$installed_kubo" --help | grep -q "run-source-search"
+          "$installed_kubo" --help | grep -q "execute-public-source-access-probe"
           "$installed_kubo" --help | grep -q "build-kuwait-research-bundle"
           "$installed_kubo" --help | grep -q "evaluate-forty-session-replay"
           "$installed_kubo" --help | grep -q "validate-source-quality-policy"
@@ -165,6 +170,7 @@ jobs:
             | grep -q -- "--operation-decision-at"
           "$installed_python" - <<'PY'
           from kubo.champion_freeze import validate_champion_freeze
+          from kubo.automation_schedule import validate_automation_schedule
           from kubo.codex_live_bootstrap import validate_codex_live_bootstrap
           from kubo.factor9_admission import validate_factor9_admission_manifest
           from kubo.capability_parity import validate_predecessor_capability_parity
@@ -186,6 +192,7 @@ jobs:
           assert callable(verify_boundary_lineage)
           assert callable(verify_final_predecessor_lineages)
           assert callable(validate_champion_freeze)
+          assert callable(validate_automation_schedule)
           assert callable(validate_codex_live_bootstrap)
           assert callable(validate_factor9_admission_manifest)
           assert callable(validate_predecessor_capability_parity)

@@ -28,12 +28,12 @@ def _temporary_project(directory: str, payload: dict[str, object]) -> Path:
 
 
 class CapabilityParityTests(unittest.TestCase):
-    def test_repository_manifest_resolves_all_fourteen_jobs(self) -> None:
+    def test_repository_manifest_resolves_all_fifteen_jobs(self) -> None:
         report = validate_predecessor_capability_parity(PROJECT_ROOT)
 
         self.assertEqual(report["status"], "PASS_SOFTWARE_PARITY_NON_OPERATIONAL")
-        self.assertEqual(report["capability_count"], 14)
-        self.assertEqual(report["resolved_callable_count"], 14)
+        self.assertEqual(report["capability_count"], 15)
+        self.assertEqual(report["resolved_callable_count"], 15)
         self.assertFalse(report["private_source_details_present"])
         self.assertFalse(report["claim_boundaries"]["training_authorized"])
         schema = json.loads(

@@ -18,6 +18,9 @@ build/
 runtime/
 data/
 raw_exports/
+private-state/
+raw-downloads/
+outputs/
 *.duckdb
 *.parquet
 htmlcov/

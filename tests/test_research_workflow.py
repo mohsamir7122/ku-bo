@@ -24,7 +24,7 @@ class ResearchWorkflowTests(unittest.TestCase):
         spec = load_research_workflow(ROOT / "config")
         domains = catalog_registrable_domains(SourceNetworkCatalog(ROOT / "config"))
         self.assertGreaterEqual(len(domains), 50)
-        self.assertEqual(len(domains), 53)
+        self.assertEqual(len(domains), 54)
         self.assertEqual(spec.catalog_distinct_registrable_domains, len(domains))
         self.assertNotIn("google.com", domains)
 
@@ -32,7 +32,7 @@ class ResearchWorkflowTests(unittest.TestCase):
         spec = load_research_workflow(ROOT / "config")
         self.assertEqual(spec.workflow_id, WORKFLOW_ID)
         self.assertEqual(spec.context_calendar_days, 120)
-        self.assertEqual(spec.transient_attempts_per_strategy, 3)
+        self.assertEqual(spec.transient_attempts_per_strategy, 2)
         self.assertEqual(spec.empty_result_query_strategies, 4)
         self.assertEqual(spec.target_distinct_registrable_domains, 50)
         self.assertEqual(spec.decision_sessions, 40)

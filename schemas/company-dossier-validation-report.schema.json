@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/company-dossier-validation-report.schema.json",
+  "title": "KU-BO company dossier validation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "evidence_class",
+    "as_of",
+    "universe_summary",
+    "dossier_summary",
+    "issuer_results",
+    "errors",
+    "claim_boundaries",
+    "limitations",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "company-dossier-validation-report-v1"},
+    "status": {
+      "enum": [
+        "STRUCTURE_VALID_ONLY",
+        "STRUCTURE_VALID_ONLY_WITH_EXPLICIT_GAPS",
+        "BLOCKED"
+      ]
+    },
+    "evidence_class": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "as_of": {"type": "string", "format": "date-time"},
+    "universe_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "universe_status",
+        "expected_security_count",
+        "active_security_count",
+        "missing_security_count",
+        "issuer_count",
+        "identity_gap_count",
+        "evidence_count"
+      ],
+      "properties": {
+        "universe_status": {"enum": ["EXACT", "PARTIAL"]},
+        "expected_security_count": {"type": "integer", "minimum": 1},
+        "active_security_count": {"type": "integer", "minimum": 0},
+        "missing_security_count": {"type": "integer", "minimum": 0},
+        "issuer_count": {"type": "integer", "minimum": 1},
+        "identity_gap_count": {"type": "integer", "minimum": 0},
+        "evidence_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "dossier_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "submitted_dossier_count",
+        "valid_dossier_count",
+        "expected_field_count",
+        "resolved_field_count",
+        "missing_field_count",
+        "missing_critical_field_count",
+        "data_coverage_score"
+      ],
+      "properties": {
+        "submitted_dossier_count": {"type": "integer", "minimum": 0},
+        "valid_dossier_count": {"type": "integer", "minimum": 0},
+        "expected_field_count": {"type": "integer", "minimum": 0},
+        "resolved_field_count": {"type": "integer", "minimum": 0},
+        "missing_field_count": {"type": "integer", "minimum": 0},
+        "missing_critical_field_count": {"type": "integer", "minimum": 0},
+        "data_coverage_score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "issuer_results": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/issuerResult"}
+    },
+    "errors": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "real_collection_complete",
+        "company_universe_complete",
+        "training_permitted",
+        "backtest_permitted",
+        "recommendation_permitted",
+        "financial_execution_permitted"
+      ],
+      "properties": {
+        "real_collection_complete": {"const": false},
+        "company_universe_complete": {"const": false},
+        "training_permitted": {"const": false},
+        "backtest_permitted": {"const": false},
+        "recommendation_permitted": {"const": false},
+        "financial_execution_permitted": {"const": false}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "issuerResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer_id",
+        "security_codes",
+        "expected_field_count",
+        "resolved_field_count",
+        "missing_field_count",
+        "missing_critical_field_count",
+        "source_count",
+        "evidence_count",
+        "last_updated_at"
+      ],
+      "properties": {
+        "issuer_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "security_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9]+$"}
+        },
+        "expected_field_count": {"type": "integer", "minimum": 1},
+        "resolved_field_count": {"type": "integer", "minimum": 0},
+        "missing_field_count": {"type": "integer", "minimum": 0},
+        "missing_critical_field_count": {"type": "integer", "minimum": 0},
+        "source_count": {"type": "integer", "minimum": 1},
+        "evidence_count": {"type": "integer", "minimum": 1},
+        "last_updated_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

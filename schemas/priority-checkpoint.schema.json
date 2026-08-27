@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/priority-checkpoint.schema.json",
+  "title": "KU-BO durable priority checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "checkpoint_id",
+    "workload_id",
+    "workload_class",
+    "priority",
+    "window_from",
+    "window_to",
+    "scheduled_at",
+    "actual_started_at",
+    "finished_at",
+    "status",
+    "generation",
+    "fencing_token",
+    "owner_run_id",
+    "created_at",
+    "updated_at",
+    "shards",
+    "checkpoint_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "checkpoint_id": {"type": "string", "pattern": "^CP-[A-F0-9]{24}$"},
+    "workload_id": {"$ref": "#/$defs/identifier"},
+    "workload_class": {
+      "enum": [
+        "LIVE_DAILY_1500",
+        "LIVE_RECOVERY",
+        "VALIDATION_AND_PUBLISH",
+        "CHALLENGER_TRAINING",
+        "BACKFILL_90D"
+      ]
+    },
+    "priority": {"enum": [100, 90, 70, 40, 10]},
+    "window_from": {"type": "string", "format": "date"},
+    "window_to": {"type": "string", "format": "date"},
+    "scheduled_at": {"type": "string", "format": "date-time"},
+    "actual_started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ]
+    },
+    "status": {
+      "enum": [
+        "RUNNING",
+        "PREEMPTED",
+        "COMPLETED",
+        "COMPLETED_WITH_BLOCKS",
+        "BLOCKED"
+      ]
+    },
+    "generation": {"type": "integer", "minimum": 1},
+    "fencing_token": {"$ref": "#/$defs/sha256"},
+    "owner_run_id": {"$ref": "#/$defs/identifier"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "shards": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20000,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/shard"}
+    },
+    "checkpoint_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "workload_class": {"const": "LIVE_DAILY_1500"},
+            "priority": {"const": 100}
+          }
+        },
+        {
+          "properties": {
+            "workload_class": {"const": "LIVE_RECOVERY"},
+            "priority": {"const": 90}
+          }
+        },
+        {
+          "properties": {
+            "workload_class": {"const": "VALIDATION_AND_PUBLISH"},
+            "priority": {"const": 70}
+          }
+        },
+        {
+          "properties": {
+            "workload_class": {"const": "CHALLENGER_TRAINING"},
+            "priority": {"const": 40}
+          }
+        },
+        {
+          "properties": {
+            "workload_class": {"const": "BACKFILL_90D"},
+            "priority": {"const": 10}
+          }
+        }
+      ]
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["COMPLETED", "COMPLETED_WITH_BLOCKS"]}
+        }
+      },
+      "then": {"properties": {"finished_at": {"type": "string"}}},
+      "else": {"properties": {"finished_at": {"type": "null"}}}
+    }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "shard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shard_id",
+        "market",
+        "source_id",
+        "partition_kind",
+        "partition_value",
+        "status",
+        "attempt_count",
+        "idempotency_key",
+        "started_at",
+        "finished_at",
+        "output",
+        "failure_code"
+      ],
+      "properties": {
+        "shard_id": {"$ref": "#/$defs/sha256"},
+        "market": {"enum": ["KUWAIT", "SAUDI_ARABIA"]},
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "partition_kind": {"enum": ["DATE", "PAGE"]},
+        "partition_value": {"type": "string", "minLength": 1, "maxLength": 128},
+        "status": {"enum": ["PENDING", "IN_PROGRESS", "COMPLETED", "BLOCKED"]},
+        "attempt_count": {"type": "integer", "minimum": 0, "maximum": 2},
+        "idempotency_key": {"$ref": "#/$defs/sha256"},
+        "started_at": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        },
+        "finished_at": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        },
+        "output": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/output"}]
+        },
+        "failure_code": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/identifier"}]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "PENDING"}}},
+          "then": {
+            "properties": {
+              "started_at": {"type": "null"},
+              "finished_at": {"type": "null"},
+              "output": {"type": "null"},
+              "failure_code": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "IN_PROGRESS"}}},
+          "then": {
+            "properties": {
+              "attempt_count": {"minimum": 1},
+              "started_at": {"type": "string"},
+              "finished_at": {"type": "null"},
+              "output": {"type": "null"},
+              "failure_code": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "COMPLETED"}}},
+          "then": {
+            "properties": {
+              "attempt_count": {"minimum": 1},
+              "started_at": {"type": "string"},
+              "finished_at": {"type": "string"},
+              "output": {"$ref": "#/$defs/output"},
+              "failure_code": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "BLOCKED"}}},
+          "then": {
+            "properties": {
+              "attempt_count": {"minimum": 1},
+              "started_at": {"type": "string"},
+              "finished_at": {"type": "string"},
+              "output": {"type": "null"},
+              "failure_code": {"$ref": "#/$defs/identifier"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

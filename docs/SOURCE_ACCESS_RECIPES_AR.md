@@ -22,12 +22,12 @@ Source Network definition
 
 ## الحالة الحالية
 
-- 14 وصفة تغطي 30 مصدرًا ذا أولوية من كتالوج يحوي 68 مصدرًا.
+- 15 وصفة تغطي 32 مصدرًا ذا أولوية من كتالوج يحوي 71 مصدرًا.
 - التغطية تشمل بورصة الكويت الحالية والتقارير والإفصاحات، CMA/iFSAH، Investing،
-  TradingView، Yahoo، Mubasher، Argaam، MarketScreener، Trading Economics، مجموعة
+  الشركة الكويتية للمقاصة، TradingView، Yahoo، Mubasher، Argaam، MarketScreener، Trading Economics، مجموعة
   أخبار محلية وإقليمية، IndexSignal، سبع قنوات Telegram، Wayback، Common Crawl،
-  وICE المرخص.
-- 38 مصدرًا لا يملك وصفة في هذه المرحلة ويظل غير قابل للتخطيط بهذا العقد.
+  وLSEG وICE المرخصين.
+- 39 مصدرًا لا يملك وصفة في هذه المرحلة ويظل غير قابل للتخطيط بهذا العقد.
 - `authorized_broker_feed` غير مغطى لأن الكتالوج لا يملك Start URL أو مزودًا
   مصرحًا به؛ لا يجوز اختراع عنوان تشغيل له.
 - كل الوصفات `DEFINED_ONLY` و0 منها `LIVE_OPERATIONAL`.
@@ -94,9 +94,20 @@ Raw artifact و SHA-256 للحالات المقروءة، و Reason code مضب�
 إيصال `BLOCKED` يمكن أن يجتاز العقد كـ`PASS_ACCESS_ONLY` إذا وصف المنع بأمان؛ هذا
 نجاح للتدقيق لا نجاح للوصول.
 
-الخطة الشاملة الحالية تحتوي 30 مهمة، وتُرفض قبل الكتابة إذا تجاوزت 32 مهمة أو
-128 MiB إجمالية أو 300 ثانية إجمالية. المهلة الحالية 10 ثوانٍ لكل مهمة، أي 300
-ثانية بالضبط عند تخطيط المصادر المغطاة كلها.
+لتنفيذ خطة عامة `HTTP_GET` محدودة فقط:
+
+```bash
+PYTHONPATH=src python3 -m kubo.cli_v3 --project-root . \
+  execute-public-source-access-probe \
+  --plan /absolute/path/to/source-probe-plan.json \
+  --output-root /private/path/to/fresh-probe-bundle
+```
+
+الخطة الشاملة الحالية تحتوي 32 مهمة، وتُرفض قبل الكتابة إذا تجاوزت 32 مهمة أو
+128 MiB إجمالية أو 300 ثانية إجمالية. المهلة الحالية 9 ثوانٍ لكل مهمة، أي 288
+ثانية عند تخطيط المصادر المغطاة كلها. وصفة المقاصة `ONE_OFF`؛ والمنفذ يفحص
+`robots.txt` ويلتزم بالنطاق وHTTPS والمهلة والحجم، ولا يرسل Cookies أوCredentials.
+نجاحه Access-only ولا يحول الصفحة إلى Corporate Action أوFinding تلقائيًا.
 
 ## ما يبقى ممنوعًا
 

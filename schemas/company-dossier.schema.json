@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/company-dossier.schema.json",
+  "title": "KU-BO point-in-time company dossier",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_class",
+    "capture_mode",
+    "as_of",
+    "last_updated_at",
+    "issuer_id",
+    "security_codes",
+    "evidence",
+    "sections",
+    "source_quality",
+    "data_gaps",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "company-dossier-v1"},
+    "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+    "capture_mode": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME"]},
+    "as_of": {"type": "string", "format": "date-time"},
+    "last_updated_at": {"type": "string", "format": "date-time"},
+    "issuer_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "security_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9]+$"}
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basic",
+        "business",
+        "financials",
+        "market",
+        "disclosures",
+        "corporate_actions",
+        "governance_ownership",
+        "risks"
+      ],
+      "properties": {
+        "basic": {"$ref": "#/$defs/section"},
+        "business": {"$ref": "#/$defs/section"},
+        "financials": {"$ref": "#/$defs/section"},
+        "market": {"$ref": "#/$defs/section"},
+        "disclosures": {"$ref": "#/$defs/section"},
+        "corporate_actions": {"$ref": "#/$defs/section"},
+        "governance_ownership": {"$ref": "#/$defs/section"},
+        "risks": {"$ref": "#/$defs/section"}
+      }
+    },
+    "source_quality": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/sourceQuality"}
+    },
+    "data_gaps": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/dataGap"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "real_collection_complete",
+        "company_universe_complete",
+        "training_permitted",
+        "backtest_permitted",
+        "recommendation_permitted",
+        "financial_execution_permitted"
+      ],
+      "properties": {
+        "real_collection_complete": {"const": false},
+        "company_universe_complete": {"const": false},
+        "training_permitted": {"const": false},
+        "backtest_permitted": {"const": false},
+        "recommendation_permitted": {"const": false},
+        "financial_execution_permitted": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 512},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fieldName": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$"},
+    "fieldKey": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]{1,127}$"},
+    "evidenceClass": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "gapReason": {
+      "enum": [
+        "SOURCE_UNAVAILABLE",
+        "NOT_DISCLOSED",
+        "RIGHTS_BLOCKED",
+        "PARSER_DRIFT",
+        "OUTSIDE_POINT_IN_TIME",
+        "NOT_APPLICABLE",
+        "UNRESOLVED_CONFLICT",
+        "NOT_COLLECTED"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "source_id",
+        "publisher",
+        "source_url",
+        "published_at",
+        "event_at",
+        "missing_date_fields",
+        "available_at",
+        "accessed_at",
+        "availability_evidence_status",
+        "raw_sha256",
+        "reconciliation_report_sha256",
+        "fact_status",
+        "source_grade",
+        "evidence_role",
+        "rights_status",
+        "robots_status"
+      ],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/identifier"},
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "publisher": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "published_at": {"type": ["string", "null"], "format": "date-time"},
+        "event_at": {"type": ["string", "null"], "format": "date-time"},
+        "missing_date_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["published_at", "event_at"]}
+        },
+        "available_at": {"type": "string", "format": "date-time"},
+        "accessed_at": {"type": "string", "format": "date-time"},
+        "availability_evidence_status": {
+          "enum": ["CAPTURED_BEFORE_CUTOFF", "VERIFIED_ARCHIVE"]
+        },
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "reconciliation_report_sha256": {"$ref": "#/$defs/sha256"},
+        "fact_status": {"enum": ["confirmed", "unverified", "inferred"]},
+        "source_grade": {"enum": ["A", "B", "C", "D"]},
+        "evidence_role": {
+          "enum": [
+            "EXCHANGE_OFFICIAL",
+            "REGULATOR_OFFICIAL",
+            "CLEARING_OFFICIAL",
+            "ISSUER_PRIMARY",
+            "FINANCIAL_CONTEXT",
+            "NEWS_CONTEXT",
+            "SOCIAL_CONTEXT_LEAD_ONLY",
+            "ROUTING_ONLY"
+          ]
+        },
+        "rights_status": {"enum": ["PERMITTED", "USER_AUTHORIZED"]},
+        "robots_status": {"enum": ["ALLOWED", "NOT_APPLICABLE"]}
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_fields", "critical_fields", "facts"],
+      "properties": {
+        "expected_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/fieldName"}
+        },
+        "critical_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/fieldName"}
+        },
+        "facts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/fact"}
+        }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_name",
+        "value",
+        "unit",
+        "effective_at",
+        "published_at",
+        "available_at",
+        "fact_status",
+        "evidence_ids",
+        "missing_reason"
+      ],
+      "properties": {
+        "field_name": {"$ref": "#/$defs/fieldName"},
+        "value": {"type": ["string", "integer", "number", "boolean", "null"]},
+        "unit": {"type": ["string", "null"], "minLength": 1, "maxLength": 64},
+        "effective_at": {"type": ["string", "null"], "format": "date-time"},
+        "published_at": {"type": ["string", "null"], "format": "date-time"},
+        "available_at": {"type": ["string", "null"], "format": "date-time"},
+        "fact_status": {"enum": ["confirmed", "unverified", "inferred", null]},
+        "evidence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "missing_reason": {
+          "anyOf": [
+            {"$ref": "#/$defs/gapReason"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "sourceQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "publisher",
+        "source_url",
+        "source_grade",
+        "rights_status",
+        "robots_status",
+        "access_status",
+        "expected_fields",
+        "resolved_fields",
+        "last_checked_at",
+        "limitations"
+      ],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "publisher": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "source_grade": {"enum": ["A", "B", "C", "D"]},
+        "rights_status": {"enum": ["PERMITTED", "USER_AUTHORIZED", "UNKNOWN", "FORBIDDEN"]},
+        "robots_status": {"enum": ["ALLOWED", "NOT_APPLICABLE", "UNKNOWN", "DISALLOWED"]},
+        "access_status": {
+          "enum": [
+            "AVAILABLE",
+            "EMPTY",
+            "BLOCKED_ACCESS",
+            "ROBOTS_DENIED",
+            "PAYWALL",
+            "RATE_LIMITED",
+            "NETWORK_ERROR",
+            "PARSER_DRIFT",
+            "NOT_CHECKED"
+          ]
+        },
+        "expected_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/fieldKey"}
+        },
+        "resolved_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/fieldKey"}
+        },
+        "last_checked_at": {"type": "string", "format": "date-time"},
+        "limitations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 65536}
+        }
+      }
+    },
+    "dataGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section",
+        "field_name",
+        "reason_code",
+        "detail",
+        "last_attempted_at",
+        "source_ids"
+      ],
+      "properties": {
+        "section": {
+          "enum": [
+            "basic",
+            "business",
+            "financials",
+            "market",
+            "disclosures",
+            "corporate_actions",
+            "governance_ownership",
+            "risks"
+          ]
+        },
+        "field_name": {"$ref": "#/$defs/fieldName"},
+        "reason_code": {"$ref": "#/$defs/gapReason"},
+        "detail": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "last_attempted_at": {"type": ["string", "null"], "format": "date-time"},
+        "source_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    }
+  }
+}

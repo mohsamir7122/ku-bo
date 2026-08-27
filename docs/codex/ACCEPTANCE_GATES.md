@@ -148,7 +148,14 @@ Pass only when:
 - branch is pushed without force;
 - Draft PR is opened against the correct base;
 - PR body documents dependencies, tests, claims, and non-claims;
-- no merge or auto-merge occurs;
+- no auto-merge occurs;
+- a merge, when explicitly covered by an approved decision, occurs only after
+  exact-head CI, all applicable gates, and a final dependency/mergeability review;
+  otherwise no merge occurs;
+- a broader approval never overrides a narrower open/rejected/deferred decision
+  or an applicable gate that requires a Draft PR and `MERGE_NOT_PERFORMED`;
+- the exact merged head and post-merge verification are recorded when a merge is
+  exercised;
 - a handoff result is written;
 - deletion candidates and user decisions are recorded rather than executed.
 

@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "ku-bo-recovery-and-resume-v1",
+  "status": "FAIL_CLOSED",
+  "market": "KUWAIT",
+  "classifications": {
+    "transient_network": {"category": "TRANSIENT", "automatic_retry": true, "health_probe_only": false, "immediate_alert": false},
+    "transient_source": {"category": "TRANSIENT", "automatic_retry": true, "health_probe_only": false, "immediate_alert": false},
+    "github_infrastructure": {"category": "TRANSIENT", "automatic_retry": true, "health_probe_only": false, "immediate_alert": false},
+    "source_access_blocked": {"category": "POLICY", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "robots_unavailable": {"category": "POLICY", "automatic_retry": false, "health_probe_only": true, "immediate_alert": false},
+    "robots_unreachable": {"category": "TRANSIENT", "automatic_retry": true, "health_probe_only": false, "immediate_alert": false},
+    "rate_limited": {"category": "TRANSIENT", "automatic_retry": true, "health_probe_only": false, "immediate_alert": false},
+    "missing_secret": {"category": "PERMISSION", "automatic_retry": false, "health_probe_only": true, "immediate_alert": true},
+    "permission_required": {"category": "PERMISSION", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "quota_or_billing": {"category": "PERMISSION", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "data_quality": {"category": "DETERMINISTIC", "automatic_retry": false, "health_probe_only": false, "immediate_alert": false},
+    "provenance_failure": {"category": "DETERMINISTIC", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "temporal_leakage": {"category": "SECURITY", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "deterministic_code": {"category": "DETERMINISTIC", "automatic_retry": false, "health_probe_only": false, "immediate_alert": false},
+    "security": {"category": "SECURITY", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true},
+    "terminal_unknown": {"category": "TERMINAL", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true}
+  },
+  "retry": {
+    "initial_delay_seconds": 0,
+    "max_automatic_attempts": 2,
+    "window_hours": 24,
+    "active_run_states": ["queued", "in_progress"],
+    "require_relevant_commit_for_deterministic": true,
+    "require_ci_and_smoke_for_fixed_code_resume": true,
+    "rerun_scope": "FAILED_JOBS_ONLY",
+    "watchdog_may_delay_first_attempt": false,
+    "idempotency_scope": "FINGERPRINT_CODE_SHA_RUN_ATTEMPT"
+  },
+  "lease": {
+    "duration_seconds": 900,
+    "heartbeat_interval_seconds": 60,
+    "require_active_run_probe_for_expired_recovery": true
+  },
+  "alerts": {
+    "primary_channel": "GITHUB_ISSUE",
+    "issue_title": "[URGENT][KUWAIT MARKET] Pipeline blocked",
+    "labels": ["automation-blocked", "recovery-exhausted", "no-trade"],
+    "assignee": "mohsamir7122",
+    "duplicate_suppression_hours": 6,
+    "direct_email_status": "DIRECT_EMAIL_NOT_CONFIGURED"
+  },
+  "controller": {
+    "schedule_cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
+    "dispatch_event": "market-recovery-request",
+    "allowed_repository_dispatch_actions": ["retry", "resume", "probe"],
+    "pipeline_workflow": "kuwait-market-pipeline.yml",
+    "concurrency_group": "kubo-kuwait-market-ai",
+    "may_modify_default_branch": false,
+    "watchdog_mode": "MISSED_EVENTS_ONLY",
+    "missed_event_grace_seconds": 300,
+    "critical_path_wait_seconds": 0
+  },
+  "robots": {
+    "maximum_redirects": 5,
+    "maximum_cache_hours": 24,
+    "not_found_requires_rights_terms_and_public_access": true,
+    "access_receipt_proves_collection": false
+  },
+  "source_fallback_order": [
+    "official_documented_api_or_export",
+    "alternate_official_page_or_repository",
+    "issuer_official_disclosures",
+    "regulator_official_records",
+    "user_supplied_authorized_export",
+    "secondary_discovery_only"
+  ],
+  "claim_boundaries": {
+    "recovery_may_disable_safety_gate": false,
+    "recovery_may_bypass_access_control": false,
+    "recovery_may_publish_while_blocked": false,
+    "recovery_may_submit_trade": false,
+    "controller_may_merge_or_modify_main": false
+  }
+}

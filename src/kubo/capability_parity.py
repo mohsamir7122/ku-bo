@@ -43,6 +43,10 @@ EXPECTED_BINDINGS = {
     ),
     "semantic_source_fallback": ("kubo.source_fallback", "plan_source_fallback"),
     "source_health_validation": ("kubo.source_network", "validate_live_probe"),
+    "source_evidence_lifecycle_reconciliation": (
+        "kubo.source_evidence_lifecycle",
+        "reconcile_source_evidence",
+    ),
     "research_candidate_ranking": ("kubo.research_rank", "rank_research_candidates"),
     "catalyst_context_deduplication": (
         "kubo.context_research",
@@ -92,6 +96,12 @@ EXPECTED_METADATA = {
         "Distinguish source transport reachability from usable semantic evidence.",
         "kubo validate-live-probe",
         "BOUND_TO_EXISTING_CORE",
+        "STRUCTURAL_VALIDATION_ONLY",
+    ),
+    "source_evidence_lifecycle_reconciliation": (
+        "Reconcile point-in-time source attempts, revisions, conflicts, duplicates, and missing cells.",
+        "kubo reconcile-source-evidence",
+        "REIMPLEMENTED_IN_CANONICAL_CORE",
         "STRUCTURAL_VALIDATION_ONLY",
     ),
     "research_candidate_ranking": (

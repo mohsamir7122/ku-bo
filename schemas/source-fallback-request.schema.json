@@ -34,7 +34,7 @@
           "transport_status",
           "semantic_status",
           "qualified_row_count",
-          "zero_result_verified",
+          "zero_result_receipt",
           "cited_original_urls"
         ],
         "properties": {
@@ -47,7 +47,20 @@
             "enum": ["ROWS_PRESENT", "ZERO_ROWS", "VERIFIED_ZERO_RESULT", "PARSE_FAILED", "ACCESS_BLOCKED", "NOT_EVALUATED"]
           },
           "qualified_row_count": {"type": "integer", "minimum": 0},
-          "zero_result_verified": {"type": "boolean"},
+          "zero_result_receipt": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["logical_path", "sha256"],
+                "properties": {
+                  "logical_path": {"type": "string", "minLength": 1, "maxLength": 512},
+                  "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                }
+              }
+            ]
+          },
           "cited_original_urls": {
             "type": "array",
             "maxItems": 32,

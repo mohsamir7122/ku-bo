@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/recovery-incident.schema.json",
+  "title": "KU-BO recovery incident",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "incident_id",
+    "fingerprint",
+    "idempotency_key",
+    "fingerprint_basis",
+    "market",
+    "stage",
+    "error_class",
+    "retriable",
+    "first_seen_at",
+    "last_seen_at",
+    "retry_after",
+    "attempt_count",
+    "max_attempts",
+    "code_sha",
+    "failed_run_id",
+    "run_url",
+    "checkpoint_id",
+    "fallbacks_tried",
+    "publish_allowed",
+    "sanitized_summary",
+    "required_user_action",
+    "alert_sent_at",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "incident_id": {
+      "type": "string",
+      "pattern": "^INC-[0-9A-F]{20}$"
+    },
+    "fingerprint": {"$ref": "#/$defs/sha256"},
+    "idempotency_key": {"$ref": "#/$defs/sha256"},
+    "fingerprint_basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market", "stage", "error_class", "component", "failure_code"],
+      "properties": {
+        "market": {"enum": ["KUWAIT", "SAUDI_ARABIA"]},
+        "stage": {"$ref": "#/$defs/identifier"},
+        "error_class": {"$ref": "#/$defs/errorClass"},
+        "component": {"$ref": "#/$defs/identifier"},
+        "failure_code": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "market": {"enum": ["KUWAIT", "SAUDI_ARABIA"]},
+    "stage": {"$ref": "#/$defs/identifier"},
+    "error_class": {"$ref": "#/$defs/errorClass"},
+    "retriable": {"type": "boolean"},
+    "first_seen_at": {"type": "string", "format": "date-time"},
+    "last_seen_at": {"type": "string", "format": "date-time"},
+    "retry_after": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ]
+    },
+    "attempt_count": {"type": "integer", "minimum": 0, "maximum": 2},
+    "max_attempts": {"const": 2},
+    "code_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
+    },
+    "failed_run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "run_url": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "uri", "pattern": "^https://github\\.com/"}
+      ]
+    },
+    "checkpoint_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+      ]
+    },
+    "fallbacks_tried": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "publish_allowed": {"const": false},
+    "sanitized_summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "required_user_action": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "minLength": 1, "maxLength": 1000}
+      ]
+    },
+    "alert_sent_at": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ]
+    },
+    "status": {
+      "enum": [
+        "OPEN",
+        "RETRY_SCHEDULED",
+        "PROBE_ONLY",
+        "BLOCKED",
+        "EXHAUSTED",
+        "RESOLVED"
+      ]
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "errorClass": {
+      "enum": [
+        "transient_network",
+        "transient_source",
+        "github_infrastructure",
+        "source_access_blocked",
+        "robots_unavailable",
+        "robots_unreachable",
+        "rate_limited",
+        "missing_secret",
+        "permission_required",
+        "quota_or_billing",
+        "data_quality",
+        "provenance_failure",
+        "temporal_leakage",
+        "deterministic_code",
+        "security",
+        "terminal_unknown"
+      ]
+    }
+  }
+}

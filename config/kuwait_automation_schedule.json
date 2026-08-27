@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0",
+  "schedule_id": "kuwait-market-ai-sequential-v1",
+  "status": "BLOCKED_PENDING_REAL_SOURCE_ADMISSION",
+  "market": {
+    "jurisdiction_code": "KW",
+    "market_name": "BOURSA_KUWAIT",
+    "currency": "KWD",
+    "timezone": "Asia/Kuwait"
+  },
+  "official_basis": {
+    "accessed_at_utc": "2026-08-27T05:14:28Z",
+    "trading_weekdays": ["SUN", "MON", "TUE", "WED", "THU"],
+    "continuous_session": {
+      "start_local": "09:00",
+      "end_local": "13:00",
+      "trade_at_last_end_local": "13:15"
+    },
+    "calendar": {
+      "coverage_start": "2026-01-01",
+      "coverage_end": "2026-12-31",
+      "holidays": [
+        {"date": "2026-01-01", "name": "New Year", "status": "CONFIRMED"},
+        {"date": "2026-01-18", "name": "Ascension of Prophet Mohammed", "status": "CONFIRMED"},
+        {"date": "2026-02-25", "name": "National Day", "status": "CONFIRMED"},
+        {"date": "2026-02-26", "name": "Liberation Day", "status": "CONFIRMED"},
+        {"date": "2026-03-19", "name": "Eid Al Fitr", "status": "CONFIRMED"},
+        {"date": "2026-03-20", "name": "Eid Al Fitr", "status": "CONFIRMED"},
+        {"date": "2026-03-21", "name": "Eid Al Fitr", "status": "CONFIRMED"},
+        {"date": "2026-03-22", "name": "Eid Al Fitr", "status": "CONFIRMED"},
+        {"date": "2026-05-26", "name": "Arafat Day", "status": "CONFIRMED"},
+        {"date": "2026-05-27", "name": "Eid Al Adha", "status": "CONFIRMED"},
+        {"date": "2026-05-28", "name": "Eid Al Adha", "status": "CONFIRMED"},
+        {"date": "2026-05-29", "name": "Eid Al Adha", "status": "CONFIRMED"},
+        {"date": "2026-05-30", "name": "Eid Al Adha", "status": "CONFIRMED"},
+        {"date": "2026-06-16", "name": "Hijri New Year", "status": "CONFIRMED"},
+        {"date": "2026-08-27", "name": "Prophet Mohammed Birthday", "status": "CONFIRMED"}
+      ]
+    },
+    "sources": [
+      {
+        "publisher": "Boursa Kuwait",
+        "title": "Trading Information",
+        "url": "https://www.boursakuwait.com.kw/en/securities/trading/trading-information/",
+        "publication_date": null,
+        "event_date": null,
+        "accessed_at_utc": "2026-08-27T05:14:28Z",
+        "status": "CONFIRMED"
+      },
+      {
+        "publisher": "Boursa Kuwait",
+        "title": "Extension of Trading Hours",
+        "url": "https://www.boursakuwait.com.kw/TS-Extension-EN/",
+        "publication_date": null,
+        "event_date": "2025-10-12",
+        "accessed_at_utc": "2026-08-27T05:14:28Z",
+        "status": "CONFIRMED"
+      },
+      {
+        "publisher": "Boursa Kuwait",
+        "title": "Market Holidays 2026",
+        "url": "https://www.boursakuwait.com.kw/en/securities/trading/market-holidays/",
+        "publication_date": null,
+        "event_date": null,
+        "accessed_at_utc": "2026-08-27T05:14:28Z",
+        "status": "CONFIRMED"
+      }
+    ]
+  },
+  "activation": {
+    "enabled_variable": "KUBO_KUWAIT_AUTOMATION_ENABLED",
+    "admission_variable": "KUBO_KUWAIT_DATA_ADMISSION_READY",
+    "required_secrets": [
+      "KUBO_AUTHORIZED_SOURCE_ACCESS",
+      "KUBO_DRIVE_RUNTIME_CONFIG"
+    ],
+    "implementation_ready": false,
+    "blocked_reason": "REAL_SOURCE_ADMISSION_NOT_COMPLETE"
+  },
+  "execution": {
+    "stage_order": ["collection", "validation", "live_scoring"],
+    "concurrency_group": "kubo-kuwait-market-ai",
+    "cancel_in_progress": false,
+    "timeouts_minutes": {
+      "gate": 5,
+      "collection": 20,
+      "validation": 20,
+      "live_scoring": 15
+    },
+    "retry_policy": {
+      "max_transient_attempts": 2,
+      "backoff_seconds": 5
+    },
+    "scheduled_minute_is_guaranteed": false,
+    "record_actual_execution_time": true
+  },
+  "slots": [
+    {
+      "slot_id": "main_1500",
+      "purpose": "MAIN_COLLECTION_VALIDATION",
+      "cadence": "DAILY",
+      "local_time": "15:00",
+      "utc_time": "12:00",
+      "cron": "0 12 * * *",
+      "requires_trading_day": false,
+      "live_scoring_requested": false
+    },
+    {
+      "slot_id": "live_0400",
+      "purpose": "LIVE_RESEARCH_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "04:00",
+      "utc_time": "01:00",
+      "cron": "0 1 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    },
+    {
+      "slot_id": "live_0700",
+      "purpose": "LIVE_RESEARCH_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "07:00",
+      "utc_time": "04:00",
+      "cron": "0 4 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    },
+    {
+      "slot_id": "market_open_0900",
+      "purpose": "MARKET_OPEN_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "09:00",
+      "utc_time": "06:00",
+      "cron": "0 6 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    },
+    {
+      "slot_id": "live_1100",
+      "purpose": "LIVE_RESEARCH_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "11:00",
+      "utc_time": "08:00",
+      "cron": "0 8 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    },
+    {
+      "slot_id": "live_1200",
+      "purpose": "LIVE_RESEARCH_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "12:00",
+      "utc_time": "09:00",
+      "cron": "0 9 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    },
+    {
+      "slot_id": "live_1300",
+      "purpose": "CONTINUOUS_SESSION_END_CHECK",
+      "cadence": "KUWAIT_TRADING_WEEKDAYS",
+      "local_time": "13:00",
+      "utc_time": "10:00",
+      "cron": "0 10 * * 0-4",
+      "requires_trading_day": true,
+      "live_scoring_requested": true
+    }
+  ],
+  "claim_boundaries": {
+    "schedule_contract_is_live_collection": false,
+    "scheduled_minute_is_exactly_guaranteed": false,
+    "holiday_run_may_emit_live_candidate": false,
+    "missing_secret_may_be_replaced_with_placeholder": false,
+    "workflow_may_submit_trade": false,
+    "workflow_may_merge_code": false
+  }
+}

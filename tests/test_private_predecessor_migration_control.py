@@ -27,12 +27,129 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
         self.assertEqual(report["status"], "PASS_PREPARATION_CONTROL")
         self.assertEqual(report["migration_id"], "KU-BO-MIG-001")
         self.assertEqual(report["opaque_seed_capability_count"], 14)
-        self.assertTrue(report["private_source_repository_read_allowed"])
+        self.assertFalse(report["migration_task_active"])
+        self.assertFalse(report["private_source_repository_read_allowed"])
+        self.assertTrue(
+            report["migration_contract_private_source_repository_read_allowed"]
+        )
         self.assertFalse(report["private_runtime_data_access_allowed"])
         self.assertFalse(report["completion_claim_allowed"])
         self.assertFalse(report["claim_boundaries"]["validator_proves_source_inventory"])
         self.assertFalse(report["claim_boundaries"]["validator_proves_migration_complete"])
         self.assertFalse(report["claim_boundaries"]["validator_authorizes_merge"])
+
+    def test_reactivated_migration_requires_the_narrow_read_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._copy_control(root)
+            task_path = root / TASK
+            task_text = task_path.read_text(encoding="utf-8").replace(
+                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                "TASK_ID: KU-BO-MIG-001",
+                1,
+            )
+            task_path.write_text(task_text, encoding="utf-8")
+            with self.assertRaisesRegex(
+                MigrationControlError,
+                "CURRENT_TASK.PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED",
+            ):
+                validate(root)
+
+            task_path.write_text(
+                task_text.replace(
+                    "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
+                    "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                MigrationControlError,
+                "CURRENT_TASK.CONTROL_BASE_BRANCH",
+            ):
+                validate(root)
+
+            migration_task_text = task_path.read_text(encoding="utf-8")
+            replacements = {
+                "CONTROL_BASE_BRANCH: main": (
+                    "CONTROL_BASE_BRANCH: agent/ku-bo-016-codex-live-bootstrap"
+                ),
+                "CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499": (
+                    "CONTROL_BASE_SHA: 6e9ab870e727494d5eb9e1ec9fa98829d6391d68"
+                ),
+                "EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1": (
+                    "EXPECTED_NEW_BRANCH: agent/private-predecessor-capability-migration-v1"
+                ),
+                "EXPECTED_PR_BASE: main": (
+                    "EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap"
+                ),
+            }
+            for current, expected in replacements.items():
+                migration_task_text = migration_task_text.replace(current, expected, 1)
+            task_path.write_text(migration_task_text, encoding="utf-8")
+            report = validate(root)
+            self.assertTrue(report["migration_task_active"])
+            self.assertTrue(report["private_source_repository_read_allowed"])
+
+    def test_permission_markers_in_prose_cannot_override_inactive_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._copy_control(root)
+            task_path = root / TASK
+            task_text = task_path.read_text(encoding="utf-8").replace(
+                "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
+                "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES",
+                1,
+            )
+            task_path.write_text(
+                task_text
+                + "\nHistorical prose: PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                MigrationControlError,
+                "CURRENT_TASK.PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED",
+            ):
+                validate(root)
+
+    def test_permission_markers_in_prose_cannot_override_active_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._copy_control(root)
+            task_path = root / TASK
+            task_text = task_path.read_text(encoding="utf-8").replace(
+                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                "TASK_ID: KU-BO-MIG-001",
+                1,
+            )
+            task_path.write_text(
+                task_text
+                + "\nHistorical prose: PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                MigrationControlError,
+                "CURRENT_TASK.PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED",
+            ):
+                validate(root)
+
+    def test_duplicate_task_metadata_keys_are_rejected(self) -> None:
+        for key_line in (
+            "TASK_ID: KU-BO-2026-08-27-DAY1",
+            "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
+        ):
+            with self.subTest(key_line=key_line), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self._copy_control(root)
+                task_path = root / TASK
+                task_text = task_path.read_text(encoding="utf-8").replace(
+                    key_line,
+                    f"{key_line}\n{key_line}",
+                    1,
+                )
+                task_path.write_text(task_text, encoding="utf-8")
+                with self.assertRaisesRegex(MigrationControlError, "duplicate key"):
+                    validate(root)
 
     def _copy_control(self, destination: Path) -> None:
         for relative in (CONTROL, MANIFEST, PARITY, ORIENTATION, TASK, EXECPLAN):

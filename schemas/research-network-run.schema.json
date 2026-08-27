@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-network-run.schema.json",
+  "title": "KU-BO research-only network result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "mode", "market", "generated_at", "decision",
+    "observation_count", "real_observation_count", "synthetic_observation_count",
+    "software_operational", "live_evidence_operational", "securities", "copy_analysis",
+    "conflict_ledger", "strict_forecast", "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "RESEARCH_NETWORK_COMPLETE"},
+    "mode": {"const": "research_network"},
+    "market": {"const": "KUWAIT"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "decision": {"enum": ["RESEARCH_RANK", "WATCH", "ABSTAIN"]},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "real_observation_count": {"type": "integer", "minimum": 0},
+    "synthetic_observation_count": {"type": "integer", "minimum": 0},
+    "software_operational": {"const": true},
+    "live_evidence_operational": {"type": "boolean"},
+    "securities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["security_code", "decision", "real_observation_count", "maximum_credibility_score", "reasons"],
+        "properties": {
+          "security_code": {"type": "string", "minLength": 1},
+          "decision": {"enum": ["RESEARCH_RANK", "WATCH", "ABSTAIN"]},
+          "real_observation_count": {"type": "integer", "minimum": 0},
+          "maximum_credibility_score": {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
+          "reasons": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+        }
+      }
+    },
+    "copy_analysis": {"type": "object"},
+    "conflict_ledger": {"type": "object"},
+    "strict_forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "publish_allowed", "blockers", "receipt_path"],
+      "properties": {
+        "status": {"enum": ["LOCKED", "READY"]},
+        "publish_allowed": {"type": "boolean"},
+        "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "receipt_path": {"type": ["string", "null"]}
+      }
+    },
+    "claim_boundaries": {
+      "const": {
+        "probability_generated": false,
+        "recommendation_generated": false,
+        "synthetic_evidence_contributes_to_live_rank": false,
+        "copied_news_counts_as_independent_confirmation": false,
+        "conflicts_averaged": false
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .foundation_io import load_strict_json_object
+from .research_network import resolve_trusted_source
 
 
 POLICY_PATH = Path("config/source_quality_policy.json")
@@ -52,11 +53,20 @@ EXPECTED_ROLE_LIMITS = {
 }
 EXPECTED_CLAIM_BOUNDARIES = {
     "catalog_presence_proves_quality": False,
+    "caller_supplied_source_role_is_authoritative": False,
     "drive_presence_grants_rights": False,
     "single_source_can_prove_market_view": False,
     "community_can_create_official_fact": False,
     "quality_score_is_probability": False,
+    "quality_routing_grants_access_rights": False,
     "automatic_source_promotion_allowed": False,
+}
+TRUSTED_TO_QUALITY_ROLE = {
+    "OFFICIAL_PRIMARY": "OFFICIAL_TRUTH",
+    "LICENSED_MARKET_DATA": "SECONDARY_RESEARCH",
+    "STRUCTURED_SECONDARY": "SECONDARY_RESEARCH",
+    "RELIABLE_NEWS": "SECONDARY_RESEARCH",
+    "COMMUNITY_DISCOVERY": "COMMUNITY_ROUTING_ONLY",
 }
 EXPECTED_HARD_BLOCKS = frozenset(
     {
@@ -127,6 +137,17 @@ def _unit_interval(value: Any, field: str, *, positive: bool = False) -> float:
 def _policy_path(project_root_or_path: Path | str) -> Path:
     value = Path(project_root_or_path)
     return value / POLICY_PATH if value.is_dir() else value
+
+
+def _project_root(project_root_or_path: Path | str) -> Path:
+    value = Path(project_root_or_path).resolve()
+    if value.is_dir():
+        return value
+    if value.name == POLICY_PATH.name and value.parent.name == POLICY_PATH.parent.name:
+        return value.parent.parent
+    raise SourceQualityError(
+        "source assessment requires a project root or canonical config/source_quality_policy.json"
+    )
 
 
 def validate_source_quality_policy(project_root_or_path: Path | str) -> dict[str, Any]:
@@ -220,22 +241,30 @@ def assess_source_quality(
     project_root_or_path: Path | str,
     *,
     source_id: str,
-    source_role: str,
     requested_fact_role: str,
     dimension_scores: Mapping[str, Any],
     failure_codes: list[str] | tuple[str, ...] = (),
+    source_role: str | None = None,
 ) -> dict[str, Any]:
-    """Route one source assessment without promoting or authorizing it."""
+    """Route one registered source assessment without trusting caller role metadata."""
 
     path = _policy_path(project_root_or_path)
+    project_root = _project_root(project_root_or_path)
     policy, policy_content = _load_object(path, "source quality policy")
     contract = validate_source_quality_policy(path)
     if hashlib.sha256(policy_content).hexdigest() != contract["policy_sha256"]:
         raise SourceQualityError("source quality policy changed during assessment")
     if not isinstance(source_id, str) or not source_id or source_id != source_id.strip():
         raise SourceQualityError("source_id must be a canonical non-empty string")
-    if source_role not in ROLE_KEYS:
-        raise SourceQualityError("source_role is outside the policy")
+    try:
+        trusted_source = resolve_trusted_source(project_root, source_id)
+    except (OSError, ValueError) as exc:
+        raise SourceQualityError("source_id is not admitted by the trusted source registry") from exc
+    resolved_role = TRUSTED_TO_QUALITY_ROLE.get(trusted_source.source_role)
+    if resolved_role not in ROLE_KEYS:
+        raise SourceQualityError("trusted source role has no source-quality mapping")
+    if source_role is not None and source_role != resolved_role:
+        raise SourceQualityError("caller-supplied source_role conflicts with trusted registry")
     if not isinstance(dimension_scores, Mapping) or frozenset(dimension_scores) != frozenset(
         DIMENSION_IDS
     ):
@@ -256,7 +285,7 @@ def assess_source_quality(
 
     role_limits = policy["role_limits"]
     failures = list(unique_failures)
-    if requested_fact_role not in role_limits[source_role]:
+    if requested_fact_role not in role_limits[resolved_role]:
         failures.append("ROLE_LIMIT_VIOLATION")
     hard_failures = sorted(set(failures) & EXPECTED_HARD_BLOCKS)
     if "ROLE_LIMIT_VIOLATION" in failures:
@@ -279,7 +308,11 @@ def assess_source_quality(
         "schema_version": "1.0",
         "status": "QUALITY_ROUTING_ONLY",
         "source_id": source_id,
-        "source_role": source_role,
+        "source_role": resolved_role,
+        "trusted_source_role": trusted_source.source_role,
+        "source_role_resolved_from_registry": True,
+        "rights_status": trusted_source.rights_status,
+        "access_authorized": False,
         "requested_fact_role": requested_fact_role,
         "quality_score": score,
         "quality_score_is_probability": False,

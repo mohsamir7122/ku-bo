@@ -130,6 +130,43 @@ def _is_substantive_finding(finding: "ResearchFinding") -> bool:
     )
 
 
+def _maximum_independent_publisher_origin_count(
+    graph: dict[str, set[str]],
+) -> int:
+    """Count independent evidence through publisher/origin bipartite matching.
+
+    Two delivery platforms carrying the same Reuters or issuer-origin item count
+    once; one publisher also cannot manufacture multiple independent sources by
+    carrying several articles.
+    """
+
+    matched_origin: dict[str, str] = {}
+
+    def assign(publisher: str, visited: set[str]) -> bool:
+        for origin in sorted(graph.get(publisher, set())):
+            if origin in visited:
+                continue
+            visited.add(origin)
+            prior = matched_origin.get(origin)
+            if prior is None or assign(prior, visited):
+                matched_origin[origin] = publisher
+                return True
+        return False
+
+    return sum(assign(publisher, set()) for publisher in sorted(graph))
+
+
+def _independent_role_coverage_count(
+    publisher_origin_graph: dict[str, set[str]], event_groups: set[str]
+) -> int:
+    """Conservatively require unique publisher/origin pairs and distinct events."""
+
+    return min(
+        _maximum_independent_publisher_origin_count(publisher_origin_graph),
+        len(event_groups),
+    )
+
+
 def _requires_external_runtime_trust(source: "NetworkSource") -> bool:
     return (
         source.requires_runtime_domain_registry
@@ -673,11 +710,12 @@ class SourceNetworkRunValidator:
         for finding in findings:
             findings_by_source.setdefault(finding.source_id, []).append(finding)
 
-        role_publisher_groups: dict[str, set[str]] = {role: set() for role in self.catalog.roles}
-        role_origin_groups: dict[str, set[str]] = {role: set() for role in self.catalog.roles}
+        role_publisher_origin_graphs: dict[str, dict[str, set[str]]] = {
+            role: {} for role in self.catalog.roles
+        }
         role_event_groups: dict[str, set[str]] = {role: set() for role in self.catalog.roles}
-        contributing_groups: set[str] = set()
-        community_groups: set[str] = set()
+        contributing_graph: dict[str, set[str]] = {}
+        community_graph: dict[str, set[str]] = {}
         for observation in observations:
             if not observation.contributes:
                 continue
@@ -704,21 +742,25 @@ class SourceNetworkRunValidator:
                 and self.policy.sentiment_contribution_cap <= 0
             ):
                 continue
-            contributing_groups.add(source.independence_group)
-            if source.source_class == "COMMUNITY":
-                community_groups.add(source.independence_group)
             for finding in substantive_findings:
+                contributing_graph.setdefault(source.independence_group, set()).add(
+                    finding.origin_id
+                )
+                if source.source_class == "COMMUNITY":
+                    community_graph.setdefault(source.independence_group, set()).add(
+                        finding.origin_id
+                    )
                 for role in finding.evidence_roles - NON_EVIDENCE_ROLES:
-                    role_publisher_groups[role].add(source.independence_group)
-                    role_origin_groups[role].add(finding.origin_id)
+                    role_publisher_origin_graphs[role].setdefault(
+                        source.independence_group, set()
+                    ).add(finding.origin_id)
                     role_event_groups[role].add(finding.event_key)
 
         role_coverage: dict[str, int] = {}
         for role in self.catalog.roles:
-            qualified_count = min(
-                len(role_publisher_groups[role]),
-                len(role_origin_groups[role]),
-                len(role_event_groups[role]),
+            qualified_count = _independent_role_coverage_count(
+                role_publisher_origin_graphs[role],
+                role_event_groups[role],
             )
             if qualified_count:
                 role_coverage[role] = qualified_count
@@ -726,10 +768,22 @@ class SourceNetworkRunValidator:
             actual = role_coverage.get(role, 0)
             if actual < minimum:
                 gaps.append(f"ROLE_QUORUM:{role}:{actual}/{minimum}")
-        if len(contributing_groups) < self.policy.minimum_independent_sources:
-            gaps.append(f"INDEPENDENT_SOURCES:{len(contributing_groups)}/{self.policy.minimum_independent_sources}")
-        if len(community_groups) < self.policy.minimum_independent_community_sources:
-            gaps.append(f"COMMUNITY_SOURCES:{len(community_groups)}/{self.policy.minimum_independent_community_sources}")
+        independent_source_count = _maximum_independent_publisher_origin_count(
+            contributing_graph
+        )
+        independent_community_count = _maximum_independent_publisher_origin_count(
+            community_graph
+        )
+        if independent_source_count < self.policy.minimum_independent_sources:
+            gaps.append(
+                f"INDEPENDENT_SOURCES:{independent_source_count}/"
+                f"{self.policy.minimum_independent_sources}"
+            )
+        if independent_community_count < self.policy.minimum_independent_community_sources:
+            gaps.append(
+                f"COMMUNITY_SOURCES:{independent_community_count}/"
+                f"{self.policy.minimum_independent_community_sources}"
+            )
         if not findings:
             gaps.append("NO_VALIDATED_FINDINGS")
 
@@ -772,7 +826,7 @@ class SourceNetworkRunValidator:
             observations=tuple(observations),
             findings=tuple(findings),
             role_coverage=role_coverage,
-            independent_sources=len(contributing_groups),
+            independent_sources=independent_source_count,
             official_confirmation_available=official_confirmation_available,
             exact_universe_reconciled=exact_universe_reconciled,
             evidence_packet_hash=packet_hash,

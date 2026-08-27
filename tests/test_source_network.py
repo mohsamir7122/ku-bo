@@ -11,7 +11,13 @@ from kubo.pipeline import ResearchPipeline
 from kubo.cli_v3 import main as cli_main
 from kubo.reporting import build_report
 from kubo.request_contracts import AnalysisRequest
-from kubo.source_network import SourceNetworkCatalog, SourceNetworkRunValidator, validate_live_probe
+from kubo.source_network import (
+    SourceNetworkCatalog,
+    SourceNetworkRunValidator,
+    _independent_role_coverage_count,
+    _maximum_independent_publisher_origin_count,
+    validate_live_probe,
+)
 from kubo.synthetic_network import build_synthetic_network_run
 
 
@@ -73,16 +79,55 @@ class SourceNetworkTests(unittest.TestCase):
     def test_network_catalog_is_research_only(self):
         report = self.catalog.report()
         self.assertEqual(report["status"], "PASS")
-        self.assertEqual(report["sources"], 68)
-        self.assertEqual(report["independence_groups"], 62)
+        self.assertEqual(report["sources"], 71)
+        self.assertEqual(report["independence_groups"], 65)
         self.assertEqual(report["profiles"], 5)
         self.assertEqual(
             report["capability_status_counts"],
-            {"DEFINED_ONLY": 66, "END_TO_END_TESTED": 2},
+            {"DEFINED_ONLY": 69, "END_TO_END_TESTED": 2},
         )
         self.assertEqual(report["live_operational_sources"], [])
         self.assertFalse(report["claim_boundaries"]["probability_allowed"])
         self.assertFalse(report["claim_boundaries"]["recommendation_allowed"])
+
+    def test_user_named_lseg_and_alphastocks_sources_remain_rights_gated(self):
+        lseg = self.catalog.sources["lseg_workspace_authorized"]
+        alpha = self.catalog.sources["alphastocks_authorized_connector"]
+        self.assertEqual(lseg.source_class, "LICENSED")
+        self.assertTrue(lseg.requires_entitlement)
+        self.assertFalse(lseg.enabled_by_default)
+        self.assertTrue(alpha.requires_entitlement)
+        self.assertTrue(alpha.requires_runtime_domain_registry)
+        self.assertFalse(alpha.enabled_by_default)
+
+    def test_republished_origin_counts_once_across_delivery_platforms(self):
+        graph = {
+            "reuters": {"reuters-event-1"},
+            "lseg_data_and_analytics": {"reuters-event-1"},
+        }
+        self.assertEqual(_maximum_independent_publisher_origin_count(graph), 1)
+        graph["lseg_data_and_analytics"].add("lseg-original-event-2")
+        self.assertEqual(_maximum_independent_publisher_origin_count(graph), 2)
+
+    def test_independence_count_uses_matching_not_minimum_set_sizes(self):
+        graph = {
+            "publisher-a": {"origin-x"},
+            "publisher-b": {"origin-x"},
+            "publisher-c": {"origin-y", "origin-z"},
+        }
+        self.assertEqual(_maximum_independent_publisher_origin_count(graph), 2)
+        self.assertEqual(
+            _independent_role_coverage_count(graph, {"event-1", "event-2", "event-3"}),
+            2,
+        )
+
+    def test_kuwait_clearing_company_is_registered_as_primary_official(self):
+        source = self.catalog.sources["kcc_maqasa_official"]
+        self.assertEqual(source.source_class, "PRIMARY_OFFICIAL")
+        self.assertEqual(source.independence_group, "kuwait_clearing_company")
+        self.assertIn("OFFICIAL_EVENT", source.roles)
+        self.assertIn("CORPORATE_ACTION", source.fact_eligibility)
+        self.assertEqual(source.start_urls, ("https://www.maqasa.com/ar/",))
 
     def test_same_platform_surfaces_share_one_independence_group(self):
         self.assertEqual(

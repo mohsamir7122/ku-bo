@@ -114,6 +114,31 @@ def _load(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _task_metadata(task_text: str) -> dict[str, str]:
+    match = re.search(
+        r"(?ms)^```text[ \t]*\r?\n(?P<body>.*?)^```[ \t]*$",
+        task_text,
+    )
+    if match is None:
+        raise MigrationControlError("CURRENT_TASK is missing its metadata fence")
+    metadata: dict[str, str] = {}
+    for line_number, raw_line in enumerate(match.group("body").splitlines(), start=1):
+        if not raw_line.strip():
+            continue
+        key, separator, value = raw_line.partition(":")
+        key = key.strip()
+        if not separator or not re.fullmatch(r"[A-Z][A-Z0-9_]*", key):
+            raise MigrationControlError(
+                f"CURRENT_TASK metadata line {line_number} is malformed"
+            )
+        if key in metadata:
+            raise MigrationControlError(
+                f"CURRENT_TASK metadata contains duplicate key: {key}"
+            )
+        metadata[key] = value.strip()
+    return metadata
+
+
 def _mapping(value: Any, field: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise MigrationControlError(f"{field} must be an object")
@@ -545,16 +570,39 @@ def validate(project_root: Path | str) -> dict[str, Any]:
 
     task_text = (root / TASK).read_text(encoding="utf-8")
     execplan_text = (root / EXECPLAN).read_text(encoding="utf-8")
-    for marker in (
-        EXPECTED_MIGRATION_ID,
-        EXPECTED_BRANCH,
-        f"EXPECTED_PR_BASE: {EXPECTED_PR_BASE}",
-        "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES",
-        "PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO",
-        "MERGE_ALLOWED: NO",
-    ):
-        if marker not in task_text:
-            raise MigrationControlError(f"CURRENT_TASK is missing marker: {marker}")
+    task_metadata = _task_metadata(task_text)
+    active_task_id = task_metadata.get("TASK_ID")
+    if not active_task_id:
+        raise MigrationControlError("CURRENT_TASK metadata is missing TASK_ID")
+    migration_task_active = active_task_id == EXPECTED_MIGRATION_ID
+    expected_task_metadata = {
+        "MIGRATION_CONTROL_REFERENCE": EXPECTED_MIGRATION_ID,
+        "MIGRATION_CONTROL_BRANCH_REFERENCE": EXPECTED_BRANCH,
+        "MIGRATION_CONTROL_EXPECTED_PR_BASE": EXPECTED_PR_BASE,
+        "PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED": "NO",
+        "MERGE_ALLOWED": "NO",
+        "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED": (
+            "YES" if migration_task_active else "NO"
+        ),
+    }
+    if migration_task_active:
+        control_target = _mapping(control.get("target"), "control.target")
+        expected_task_metadata.update(
+            {
+                "REPOSITORY": str(control_target["repository"]),
+                "CONTROL_BASE_BRANCH": str(control_target["control_base_branch"]),
+                "CONTROL_BASE_SHA": str(control_target["control_base_sha"]),
+                "EXPECTED_NEW_BRANCH": str(control_target["task_branch"]),
+                "EXPECTED_PR_BASE": str(control_target["expected_pr_base"]),
+                "EXPECTED_PR_MODE": str(control_target["pr_mode"]),
+            }
+        )
+    if not migration_task_active:
+        expected_task_metadata["MIGRATION_FIELDS_APPLICABILITY"] = (
+            "HISTORICAL_REFERENCE_ONLY_UNLESS_TASK_ID_IS_KU-BO-MIG-001"
+        )
+    for key, expected in expected_task_metadata.items():
+        _require(task_metadata.get(key), expected, f"CURRENT_TASK.{key}")
     for marker in (
         "Private source census and authenticated receipt",
         "User-job denominator",
@@ -579,7 +627,10 @@ def validate(project_root: Path | str) -> dict[str, Any]:
         "task_branch": EXPECTED_BRANCH,
         "expected_pr_base": EXPECTED_PR_BASE,
         "source_alias": EXPECTED_SOURCE_ALIAS,
-        "private_source_repository_read_allowed": True,
+        "active_task_id": active_task_id,
+        "migration_task_active": migration_task_active,
+        "migration_contract_private_source_repository_read_allowed": True,
+        "private_source_repository_read_allowed": migration_task_active,
         "private_runtime_data_access_allowed": False,
         "opaque_seed_capability_count": len(EXPECTED_CAPABILITIES),
         "parity_row_count": capability_count,

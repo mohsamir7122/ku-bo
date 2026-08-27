@@ -25,18 +25,18 @@ secondary_targets: MARKET_NET_EXCESS_GT_0, SECTOR_NET_EXCESS_GT_0
 المقصود محاولة ما يصل إلى 50 **نطاقًا قابلًا للتسجيل ومميزًا**، لا جمع 50 رابطًا من ناشر واحد، ولا اشتراط 50 نتيجة، ولا اعتبارها 50 تأكيدًا مستقلًا. الكتالوج يحتوي الآن:
 
 ```text
-source_definitions: 68
-independence_groups: 62
-candidate_research_domains: 59
-declared_enabled_public_catalog_domains: 53
-distinct_executable_start_url_domains: 52
+source_definitions: 71
+independence_groups: 65
+candidate_research_domains: 61
+declared_enabled_public_catalog_domains: 54
+distinct_executable_start_url_domains: 53
 default_fair_plan_domains: 50
-DEFINED_ONLY: 66
+DEFINED_ONLY: 69
 END_TO_END_TESTED: 2 generated fixtures
 LIVE_OPERATIONAL: 0
 ```
 
-استُبعدت أسطح البحث والتخزين من رقم 59. الفارق إلى 53 هو ستة نطاقات معطلة أوLicensed (`facebook.com` و`ice.com` و`instagram.com` و`tiktok.com` و`twitter.com` و`x.com`). والفرق من 53 إلى 52 ينتج من تحويل التعريفات العامة إلى Start URLs تنفيذية مميزة. تبقى أسطح البحث والتخزين مفيدة للتوجيه أوالحفظ، لكنها لا تنشئ Finding. تكرار خبر Reuters في عدة صحف يحسب أصلًا واحدًا بعد Dedup، وكل أسطح المنصة ذات الملكية الواحدة تُعامل كمجموعة ناشر واحدة.
+استُبعدت أسطح البحث والتخزين من رقم 61. الفارق إلى 54 هو سبعة نطاقات معطلة أوLicensed (`facebook.com` و`ice.com` و`instagram.com` و`lseg.com` و`tiktok.com` و`twitter.com` و`x.com`). والفرق من 54 إلى 53 ينتج من تحويل التعريفات العامة إلى Start URLs تنفيذية مميزة؛ فالكتالوج المؤهل يحسب `telegram.org` بينما لا يملك المسار العام Start URL مباشرًا له. تبقى أسطح البحث والتخزين مفيدة للتوجيه أوالحفظ، لكنها لا تنشئ Finding. تكرار خبر Reuters في عدة صحف يحسب أصلًا واحدًا بعد Dedup، وكل أسطح المنصة ذات الملكية الواحدة تُعامل كمجموعة ناشر واحدة.
 
 ## ترتيب البحث
 
@@ -47,7 +47,7 @@ LIVE_OPERATIONAL: 0
 3. البيانات السوقية المنظمة والصحف ووكالات الأخبار؛
 4. المجتمع والأرشيف؛ أما Search Router فمسجل للتوجيه فقط ولا ينفذه المشغل الحالي.
 
-كل تشغيل له حدود قصوى للنطاقات والطلبات والوقت. الخطة الافتراضية العادلة تختار 50 نطاقًا من 52 Start URL domain، بمساهمات جديدة `17/0/29/4`. تحجز الموجة الرابعة الأربعة الأخيرة لـ`archive.org` و`commoncrawl.org` و`indexsignal.com` و`t.me`، وبذلك لا تستهلك الموجات المبكرة الميزانية قبل Telegram وIndexSignal. أسطح مجتمع Investing/TradingView موجودة، لكنها لا تضيف نطاقين جديدين بعد احتساب ملكيتيهما في الموجة الثالثة. Corpus الـ120 يومًا تراكمي وله Watermark؛ لذلك لا يعيد التشغيل المعتاد تنزيل أربعة أشهر كاملة من كل مصدر.
+كل تشغيل له حدود قصوى للنطاقات والطلبات والوقت. الخطة الافتراضية العادلة تختار 50 نطاقًا من 53 Start URL domain، بمساهمات جديدة `17/0/29/4`. تحجز الموجة الرابعة الأربعة الأخيرة لـ`archive.org` و`commoncrawl.org` و`indexsignal.com` و`t.me`، وبذلك لا تستهلك الموجات المبكرة الميزانية قبل Telegram وIndexSignal. أسطح مجتمع Investing/TradingView موجودة، لكنها لا تضيف نطاقين جديدين بعد احتساب ملكيتيهما في الموجة الثالثة. Corpus الـ120 يومًا تراكمي وله Watermark؛ لذلك لا يعيد التشغيل المعتاد تنزيل أربعة أشهر كاملة من كل مصدر.
 
 ## إعادة المحاولة والنتيجة الفارغة
 

@@ -1,0 +1,495 @@
+name: Kuwait Market Pipeline
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "0 1 * * 0-4"
+    - cron: "0 4 * * 0-4"
+    - cron: "0 6 * * 0-4"
+    - cron: "0 8 * * 0-4"
+    - cron: "0 9 * * 0-4"
+    - cron: "0 10 * * 0-4"
+    - cron: "23 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Fail-closed execution mode
+        required: true
+        default: normal
+        type: choice
+        options:
+          - normal
+          - retry
+          - resume
+      incident_id:
+        description: Required for retry or resume
+        required: false
+        type: string
+      checkpoint:
+        description: Optional validated checkpoint for resume only
+        required: false
+        type: string
+      slot_id:
+        description: Kuwait contract slot
+        required: true
+        default: main_1500
+        type: choice
+        options:
+          - main_1500
+          - live_0400
+          - live_0700
+          - market_open_0900
+          - live_1100
+          - live_1200
+          - live_1300
+  repository_dispatch:
+    types:
+      - market-recovery-request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-kuwait-market-ai
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Kuwait
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  backfill_gate:
+    if: ${{ github.event_name == 'schedule' && github.event.schedule == '23 */2 * * *' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Resolve scheduled and actual background timestamps
+        id: timing
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/validate_kuwait_automation_schedule.py \
+            --project-root . \
+            --resolve-background-backfill \
+            --event-schedule "$EVENT_SCHEDULE" \
+            --actual-started-at "$actual_started_at" \
+            --output runtime/backfill-schedule.json \
+            --github-output "$GITHUB_OUTPUT"
+      - name: Validate priority and rights-aware backfill gates
+        id: backfill
+        continue-on-error: true
+        env:
+          SCHEDULED_AT: ${{ steps.timing.outputs.scheduled_at }}
+          CODE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -uo pipefail
+          mkdir -p runtime
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/backfill_90d.py --project-root . policy \
+            > runtime/backfill-policy.json
+          set +e
+          python scripts/backfill_90d.py --project-root . build \
+            --output runtime/forbidden-backfill-output \
+            --run-id "github-${RUN_ID}-${RUN_ATTEMPT}" \
+            --code-sha "$CODE_SHA" \
+            --scheduled-at "$SCHEDULED_AT" \
+            --actual-started-at "$actual_started_at" \
+            --finished-at "$actual_started_at" \
+            --production \
+            > runtime/backfill-production-gate.json 2>&1
+          backfill_exit_code=$?
+          set -e
+          if [[ "$backfill_exit_code" -eq 0 ]]; then
+            echo '{"status":"BLOCKED_UNWIRED_PRODUCTION_COORDINATOR","publish_allowed":false}' \
+              > runtime/backfill-production-gate.json
+            backfill_exit_code=2
+          fi
+          finished_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          {
+            echo "scheduled_at=$SCHEDULED_AT"
+            echo "scheduled_at_basis=MOST_RECENT_ELIGIBLE_CRON_OCCURRENCE"
+            echo "actual_started_at=$actual_started_at"
+            echo "finished_at=$finished_at"
+            echo "priority=BACKFILL_90D:10"
+            echo "checkpoint_store=BLOCKED_CHECKPOINT_STORE"
+            echo "schedule_active_claim=false"
+          } > runtime/backfill-timing.txt
+          echo "exit_code=$backfill_exit_code" >> "$GITHUB_OUTPUT"
+          exit "$backfill_exit_code"
+      - name: Create fail-closed backfill incident
+        if: ${{ steps.backfill.outcome == 'failure' }}
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/recovery_controller.py --project-root . create-incident \
+            --market KUWAIT --stage backfill --error-class permission_required \
+            --component durable_checkpoint_store --failure-code BLOCKED_CHECKPOINT_STORE \
+            --code-sha "$CODE_SHA" --failed-run-id "$RUN_ID" --run-url "$RUN_URL" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --summary "Kuwait background backfill stopped before collection because no trusted durable checkpoint store is configured." \
+            --required-user-action "Configure one reviewed allowlisted durable checkpoint store; an ephemeral runner directory is not sufficient." \
+            --output runtime/recovery-incident.json
+          echo "NO-TRADE"
+      - name: Write backfill gate summary
+        if: always()
+        run: |
+          echo "BACKFILL_90D_FAIL_CLOSED" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f runtime/backfill-timing.txt ]]; then
+            sed -n '1,20p' runtime/backfill-timing.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "No source request, training, forecast, or publication is authorized by this gate." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload sanitized backfill diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-backfill-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve backfill blocker exit code
+        if: ${{ steps.backfill.outcome == 'failure' }}
+        env:
+          BACKFILL_EXIT_CODE: ${{ steps.backfill.outputs.exit_code || '2' }}
+        run: exit "$BACKFILL_EXIT_CODE"
+
+  gate:
+    if: ${{ github.event_name != 'schedule' || github.event.schedule != '23 */2 * * *' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      status: ${{ steps.resolve.outputs.status || 'PASS_HEALTH_PROBE' }}
+      slot_id: ${{ steps.normalize.outputs.slot_id }}
+      incident_id: ${{ steps.normalize.outputs.incident_id }}
+      checkpoint: ${{ steps.normalize.outputs.checkpoint }}
+      probe_only: ${{ steps.normalize.outputs.probe_only }}
+      run_collection: ${{ steps.resolve.outputs.run_collection || 'false' }}
+      run_validation: ${{ steps.resolve.outputs.run_validation || 'false' }}
+      run_live_scoring: ${{ steps.resolve.outputs.run_live_scoring || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Normalize and allowlist the trigger
+        id: normalize
+        continue-on-error: true
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PATH: ${{ github.event_path }}
+          EVENT_ACTOR: ${{ github.actor }}
+          EVENT_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          python scripts/recovery_controller.py \
+            --project-root . \
+            validate-event \
+            --event-name "$EVENT_NAME" \
+            --event-path "$EVENT_PATH" \
+            --actor "$EVENT_ACTOR" \
+            --repository "$EVENT_REPOSITORY" \
+            --output runtime/dispatch.json \
+            --github-output "$GITHUB_OUTPUT"
+      - name: Validate recovery policy
+        id: recovery_policy
+        if: ${{ steps.normalize.outcome == 'success' }}
+        continue-on-error: true
+        run: python scripts/recovery_controller.py --project-root . validate-policy > runtime/recovery-policy-report.json
+      - name: Lightweight health probe only
+        if: ${{ steps.normalize.outcome == 'success' && steps.normalize.outputs.probe_only == 'true' }}
+        run: |
+          set -euo pipefail
+          python scripts/recovery_controller.py --project-root . validate-policy > runtime/health-probe.json
+          echo "HEALTH_PROBE_ONLY" >> "$GITHUB_STEP_SUMMARY"
+          echo "NO_HEAVY_PIPELINE_DISPATCH" >> "$GITHUB_STEP_SUMMARY"
+      - name: Resolve actual schedule and activation gates
+        id: resolve
+        if: ${{ steps.normalize.outcome == 'success' && steps.recovery_policy.outcome == 'success' && steps.normalize.outputs.probe_only != 'true' }}
+        continue-on-error: true
+        env:
+          EVENT_SCHEDULE: ${{ steps.normalize.outputs.event_schedule }}
+          SLOT_ID: ${{ steps.normalize.outputs.slot_id }}
+          AUTOMATION_ENABLED: ${{ vars.KUBO_KUWAIT_AUTOMATION_ENABLED == 'true' }}
+          ADMISSION_READY: ${{ vars.KUBO_KUWAIT_DATA_ADMISSION_READY == 'true' }}
+          SOURCE_ACCESS_CONFIGURED: ${{ secrets.KUBO_AUTHORIZED_SOURCE_ACCESS != '' }}
+          DRIVE_RUNTIME_CONFIGURED: ${{ secrets.KUBO_DRIVE_RUNTIME_CONFIG != '' }}
+        run: |
+          set -uo pipefail
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          args=(
+            --project-root .
+            --resolve
+            --actual-started-at "$actual_started_at"
+            --mode EXECUTE
+            --activation-enabled "$AUTOMATION_ENABLED"
+            --admission-ready "$ADMISSION_READY"
+            --source-access-configured "$SOURCE_ACCESS_CONFIGURED"
+            --drive-runtime-configured "$DRIVE_RUNTIME_CONFIGURED"
+            --output runtime/schedule-gate.json
+            --github-output "$GITHUB_OUTPUT"
+          )
+          if [[ -n "$EVENT_SCHEDULE" ]]; then
+            args+=(--event-schedule "$EVENT_SCHEDULE")
+          else
+            args+=(--slot-id "$SLOT_ID")
+          fi
+          set +e
+          python scripts/validate_kuwait_automation_schedule.py "${args[@]}"
+          stage_exit_code=$?
+          set -e
+          echo "exit_code=$stage_exit_code" >> "$GITHUB_OUTPUT"
+          exit "$stage_exit_code"
+      - name: Build sanitized gate incident
+        if: ${{ steps.normalize.outcome == 'failure' || steps.recovery_policy.outcome == 'failure' || steps.resolve.outcome == 'failure' }}
+        continue-on-error: true
+        env:
+          NORMALIZE_OUTCOME: ${{ steps.normalize.outcome }}
+          POLICY_OUTCOME: ${{ steps.recovery_policy.outcome }}
+          AUTOMATION_ENABLED: ${{ vars.KUBO_KUWAIT_AUTOMATION_ENABLED == 'true' }}
+          ADMISSION_READY: ${{ vars.KUBO_KUWAIT_DATA_ADMISSION_READY == 'true' }}
+          SOURCE_ACCESS_CONFIGURED: ${{ secrets.KUBO_AUTHORIZED_SOURCE_ACCESS != '' }}
+          DRIVE_RUNTIME_CONFIGURED: ${{ secrets.KUBO_DRIVE_RUNTIME_CONFIG != '' }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          error_class="deterministic_code"
+          failure_code="SCHEDULE_GATE_BLOCKED"
+          required_action="Review the fail-closed implementation and data admission gates."
+          if [[ "$NORMALIZE_OUTCOME" == "failure" ]]; then
+            error_class="security"
+            failure_code="INVALID_DISPATCH_REJECTED"
+            required_action="Review the rejected dispatch actor and payload."
+          elif [[ "$POLICY_OUTCOME" == "failure" ]]; then
+            error_class="security"
+            failure_code="RECOVERY_POLICY_INVALID"
+            required_action="Restore the reviewed recovery policy and rerun CI."
+          elif [[ "$SOURCE_ACCESS_CONFIGURED" != "true" || "$DRIVE_RUNTIME_CONFIGURED" != "true" ]]; then
+            error_class="missing_secret"
+            failure_code="REQUIRED_SECRET_MISSING"
+            required_action="Configure the existing required GitHub Secrets; do not place credentials in the repository."
+          elif [[ "$AUTOMATION_ENABLED" != "true" || "$ADMISSION_READY" != "true" ]]; then
+            error_class="permission_required"
+            failure_code="ACTIVATION_NOT_AUTHORIZED"
+            required_action="Review and explicitly enable the two Kuwait activation variables after admission."
+          fi
+          python scripts/recovery_controller.py \
+            --project-root . \
+            create-incident \
+            --market KUWAIT \
+            --stage gate \
+            --error-class "$error_class" \
+            --component kuwait_market_pipeline \
+            --failure-code "$failure_code" \
+            --code-sha "$CODE_SHA" \
+            --failed-run-id "$RUN_ID" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --run-url "$RUN_URL" \
+            --summary "Kuwait pipeline gate failed closed; publication is disabled and NO-TRADE applies." \
+            --required-user-action "$required_action" \
+            --output runtime/recovery-incident.json
+      - name: Write sanitized job summary
+        if: always()
+        run: |
+          {
+            echo "actual_execution_time_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo '```json'
+            if [[ -f runtime/schedule-gate.json ]]; then
+              cat runtime/schedule-gate.json
+            elif [[ -f runtime/health-probe.json ]]; then
+              cat runtime/health-probe.json
+            else
+              echo '{"status":"BLOCKED_NO_GATE_REPORT","publish_allowed":false}'
+            fi
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload sanitized gate diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve gate failure exit code
+        if: ${{ steps.normalize.outcome == 'failure' || steps.recovery_policy.outcome == 'failure' || steps.resolve.outcome == 'failure' }}
+        env:
+          RESOLVE_EXIT_CODE: ${{ steps.resolve.outputs.exit_code || '2' }}
+        run: exit "$RESOLVE_EXIT_CODE"
+
+  collection:
+    needs: gate
+    if: ${{ needs.gate.outputs.run_collection == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Record unavailable collection adapter
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          python scripts/recovery_controller.py --project-root . create-incident \
+            --market KUWAIT --stage collection --error-class source_access_blocked \
+            --component official_source_collection --failure-code COLLECTION_ADAPTER_NOT_ADMITTED \
+            --code-sha "$CODE_SHA" --failed-run-id "$RUN_ID" --run-url "$RUN_URL" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --summary "Collection remains blocked because no executable real-source adapter has passed admission." \
+            --required-user-action "Complete source rights, provenance, and adapter admission without bypassing access controls." \
+            --output runtime/recovery-incident.json
+      - name: Upload sanitized collection diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-collection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve collection blocker exit
+        run: exit 2
+
+  validation:
+    needs: collection
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Record missing qualified collection bundle
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          python scripts/recovery_controller.py --project-root . create-incident \
+            --market KUWAIT --stage validation --error-class provenance_failure \
+            --component canonical_collection_bundle --failure-code QUALIFIED_BUNDLE_MISSING \
+            --code-sha "$CODE_SHA" --failed-run-id "$RUN_ID" --run-url "$RUN_URL" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --summary "Validation refused a missing or unqualified collection bundle." \
+            --required-user-action "Produce a hash-bound admitted collection bundle with canonical provenance validation." \
+            --output runtime/recovery-incident.json
+          echo "NO-TRADE"
+          echo "Validation cannot run without hash-bound admitted collection artifacts."
+      - name: Upload sanitized validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve validation blocker exit
+        run: |
+          exit 2
+
+  live_scoring:
+    needs: [gate, validation]
+    if: ${{ needs.gate.outputs.run_live_scoring == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Record locked strict forecast gate
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          python scripts/recovery_controller.py --project-root . create-incident \
+            --market KUWAIT --stage live_scoring --error-class data_quality \
+            --component strict_forecast_gate --failure-code STRICT_FORECAST_LOCKED \
+            --code-sha "$CODE_SHA" --failed-run-id "$RUN_ID" --run-url "$RUN_URL" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --summary "Strict forecast remains locked because training and blind-test evidence are incomplete." \
+            --required-user-action "Complete temporal training, locked blind test, and forecast readiness validation." \
+            --output runtime/recovery-incident.json
+          echo "NO-TRADE"
+          echo "Live scoring remains blocked until canonical validators and point-in-time evidence pass."
+      - name: Upload sanitized live-scoring diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve live-scoring blocker exit
+        run: |
+          exit 2
+
+  recovery_success:
+    needs: [gate, collection, validation, live_scoring]
+    if: ${{ always() && needs.gate.result == 'success' && needs.gate.outputs.probe_only != 'true' && needs.gate.outputs.incident_id != '' && needs.validation.result == 'success' && (needs.live_scoring.result == 'success' || needs.live_scoring.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Create hash-bound recovery success receipt
+        env:
+          INCIDENT_ID: ${{ needs.gate.outputs.incident_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          python scripts/recovery_controller.py --project-root . create-success-receipt \
+            --incident-id "$INCIDENT_ID" --run-url "$RUN_URL" --code-sha "$CODE_SHA" \
+            --output runtime/recovery-success.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-success-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/recovery-success.json
+          if-no-files-found: error
+          retention-days: 14
+
+  no_trade:
+    needs: [gate, collection, validation, live_scoring]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enforce no-trade on every blocked or failed gate
+        if: ${{ needs.gate.result != 'success' || needs.collection.result == 'failure' || needs.validation.result == 'failure' || needs.live_scoring.result == 'failure' }}
+        run: |
+          echo "NO-TRADE"
+          echo "No research candidate or actionable candidate may be published from this run."

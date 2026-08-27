@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/research-source-registry.schema.json",
+  "title": "KU-BO trusted research source role registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "registry_id", "market", "class_role_map",
+    "excluded_source_classes", "required_named_sources", "role_policies",
+    "source_credibility_caps", "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "registry_id": {"const": "ku-bo-kuwait-trusted-source-roles-v1"},
+    "market": {"const": "KUWAIT"},
+    "class_role_map": {
+      "const": {
+        "PRIMARY_OFFICIAL": "OFFICIAL_PRIMARY",
+        "PRIMARY_ISSUER": "OFFICIAL_PRIMARY",
+        "LICENSED": "LICENSED_MARKET_DATA",
+        "STRUCTURED_SECONDARY": "STRUCTURED_SECONDARY",
+        "EDITORIAL": "RELIABLE_NEWS",
+        "COMMUNITY": "COMMUNITY_DISCOVERY"
+      }
+    },
+    "excluded_source_classes": {
+      "const": ["SEARCH_ROUTER", "STORAGE", "WEB_ARCHIVE"]
+    },
+    "required_named_sources": {
+      "type": "array",
+      "minItems": 11,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "source_role"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"},
+          "source_role": {"$ref": "#/$defs/sourceRole"}
+        }
+      }
+    },
+    "role_policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["OFFICIAL_PRIMARY", "LICENSED_MARKET_DATA", "STRUCTURED_SECONDARY", "RELIABLE_NEWS", "COMMUNITY_DISCOVERY"],
+      "properties": {
+        "OFFICIAL_PRIMARY": {"$ref": "#/$defs/rolePolicy"},
+        "LICENSED_MARKET_DATA": {"$ref": "#/$defs/rolePolicy"},
+        "STRUCTURED_SECONDARY": {"$ref": "#/$defs/rolePolicy"},
+        "RELIABLE_NEWS": {"$ref": "#/$defs/rolePolicy"},
+        "COMMUNITY_DISCOVERY": {"$ref": "#/$defs/rolePolicy"}
+      }
+    },
+    "source_credibility_caps": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 100}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caller_supplied_source_role_is_authoritative", "registry_role_grants_access_rights",
+        "credibility_score_is_stock_probability", "community_can_confirm_official_fact_or_price",
+        "copied_news_counts_as_independent_confirmation", "conflicting_values_may_be_averaged",
+        "research_network_may_unlock_strict_forecast"
+      ],
+      "properties": {
+        "caller_supplied_source_role_is_authoritative": {"const": false},
+        "registry_role_grants_access_rights": {"const": false},
+        "credibility_score_is_stock_probability": {"const": false},
+        "community_can_confirm_official_fact_or_price": {"const": false},
+        "copied_news_counts_as_independent_confirmation": {"const": false},
+        "conflicting_values_may_be_averaged": {"const": false},
+        "research_network_may_unlock_strict_forecast": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sourceRole": {
+      "enum": ["OFFICIAL_PRIMARY", "LICENSED_MARKET_DATA", "STRUCTURED_SECONDARY", "RELIABLE_NEWS", "COMMUNITY_DISCOVERY"]
+    },
+    "claimType": {
+      "enum": ["OFFICIAL_FACT", "PRICE", "FUNDAMENTAL", "NEWS_EVENT", "MARKET_CONTEXT", "DISCOVERY", "SENTIMENT", "RISK_SIGNAL"]
+    },
+    "rolePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["credibility_ceiling", "allowed_claim_types"],
+      "properties": {
+        "credibility_ceiling": {"type": "integer", "minimum": 0, "maximum": 100},
+        "allowed_claim_types": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/claimType"}
+        }
+      }
+    }
+  }
+}

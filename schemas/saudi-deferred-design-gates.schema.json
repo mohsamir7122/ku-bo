@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/saudi-deferred-design-gates.schema.json",
+  "title": "Deferred Saudi design gates",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "market",
+    "status",
+    "implementation_started",
+    "activation_gate",
+    "invariants",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "market": {"const": "SAUDI_ARABIA"},
+    "status": {"const": "DESIGN_ONLY_BLOCKED_UNTIL_KUWAIT_GATES_PASS"},
+    "implementation_started": {"const": false},
+    "activation_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_market", "required_results"],
+      "properties": {
+        "required_market": {"const": "KUWAIT"},
+        "required_results": {
+          "const": [
+            "TRAINING_VALIDATED",
+            "LOCKED_BLIND_TEST_PASSED",
+            "MEASUREMENT_REPORT_PUBLISHED"
+          ]
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "requirement", "violation_status"],
+        "properties": {
+          "gate_id": {"type": "string", "pattern": "^SAUDI_[A-Z_]+$"},
+          "requirement": {"type": "string", "minLength": 20, "maxLength": 300},
+          "violation_status": {"const": "BLOCKED"}
+        }
+      }
+    },
+    "claim_boundaries": {
+      "const": {
+        "saudi_collection_runtime_started": false,
+        "saudi_training_started": false,
+        "saudi_promotion_allowed": false
+      }
+    }
+  }
+}

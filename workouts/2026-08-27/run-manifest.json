@@ -1,0 +1,278 @@
+{
+  "schema_version": "1.0",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "started_at_utc": "2026-08-27T02:06:35Z",
+  "started_at_kuwait": "2026-08-27T05:06:35+03:00",
+  "market": "Kuwait",
+  "repository": "mohsamir7122/ku-bo",
+  "base_branch": "main",
+  "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
+  "work_branch": "codex/kuwait-market-ai-day1-v1",
+  "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
+  "contract": {
+    "filename": "CODEX_MARKET_AI_MASTER_EXECUTION_CONTRACT_AR.md",
+    "line_count": 478,
+    "sha256": "2720a8778ade69a7d53a1ac5aa4a12c518ef4f845819601b662b0046773733d2"
+  },
+  "environment": {
+    "os": "Ubuntu 24.04 PRoot",
+    "architecture": "aarch64",
+    "codex": "0.148.0",
+    "git": "2.43.0",
+    "gh": "2.45.0",
+    "python": "3.12.3",
+    "node": "26.4.0",
+    "tmux": "3.4",
+    "rclone": "1.74.4-termux"
+  },
+  "drive_structure": {
+    "project_folders_verified": 2,
+    "subfolders_per_project": 16,
+    "identifiers_persisted": false
+  },
+  "baseline": {
+    "tests_total": 2243,
+    "tests_passed": 2242,
+    "tests_failed": 1,
+    "tests_errors": 0,
+    "duration_seconds": 601.17
+  },
+  "candidate_focused_validation": {
+    "completed_at_utc": "2026-08-27T03:51:15Z",
+    "control_validator": "pass",
+    "targeted_consistency_tests_total": 57,
+    "targeted_consistency_tests_passed": 57,
+    "source_evidence_tests_total": 30,
+    "source_evidence_tests_passed": 30,
+    "json_parse": "pass",
+    "diff_check": "pass",
+    "private_drive_link_scan": "pass",
+    "secret_guard": "pass",
+    "compileall": "pass"
+  },
+  "candidate_full_validation": {
+    "recorded_at_utc": "2026-08-27T05:41:08Z",
+    "tests_total": 2329,
+    "tests_passed": 2329,
+    "tests_failures": 0,
+    "tests_errors": 0,
+    "duration_seconds": 621.603
+  },
+  "stage_5_focused_validation": {
+    "recorded_at_utc": "2026-08-27T08:23:51Z",
+    "recovery_adversarial_controller_workflow_schedule_tests": {
+      "total": 64,
+      "passed": 64,
+      "failures": 0,
+      "errors": 0
+    },
+    "source_resilience_orchestrator_quality_research_tests": {
+      "total": 88,
+      "passed": 88,
+      "failures": 0,
+      "errors": 0
+    },
+    "saudi_deferred_design_tests": {
+      "total": 2,
+      "passed": 2
+    },
+    "workflow_yaml_parse": "pass",
+    "actionlint": "pass",
+    "secret_guard": "pass"
+  },
+  "stage_6_focused_validation": {
+    "recorded_at_utc": "2026-08-27T09:07:00Z",
+    "priority_checkpoint_tests": {
+      "total": 16,
+      "passed": 16
+    },
+    "recovery_lease_tests": {
+      "total": 35,
+      "passed": 35
+    },
+    "integrated_preemption_resume_test": "pass_synthetic_coordination_only",
+    "checkpoint_schema_validation": "pass",
+    "compile": "pass",
+    "secret_guard": "pass"
+  },
+  "stage_7_focused_validation": {
+    "recorded_at_utc": "2026-08-27T10:02:25Z",
+    "rights_aware_backfill_tests": {
+      "total": 18,
+      "passed": 18
+    },
+    "combined_backfill_schedule_recovery_lease_priority_workflow_tests": {
+      "total": 106,
+      "passed": 106
+    },
+    "source_research_control_secret_unit_tests": {
+      "total": 102,
+      "passed": 102
+    },
+    "real_receipt_bundle_reopen": "pass",
+    "schema_validation": "pass",
+    "workflow_yaml_parse": "pass",
+    "actionlint_version": "1.7.12",
+    "actionlint": "pass",
+    "production_blocker_dry_run": "pass_exit_2_no_output",
+    "compile": "pass",
+    "diff_check": "pass",
+    "secret_guard": "pass"
+  },
+  "stage_1_artifacts": {
+    "source_evidence_input_schema": "source-evidence-lifecycle-v1",
+    "source_evidence_report_schema": "source-evidence-reconciliation-report-v1",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "report_status": "STRUCTURE_AND_RECONCILIATION_VALID_ONLY",
+    "report_file_sha256": "5ae248159d5e60a15184ffee978a3e1bd92e8faf5460ff8149fbbbc81f12125f",
+    "report_internal_sha256": "74514ea6d6fbf6b36f9a74de59582817720ddcc626bbf9aba8c01e8f9a954b5f",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
+    "package_install_cli_smoke": "pass",
+    "stage_commit_sha": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a"
+  },
+  "stage_2_artifacts": {
+    "issuer_universe_schema": "issuer-universe-v1",
+    "company_dossier_schema": "company-dossier-v1",
+    "validation_report_schema": "company-dossier-validation-report-v1",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "report_status": "STRUCTURE_VALID_ONLY",
+    "synthetic_issuer_count": 1,
+    "synthetic_security_count": 1,
+    "synthetic_expected_field_count": 21,
+    "report_file_sha256": "569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4",
+    "report_internal_sha256": "8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9",
+    "package_install_cli_smoke": "pass",
+    "real_company_count": 0,
+    "stage_commit_sha": "2a37ac81e440bd1ce609abdfab61993e118ccb57"
+  },
+  "stage_3_artifacts": {
+    "kcc_source_id": "kcc_maqasa_official",
+    "catalog_source_count": 69,
+    "recipe_count": 15,
+    "executor_test_count": 7,
+    "completed_validated_probe_receipts": 2,
+    "readable_raw_artifact_count": 0,
+    "terminal_code": "ROBOTS_POLICY_UNAVAILABLE",
+    "kcc_plan_sha256": "e752c630bcc1651fa45d74697bbcf33c399d057b9e3d425c50a20c7c54301f7e",
+    "kcc_probe_hash": "b2c07ec0a7b157aa10fb9c7e2a29a6e97c1531e1ca927f728e8eaa3562615cd1",
+    "boursa_reports_plan_sha256": "79a78c16b49f7dea6288c029a26dd163e09f1eec163dab8215b7cfebb1b6a24a",
+    "boursa_reports_probe_hash": "89d524ce3f6a5cf718627ed55cd96523886bf733d5df3b025bdbf7c559bcaf1d",
+    "wheel_sha256": "d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff",
+    "market_data_collected": false,
+    "stage_commit_sha": "a64ad7c6996ecec354bbf02bfa0b7fcbc048c086"
+  },
+  "stage_4_artifacts": {
+    "schedule_id": "kuwait-market-ai-sequential-v1",
+    "schedule_slot_count": 7,
+    "official_holiday_count": 15,
+    "schedule_sha256": "ac27b55b30465b80090762b86badf74c1b54e2d322066391007923f4b484d093",
+    "workflow_sha256": "89f77e55fc59a36f04979d0e02c4eae65fa973e30b8b88e24cefcd7ea12f8293",
+    "schema_sha256": "58e5c6c15f717b2f18c77b05cd40d4943a3aebfc9e93b28b01ced54819a2e18f",
+    "focused_tests": 13,
+    "slot_contract_dry_runs": 7,
+    "holiday_no_trade_dry_run": "pass",
+    "missing_controls_exit_2_dry_run": "pass",
+    "actionlint_version": "1.7.12",
+    "actionlint_status": "pass",
+    "wheel_sha256": "28911ded022223a57436ddd619c48216bfa132209eb0d2b0fa1764054414b8cc",
+    "implementation_ready": false,
+    "scheduled_workflow_active": false,
+    "market_data_collected": false,
+    "stage_commit_sha": "810b077cbd56267e897546237c3a354be3838f98"
+  },
+  "stage_5_artifacts": {
+    "source_failover_commit": "1309e52b6396c1ff6218d16d411dfc3d0d8d09a6",
+    "research_registry_commit": "9e6db2052b1f8c7a6db0363f1071cec924f72860",
+    "research_mode_commit": "bdbfb5c55a376f0976cfcf912066d310d88f0f55",
+    "recovery_policy_commit": "cb4808a13489cad0c14e2e41622fdbdeb8644631",
+    "recovery_controller_commit": "0170fa1549e32d29577aac5f9ef8f8528131247c",
+    "recovery_workflows_commit": "94e384f297e53019df644312c99c8529deefd7df",
+    "recovery_policy_sha256": "a5848fa82a518e650953c173e1acf0e50ce046b42c51fbf2351d570d185bef8b",
+    "incident_schema_sha256": "c49a731a9faee13259b7b0508a396d08d7b0b3e56f4e825a2803c65680830aa3",
+    "pipeline_workflow_sha256": "b8d71a6cac3d5a426d75f1a3b74754da18ffafd08fcd9981b446716f6bcf0d61",
+    "controller_workflow_sha256": "32f74a31cff2da0d5699a67b1a342398f69838cda3eef901531ebc650f41c674",
+    "real_source_attempt_count": 2,
+    "real_observation_count": 0,
+    "unique_admitted_event_count": 0,
+    "training_admitted_record_count": 0,
+    "research_network_status": "SOFTWARE_OPERATIONAL_ABSTAIN",
+    "strict_forecast_status": "LOCKED",
+    "scheduled_workflows_active": false
+  },
+  "stage_6_artifacts": {
+    "priority_checkpoint_commit": "3195ba768382a063dac18053645c8dcd7fe4dd70",
+    "window_from": "2026-05-30",
+    "window_to": "2026-08-27",
+    "window_day_count": 90,
+    "maximum_attempts_per_shard": 2,
+    "production_checkpoint_store_status": "BLOCKED_CHECKPOINT_STORE",
+    "completed_shards_immutable": true,
+    "resume_only_non_completed": true,
+    "champion_mutation_allowed": false
+  },
+  "stage_7_artifacts": {
+    "package_commit": "e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d",
+    "workflow_commit": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "package_name": "INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT",
+    "window_from": "2026-05-30",
+    "window_to": "2026-08-27",
+    "window_day_count": 90,
+    "manifest_digest": "d5c07df65a7b80ed8a332b3e472eadfd6a7633a6718bff07e498b0ba14a96069",
+    "source_group_denominator": 11,
+    "planned_date_shards": 990,
+    "source_attempts": 2,
+    "blocked_sources": 2,
+    "blocked_before_fetch_date_shards": 180,
+    "unattempted_date_shards": 810,
+    "completed_date_shards": 0,
+    "readable_artifacts": 0,
+    "real_observations": 0,
+    "provenance_records": 0,
+    "unique_events": 0,
+    "research_context_records": 0,
+    "training_candidates": 0,
+    "contradictions": 0,
+    "blocked_source_ids": [
+      "boursa_reports_archive",
+      "kcc_maqasa_official"
+    ],
+    "terminal_code": "ROBOTS_POLICY_UNAVAILABLE",
+    "pipeline_workflow_sha256": "597a5519586ec25468a2757654e5babf1cd1262cde665368ae3f23e0086ee0ea",
+    "controller_workflow_sha256": "a789212b05147b84f184d066518c0d0487c9e3bf486abad5931618fc6e5b3732",
+    "background_backfill_cron_utc": "23 */2 * * *",
+    "scheduled_recovery_cron_utc": "13,43 * * * *",
+    "watchdog_interval_minutes": 5,
+    "research_network_status": "SOFTWARE_OPERATIONAL_ABSTAIN",
+    "strict_forecast_status": "LOCKED",
+    "scheduled_workflows_active": false,
+    "market_data_collected": false
+  },
+  "exact_head_ci": {
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
+    "python_versions": ["3.11", "3.12", "3.13", "3.14"],
+    "status": "success",
+    "pull_request_created": true,
+    "merged_to_main": false
+  },
+  "latest_branch_ci": {
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
+    "status": "success"
+  },
+  "repository_audit": {
+    "completed_at_utc": "2026-08-27T02:53:38Z",
+    "private_runtime_receipt_sha256": "9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5",
+    "private_locators_persisted_in_git": false,
+    "private_predecessor_tests": 937,
+    "private_history_tests": 48,
+    "archived_kuwait_tests": 33,
+    "source_worktrees_clean": true
+  },
+  "secrets_logged": false,
+  "real_market_data_written": false,
+  "trades_submitted": false
+}

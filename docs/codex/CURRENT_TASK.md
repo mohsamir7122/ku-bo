@@ -1,12 +1,12 @@
-# CURRENT TASK — KU-BO-2026-08-26-INTEGRATION
+# CURRENT TASK — KU-BO-2026-08-27-DAY1
 
 ```text
-TASK_ID: KU-BO-2026-08-26-INTEGRATION
-STATUS: COMPLETED
+TASK_ID: KU-BO-2026-08-27-DAY1
+STATUS: IN_PROGRESS
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: 59833bf73510b3aa3901f628cbf2c13c0d01cf79
-EXPECTED_NEW_BRANCH: main
+CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
+EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -15,47 +15,104 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-HISTORICAL_CORPUS_COLLECTION_REQUESTED: NO
-BLOCKED_ON: NONE; TASK_COMPLETED_IN_MAIN
+HISTORICAL_CORPUS_COLLECTION_REQUESTED: YES
+BLOCKED_ON: LIVE_SCHEDULE_SECRETS_AND_VARIABLES_MISSING; REAL_DATA_AND_EVALUATION_GATES_NOT_YET_SATISFIED
 CONTROL_FILES: docs/codex/HANDOFF_TEMPLATE.md; docs/codex/USER_DECISIONS.md
 MERGE_GUARD: Do not merge until exact-head CI and every Section 8 gate pass.
+MASTER_CONTRACT: /root/codexphone/workspaces/CODEX_MARKET_AI_MASTER_EXECUTION_CONTRACT_AR.md (runtime-local; not committed)
 MIGRATION_CONTROL_REFERENCE: KU-BO-MIG-001
-LEGACY_MIGRATION_CONTROL_BRANCH: agent/private-predecessor-capability-migration-v1
-EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
-PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES
+MIGRATION_CONTROL_BRANCH_REFERENCE: agent/private-predecessor-capability-migration-v1
+MIGRATION_CONTROL_EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
+EXPECTED_PR_BASE: main
+PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO
 PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
+GOOGLE_DRIVE_RUNTIME_ACCESS: READ_ONLY_PREFLIGHT_VERIFICATION_ONLY
+MIGRATION_FIELDS_APPLICABILITY: HISTORICAL_REFERENCE_ONLY_UNLESS_TASK_ID_IS_KU-BO-MIG-001
 ```
 
 ## Mission
 
-Integrate the unique, auditable capabilities of Kuwait PRs #19 and #20, then
-the migration controls in #21 and guarded orchestration in #22, into one
-canonical KU-BO branch above the verified `main` SHA. Preserve the existing
-fail-closed research boundaries and leave old repositories as migration-only
-sources.
+Execute day one of the master Kuwait-first market research contract on a fresh
+branch. Establish a reproducible pre-flight baseline, reconcile repository and
+legacy capabilities, preserve provenance and Git history, repair the active
+control surface, and run the first deterministic dry work without claiming
+real market coverage or predictive performance.
 
-## Required integration
+## Mobile Codex CLI delegation
 
-1. Recreate the clean #19 → #20 path.
-2. Compare #21 and #22 against #20 and retain only unique, non-conflicting
-   capabilities; do not perform a blind PR merge.
-3. Review PRs #17, #18, #2, and #3 for unique capability only and leave them
-   unchanged.
-4. Keep private source locators, credentials, raw market evidence, and Drive
-   identifiers outside this public repository.
-5. Run deterministic synthetic dry-run, unit/integration/property tests,
-   package checks, Secret Guard, and exact-head CI.
+The owner has delegated the remaining repository repair and project continuation
+to Codex CLI running in the existing Android Termux/Ubuntu environment. ChatGPT's
+handoff is intentionally small; Codex CLI owns the inspect, repair, test, publish,
+conditional-merge, checkpoint, and resume cycles.
+
+Before any merge, Codex CLI must perform a fresh read-only audit of `main`, every
+remote branch, every open PR, exact SHAs, dependencies, mergeability, and CI. An
+unmerged branch is not automatically missing work: classify it as `MERGE_CANDIDATE`,
+`ALREADY_INTEGRATED`, `SUPERSEDED`, `BLOCKED`, or `USER_DECISION_REQUIRED`.
+Only useful non-duplicated engineering work may be repaired and merged, in
+dependency order, after its exact head passes all applicable acceptance gates.
+
+`MERGE_ALLOWED` remains `NO` during implementation and review. The separately
+recorded conditional authority in `KU-BO-MOBILE-CODEX-D01` may be exercised only
+at a proven merge boundary. It does not authorize force-push, history rewrite,
+deletion, gate weakening, secret exposure, private/licensed-data publication,
+paid access, scheduler activation, training on unadmitted data, financial
+recommendations, or trading.
+
+The mobile delegation does not override a narrower open decision. In particular,
+`KU-BO-MIG-001` and its Draft PR remain `USER_DECISION_REQUIRED` and unmerged
+while `KU-BO-MIG-D02` is open and Gate 12 requires `MERGE_NOT_PERFORMED`.
+
+After repository consolidation, Codex CLI must create the next bounded task from
+the exact merged `main` and continue the security-by-security sequence. It must
+finish all terminal source receipts and one security seal before starting the
+next security, persist resumable checkpoints outside Git, and store real/private
+artifacts only under the authorized logical `AI Rebuild/04_Curated_Core/KU_BO`
+runtime boundary. The current Day-One task does not authorize private-runtime or
+Drive writes: the later task must record explicit write authority before creating
+any such checkpoint or artifact.
+
+## Required sequence
+
+1. Record UTC/Kuwait timestamps, host/tool/resource/network checks, GitHub
+   authentication, repository state, pre-existing CI failures, and rollback
+   checkpoints.
+2. Audit `ku-bo` and its public refs. Audit `PRIVATE_PREDECESSOR_SOURCE`, the
+   Saudi target, or other private/archived repositories only if a later
+   `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`; then follow its
+   migration plan, validator, exact-source handling, and narrower decisions.
+3. Keep private source locators, credentials, raw evidence, licensed bytes,
+   and Google Drive identifiers outside this public repository.
+4. Repair the task/branch control mismatch and retain every fail-closed claim
+   boundary.
+5. Run a deterministic synthetic dry-run and the applicable test, schema,
+   provenance, leakage, duplicate, missing-data, corporate-action, workflow,
+   source-failure, and secret checks.
+6. Prepare gated sequential GitHub Actions without activating schedules until
+   required secrets, variables, calendars, and dry-run gates are verified.
+7. Apply the owner-directed collection correction: make `security_code` the
+   outer unit of work, allow only one active security, exhaust the frozen
+   per-security source denominator, seal it, and only then start the next
+   security. Include an authority-bound official company website source for
+   every security and enumerate licensed, secondary, news, community, and
+   search-routing sources without promoting any of them to live status.
 
 ## Acceptance gates
 
-1. Every migrated capability is locked to repository, branch, PR, and exact
-   source SHA in private runtime evidence and summarized without secrets.
-2. `git diff` is reviewed and contains no unintended files or credentials.
-3. Baseline and candidate tests are recorded; no gate is weakened.
-4. The dry-run produces a valid, replayable receipt and preserves failures.
-5. Exact-head CI is green on the candidate SHA.
-6. Privacy, licensing, robots/access, and claim-boundary checks pass.
-7. A rollback path, changelog/status update, and merge receipt are prepared.
+1. The dated workout contains the contract-required files and truthful status.
+2. Every adopted capability is locked to repository, branch, PR, and exact
+   source SHA in runtime evidence and summarized without secrets.
+3. `git diff` is reviewed and contains no unintended files or credentials.
+4. Baseline and candidate tests are recorded; no gate is weakened.
+5. The dry-run produces a valid, replayable receipt and preserves failures.
+6. Exact-head CI is green on the candidate SHA before any merge consideration.
+7. Privacy, licensing, robots/access, temporal, provenance, and claim-boundary
+   checks pass.
+8. Rollback, status, handoff, and next-action records are current.
+9. The security-sequential contract rejects group-level processing, partial
+   universes, source substitution, unresolved source receipts, and starting a
+   second security before the first security seal. It records the official
+   company-site gap explicitly when no signed runtime authority binding exists.
 
 ## Safety and non-claims
 
@@ -63,7 +120,12 @@ sources.
   move money.
 - No live source is promoted merely because it is catalogued or reachable.
 - Synthetic fixtures prove software behavior only, not prediction quality,
-  accuracy, full-market coverage, or live readiness.
+  accuracy, full-market coverage, training completion, or live readiness.
+- An `EXACT` input universe proves exact agreement with its own expected codes;
+  it does not by itself prove that every Boursa Kuwait security is present.
+- The security-sequential coordinator accepts a separately admitted adapter;
+  this task does not authorize live source access, licensed bytes, or Drive
+  publication merely because the scheduling contract exists.
 - Do not bypass login, CAPTCHA, paywalls, robots controls, rate limits, or
   licensing restrictions.
 - Do not merge, force-push, delete, expose secrets, or weaken gates while this

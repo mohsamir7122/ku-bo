@@ -184,8 +184,8 @@ def load_research_workflow(config_dir: Path) -> ResearchWorkflowSpec:
         source["maximum_wall_seconds"],
     ) != (50, 50, 600, 1800):
         raise ValueError("source domain, request, and wall-time budgets must match the frozen contract")
-    if source["transient_attempts_per_strategy"] != 3 or source["empty_result_query_strategies"] != 4:
-        raise ValueError("retry and empty-result strategies must be 3 and 4")
+    if source["transient_attempts_per_strategy"] != 2 or source["empty_result_query_strategies"] != 4:
+        raise ValueError("retry and empty-result strategies must be 2 and 4")
     if source["incremental_corpus"] is not True or tuple(source["wave_order"]) != _WAVES:
         raise ValueError("source search must be incremental and use the fixed wave order")
     evaluation = _object(
@@ -327,7 +327,7 @@ def load_research_workflow(config_dir: Path) -> ResearchWorkflowSpec:
         maximum_requests=source["maximum_requests"],
         maximum_wall_seconds=source["maximum_wall_seconds"],
         catalog_distinct_registrable_domains=len(registered_domains),
-        transient_attempts_per_strategy=3,
+        transient_attempts_per_strategy=2,
         empty_result_query_strategies=4,
         incremental_corpus=True,
         wave_order=_WAVES,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass
 from datetime import date
@@ -15,7 +16,7 @@ from .benchmark_registry import load_benchmark_registry
 from .capabilities import CapabilityAttestation, CapabilityReport
 from .catalog import Catalog
 from .evidence import EvidenceManifest, ManifestResult
-from .foundation_io import read_csv_bytes, safe_regular_file
+from .foundation_io import load_strict_json_object, read_csv_bytes, safe_regular_file
 from .hashing import sha256_file
 from .identity import IdentityRecord, StatusRecord, read_csv_rows, validate_security_master, validate_status_history
 from .market import (
@@ -78,8 +79,10 @@ def _load_collection_contract(pack_root: Path) -> tuple[CollectionContract | Non
     if not path.is_file():
         return None, ["MISSING_COLLECTION_RUN"]
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        payload, _ = load_strict_json_object(
+            path, field="collection run contract", max_bytes=4 * 1024 * 1024
+        )
+    except ValueError as exc:
         return None, [f"INVALID_COLLECTION_RUN:{exc}"]
     errors: list[str] = []
     try:
@@ -140,10 +143,16 @@ def _normalized_file(pack_root: Path, attestation: CapabilityAttestation) -> tup
     relative = Path(attestation.normalized_path)
     if relative.is_absolute() or ".." in relative.parts or not relative.parts or relative.parts[0] != "normalized":
         return None, ["UNSAFE_NORMALIZED_PATH"]
-    path = (pack_root / relative).resolve()
-    if pack_root.resolve() not in path.parents or not path.is_file():
-        return None, ["MISSING_NORMALIZED_FILE"]
-    if sha256_file(path) != attestation.normalized_sha256:
+    path = pack_root / relative
+    try:
+        content = safe_regular_file(
+            path,
+            field=f"normalized capability {attestation.capability}",
+            max_bytes=512 * 1024 * 1024,
+        )
+    except ValueError:
+        return None, ["MISSING_OR_UNSAFE_NORMALIZED_FILE"]
+    if hashlib.sha256(content).hexdigest() != attestation.normalized_sha256:
         errors.append("NORMALIZED_HASH_MISMATCH")
     return path, errors
 

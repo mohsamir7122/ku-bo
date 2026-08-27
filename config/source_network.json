@@ -72,6 +72,20 @@
       "notes": "Official filing and regulation source; not a quote or execution feed."
     },
     {
+      "source_id": "kcc_maqasa_official",
+      "name": "Kuwait Clearing Company (Maqasa)",
+      "source_class": "PRIMARY_OFFICIAL",
+      "roles": ["IDENTITY_REFERENCE", "OFFICIAL_EVENT", "FUNDAMENTAL_ARCHIVE"],
+      "domains": ["maqasa.com", "www.maqasa.com"],
+      "start_urls": ["https://www.maqasa.com/ar/"],
+      "access_modes": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD"],
+      "independence_group": "kuwait_clearing_company",
+      "timing_grade_ceiling": "A",
+      "fact_eligibility": ["CORPORATE_ACTION", "DISTRIBUTION", "GENERAL_ASSEMBLY", "FOREIGN_OWNERSHIP", "CLEARING_RULE", "SETTLEMENT_RULE", "REGISTRAR_EVENT"],
+      "enabled_by_default": true,
+      "notes": "Official clearing-company surface for registrar, distribution, assembly, ownership, clearing, and settlement facts. Public access does not prove completeness or execution-grade data."
+    },
+    {
       "source_id": "issuer_ir_verified",
       "name": "Verified per-issuer investor-relations site",
       "source_class": "PRIMARY_ISSUER",
@@ -929,6 +943,37 @@
       "fact_eligibility": [],
       "enabled_by_default": true,
       "notes": "Search results route to publishers. Snippets do not establish facts, timing, or independent confirmation."
+    },
+    {
+      "source_id": "lseg_workspace_authorized",
+      "name": "LSEG Workspace and licensed data exports",
+      "source_class": "LICENSED",
+      "roles": ["IDENTITY_REFERENCE", "MARKET_DISCOVERY", "PRICE_HISTORY", "FUNDAMENTAL_ARCHIVE", "NEWS_ARCHIVE", "EXECUTION_TAPE"],
+      "domains": ["lseg.com", "www.lseg.com"],
+      "start_urls": ["https://www.lseg.com/en/data-analytics/financial-data/pricing-and-market-data"],
+      "access_modes": ["LICENSED_VENDOR", "USER_EXPORT"],
+      "independence_group": "lseg_data_and_analytics",
+      "timing_grade_ceiling": "A",
+      "fact_eligibility": ["LICENSED_IDENTITY", "LICENSED_PRICE_HISTORY", "LICENSED_FUNDAMENTAL_CONTEXT", "LICENSED_NEWS_CONTEXT", "LICENSED_EXECUTION_CONTEXT"],
+      "enabled_by_default": false,
+      "requires_entitlement": true,
+      "notes": "Requires an external LSEG entitlement and retention rights. Reuters items delivered through LSEG retain their Reuters origin and do not become an independent second news source."
+    },
+    {
+      "source_id": "alphastocks_authorized_connector",
+      "name": "AlphaStocks authorized connector",
+      "source_class": "STRUCTURED_SECONDARY",
+      "roles": ["MARKET_DISCOVERY", "PRICE_HISTORY", "FUNDAMENTAL_ARCHIVE", "NEWS_ARCHIVE"],
+      "domains": [],
+      "start_urls": [],
+      "access_modes": ["AUTHORIZED_EXTERNAL", "USER_EXPORT"],
+      "independence_group": "alphastocks",
+      "timing_grade_ceiling": "C",
+      "fact_eligibility": ["SECONDARY_PRICE_HISTORY", "SECONDARY_FUNDAMENTAL_CONTEXT", "SECONDARY_EARNINGS_CONTEXT", "NEWS_CONTEXT"],
+      "enabled_by_default": false,
+      "requires_runtime_domain_registry": true,
+      "requires_entitlement": true,
+      "notes": "Catalog placeholder for the user-named AlphaStocks app. It remains unavailable until an exact connector identity, authorized activation, supported Kuwait symbols, and data rights are bound at runtime."
     },
     {
       "source_id": "ice_kuwait_archive",

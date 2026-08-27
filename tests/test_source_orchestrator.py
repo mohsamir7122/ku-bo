@@ -102,6 +102,18 @@ def result(request: CaptureRequest, kind: str, *, final_url: str | None = None) 
             error_code="",
             data_quality_flags=("RAW_CAPTURE_PENDING_PARSER_VALIDATION",),
         )
+    if kind == "parser_failure":
+        return CaptureResult(
+            **common,
+            observed_at=NOW,
+            state="PARTIAL",
+            query_status="PARSER_DRIFT",
+            qualified_items=0,
+            zero_result=False,
+            content=b'{"unexpected":"shape"}',
+            error_code="PARSER_DRIFT",
+            data_quality_flags=("PARSER_SCHEMA_FAILURE",),
+        )
     failure = {
         **common,
         "observed_at": None,
@@ -131,6 +143,13 @@ def result(request: CaptureRequest, kind: str, *, final_url: str | None = None) 
             state="ERROR",
             query_status="ERROR",
             error_code="HTTP_TIMEOUT",
+        )
+    if kind == "server":
+        return CaptureResult(
+            **{**failure, "http_status": 503},
+            state="ERROR",
+            query_status="ERROR",
+            error_code="HTTP_SERVER_ERROR",
         )
     if kind in {"dns", "robots_unavailable"}:
         return CaptureResult(
@@ -209,6 +228,7 @@ class SourceOrchestratorTests(unittest.TestCase):
             connector=connector,
             clock=FixedClock(),
             sleeper=kwargs.pop("sleeper", lambda _seconds: None),
+            jitter=kwargs.pop("jitter", lambda ceiling: ceiling),
         ).run(
             run_id=kwargs.pop("run_id", "orchestrator-test"),
             decision_at=DECISION,
@@ -217,10 +237,10 @@ class SourceOrchestratorTests(unittest.TestCase):
             **kwargs,
         )
 
-    def test_policy_freezes_three_transient_attempts_and_four_empty_strategies(self) -> None:
+    def test_policy_freezes_two_transient_attempts_and_four_empty_strategies(self) -> None:
         policy = load_orchestrator_policy(self.strategy_path)
         self.assertEqual(policy.context_days, 120)
-        self.assertEqual(policy.max_transient_attempts, 3)
+        self.assertEqual(policy.max_transient_attempts, 2)
         self.assertEqual(len(policy.strategies), 4)
         self.assertEqual(len({item.query_params for item in policy.strategies}), 4)
 
@@ -272,22 +292,39 @@ class SourceOrchestratorTests(unittest.TestCase):
                     },
                 )
 
-    def test_transient_is_retried_exactly_three_times_before_next_strategy(self) -> None:
+    def test_transient_retries_once_with_jitter_then_fails_over_to_next_source(self) -> None:
         connector = ScriptedConnector(
-            {"boursa_current": ["timeout", "timeout", "timeout", "qualified"]}
+            {
+                "boursa_current": ["timeout", "timeout", "qualified"],
+                "reuters_middle_east": ["qualified"],
+            }
         )
         sleeps: list[float] = []
         with tempfile.TemporaryDirectory() as directory:
-            run = self.run_one(connector, directory, sleeper=sleeps.append)
+            run = self.run_one(
+                connector,
+                directory,
+                sleeper=sleeps.append,
+                jitter=lambda ceiling: ceiling / 2,
+                source_ids=["boursa_current", "reuters_middle_east"],
+            )
             rows = [json.loads(line) for line in (Path(directory) / "source_attempts.jsonl").read_text().splitlines()]
-        self.assertEqual(len(rows), 4)
-        self.assertEqual([row["attempt_ordinal"] for row in rows[:3]], [1, 2, 3])
-        self.assertEqual([row["strategy_ordinal"] for row in rows], [1, 1, 1, 2])
-        self.assertEqual(sleeps, [0.25, 1.0])
-        self.assertEqual(run.sources[0].status, "QUALIFIED")
+        self.assertEqual(len(rows), 3)
+        self.assertEqual([row["attempt_ordinal"] for row in rows[:2]], [1, 2])
+        self.assertEqual([row["strategy_ordinal"] for row in rows[:2]], [1, 1])
+        self.assertEqual(sleeps, [0.125])
+        statuses = {item.source_id: item.status for item in run.sources}
+        self.assertEqual(statuses["boursa_current"], "ERROR")
+        self.assertEqual(statuses["reuters_middle_east"], "QUALIFIED")
+        self.assertEqual(rows[1]["retry_disposition"], "STOP_TRANSIENT_SOURCE_FAILOVER")
+        self.assertIn("IMMEDIATE_SOURCE_FAILOVER", rows[1]["limitations"])
 
-    def test_dns_and_transient_robots_failures_receive_three_bounded_attempts(self) -> None:
-        for kind in ("dns", "robots_unavailable"):
+    def test_dns_and_5xx_retry_once_but_unavailable_robots_disables_without_retry(self) -> None:
+        for kind, expected_calls in (
+            ("dns", 2),
+            ("server", 2),
+            ("robots_unavailable", 1),
+        ):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
                 connector = ScriptedConnector(
                     {"boursa_current": [kind, kind, "qualified"]}
@@ -297,8 +334,8 @@ class SourceOrchestratorTests(unittest.TestCase):
                     directory,
                     run_id=f"transient-{kind}",
                 )
-                self.assertEqual(len(connector.calls), 3)
-                self.assertEqual(run.sources[0].status, "QUALIFIED")
+                self.assertEqual(len(connector.calls), expected_calls)
+                self.assertEqual(run.sources[0].status, "ERROR")
 
     def test_four_distinct_evidence_backed_zero_strategies_advance_watermark(self) -> None:
         connector = ScriptedConnector(default="zero")
@@ -359,42 +396,57 @@ class SourceOrchestratorTests(unittest.TestCase):
                 row = json.loads((Path(directory) / "source_attempts.jsonl").read_text())
                 self.assertEqual(row["retry_disposition"], "STOP_HARD_BLOCK")
 
-    def test_rate_limit_exhaustion_stops_source_without_rotating_strategy(self) -> None:
+    def test_rate_limit_opens_circuit_without_retry_or_strategy_rotation(self) -> None:
         connector = ScriptedConnector(
             {"boursa_current": ["rate", "rate", "rate", "qualified"]}
         )
         with tempfile.TemporaryDirectory() as directory:
             run = self.run_one(connector, directory)
             rows = [json.loads(line) for line in (Path(directory) / "source_attempts.jsonl").read_text().splitlines()]
-        self.assertEqual(len(rows), 3)
-        self.assertEqual([row["attempt_ordinal"] for row in rows], [1, 2, 3])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual([row["attempt_ordinal"] for row in rows], [1])
         self.assertEqual({row["strategy_ordinal"] for row in rows}, {1})
         self.assertTrue(
             all("RATE_LIMIT_RETRY_AFTER_UNAVAILABLE" in row["limitations"] for row in rows)
         )
         self.assertEqual(rows[-1]["retry_disposition"], "STOP_RATE_LIMITED")
         self.assertEqual(run.sources[0].status, "BLOCKED")
-        self.assertIn("RATE_LIMIT_RETRY_EXHAUSTED", run.sources[0].limitations)
+        self.assertIn("RATE_LIMIT_CIRCUIT_OPEN", run.sources[0].limitations)
 
-    def test_rate_limit_honors_bounded_retry_after(self) -> None:
+    def test_rate_limit_records_retry_after_but_fails_over_without_sleep(self) -> None:
         connector = ScriptedConnector(
             {"boursa_current": ["rate_retry_after", "qualified"]}
         )
         sleeps: list[float] = []
         with tempfile.TemporaryDirectory() as directory:
-            self.run_one(connector, directory, sleeper=sleeps.append)
+            orchestrator = SourceSearchOrchestrator(
+                catalog=self.catalog,
+                strategy_path=self.strategy_path,
+                connector=connector,
+                clock=FixedClock(),
+                sleeper=sleeps.append,
+                jitter=lambda ceiling: ceiling,
+            )
+            orchestrator.run(
+                run_id="rate-retry-after",
+                decision_at=DECISION,
+                attempt_log_path=Path(directory) / "source_attempts.jsonl",
+                source_ids=["boursa_current"],
+            )
             rows = [
                 json.loads(line)
                 for line in (Path(directory) / "source_attempts.jsonl")
                 .read_text()
                 .splitlines()
             ]
-        self.assertEqual(sleeps, [7.0])
-        self.assertEqual(rows[0]["retry_delay_seconds"], 7.0)
+        self.assertEqual(sleeps, [])
+        self.assertEqual(rows[0]["retry_delay_seconds"], 0.0)
         self.assertEqual(rows[0]["retry_after_seconds"], 7.0)
         self.assertNotIn("RATE_LIMIT_RETRY_AFTER_UNAVAILABLE", rows[0]["limitations"])
+        self.assertEqual(orchestrator.circuit_breakers[0]["state"], "CIRCUIT_OPEN")
+        self.assertEqual(orchestrator.circuit_breakers[0]["retry_after_at"], "2026-08-13T10:00:07Z")
 
-    def test_retry_after_beyond_remaining_wall_budget_defers_without_sleep(self) -> None:
+    def test_retry_after_never_blocks_critical_path_even_beyond_wall_budget(self) -> None:
         connector = ScriptedConnector(default="rate_retry_after")
         sleeps: list[float] = []
         with tempfile.TemporaryDirectory() as directory:
@@ -419,9 +471,9 @@ class SourceOrchestratorTests(unittest.TestCase):
         self.assertEqual(sleeps, [])
         self.assertEqual(row["retry_after_seconds"], 7.0)
         self.assertEqual(row["retry_delay_seconds"], 0.0)
-        self.assertEqual(row["retry_disposition"], "STOP_RETRY_BUDGET")
+        self.assertEqual(row["retry_disposition"], "STOP_RATE_LIMITED")
         self.assertIn(
-            "RETRY_DELAY_EXCEEDS_REMAINING_WALL_BUDGET",
+            "RATE_LIMIT_CIRCUIT_OPEN",
             run.sources[0].limitations,
         )
 
@@ -439,7 +491,7 @@ class SourceOrchestratorTests(unittest.TestCase):
 
     def test_connector_exception_is_isolated_and_other_source_completes(self) -> None:
         connector = ScriptedConnector(
-            {"boursa_current": [RuntimeError("boom")] * 12, "reuters_middle_east": ["qualified"]}
+            {"boursa_current": [RuntimeError("boom")] * 2, "reuters_middle_east": ["qualified"]}
         )
         with tempfile.TemporaryDirectory() as directory:
             run = self.run_one(
@@ -463,6 +515,39 @@ class SourceOrchestratorTests(unittest.TestCase):
         self.assertEqual(run.sources[0].watermark_before, prior_kuwait)
         self.assertEqual(dict(run.final_watermarks)["boursa_current"], prior_kuwait)
         self.assertEqual(run.sources[0].status, "CAPTURED_PENDING_PARSER")
+
+    def test_parser_schema_failure_quarantines_adapter_and_continues_fallback(self) -> None:
+        connector = ScriptedConnector(
+            {
+                "boursa_current": ["parser_failure", "qualified"],
+                "reuters_middle_east": ["qualified"],
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            orchestrator = SourceSearchOrchestrator(
+                catalog=self.catalog,
+                strategy_path=self.strategy_path,
+                connector=connector,
+                clock=FixedClock(),
+                sleeper=lambda _seconds: None,
+                jitter=lambda ceiling: ceiling,
+            )
+            run = orchestrator.run(
+                run_id="parser-quarantine",
+                decision_at=DECISION,
+                attempt_log_path=Path(directory) / "source_attempts.jsonl",
+                source_ids=["boursa_current", "reuters_middle_east"],
+            )
+            rows = [
+                json.loads(line)
+                for line in (Path(directory) / "source_attempts.jsonl").read_text().splitlines()
+            ]
+        statuses = {item.source_id: item.status for item in run.sources}
+        self.assertEqual(statuses["boursa_current"], "CAPTURED_PENDING_PARSER")
+        self.assertEqual(statuses["reuters_middle_east"], "QUALIFIED")
+        self.assertEqual(rows[0]["retry_disposition"], "STOP_ADAPTER_QUARANTINED")
+        self.assertEqual(orchestrator.circuit_breakers[0]["state"], "QUARANTINED")
+        self.assertEqual(len([call for call in connector.calls if call.source_id == "boursa_current"]), 1)
 
     def test_capture_after_decision_remains_raw_pending_parser_point_in_time(self) -> None:
         class LateRawConnector:
@@ -500,12 +585,35 @@ class SourceOrchestratorTests(unittest.TestCase):
             for row in rows:
                 self.assertEqual(set(row), set(schema["required"]))
             self.assertEqual(rows[0]["previous_attempt_hash"], "0" * 64)
+            self.assertEqual(len(rows[0]["idempotency_key"]), 64)
             self.assertEqual(run.first_attempt_hash, rows[0]["attempt_hash"])
             artifact = Path(directory) / rows[0]["artifact_path"]
             self.assertEqual(artifact.read_bytes(), b'{"items":[1]}')
             self.assertEqual(len(artifact.read_bytes()), rows[0]["content_bytes"])
             with self.assertRaisesRegex(ValueError, "never overwritten"):
                 AppendOnlyAttemptLedger(path, "second-run")
+
+    def test_self_rehashed_idempotency_forgery_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run = self.run_one(ScriptedConnector(default="qualified"), directory)
+            report = run.to_dict()
+            ledger_path = root / "source_attempts.jsonl"
+            row = json.loads(ledger_path.read_text(encoding="utf-8"))
+            row["idempotency_key"] = "f" * 64
+            unhashed = dict(row)
+            unhashed.pop("attempt_hash")
+            row["attempt_hash"] = hash_json(unhashed)
+            ledger_bytes = canonical_json_bytes(row)
+            ledger_path.write_bytes(ledger_bytes)
+            report["attempt_ledger"].update(
+                sha256=sha256_bytes(ledger_bytes),
+                first_attempt_hash=row["attempt_hash"],
+                last_attempt_hash=row["attempt_hash"],
+            )
+            (root / "source_search_run.json").write_bytes(canonical_json_bytes(report))
+            with self.assertRaisesRegex(ValueError, "idempotency key"):
+                validate_source_search_run(root, schema_root=ROOT / "schemas")
 
     def test_persisted_source_search_validator_rehashes_ledger_and_raw(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -776,7 +884,7 @@ class SourceOrchestratorTests(unittest.TestCase):
         self.assertEqual(set(payload), set(schema["required"]))
         self.assertTrue(all(value is False for value in payload["claim_boundaries"].values()))
 
-    def test_default_plan_reserves_all_waves_within_fifty_domains(self) -> None:
+    def test_default_plan_fails_over_across_all_waves_without_forcing_domain_target(self) -> None:
         connector = ScriptedConnector(default="blocked")
         with tempfile.TemporaryDirectory() as directory:
             run = SourceSearchOrchestrator(
@@ -792,12 +900,16 @@ class SourceOrchestratorTests(unittest.TestCase):
             )
         coverage = run.to_dict()["domain_coverage"]
         self.assertGreaterEqual(coverage["catalog_registrable_domain_count"], 50)
-        self.assertEqual(coverage["attempted_registrable_domain_count"], 50)
-        self.assertLess(coverage["attempted_registrable_domain_count"], len(connector.calls))
+        self.assertGreaterEqual(coverage["attempted_registrable_domain_count"], 4)
+        self.assertLessEqual(coverage["attempted_registrable_domain_count"], 50)
+        self.assertLessEqual(coverage["attempted_registrable_domain_count"], len(connector.calls))
         self.assertIsNone(run.budget_stop_reason)
         self.assertEqual(coverage["selection_mode"], "DEFAULT_FAIR_NETWORK")
         self.assertTrue(coverage["global_target_applicable"])
-        self.assertTrue(coverage["global_target_met"])
+        self.assertEqual(
+            coverage["global_target_met"],
+            coverage["attempted_registrable_domain_count"] >= 50,
+        )
         community = next(
             wave
             for wave in run.waves
@@ -821,7 +933,7 @@ class SourceOrchestratorTests(unittest.TestCase):
             run.limitations,
         )
 
-    def test_request_budget_stops_before_connector_call_beyond_limit(self) -> None:
+    def test_source_attempt_budget_stops_at_two_without_infinite_retry(self) -> None:
         connector = ScriptedConnector(default="timeout")
         with tempfile.TemporaryDirectory() as directory:
             orchestrator = SourceSearchOrchestrator(
@@ -844,7 +956,9 @@ class SourceOrchestratorTests(unittest.TestCase):
             )
         self.assertEqual(len(connector.calls), 2)
         self.assertEqual(run.attempt_count, 2)
-        self.assertEqual(run.budget_stop_reason, "MAX_REQUESTS_EXHAUSTED")
+        self.assertIsNone(run.budget_stop_reason)
+        self.assertEqual(run.sources[0].status, "ERROR")
+        self.assertIn("TRANSIENT_ATTEMPT_BUDGET_EXHAUSTED", run.sources[0].limitations)
 
     def test_wall_budget_stops_before_first_over_budget_connector_call(self) -> None:
         connector = ScriptedConnector(default="qualified")

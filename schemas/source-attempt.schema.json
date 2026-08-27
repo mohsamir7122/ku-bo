@@ -5,7 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "run_id", "attempt_id", "sequence", "previous_attempt_hash", "event_type",
+    "schema_version", "run_id", "attempt_id", "idempotency_key", "sequence", "previous_attempt_hash", "event_type",
     "wave_id", "source_id", "route_id", "strategy_id", "strategy_ordinal",
     "attempt_ordinal", "window_from", "window_to", "requested_url", "final_url",
     "registrable_domain", "access_mode", "capture_kind", "attempted_at", "completed_at",
@@ -18,6 +18,7 @@
     "schema_version": {"const": "1.0"},
     "run_id": {"type": "string", "minLength": 1},
     "attempt_id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"$ref": "#/$defs/sha256"},
     "sequence": {"type": "integer", "minimum": 1},
     "previous_attempt_hash": {"$ref": "#/$defs/sha256"},
     "event_type": {"enum": ["CAPTURE_ATTEMPT", "RETRY_CONTROL_EVENT"]},
@@ -26,7 +27,7 @@
     "route_id": {"type": "string", "minLength": 1},
     "strategy_id": {"type": "string", "minLength": 1},
     "strategy_ordinal": {"type": "integer", "minimum": 1, "maximum": 4},
-    "attempt_ordinal": {"type": "integer", "minimum": 1, "maximum": 3},
+    "attempt_ordinal": {"type": "integer", "minimum": 1, "maximum": 2},
     "window_from": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
     "window_to": {"type": "string", "format": "date-time", "pattern": "\\+03:00$"},
     "requested_url": {"type": "string", "format": "uri", "pattern": "^https://"},
@@ -54,7 +55,8 @@
     "retry_disposition": {
       "enum": [
         "RETRY_TRANSIENT", "NEXT_EMPTY_STRATEGY", "STOP_QUALIFIED", "STOP_HARD_BLOCK",
-        "STOP_CAPTURE_PENDING_PARSER", "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED",
+        "STOP_CAPTURE_PENDING_PARSER", "STOP_ADAPTER_QUARANTINED",
+        "STOP_TRANSIENT_SOURCE_FAILOVER",
         "STOP_RATE_LIMITED", "STOP_RETRY_BUDGET", "STOP_SLEEPER_FAILURE", "NEXT_REJECTED_STRATEGY",
         "STOP_STRATEGIES_EXHAUSTED"
       ]

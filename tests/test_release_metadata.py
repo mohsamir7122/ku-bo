@@ -30,7 +30,7 @@ class ReleaseMetadataTests(unittest.TestCase):
         self.assertEqual(metadata["dependencies"], ["tzdata==2026.3"])
         self.assertEqual(
             project_file["project"]["optional-dependencies"]["test"],
-            ["jsonschema==4.25.1"],
+            ["jsonschema==4.25.1", "PyYAML==6.0.3"],
         )
         self.assertIn(f"/{__version__}", DEFAULT_USER_AGENT)
 

@@ -23,7 +23,7 @@ flowchart TD
 
 ## مكونات مسار الشبكة
 
-- `SourceNetworkCatalog`: يقرأ 68 تعريف مصدر و62 مجموعة استقلال وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت. يوجد 59 نطاقًا مرشحًا بعد استبعاد البحث والتخزين، و53 نطاقًا معلنًا Enabled-public، و52 نطاق Start URL تنفيذيًا مميزًا قبل الحجز. العدد لا يساوي تأكيدات مستقلة.
+- `SourceNetworkCatalog`: يقرأ 71 تعريف مصدر و65 مجموعة استقلال وسياسات الأفق، ويتحقق من الأدوار والنطاقات والاستقلال وحدود التوقيت. يوجد 61 نطاقًا مرشحًا بعد استبعاد البحث والتخزين، و54 نطاقًا معلنًا Enabled-public، و53 نطاق Start URL عامًا مميزًا قبل الحجز. العدد لا يساوي تأكيدات مستقلة.
 - `ingestion` و`capture_plan`: يجمعان البايتات العامة أوUser exports بصورة محدودة، ويحفظان Raw وManifest دون ترقيتها تلقائيًا إلى Finding. خطة واحدة لا تتجاوز 32 مهمة أو128 MiB أو300 ثانية إجمالًا، ويحدث رفض التجاوز قبل Connector/I/O.
 - `Parser/QA`: يحتوي محلل هوية Boursa ومحلل تاريخ سعر Investing فقط، مع مصالحة ISIN واختبارات Drift ونهاية إلى نهاية على Fixtures مولدة. مصفوفة `source_capabilities.json` تفصل `END_TO_END_TESTED` عن `LIVE_OPERATIONAL`؛ ولا توجد في المستودع Fixture حية مصرح بها ترفع أي مصدر إلى الحالة الثانية.
 - `RuntimeTrustRegistry`: يصادق سجلًا خارجيًا بـ`HMAC-SHA256` ومفتاح Runtime، ويتحقق من الجمهور والصلاحية ويربط المصادر الحساسة بالحساب/Subject والنطاق وSecurity codes وActivation/Entitlement.
@@ -47,7 +47,7 @@ flowchart TD
 - Full denominator: ينتج صفًا لكل `security_code` متوقع عند كل Cutoff، بحالة `SELECTED` أو`REJECTED` أو`ABSTAINED` أو`UNRESOLVED` وسبب أول مرحلة فاشلة.
 - `forty_session_replay`: المنتج Execution-grade. يعيد اشتقاق Rank من Score تنازليًا وSecurity Code تصاعديًا عند التعادل، ويفرض أن Selected تساوي Top-K وأن كل Selected يحمل Fill ودليل تنفيذ. الـPrimary label هو adjusted gross return قبل التكاليف؛ الرسوم وSpread وSlippage تدخل في Actionable net وMarket/Sector net-excess الثانوية. لا يحسب Metrics إلا من 40 قرارًا و41 جلسة رسمية متتالية مع Universe وFeatures وOutcomes حقيقية Point-in-Time. يبقى Non-trading member في المقام، لكن أي حالة غير متداولة تعيد `STOP_BACKTEST` ما دام `KU-BO-008-D01` مفتوحًا. نتيجة الإيقاف تفرض `metrics=null` و`agreement_rate=null/NOT_APPLICABLE` و`authority_verified=false` و`accuracy_claim_allowed=false`؛ ولا يعلن Runtime حالة `STOP_INFERENCE` غير القابلة للوصول.
 
-الكتالوج لا يساوي طبقة جمع حية: الحالة الحالية 66 `DEFINED_ONLY` و2 `END_TO_END_TESTED` على Fixtures مولدة و0 `LIVE_OPERATIONAL`.
+الكتالوج لا يساوي طبقة جمع حية: الحالة الحالية 69 `DEFINED_ONLY` و2 `END_TO_END_TESTED` على Fixtures مولدة و0 `LIVE_OPERATIONAL`.
 
 ## استقلال المصادر
 
