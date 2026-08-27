@@ -12,6 +12,7 @@
     "stages",
     "products",
     "input_bindings",
+    "input_validations",
     "claim_boundaries"
   ],
   "properties": {
@@ -75,6 +76,43 @@
         }
       }
     },
+    "input_validations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_probe",
+        "raw_evidence_manifest",
+        "normalized_snapshot",
+        "factor_snapshot",
+        "champion_freeze"
+      ],
+      "properties": {
+        "source_probe": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/validationRecord"}
+        },
+        "raw_evidence_manifest": {"$ref": "#/$defs/optionalValidationRecord"},
+        "normalized_snapshot": {"$ref": "#/$defs/optionalValidationRecord"},
+        "factor_snapshot": {"$ref": "#/$defs/optionalValidationRecord"},
+        "champion_freeze": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "three_session_rank",
+            "five_session_weekly_swing",
+            "twenty_one_session_monthly_swing",
+            "sixty_three_session_quarter_rank"
+          ],
+          "properties": {
+            "three_session_rank": {"$ref": "#/$defs/optionalValidationRecord"},
+            "five_session_weekly_swing": {"$ref": "#/$defs/optionalValidationRecord"},
+            "twenty_one_session_monthly_swing": {"$ref": "#/$defs/optionalValidationRecord"},
+            "sixty_three_session_quarter_rank": {"$ref": "#/$defs/optionalValidationRecord"}
+          }
+        }
+      }
+    },
     "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"}
   },
   "$defs": {
@@ -84,6 +122,49 @@
         {"type": "null"},
         {"$ref": "#/$defs/sha256"}
       ]
+    },
+    "optionalValidationRecord": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/validationRecord"}
+      ]
+    },
+    "validationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_sha256",
+        "validator_id",
+        "validator_status",
+        "authorization_status",
+        "validator_result",
+        "validator_report_sha256"
+      ],
+      "properties": {
+        "artifact_sha256": {"$ref": "#/$defs/sha256"},
+        "validator_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "validator_status": {"enum": ["PASS", "BLOCKED"]},
+        "authorization_status": {
+          "enum": ["CANONICAL_AUTHORIZED_INPUT", "REJECTED_INPUT"]
+        },
+        "validator_result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "object_id", "errors", "facts"],
+          "properties": {
+            "status": {"enum": ["PASS", "BLOCKED"]},
+            "object_id": {"type": ["string", "null"], "maxLength": 256},
+            "errors": {
+              "type": "array",
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1, "maxLength": 512}
+            },
+            "facts": {"type": "object"}
+          }
+        },
+        "validator_report_sha256": {"$ref": "#/$defs/sha256"}
+      }
     },
     "products": {
       "type": "array",

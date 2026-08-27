@@ -29,6 +29,24 @@ kubo --project-root . run-live-dry-run \
 بحثي. التشغيل الكامل يحتاج ملفات خاصة تحت `private-runtime-root` وأربع روابط
 `--champion-freeze PRODUCT_ID=RELATIVE_PATH`، ولا تحفظ المخرجات المسارات نفسها.
 
+وجود ملف لا يمرر أي مرحلة. يعيد التشغيل فتح كل input ويشغل المدقق القانوني له:
+
+- Access probe من `source-access-executor-v1` مع `validate_live_probe`؛ وهو دليل
+  وصول فقط ولا يثبت نجاح collection.
+- `manifests/file_manifest.json` مع `EvidenceManifest` وإعادة hash للـraw bytes.
+- `manifests/collection_run.json` مع `PackValidator`، مع رفض `synthetic=true`
+  وأي run غير `QUALIFIED`.
+- `factor_snapshot.json` مع registry الكويت الموثوق وhashes الـraw المثبتة.
+- كل Champion freeze مع `validate_champion_freeze` وربط المنتج والأفق.
+
+يرفض المسارات الموسومة fixture/sample، والملف العام غير القانوني، وsymlink،
+والـhash المتغير. يحتفظ العقد بـSHA-256 للـinput وSHA-256 لنتيجة المدقق، وتحتوي
+إيصالات المرحلة على الاثنين. `DRY_RUN_BLOCKED` يعيد process exit غير صفري.
+
+قفل التشغيل Lease محدود الصلاحية بدل lock أبدي. يحمل run/owner/process identity
+وتوقيت الإنشاء والانتهاء وheartbeat. لا يستبدل Lease نشط، ولا يسترد المنتهي إلا
+بعد probe يثبت عدم وجود تشغيل نشط لنفس fingerprint.
+
 ## Factor 9
 
 الـManifest الخاص يلزم ثمانية أدوار Artifact وسبع بوابات وستة عوائق. المقام

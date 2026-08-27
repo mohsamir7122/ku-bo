@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 
 try:
     from jsonschema import Draft202012Validator
@@ -14,15 +16,49 @@ except ImportError:  # pragma: no cover
     Draft202012Validator = None
 
 from kubo.codex_live_bootstrap import EXPECTED_PRODUCTS, EXPECTED_STAGES
+from kubo.hashing import hash_json
+import kubo.live_dry_run as live_module
 from kubo.live_dry_run import (
     LiveDryRunError,
     LiveDryRunLockError,
     run_daily_dry_run,
     validate_live_dry_run,
 )
+from kubo.recovery import acquire_recovery_lease, load_recovery_policy
+from kubo.source_access_executor import PROBE_PURPOSE, PROBE_VERSION
+from tests.helpers import synthetic_pack
 
 
 ROOT = Path(__file__).resolve().parents[1]
+_REAL_CANONICAL_VALIDATOR = live_module._canonical_validate_input
+
+
+def _canonical_access_probe(root: Path) -> Path:
+    payload = {
+        "schema_version": "3.1-access-probe",
+        "probe_id": "",
+        "probe_version": PROBE_VERSION,
+        "observed_at": "2026-08-24T07:59:00+03:00",
+        "expires_at": "2026-08-25T07:59:00+03:00",
+        "purpose": PROBE_PURPOSE,
+        "sources": [
+            {
+                "source_id": "boursa_current",
+                "state": "BLOCKED",
+                "tested_url": "https://www.boursakuwait.com.kw/",
+                "final_url": "https://www.boursakuwait.com.kw/",
+                "attempted_at": "2026-08-24T07:58:00+03:00",
+                "http_status": 503,
+                "observation": "Access unavailable; this receipt is not collection evidence.",
+                "data_quality_flags": ["SOURCE_ACCESS_BLOCKED"],
+                "artifact": None,
+            }
+        ],
+    }
+    payload["probe_id"] = "public-access-probe-" + hash_json(payload)[:24]
+    path = root / "access-probe.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
 
 
 def _freeze(product_id: str, horizon: int) -> dict[str, object]:
@@ -62,6 +98,25 @@ def _freeze(product_id: str, horizon: int) -> dict[str, object]:
 
 
 class LiveDryRunTests(unittest.TestCase):
+    def _controlled_validator(self, kind: str, path: Path, **kwargs):
+        if kind == "champion_freeze":
+            return _REAL_CANONICAL_VALIDATOR(kind, path, **kwargs)
+        return live_module._validation_record(
+            path,
+            validator_id=live_module.VALIDATOR_IDS[kind],
+            object_id=f"controlled-{kind}",
+            errors=[],
+            facts={"controlled_orchestration_test_double": True},
+            authorized=True,
+        )
+
+    def _run_controlled(self, **kwargs):
+        with patch(
+            "kubo.live_dry_run._canonical_validate_input",
+            side_effect=self._controlled_validator,
+        ):
+            return run_daily_dry_run(project_root=ROOT, **kwargs)
+
     def _runtime(self, temporary: str):
         root = Path(temporary)
         inputs = root / "inputs"
@@ -82,7 +137,7 @@ class LiveDryRunTests(unittest.TestCase):
         return root, paths, freezes
 
     def _complete(self, root: Path, paths, freezes, *, run_id="dry-run-001"):
-        return run_daily_dry_run(
+        return self._run_controlled(
             private_runtime_root=root,
             output_root="runs",
             run_id=run_id,
@@ -98,7 +153,7 @@ class LiveDryRunTests(unittest.TestCase):
     def test_no_input_run_blocks_without_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            report = run_daily_dry_run(
+            report = self._run_controlled(
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-empty",
@@ -145,7 +200,7 @@ class LiveDryRunTests(unittest.TestCase):
     def test_missing_raw_manifest_blocks_stage_three(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root, paths, _ = self._runtime(temporary)
-            report = run_daily_dry_run(
+            report = self._run_controlled(
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-no-raw",
@@ -157,7 +212,7 @@ class LiveDryRunTests(unittest.TestCase):
     def test_missing_normalized_snapshot_blocks_stage_four(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root, paths, _ = self._runtime(temporary)
-            report = run_daily_dry_run(
+            report = self._run_controlled(
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-no-normalized",
@@ -170,7 +225,7 @@ class LiveDryRunTests(unittest.TestCase):
     def test_missing_factor_snapshot_blocks_stage_five(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root, paths, _ = self._runtime(temporary)
-            report = run_daily_dry_run(
+            report = self._run_controlled(
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-no-factor",
@@ -184,7 +239,7 @@ class LiveDryRunTests(unittest.TestCase):
     def test_missing_freeze_set_blocks_champion(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root, paths, _ = self._runtime(temporary)
-            report = run_daily_dry_run(
+            report = self._run_controlled(
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-no-freeze",
@@ -245,11 +300,21 @@ class LiveDryRunTests(unittest.TestCase):
     def test_lock_conflict_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            lock = root / "runs/.locks/dry-run-lock.lock"
-            lock.parent.mkdir(parents=True)
-            lock.write_text("held", encoding="utf-8")
+            lease_root = root / "runs/.leases"
+            lease_root.mkdir(parents=True)
+            policy, _ = load_recovery_policy(ROOT)
+            acquire_recovery_lease(
+                lease_root,
+                fingerprint=live_module._dry_run_lease_fingerprint("dry-run-lock"),
+                run_id="dry-run-lock",
+                owner="other-owner",
+                process_identity="github:other-run:job",
+                now=datetime.now(timezone.utc),
+                policy=policy,
+            )
             with self.assertRaises(LiveDryRunLockError):
                 run_daily_dry_run(
+                    project_root=ROOT,
                     private_runtime_root=root,
                     output_root="runs",
                     run_id="dry-run-lock",
@@ -260,12 +325,163 @@ class LiveDryRunTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             run_daily_dry_run(
+                project_root=ROOT,
                 private_runtime_root=root,
                 output_root="runs",
                 run_id="dry-run-release",
                 decision_session_date="2026-08-24",
             )
-            self.assertFalse((root / "runs/.locks/dry-run-release.lock").exists())
+            self.assertEqual(list((root / "runs/.leases").glob("*.lease.json")), [])
+
+    def test_expired_lease_requires_active_run_probe_before_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lease_root = root / "runs/.leases"
+            lease_root.mkdir(parents=True)
+            policy, _ = load_recovery_policy(ROOT)
+            fingerprint = live_module._dry_run_lease_fingerprint("dry-run-stale")
+            acquire_recovery_lease(
+                lease_root,
+                fingerprint=fingerprint,
+                run_id="dry-run-stale",
+                owner="stale-owner",
+                process_identity="github:stale-run:job",
+                now=datetime.now(timezone.utc) - timedelta(minutes=16),
+                policy=policy,
+            )
+            with self.assertRaises(LiveDryRunLockError):
+                run_daily_dry_run(
+                    project_root=ROOT,
+                    private_runtime_root=root,
+                    output_root="runs",
+                    run_id="dry-run-stale",
+                    decision_session_date="2026-08-24",
+                )
+            report = run_daily_dry_run(
+                project_root=ROOT,
+                private_runtime_root=root,
+                output_root="runs",
+                run_id="dry-run-stale",
+                decision_session_date="2026-08-24",
+                active_run_probe=lambda _: False,
+            )
+            self.assertEqual(report["status"], "DRY_RUN_BLOCKED")
+
+    def test_canonical_access_receipt_passes_only_access_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            probe = _canonical_access_probe(root)
+            report = run_daily_dry_run(
+                project_root=ROOT,
+                private_runtime_root=root,
+                output_root="runs",
+                run_id="dry-run-canonical-probe",
+                decision_session_date="2026-08-24",
+                source_probe_receipts=[probe.relative_to(root)],
+                recorded_at="2026-08-24T08:00:00+03:00",
+            )
+            self.assertEqual(report["blocked_stage"], EXPECTED_STAGES[2])
+            contract = json.loads(
+                (root / "runs/dry-run-canonical-probe/run_contract.json").read_text()
+            )
+            validation = contract["input_validations"]["source_probe"][0]
+            self.assertEqual(validation["validator_status"], "PASS")
+            self.assertFalse(
+                validation["validator_result"]["facts"]["access_receipt_is_collection"]
+            )
+
+    def test_generic_and_fixture_inputs_are_rejected_by_canonical_validator(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root, paths, freezes = self._runtime(temporary)
+            report = run_daily_dry_run(
+                project_root=ROOT,
+                private_runtime_root=root,
+                output_root="runs",
+                run_id="dry-run-generic-inputs",
+                decision_session_date="2026-08-24",
+                source_probe_receipts=[paths["probe"]],
+                raw_evidence_manifest=paths["raw"],
+                normalized_snapshot=paths["normalized"],
+                factor_snapshot=paths["factor"],
+                champion_freezes=freezes,
+                recorded_at="2026-08-24T08:00:00+03:00",
+            )
+            self.assertEqual(report["blocked_stage"], EXPECTED_STAGES[1])
+            contract = json.loads(
+                (root / "runs/dry-run-generic-inputs/run_contract.json").read_text()
+            )
+            self.assertEqual(
+                contract["input_validations"]["source_probe"][0]["authorization_status"],
+                "REJECTED_INPUT",
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "fixtures"
+            fixture.mkdir()
+            probe = _canonical_access_probe(fixture)
+            report = run_daily_dry_run(
+                project_root=ROOT,
+                private_runtime_root=root,
+                output_root="runs",
+                run_id="dry-run-fixture-path",
+                decision_session_date="2026-08-24",
+                source_probe_receipts=[probe.relative_to(root)],
+                recorded_at="2026-08-24T08:00:00+03:00",
+            )
+            self.assertEqual(report["blocked_stage"], EXPECTED_STAGES[1])
+
+    def test_synthetic_pack_is_rejected_before_raw_stage_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            probe = _canonical_access_probe(root)
+            pack = synthetic_pack(root / "pack")
+            report = run_daily_dry_run(
+                project_root=ROOT,
+                private_runtime_root=root,
+                output_root="runs",
+                run_id="dry-run-synthetic-pack",
+                decision_session_date="2026-08-24",
+                source_probe_receipts=[probe.relative_to(root)],
+                raw_evidence_manifest=(pack / "manifests/file_manifest.json").relative_to(root),
+                recorded_at="2026-08-24T08:00:00+03:00",
+            )
+            self.assertEqual(report["blocked_stage"], EXPECTED_STAGES[2])
+            contract = json.loads(
+                (root / "runs/dry-run-synthetic-pack/run_contract.json").read_text()
+            )
+            self.assertEqual(
+                contract["input_validations"]["raw_evidence_manifest"]["validator_status"],
+                "BLOCKED",
+            )
+
+    def test_receipt_binds_artifact_and_validator_report_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root, paths, freezes = self._runtime(temporary)
+            self._complete(root, paths, freezes, run_id="dry-run-validator-binding")
+            run_root = root / "runs/dry-run-validator-binding"
+            contract = json.loads((run_root / "run_contract.json").read_text())
+            validation = contract["input_validations"]["source_probe"][0]
+            receipt = json.loads(
+                (
+                    run_root
+                    / "receipts"
+                    / f"02_{EXPECTED_STAGES[1]}.json"
+                ).read_text()
+            )
+            self.assertEqual(
+                set(receipt["input_sha256"]),
+                {
+                    validation["artifact_sha256"],
+                    validation["validator_report_sha256"],
+                },
+            )
+            contract["input_validations"]["source_probe"][0][
+                "validator_report_sha256"
+            ] = "f" * 64
+            (run_root / "run_contract.json").write_text(json.dumps(contract))
+            with self.assertRaisesRegex(LiveDryRunError, "validator report hash mismatch"):
+                validate_live_dry_run(run_root)
 
     def test_input_path_escape_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as outside:

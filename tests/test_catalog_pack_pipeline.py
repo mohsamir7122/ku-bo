@@ -120,6 +120,25 @@ class CatalogPackPipelineTests(unittest.TestCase):
             self.assertEqual(validation.status, "BLOCKED")
             self.assertTrue(any("artifact" in item.lower() and "mismatch" in item.lower() for item in validation.errors))
 
+    def test_symlink_raw_artifact_is_rejected_by_canonical_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            pack = synthetic_pack(base / "pack")
+            raw = pack / "raw" / "eod.json"
+            outside = base / "outside-eod.json"
+            outside.write_bytes(raw.read_bytes())
+            raw.unlink()
+            try:
+                raw.symlink_to(outside)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks unavailable")
+            validation = PackValidator(pack, self.catalog).validate()
+            self.assertEqual(validation.status, "BLOCKED")
+            self.assertTrue(
+                any("symlink" in item.casefold() for item in validation.errors),
+                validation.errors,
+            )
+
     def test_mutated_normalized_file_blocks_capability(self):
         with tempfile.TemporaryDirectory() as directory:
             pack = synthetic_pack(Path(directory) / "pack")

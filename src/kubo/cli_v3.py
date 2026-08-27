@@ -36,6 +36,7 @@ from .factor9_admission import (
     validate_factor9_admission_manifest,
     write_factor9_admission_report,
 )
+from .exit_status import is_blocking_status
 from .ku_bo_live_program import validate_ku_bo_live_program
 from .kuwait_research_pipeline import build_integrated_research_bundle
 from .live_dry_run import run_daily_dry_run, validate_live_dry_run
@@ -710,6 +711,7 @@ def main(argv: list[str] | None = None) -> int:
         validate_market_scope(project_root)
         validate_ku_bo_live_program(project_root)
         report = run_daily_dry_run(
+            project_root=project_root,
             private_runtime_root=args.private_runtime_root,
             output_root=args.output_root,
             run_id=args.run_id,
@@ -779,7 +781,7 @@ def main(argv: list[str] | None = None) -> int:
             args.output.write_text(rendered, encoding="utf-8")
         else:
             print(rendered, end="")
-        return 1 if report.get("status") in BLOCKING_STATUSES else 0
+        return 1 if is_blocking_status(report.get("status"), known=BLOCKING_STATUSES) else 0
     elif args.command == "capture":
         assert network_catalog is not None
         report = execute_capture_plan(
@@ -841,7 +843,9 @@ def main(argv: list[str] | None = None) -> int:
         report = ledger.verify_seal(args.seal) if args.seal else ledger.verify()
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True, default=str))
-    return 1 if report.get("status") in BLOCKING_STATUSES | {"FAILED"} else 0
+    return 1 if is_blocking_status(
+        report.get("status"), known=BLOCKING_STATUSES | {"FAILED"}
+    ) else 0
 
 
 if __name__ == "__main__":

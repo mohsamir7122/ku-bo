@@ -54,6 +54,7 @@ from .tri_security_receipts import (
     verify_tri_security_stage_binding,
 )
 from .user_price_export import import_investing_user_exports
+from .exit_status import is_blocking_status
 from .vendor_symbol_mapping import (
     PilotIdentitySeedCatalog,
     VendorSymbolMappingCatalog,
@@ -353,7 +354,7 @@ def _report_is_blocking(report: dict[str, Any]) -> bool:
     """Honor independent validation results, not only a saved stage status."""
 
     return any(
-        report.get(field) in BLOCKING_STATUSES
+        is_blocking_status(report.get(field), known=BLOCKING_STATUSES)
         for field in ("status", "validation_status", "contract_status")
     )
 
