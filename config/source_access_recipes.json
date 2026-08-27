@@ -237,7 +237,7 @@
     },
     {
       "recipe_id": "licensed-archive-export-v1",
-      "source_ids": ["ice_kuwait_archive"],
+      "source_ids": ["ice_kuwait_archive", "lseg_workspace_authorized"],
       "capability_status": "DEFINED_ONLY",
       "route_kind": "LICENSED_OR_BROKER_EXPORT",
       "access_mode": "LICENSED_VENDOR",
@@ -248,7 +248,7 @@
       "allowed_states": ["AVAILABLE", "PARTIAL", "BLOCKED", "AUTH_REQUIRED", "ERROR", "UNTESTED"],
       "terminal_reason_codes": ["LOGIN_REQUIRED", "USER_EXPORT_REQUIRED", "NETWORK_ERROR", "AUTHORIZATION_MISSING", "ENTITLEMENT_MISSING"],
       "artifact_policy": "REQUIRED_WHEN_READABLE",
-      "notes": "Requires external entitlement and an authorized-host binding. Catalog presence, a tool account, or packet-authored receipt is not a root of trust."
+      "notes": "Requires external entitlement, licensed retention rights, and an authorized-host binding. Catalog presence, a tool account, or packet-authored receipt is not a root of trust. Reuters content delivered by LSEG retains its Reuters origin."
     }
   ],
   "manual_importers": [

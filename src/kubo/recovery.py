@@ -880,11 +880,18 @@ def _local_process_active(identity: str) -> bool:
     current_host = re.sub(r"[^A-Za-z0-9._-]", "_", socket.gethostname())[:63] or "unknown"
     if host != current_host:
         return False
+    pid = int(raw_pid)
     try:
-        fields = Path(f"/proc/{int(raw_pid)}/stat").read_text(encoding="ascii").split()
+        fields = Path(f"/proc/{pid}/stat").read_text(encoding="ascii").split()
     except (OSError, UnicodeError, ValueError):
-        return False
-    return expected_start != "unknown" and len(fields) > 21 and fields[21] == expected_start
+        # Some constrained runtimes hide the caller from /proc. The current
+        # interpreter is nevertheless definitive proof that its own PID is
+        # alive; treating an unknown self lease as recoverable would violate
+        # the fail-closed lease rule.
+        return pid == os.getpid()
+    if expected_start == "unknown":
+        return pid == os.getpid()
+    return len(fields) > 21 and fields[21] == expected_start
 
 
 def _safe_lease_root(root: Path) -> Path:

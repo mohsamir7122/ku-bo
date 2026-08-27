@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "ku-bo-kuwait-security-by-security-v1",
+  "market": "BOURSA_KUWAIT",
+  "execution": {
+    "grain": "SECURITY",
+    "mode": "SECURITY_SEQUENTIAL",
+    "order": "SECURITY_CODE_NUMERIC_ASC",
+    "max_active_securities": 1,
+    "max_parallel_sources_within_security": 4,
+    "next_security_requires_terminal_seal": true,
+    "blocked_security_aborts_market_run": false,
+    "source_failure_scope": "SOURCE_LOCAL",
+    "source_execution_mode": "EXHAUSTIVE_PER_SECURITY",
+    "shared_artifact_reuse": "CONTENT_ADDRESSED_WITH_PER_SECURITY_EXTRACTION"
+  },
+  "security_lifecycle": [
+    "QUEUED",
+    "IDENTITY_BOUND",
+    "SOURCE_PLAN_FROZEN",
+    "COLLECTING",
+    "RECONCILING",
+    "VALIDATING",
+    "SEALING"
+  ],
+  "terminal_security_statuses": [
+    "SEALED_ALL_SOURCE_ATTEMPTS_TERMINAL",
+    "SEALED_WITH_EXPLICIT_GAPS",
+    "SEALED_BLOCKED"
+  ],
+  "terminal_source_statuses": [
+    "COLLECTED",
+    "VERIFIED_ZERO",
+    "REVIEWED_NOT_APPLICABLE",
+    "BLOCKED_RIGHTS",
+    "BLOCKED_ROBOTS",
+    "BLOCKED_ACCESS",
+    "AUTH_REQUIRED",
+    "ENTITLEMENT_REQUIRED",
+    "PAYWALL",
+    "RATE_LIMITED_EXHAUSTED",
+    "NETWORK_ERROR_EXHAUSTED",
+    "PARSER_DRIFT",
+    "ISSUER_OFFICIAL_SITE_UNRESOLVED"
+  ],
+  "official_company_site": {
+    "source_id": "issuer_ir_verified",
+    "required_for_every_security": true,
+    "authority_binding": "SIGNED_RUNTIME_TRUST_REGISTRY",
+    "domain_guessing_allowed": false,
+    "unresolved_status": "ISSUER_OFFICIAL_SITE_UNRESOLVED",
+    "required_content_areas": [
+      "FINANCIAL_REPORTS",
+      "INVESTOR_PRESENTATIONS",
+      "OFFICIAL_RELEASES",
+      "GOVERNANCE_AND_OWNERSHIP",
+      "GENERAL_ASSEMBLIES",
+      "STRATEGY_PROJECTS_AND_SUBSIDIARIES"
+    ]
+  },
+  "source_waves": [
+    {
+      "wave_id": "OFFICIAL_IDENTITY",
+      "ordinal": 1,
+      "source_ids": ["boursa_current", "cma_ifsah"],
+      "purpose": "Resolve point-in-time security and issuer identity before all other collection."
+    },
+    {
+      "wave_id": "ISSUER_PRIMARY",
+      "ordinal": 2,
+      "source_ids": ["issuer_ir_verified"],
+      "purpose": "Collect the verified official company website and Investor Relations archive for the current security."
+    },
+    {
+      "wave_id": "OFFICIAL_MARKET_FILINGS_AND_ACTIONS",
+      "ordinal": 3,
+      "source_ids": ["boursa_disclosure_archive", "boursa_reports_archive", "kcc_maqasa_official"],
+      "purpose": "Collect official disclosures, completed-session reports, distributions, assemblies, ownership, and corporate actions."
+    },
+    {
+      "wave_id": "LICENSED_AND_AUTHORIZED_MARKET_DATA",
+      "ordinal": 4,
+      "source_ids": ["authorized_broker_feed", "lseg_workspace_authorized", "ice_kuwait_archive"],
+      "purpose": "Use only licensed entitlements or authorized exports; record entitlement gaps without stopping other sources."
+    },
+    {
+      "wave_id": "STRUCTURED_SECONDARY",
+      "ordinal": 5,
+      "source_ids": ["investing_history", "yahoo_finance_kw", "mubasher_kuwait", "argaam_kuwait", "tradingview_screeners", "marketscreener_kuwait", "alphastocks_authorized_connector"],
+      "purpose": "Cross-check prices, financial context, ratios, earnings, and news without promoting secondary data to official truth."
+    },
+    {
+      "wave_id": "EDITORIAL_CONTEXT",
+      "ordinal": 6,
+      "source_ids": ["reuters_middle_east", "kuna", "alqabas_economy", "alanba_economy", "alrai_economy", "aljarida_economy", "zawya", "asharq_business"],
+      "purpose": "Collect original reporting and local or regional context, deduplicating wire copies and issuer-release mirrors."
+    },
+    {
+      "wave_id": "DISCOVERY_AND_SENTIMENT_ONLY",
+      "ordinal": 7,
+      "source_ids": ["indexsignal_forum", "telegram_boursakw", "telegram_kuwaitstockex", "telegram_kuwaitse", "web_search_router"],
+      "purpose": "Discover claims, attention, and sentiment only; route every material claim to an original or official source."
+    }
+  ],
+  "user_required_source_ids": [
+    "boursa_current",
+    "boursa_disclosure_archive",
+    "boursa_reports_archive",
+    "cma_ifsah",
+    "kcc_maqasa_official",
+    "issuer_ir_verified",
+    "investing_history",
+    "reuters_middle_east",
+    "yahoo_finance_kw",
+    "alqabas_economy",
+    "alanba_economy",
+    "indexsignal_forum",
+    "web_search_router",
+    "lseg_workspace_authorized",
+    "alphastocks_authorized_connector"
+  ],
+  "completion_rules": {
+    "all_planned_sources_require_terminal_receipt": true,
+    "unattempted_source_blocks_security_seal": true,
+    "all_universe_securities_require_one_terminal_seal": true,
+    "universe_must_be_exact": true,
+    "official_site_gap_must_be_explicit": true,
+    "source_substitution_allowed": false,
+    "republication_counts_as_independent_source": false,
+    "market_wide_artifact_requires_per_security_lineage": true,
+    "complete_claim_requires_no_blocks_or_critical_gaps": true
+  },
+  "claim_boundaries": {
+    "policy_executes_network_access": false,
+    "catalog_entry_proves_source_access": false,
+    "terminal_execution_proves_data_completeness": false,
+    "community_or_search_confirms_official_fact": false,
+    "licensed_source_may_be_used_without_entitlement": false,
+    "partial_collection_unlocks_training_backtest_or_forecast": false,
+    "collection_plan_is_trading_advice": false
+  }
+}

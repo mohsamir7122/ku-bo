@@ -17,9 +17,16 @@ from .company_dossier import (
     validate_company_research_bundle_files,
     write_company_dossier_report,
 )
-from .foundation_io import prepare_output_root
+from .foundation_io import prepare_output_root, safe_regular_file
 from .hashing import canonical_json_bytes, sha256_file
 from .historical_knowledge import HistoricalKnowledgeCatalog, compile_research_plan, parse_as_of
+from .issuer_sequential_collection import (
+    compile_issuer_sequential_collection_plan,
+    validate_issuer_sequential_collection_plan,
+    validate_issuer_sequential_collection_policy,
+    validate_issuer_sequential_collection_run,
+    write_issuer_sequential_collection_plan,
+)
 from .ingestion import PublicHttpConnector
 from .ledger import ForecastLedger
 from .outcome_sessions import OutcomeSessionAuthority
@@ -123,6 +130,10 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "plan-historical-research",
         "reconcile-source-evidence",
         "validate-company-dossier-bundle",
+        "validate-issuer-sequential-collection-policy",
+        "validate-issuer-sequential-collection-plan",
+        "validate-issuer-sequential-collection-run",
+        "plan-issuer-sequential-collection",
     }
 )
 
@@ -139,6 +150,7 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/source_network.json"),
     Path("config/source_access_recipes.json"),
     Path("config/source_fallback_policy.json"),
+    Path("config/issuer_sequential_collection_policy.json"),
     Path("config/source_quality_policy.json"),
     Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
@@ -199,8 +211,9 @@ def _reject_non_json_constant(value: str) -> None:
 
 def _load_strict_json_object(path: Path, field: str) -> dict[str, object]:
     try:
+        content = safe_regular_file(path, field=field)
         payload = json.loads(
-            path.read_text(encoding="utf-8"),
+            content.decode("utf-8"),
             object_pairs_hook=_reject_duplicate_json_keys,
             parse_constant=_reject_non_json_constant,
         )
@@ -307,6 +320,30 @@ def parser() -> argparse.ArgumentParser:
         "--dossier", type=Path, action="append", dest="dossiers", required=True
     )
     company_dossier.add_argument("--output", type=Path)
+
+    sub.add_parser("validate-issuer-sequential-collection-policy")
+
+    validate_sequential_plan = sub.add_parser(
+        "validate-issuer-sequential-collection-plan"
+    )
+    validate_sequential_plan.add_argument("--plan", type=Path, required=True)
+    validate_sequential_plan.add_argument("--universe", type=Path, required=True)
+    validate_sequential_plan.add_argument("--runtime-trust-registry", type=Path)
+
+    validate_sequential_run = sub.add_parser(
+        "validate-issuer-sequential-collection-run"
+    )
+    validate_sequential_run.add_argument("--plan", type=Path, required=True)
+    validate_sequential_run.add_argument("--run", type=Path, required=True)
+    validate_sequential_run.add_argument("--universe", type=Path, required=True)
+    validate_sequential_run.add_argument("--runtime-trust-registry", type=Path)
+
+    sequential_plan = sub.add_parser("plan-issuer-sequential-collection")
+    sequential_plan.add_argument("--universe", type=Path, required=True)
+    sequential_plan.add_argument("--run-id", required=True)
+    sequential_plan.add_argument("--generated-at", required=True)
+    sequential_plan.add_argument("--runtime-trust-registry", type=Path)
+    sequential_plan.add_argument("--output", type=Path)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -507,6 +544,9 @@ def main(argv: list[str] | None = None) -> int:
             "source_access_recipes": recipe_catalog.report(network_catalog),
             "source_quality_policy": validate_source_quality_policy(project_root),
             "source_fallback_policy": validate_source_fallback_policy(project_root),
+            "issuer_sequential_collection_policy": (
+                validate_issuer_sequential_collection_policy(project_root)
+            ),
             "predecessor_capability_parity": validate_predecessor_capability_parity(
                 project_root
             ),
@@ -589,6 +629,100 @@ def main(argv: list[str] | None = None) -> int:
         report = validate_company_research_bundle_files(args.universe, args.dossiers)
         if args.output is not None:
             write_company_dossier_report(args.output, report)
+    elif args.command == "validate-issuer-sequential-collection-policy":
+        report = validate_issuer_sequential_collection_policy(project_root)
+    elif args.command == "validate-issuer-sequential-collection-plan":
+        plan = _load_strict_json_object(args.plan, "sequential collection plan")
+        runtime_trust_registry = None
+        if args.runtime_trust_registry is not None:
+            key_id = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY_ID", "").strip()
+            if not key_id:
+                raise ValueError(
+                    "KUBO_RUNTIME_TRUST_HMAC_KEY_ID is required with "
+                    "--runtime-trust-registry"
+                )
+            runtime_trust_registry = load_runtime_trust_registry(
+                args.runtime_trust_registry,
+                key=_runtime_trust_hmac_key(),
+                expected_key_id=key_id,
+                decision_at=plan.get("generated_at"),
+            )
+        report = validate_issuer_sequential_collection_plan(
+            plan,
+            issuer_universe=args.universe,
+            project_root=project_root,
+            runtime_trust_registry=runtime_trust_registry,
+        )
+    elif args.command == "validate-issuer-sequential-collection-run":
+        plan = _load_strict_json_object(args.plan, "sequential collection plan")
+        run = _load_strict_json_object(args.run, "sequential collection run")
+        runtime_trust_registry = None
+        if args.runtime_trust_registry is not None:
+            key_id = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY_ID", "").strip()
+            if not key_id:
+                raise ValueError(
+                    "KUBO_RUNTIME_TRUST_HMAC_KEY_ID is required with "
+                    "--runtime-trust-registry"
+                )
+            runtime_trust_registry = load_runtime_trust_registry(
+                args.runtime_trust_registry,
+                key=_runtime_trust_hmac_key(),
+                expected_key_id=key_id,
+                decision_at=plan.get("generated_at"),
+            )
+        report = validate_issuer_sequential_collection_run(
+            run,
+            plan,
+            project_root=project_root,
+            issuer_universe=args.universe,
+            runtime_trust_registry=runtime_trust_registry,
+        )
+    elif args.command == "plan-issuer-sequential-collection":
+        runtime_trust_registry = None
+        if args.runtime_trust_registry is not None:
+            key_id = os.environ.get("KUBO_RUNTIME_TRUST_HMAC_KEY_ID", "").strip()
+            if not key_id:
+                raise ValueError(
+                    "KUBO_RUNTIME_TRUST_HMAC_KEY_ID is required with "
+                    "--runtime-trust-registry"
+                )
+            runtime_trust_registry = load_runtime_trust_registry(
+                args.runtime_trust_registry,
+                key=_runtime_trust_hmac_key(),
+                expected_key_id=key_id,
+                decision_at=args.generated_at,
+            )
+        full_plan = compile_issuer_sequential_collection_plan(
+            project_root,
+            args.universe,
+            run_id=args.run_id,
+            generated_at=args.generated_at,
+            runtime_trust_registry=runtime_trust_registry,
+        )
+        if args.output is None:
+            report = full_plan
+        else:
+            write_issuer_sequential_collection_plan(
+                args.output,
+                full_plan,
+                project_root=project_root,
+                issuer_universe=args.universe,
+                runtime_trust_registry=runtime_trust_registry,
+            )
+            report = {
+                "status": "PLANNED_NOT_EXECUTED",
+                "plan_id": full_plan["plan_id"],
+                "output": str(args.output),
+                "security_count": full_plan["security_count"],
+                "planned_source_count_per_security": full_plan[
+                    "planned_source_count_per_security"
+                ],
+                "total_source_attempts_planned": full_plan[
+                    "total_source_attempts_planned"
+                ],
+                "plan_sha256": full_plan["plan_sha256"],
+                "claim_boundaries": full_plan["claim_boundaries"],
+            }
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(

@@ -54,6 +54,12 @@ real market coverage or predictive performance.
    source-failure, and secret checks.
 6. Prepare gated sequential GitHub Actions without activating schedules until
    required secrets, variables, calendars, and dry-run gates are verified.
+7. Apply the owner-directed collection correction: make `security_code` the
+   outer unit of work, allow only one active security, exhaust the frozen
+   per-security source denominator, seal it, and only then start the next
+   security. Include an authority-bound official company website source for
+   every security and enumerate licensed, secondary, news, community, and
+   search-routing sources without promoting any of them to live status.
 
 ## Acceptance gates
 
@@ -67,6 +73,10 @@ real market coverage or predictive performance.
 7. Privacy, licensing, robots/access, temporal, provenance, and claim-boundary
    checks pass.
 8. Rollback, status, handoff, and next-action records are current.
+9. The security-sequential contract rejects group-level processing, partial
+   universes, source substitution, unresolved source receipts, and starting a
+   second security before the first security seal. It records the official
+   company-site gap explicitly when no signed runtime authority binding exists.
 
 ## Safety and non-claims
 
@@ -75,6 +85,11 @@ real market coverage or predictive performance.
 - No live source is promoted merely because it is catalogued or reachable.
 - Synthetic fixtures prove software behavior only, not prediction quality,
   accuracy, full-market coverage, training completion, or live readiness.
+- An `EXACT` input universe proves exact agreement with its own expected codes;
+  it does not by itself prove that every Boursa Kuwait security is present.
+- The security-sequential coordinator accepts a separately admitted adapter;
+  this task does not authorize live source access, licensed bytes, or Drive
+  publication merely because the scheduling contract exists.
 - Do not bypass login, CAPTCHA, paywalls, robots controls, rate limits, or
   licensing restrictions.
 - Do not merge, force-push, delete, expose secrets, or weaken gates while this

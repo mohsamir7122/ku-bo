@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T10:02:25Z (2026-08-27T13:02:25+03:00, Asia/Kuwait)
+Updated: 2026-08-27T11:56:00Z (2026-08-27T14:56:00+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_7_RIGHTS_AWARE_BACKFILL_AUDITED_WORKFLOWS_CI_SUCCESS_STATUS_PENDING
+STAGE: STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_LOCAL_PASS_EXACT_HEAD_CI_PENDING
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -27,6 +27,7 @@ RELEASE_METADATA_CI_FIX_COMMIT: ee07f00382dc5eba1fb9b903a4fd7f10deac4523
 PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
 RIGHTS_AWARE_BACKFILL_COMMIT: e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d
 BACKFILL_RECOVERY_WORKFLOW_COMMIT: 85a9068d05b9c015d2044f78d0bdc9b1558d569e
+SECURITY_SEQUENTIAL_COLLECTION_COMMIT: PUBLISHED_TASK_HEAD
 ```
 
 ## Completed and evidenced
@@ -106,8 +107,8 @@ BACKFILL_RECOVERY_WORKFLOW_COMMIT: 85a9068d05b9c015d2044f78d0bdc9b1558d569e
   and 3.14.
 - Registered the official Kuwait Clearing Company surface as
   `kcc_maqasa_official` after verifying the public `maqasa.com` domain. The
-  catalog now contains 69 definitions in 63 independence groups; capabilities
-  remain 67 `DEFINED_ONLY`, 2 fixture-only `END_TO_END_TESTED`, and 0
+  catalog now contains 71 definitions in 65 independence groups; capabilities
+  remain 69 `DEFINED_ONLY`, 2 fixture-only `END_TO_END_TESTED`, and 0
   `LIVE_OPERATIONAL`.
 - Added a one-off public source-access executor. It accepts only validated
   `PUBLIC_ACCESS_ONLY`/`HTTP_GET` plans, reserves a fresh output root before
@@ -250,14 +251,41 @@ BACKFILL_RECOVERY_WORKFLOW_COMMIT: 85a9068d05b9c015d2044f78d0bdc9b1558d569e
 - Final pre-commit local revalidation passed 106/106 combined backfill/recovery/
   workflow tests, 102/102 source/research/control/secret-unit tests, standalone
   Secret Guard, JSON parsing, and whitespace checks.
+- Implemented the owner-directed security-by-security collection contract.
+  `security_code` is the outer work unit, `max_active_securities=1`, and every
+  security must produce 29 terminal source receipts across seven fixed waves
+  before the next security can start. Securities from the same issuer remain
+  separate queue entries.
+- Made the issuer's official website a required per-security source. A positive
+  result is accepted only against a reopened HMAC-authenticated runtime trust
+  registry binding the issuer, security, official domain, validity interval,
+  registry digest, and key ID. Domain inference from a company name is rejected.
+- Added deterministic plan/run schemas, safe exclusive JSON writers, content-
+  hash chains, source-manifest requirements, entitlement checks for LSEG and
+  AlphaStocks, and installed-CLI validation. The run validator reports internal
+  receipt consistency only; it does not authenticate raw bytes or prove dossier
+  completeness.
+- The security-sequential focused gate passes 84/84 tests; recovery and ledger
+  regressions pass 38/38; the full candidate suite passes 2,502/2,502 in
+  195.597 seconds. Compile, 170 strict JSON files, 107 schema metaschemas,
+  control (31 text files, 10 required), bootstrap, migration-control, smoke,
+  whitespace, Secret Guard, wheel
+  build/install, installed `validate-config`, policy validation, plan generation,
+  and plan reopening pass. Candidate wheel SHA-256 is
+  `fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72`.
+- This stage executed no network collection. The real issuer/security universe,
+  issuer-domain trust bindings, live adapters, and a security-aware durable
+  checkpoint v2 remain absent. Real artifacts, observations, events, training
+  rows, predictions, and Drive publications therefore remain zero.
 
 ## Next active stage
 
-- Require exact-head CI for the Stage 7 status head, then continue official-first
-  Kuwait source admission and fallback discovery. Production backfill remains
-  blocked until a reviewed durable checkpoint store exists; admissible market
-  observations, issuer coverage, event deduplication, temporal dataset release,
-  training, and the locked Blind Test remain subsequent gates.
+- Push the Stage 8 candidate and require exact-head CI. Then admit one real,
+  point-in-time Kuwait issuer/security universe, populate the signed official-
+  company-domain registry, implement the 29 per-security adapters, and execute
+  one authorized security end to end before expanding the queue. Production
+  work remains blocked until a reviewed security-aware durable checkpoint store
+  exists; training and the locked Blind Test remain subsequent gates.
 
 ## Not started or not yet evidenced
 

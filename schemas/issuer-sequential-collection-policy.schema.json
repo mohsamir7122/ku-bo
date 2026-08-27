@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-sequential-collection-policy.schema.json",
+  "title": "KU-BO security-by-security collection policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "market",
+    "execution",
+    "security_lifecycle",
+    "terminal_security_statuses",
+    "terminal_source_statuses",
+    "official_company_site",
+    "source_waves",
+    "user_required_source_ids",
+    "completion_rules",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "ku-bo-kuwait-security-by-security-v1"},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grain",
+        "mode",
+        "order",
+        "max_active_securities",
+        "max_parallel_sources_within_security",
+        "next_security_requires_terminal_seal",
+        "blocked_security_aborts_market_run",
+        "source_failure_scope",
+        "source_execution_mode",
+        "shared_artifact_reuse"
+      ],
+      "properties": {
+        "grain": {"const": "SECURITY"},
+        "mode": {"const": "SECURITY_SEQUENTIAL"},
+        "order": {"const": "SECURITY_CODE_NUMERIC_ASC"},
+        "max_active_securities": {"const": 1},
+        "max_parallel_sources_within_security": {"type": "integer", "minimum": 1, "maximum": 16},
+        "next_security_requires_terminal_seal": {"const": true},
+        "blocked_security_aborts_market_run": {"const": false},
+        "source_failure_scope": {"const": "SOURCE_LOCAL"},
+        "source_execution_mode": {"const": "EXHAUSTIVE_PER_SECURITY"},
+        "shared_artifact_reuse": {"const": "CONTENT_ADDRESSED_WITH_PER_SECURITY_EXTRACTION"}
+      }
+    },
+    "security_lifecycle": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "terminal_security_statuses": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["SEALED_ALL_SOURCE_ATTEMPTS_TERMINAL", "SEALED_WITH_EXPLICIT_GAPS", "SEALED_BLOCKED"]}
+    },
+    "terminal_source_statuses": {
+      "type": "array",
+      "minItems": 13,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "official_company_site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "required_for_every_security",
+        "authority_binding",
+        "domain_guessing_allowed",
+        "unresolved_status",
+        "required_content_areas"
+      ],
+      "properties": {
+        "source_id": {"const": "issuer_ir_verified"},
+        "required_for_every_security": {"const": true},
+        "authority_binding": {"const": "SIGNED_RUNTIME_TRUST_REGISTRY"},
+        "domain_guessing_allowed": {"const": false},
+        "unresolved_status": {"const": "ISSUER_OFFICIAL_SITE_UNRESOLVED"},
+        "required_content_areas": {
+          "type": "array",
+          "minItems": 6,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "source_waves": {
+      "type": "array",
+      "minItems": 7,
+      "items": {"$ref": "#/$defs/wave"}
+    },
+    "user_required_source_ids": {
+      "type": "array",
+      "minItems": 15,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sourceId"}
+    },
+    "completion_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "all_planned_sources_require_terminal_receipt",
+        "unattempted_source_blocks_security_seal",
+        "all_universe_securities_require_one_terminal_seal",
+        "universe_must_be_exact",
+        "official_site_gap_must_be_explicit",
+        "source_substitution_allowed",
+        "republication_counts_as_independent_source",
+        "market_wide_artifact_requires_per_security_lineage",
+        "complete_claim_requires_no_blocks_or_critical_gaps"
+      ],
+      "properties": {
+        "all_planned_sources_require_terminal_receipt": {"const": true},
+        "unattempted_source_blocks_security_seal": {"const": true},
+        "all_universe_securities_require_one_terminal_seal": {"const": true},
+        "universe_must_be_exact": {"const": true},
+        "official_site_gap_must_be_explicit": {"const": true},
+        "source_substitution_allowed": {"const": false},
+        "republication_counts_as_independent_source": {"const": false},
+        "market_wide_artifact_requires_per_security_lineage": {"const": true},
+        "complete_claim_requires_no_blocks_or_critical_gaps": {"const": true}
+      }
+    },
+    "claim_boundaries": {
+      "const": {
+        "policy_executes_network_access": false,
+        "catalog_entry_proves_source_access": false,
+        "terminal_execution_proves_data_completeness": false,
+        "community_or_search_confirms_official_fact": false,
+        "licensed_source_may_be_used_without_entitlement": false,
+        "partial_collection_unlocks_training_backtest_or_forecast": false,
+        "collection_plan_is_trading_advice": false
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "sourceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9_]*$"
+    },
+    "wave": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wave_id", "ordinal", "source_ids", "purpose"],
+      "properties": {
+        "wave_id": {"$ref": "#/$defs/identifier"},
+        "ordinal": {"type": "integer", "minimum": 1},
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sourceId"}
+        },
+        "purpose": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    }
+  }
+}

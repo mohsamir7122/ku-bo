@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-sequential-collection-plan.schema.json",
+  "title": "KU-BO deterministic security-by-security collection plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "run_id",
+    "generated_at",
+    "market",
+    "universe_as_of",
+    "universe_evidence_class",
+    "universe_status",
+    "issuer_universe_sha256",
+    "policy_id",
+    "policy_sha256",
+    "source_network_sha256",
+    "source_capabilities_sha256",
+    "execution",
+    "security_lifecycle",
+    "terminal_security_statuses",
+    "terminal_source_statuses",
+    "security_count",
+    "planned_source_count_per_security",
+    "total_source_attempts_planned",
+    "user_required_source_ids",
+    "queue",
+    "completion_rules",
+    "claim_boundaries",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-sequential-collection-plan-v1"},
+    "plan_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "universe_as_of": {"type": "string", "format": "date-time"},
+    "universe_evidence_class": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "universe_status": {"const": "EXACT"},
+    "issuer_universe_sha256": {"$ref": "#/$defs/sha256"},
+    "policy_id": {"const": "ku-bo-kuwait-security-by-security-v1"},
+    "policy_sha256": {"$ref": "#/$defs/sha256"},
+    "source_network_sha256": {"$ref": "#/$defs/sha256"},
+    "source_capabilities_sha256": {"$ref": "#/$defs/sha256"},
+    "execution": {"$ref": "#/$defs/execution"},
+    "security_lifecycle": {
+      "const": [
+        "QUEUED",
+        "IDENTITY_BOUND",
+        "SOURCE_PLAN_FROZEN",
+        "COLLECTING",
+        "RECONCILING",
+        "VALIDATING",
+        "SEALING"
+      ]
+    },
+    "terminal_security_statuses": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["SEALED_ALL_SOURCE_ATTEMPTS_TERMINAL", "SEALED_WITH_EXPLICIT_GAPS", "SEALED_BLOCKED"]}
+    },
+    "terminal_source_statuses": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "security_count": {"type": "integer", "minimum": 1},
+    "planned_source_count_per_security": {"const": 29},
+    "total_source_attempts_planned": {"type": "integer", "minimum": 29},
+    "user_required_source_ids": {
+      "type": "array",
+      "minItems": 15,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sourceId"}
+    },
+    "queue": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/securityPlan"}
+    },
+    "completion_rules": {"$ref": "#/$defs/completionRules"},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "sourceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9_]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grain",
+        "mode",
+        "order",
+        "max_active_securities",
+        "max_parallel_sources_within_security",
+        "next_security_requires_terminal_seal",
+        "blocked_security_aborts_market_run",
+        "source_failure_scope",
+        "source_execution_mode",
+        "shared_artifact_reuse"
+      ],
+      "properties": {
+        "grain": {"const": "SECURITY"},
+        "mode": {"const": "SECURITY_SEQUENTIAL"},
+        "order": {"const": "SECURITY_CODE_NUMERIC_ASC"},
+        "max_active_securities": {"const": 1},
+        "max_parallel_sources_within_security": {"type": "integer", "minimum": 1, "maximum": 16},
+        "next_security_requires_terminal_seal": {"const": true},
+        "blocked_security_aborts_market_run": {"const": false},
+        "source_failure_scope": {"const": "SOURCE_LOCAL"},
+        "source_execution_mode": {"const": "EXHAUSTIVE_PER_SECURITY"},
+        "shared_artifact_reuse": {"const": "CONTENT_ADDRESSED_WITH_PER_SECURITY_EXTRACTION"}
+      }
+    },
+    "securityPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "issuer_id",
+        "security_code",
+        "ticker",
+        "isin",
+        "board",
+        "market_segment",
+        "listing_status",
+        "legal_name_ar",
+        "legal_name_en",
+        "identity_sha256",
+        "query_terms",
+        "initial_state",
+        "official_company_site",
+        "source_plan"
+      ],
+      "properties": {
+        "ordinal": {"type": "integer", "minimum": 1},
+        "issuer_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+        "ticker": {"type": "string", "minLength": 1, "maxLength": 64},
+        "isin": {"type": ["string", "null"], "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+        "board": {"const": "cash"},
+        "market_segment": {"type": "string", "minLength": 1, "maxLength": 128},
+        "listing_status": {
+          "enum": ["ACTIVE", "LISTED", "TRADING", "SUSPENDED", "HALTED"]
+        },
+        "legal_name_ar": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "legal_name_en": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "identity_sha256": {"$ref": "#/$defs/sha256"},
+        "query_terms": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 65536}
+        },
+        "initial_state": {"const": "QUEUED"},
+        "official_company_site": {"$ref": "#/$defs/officialCompanySite"},
+        "source_plan": {
+          "type": "array",
+          "minItems": 29,
+          "maxItems": 29,
+          "items": {"$ref": "#/$defs/sourcePlan"}
+        }
+      }
+    },
+    "officialCompanySite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "required",
+        "binding_status",
+        "authority_binding",
+        "domain_guessing_allowed",
+        "unresolved_terminal_status",
+        "required_content_areas",
+        "authority_registry_id",
+        "authority_registry_sha256",
+        "authority_authenticated_key_id",
+        "authority_registry_issued_at",
+        "authority_registry_expires_at",
+        "authority_subject_id",
+        "authority_entry_valid_from",
+        "authority_entry_valid_until",
+        "verified_domains",
+        "activation_id"
+      ],
+      "properties": {
+        "source_id": {"const": "issuer_ir_verified"},
+        "required": {"const": true},
+        "binding_status": {"enum": ["BOUND", "REQUIRED_AT_EXECUTION"]},
+        "authority_binding": {"const": "SIGNED_RUNTIME_TRUST_REGISTRY"},
+        "domain_guessing_allowed": {"const": false},
+        "unresolved_terminal_status": {"const": "ISSUER_OFFICIAL_SITE_UNRESOLVED"},
+        "required_content_areas": {
+          "const": [
+            "FINANCIAL_REPORTS",
+            "INVESTOR_PRESENTATIONS",
+            "OFFICIAL_RELEASES",
+            "GOVERNANCE_AND_OWNERSHIP",
+            "GENERAL_ASSEMBLIES",
+            "STRATEGY_PROJECTS_AND_SUBSIDIARIES"
+          ]
+        },
+        "authority_registry_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "authority_registry_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        },
+        "authority_authenticated_key_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "authority_registry_issued_at": {"type": ["string", "null"], "format": "date-time"},
+        "authority_registry_expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "authority_subject_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "authority_entry_valid_from": {"type": ["string", "null"], "format": "date-time"},
+        "authority_entry_valid_until": {"type": ["string", "null"], "format": "date-time"},
+        "verified_domains": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 253}
+        },
+        "activation_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"binding_status": {"const": "BOUND"}}},
+          "then": {
+            "properties": {
+              "authority_registry_id": {"type": "string"},
+              "authority_registry_sha256": {"$ref": "#/$defs/sha256"},
+              "authority_authenticated_key_id": {"type": "string"},
+              "authority_registry_issued_at": {"type": "string", "format": "date-time"},
+              "authority_registry_expires_at": {"type": "string", "format": "date-time"},
+              "authority_subject_id": {"type": "string"},
+              "authority_entry_valid_from": {"type": "string", "format": "date-time"},
+              "authority_entry_valid_until": {"type": "string", "format": "date-time"},
+              "verified_domains": {"minItems": 1}
+            }
+          },
+          "else": {
+            "properties": {
+              "authority_registry_id": {"type": "null"},
+              "authority_registry_sha256": {"type": "null"},
+              "authority_authenticated_key_id": {"type": "null"},
+              "authority_registry_issued_at": {"type": "null"},
+              "authority_registry_expires_at": {"type": "null"},
+              "authority_subject_id": {"type": "null"},
+              "authority_entry_valid_from": {"type": "null"},
+              "authority_entry_valid_until": {"type": "null"},
+              "verified_domains": {"maxItems": 0},
+              "activation_id": {"type": "null"}
+            }
+          }
+        }
+      ]
+    },
+    "sourcePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ordinal",
+        "wave_ordinal",
+        "wave_id",
+        "source_id",
+        "source_class",
+        "roles",
+        "independence_group",
+        "capability_status",
+        "enabled_by_default",
+        "requires_runtime_domain_registry",
+        "requires_entitlement",
+        "initial_status"
+      ],
+      "properties": {
+        "source_ordinal": {"type": "integer", "minimum": 1},
+        "wave_ordinal": {"type": "integer", "minimum": 1},
+        "wave_id": {"$ref": "#/$defs/identifier"},
+        "source_id": {"$ref": "#/$defs/sourceId"},
+        "source_class": {
+          "enum": [
+            "PRIMARY_OFFICIAL",
+            "PRIMARY_ISSUER",
+            "STRUCTURED_SECONDARY",
+            "EDITORIAL",
+            "COMMUNITY",
+            "WEB_ARCHIVE",
+            "SEARCH_ROUTER",
+            "LICENSED"
+          ]
+        },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "independence_group": {"type": "string", "minLength": 1, "maxLength": 128},
+        "capability_status": {
+          "enum": ["DEFINED_ONLY", "CAPTURE_ONLY", "PARSER_IMPLEMENTED", "END_TO_END_TESTED", "LIVE_OPERATIONAL"]
+        },
+        "enabled_by_default": {"type": "boolean"},
+        "requires_runtime_domain_registry": {"type": "boolean"},
+        "requires_entitlement": {"type": "boolean"},
+        "initial_status": {"const": "PLANNED"}
+      }
+    },
+    "completionRules": {
+      "const": {
+        "all_planned_sources_require_terminal_receipt": true,
+        "unattempted_source_blocks_security_seal": true,
+        "all_universe_securities_require_one_terminal_seal": true,
+        "universe_must_be_exact": true,
+        "official_site_gap_must_be_explicit": true,
+        "source_substitution_allowed": false,
+        "republication_counts_as_independent_source": false,
+        "market_wide_artifact_requires_per_security_lineage": true,
+        "complete_claim_requires_no_blocks_or_critical_gaps": true
+      }
+    },
+    "claimBoundaries": {
+      "const": {
+        "policy_executes_network_access": false,
+        "catalog_entry_proves_source_access": false,
+        "terminal_execution_proves_data_completeness": false,
+        "community_or_search_confirms_official_fact": false,
+        "licensed_source_may_be_used_without_entitlement": false,
+        "partial_collection_unlocks_training_backtest_or_forecast": false,
+        "collection_plan_is_trading_advice": false
+      }
+    }
+  }
+}

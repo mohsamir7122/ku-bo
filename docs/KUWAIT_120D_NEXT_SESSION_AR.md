@@ -25,18 +25,18 @@ secondary_targets: MARKET_NET_EXCESS_GT_0, SECTOR_NET_EXCESS_GT_0
 المقصود محاولة ما يصل إلى 50 **نطاقًا قابلًا للتسجيل ومميزًا**، لا جمع 50 رابطًا من ناشر واحد، ولا اشتراط 50 نتيجة، ولا اعتبارها 50 تأكيدًا مستقلًا. الكتالوج يحتوي الآن:
 
 ```text
-source_definitions: 69
-independence_groups: 63
-candidate_research_domains: 60
+source_definitions: 71
+independence_groups: 65
+candidate_research_domains: 61
 declared_enabled_public_catalog_domains: 54
 distinct_executable_start_url_domains: 53
 default_fair_plan_domains: 50
-DEFINED_ONLY: 67
+DEFINED_ONLY: 69
 END_TO_END_TESTED: 2 generated fixtures
 LIVE_OPERATIONAL: 0
 ```
 
-استُبعدت أسطح البحث والتخزين من رقم 60. الفارق إلى 54 هو ستة نطاقات معطلة أوLicensed (`facebook.com` و`ice.com` و`instagram.com` و`tiktok.com` و`twitter.com` و`x.com`). والفرق من 54 إلى 53 ينتج من تحويل التعريفات العامة إلى Start URLs تنفيذية مميزة. تبقى أسطح البحث والتخزين مفيدة للتوجيه أوالحفظ، لكنها لا تنشئ Finding. تكرار خبر Reuters في عدة صحف يحسب أصلًا واحدًا بعد Dedup، وكل أسطح المنصة ذات الملكية الواحدة تُعامل كمجموعة ناشر واحدة.
+استُبعدت أسطح البحث والتخزين من رقم 61. الفارق إلى 54 هو سبعة نطاقات معطلة أوLicensed (`facebook.com` و`ice.com` و`instagram.com` و`lseg.com` و`tiktok.com` و`twitter.com` و`x.com`). والفرق من 54 إلى 53 ينتج من تحويل التعريفات العامة إلى Start URLs تنفيذية مميزة؛ فالكتالوج المؤهل يحسب `telegram.org` بينما لا يملك المسار العام Start URL مباشرًا له. تبقى أسطح البحث والتخزين مفيدة للتوجيه أوالحفظ، لكنها لا تنشئ Finding. تكرار خبر Reuters في عدة صحف يحسب أصلًا واحدًا بعد Dedup، وكل أسطح المنصة ذات الملكية الواحدة تُعامل كمجموعة ناشر واحدة.
 
 ## ترتيب البحث
 

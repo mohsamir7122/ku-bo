@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T10:02:25Z",
-  "updated_at_kuwait": "2026-08-27T13:02:25+03:00",
+  "updated_at_utc": "2026-08-27T11:56:00Z",
+  "updated_at_kuwait": "2026-08-27T14:56:00+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "STAGE_7_RIGHTS_AWARE_BACKFILL_AUDITED_WORKFLOWS_CI_SUCCESS_STATUS_PENDING",
+  "stage": "STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_LOCAL_PASS_EXACT_HEAD_CI_PENDING",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -32,7 +32,8 @@
     "release_metadata_ci_fix": "ee07f00382dc5eba1fb9b903a4fd7f10deac4523",
     "priority_checkpoint_runtime": "3195ba768382a063dac18053645c8dcd7fe4dd70",
     "rights_aware_backfill_90d": "e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d",
-    "backfill_recovery_workflows": "85a9068d05b9c015d2044f78d0bdc9b1558d569e"
+    "backfill_recovery_workflows": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "security_sequential_collection": "PUBLISHED_TASK_HEAD"
   },
   "stages": [
     {"name": "contract_read", "status": "completed"},
@@ -50,6 +51,7 @@
     {"name": "issue_24_delta_preflight", "status": "completed"},
     {"name": "priority_checkpoint_runtime", "status": "implemented_tested_pushed_ci_success"},
     {"name": "rights_aware_backfill_90d", "status": "implemented_tested_real_receipt_audit_incomplete_production_blocked_ci_success"},
+    {"name": "security_sequential_collection", "status": "implemented_tested_synthetic_live_adapters_blocked_ci_pending"},
     {"name": "kuwait_collection", "status": "blocked_by_source_admission"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
@@ -119,13 +121,40 @@
     "diff_check": "pass",
     "secret_guard": "pass"
   },
+  "stage_8_focused_validation": {
+    "issuer_sequential_collection_tests_total": 26,
+    "issuer_sequential_collection_tests_passed": 26,
+    "combined_sequential_source_cli_tests_total": 84,
+    "combined_sequential_source_cli_tests_passed": 84,
+    "recovery_and_ledger_regression_tests_total": 38,
+    "recovery_and_ledger_regression_tests_passed": 38,
+    "full_suite_tests_total": 2502,
+    "full_suite_tests_passed": 2502,
+    "full_suite_duration_seconds": 195.597,
+    "strict_json_files": 170,
+    "schema_metaschemas": 107,
+    "control_text_files": 31,
+    "control_required_files": 10,
+    "compile": "pass",
+    "schema_validation": "pass",
+    "control_validator": "pass",
+    "bootstrap_validator": "pass_handoff_contract",
+    "migration_control_validator": "pass_preparation_control",
+    "smoke": "pass_synthetic_only",
+    "diff_check": "pass",
+    "secret_guard": "pass",
+    "package_build_install_cli_smoke": "pass",
+    "wheel_sha256": "fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72",
+    "wheel_size_bytes": 605193,
+    "network_collection_executed": false
+  },
   "candidate_full_validation": {
-    "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
-    "total": 2329,
-    "passed": 2329,
+    "command": "PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -q",
+    "total": 2502,
+    "passed": 2502,
     "failures": 0,
     "errors": 0,
-    "duration_seconds": 621.603
+    "duration_seconds": 195.597
   },
   "exact_head_ci": {
     "run_id": 33060045908,
@@ -152,6 +181,13 @@
     "rights_aware_backfill_run_status": "success",
     "workflow_delta_run_id": 33060045908,
     "workflow_delta_run_status": "success"
+  },
+  "stage_8_candidate_ci": {
+    "head_sha": "PUBLISHED_TASK_HEAD",
+    "status": "pending_until_push",
+    "required_python_versions": ["3.11", "3.12", "3.13", "3.14"],
+    "pull_request_created": false,
+    "merged_to_main": false
   },
   "source_evidence_lifecycle": {
     "implementation_status": "implemented_tested_synthetic",
@@ -186,10 +222,10 @@
   },
   "official_source_access": {
     "implementation_status": "implemented_tested_live_probes_blocked",
-    "catalog_source_count": 69,
-    "independence_group_count": 63,
+    "catalog_source_count": 71,
+    "independence_group_count": 65,
     "recipe_count": 15,
-    "recipe_covered_source_count": 31,
+    "recipe_covered_source_count": 32,
     "executor_focused_tests_total": 7,
     "executor_focused_tests_passed": 7,
     "completed_validated_probe_receipts": 2,
@@ -208,6 +244,35 @@
     "network_access_attempted": true,
     "market_data_collected": false,
     "market_evidence_created": false,
+    "live_operational_claim_allowed": false
+  },
+  "issuer_sequential_collection": {
+    "implementation_status": "implemented_tested_synthetic_live_adapters_blocked_ci_pending",
+    "policy_id": "ku-bo-kuwait-security-by-security-v1",
+    "policy_sha256": "2d0469603bc0a6dcd13104d01dd7e7ef5abfddbc46877a51dea2db0a29b649e3",
+    "security_grain": "SECURITY",
+    "security_execution_mode": "SECURITY_SEQUENTIAL",
+    "security_sort": "security_code_numeric_ascending",
+    "max_active_securities": 1,
+    "planned_source_count_per_security": 29,
+    "source_wave_count": 7,
+    "official_company_site_required": true,
+    "official_company_site_binding": "SIGNED_RUNTIME_TRUST_REGISTRY_HMAC_SHA256",
+    "official_company_site_registry_entries_in_git": 0,
+    "real_universe_admitted": false,
+    "live_adapter_set_admitted": false,
+    "runtime_execution_cli_exposed": false,
+    "missing_complete_access_recipe_source_ids": [
+      "issuer_ir_verified",
+      "authorized_broker_feed",
+      "alphastocks_authorized_connector",
+      "web_search_router"
+    ],
+    "security_aware_checkpoint_v2_implemented": false,
+    "legacy_market_source_date_shards_are_security_sequential": false,
+    "network_collection_executed": false,
+    "real_security_runs": 0,
+    "wheel_sha256": "fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72",
     "live_operational_claim_allowed": false
   },
   "kuwait_automation_schedule": {
@@ -348,7 +413,8 @@
     "admitted_unique_events": 0,
     "admitted_training_records": 0,
     "locked_test_predictions": 0,
-    "live_candidates": 0
+    "live_candidates": 0,
+    "security_sequential_live_runs": 0
   },
   "claims": {
     "real_collection_complete": false,
@@ -357,6 +423,8 @@
     "forecast_accuracy_known": false,
     "improvement_percent_known": false,
     "live_ready": false,
+    "security_sequential_contract_implemented": true,
+    "security_sequential_live_collection_complete": false,
     "research_network_software_operational": true,
     "strict_forecast_unlocked": false,
     "trading_authorized": false
@@ -370,6 +438,10 @@
     "PREDECESSOR_MIGRATION_CONTROL_ARTIFACTS_DISAGREE",
     "REAL_SOURCE_ADMISSION_NOT_COMPLETE",
     "COMPANY_UNIVERSE_NOT_RECONCILED",
+    "REAL_ISSUER_SECURITY_UNIVERSE_NOT_ADMITTED",
+    "ISSUER_OFFICIAL_SITE_TRUST_REGISTRY_NOT_POPULATED",
+    "SECURITY_SEQUENTIAL_LIVE_ADAPTERS_NOT_ADMITTED",
+    "SECURITY_AWARE_CHECKPOINT_V2_NOT_IMPLEMENTED",
     "HISTORICAL_EVENTS_NOT_ADMITTED",
     "BLIND_TEST_NOT_RUN",
     "RECOVERY_AND_BACKFILL_WORKFLOWS_NOT_ON_DEFAULT_BRANCH",

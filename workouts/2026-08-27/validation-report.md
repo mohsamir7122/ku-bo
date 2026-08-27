@@ -317,3 +317,55 @@ the same four Python versions. A final local pre-commit rerun passed the 106-tes
 combined gate, 102/102 source/research/control/secret-unit tests, and standalone
 Secret Guard. The schedules remain inactive because no reviewed workflow has
 been merged to the default branch.
+
+## Stage 8 security-by-security collection contract
+
+The owner-directed correction is implemented at `security_code` grain. The
+outer queue is deterministic, numeric-code ordered, and permits exactly one
+active security. A security cannot release the next queue item until all 29
+planned source attempts across seven waves have terminal receipts and the
+security receipt has been sealed. Two securities issued by one company remain
+two independent queue entries.
+
+The issuer's official website is a mandatory per-security source. It is never
+guessed from a company name: a positive or verified-zero result requires a
+reopened HMAC-authenticated runtime trust registry binding issuer, security,
+domain, validity interval, registry digest, and key ID. Licensed LSEG and
+AlphaStocks results similarly require reopened entitlement/authority evidence.
+
+```text
+ISSUER_SEQUENTIAL_COLLECTION_TESTS: PASS — 26/26
+SEQUENTIAL/SOURCE/CLI FOCUSED GATE: PASS — 84/84
+RECOVERY/LEDGER REGRESSION GATE: PASS — 38/38
+FULL_COMMAND: PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -q
+FULL_RESULT: PASS — 2502/2502
+FULL_DURATION_SECONDS: 195.597
+COMPILEALL: PASS
+STRICT_JSON: PASS — 170 files
+SCHEMA_METASCHEMA: PASS — 107 schemas
+CODEX_CONTROL: PASS — 31 control text files, 10 required files, 0 warnings/errors
+LIVE_BOOTSTRAP: PASS_HANDOFF_CONTRACT
+MIGRATION_CONTROL: PASS_PREPARATION_CONTROL
+SMOKE: PASS — synthetic only
+SECRET_GUARD: PASS
+GIT_DIFF_CHECK: PASS
+WHEEL_BUILD_INSTALL: PASS — 605193 bytes
+INSTALLED_VALIDATE_CONFIG: PASS
+INSTALLED_POLICY_VALIDATE: PASS_CONTRACT_NOT_EXECUTED
+INSTALLED_PLAN/REOPEN: PASS_PLAN_NOT_EXECUTED — 1 synthetic security, 29 attempts
+WHEEL_SHA256: fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72
+```
+
+Adversarial validation rejects grouped execution, a second active security,
+partial or replaced universes, source substitution, forged plan identities,
+missing terminal receipts, replayed run/plan IDs, mutated authoritative flags,
+untrusted issuer domains, and licensed positive results without entitlement.
+The run validator proves internal receipt/hash-chain consistency only; it does
+not authenticate raw artifacts or prove complete company coverage.
+
+No network source was executed in this stage. The repository still contains no
+real complete Kuwait issuer/security universe, no populated official-domain
+runtime registry, no admitted 29-source adapter set, and no security-aware
+durable checkpoint v2. Real artifacts, observations, issuer dossiers, events,
+training rows, predictions, and Drive publications remain zero. Exact-head CI
+for the published Stage 8 candidate is pending; no PR or merge is authorized.

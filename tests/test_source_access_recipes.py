@@ -114,8 +114,8 @@ class SourceAccessRecipeTests(unittest.TestCase):
         self.assertEqual(report["status"], "PASS_CONTRACT")
         self.assertEqual(report["readiness_status"], "DEFINED_ONLY")
         self.assertEqual(report["recipe_count"], 15)
-        self.assertEqual(report["covered_source_count"], 31)
-        self.assertEqual(report["catalog_source_count"], 69)
+        self.assertEqual(report["covered_source_count"], 32)
+        self.assertEqual(report["catalog_source_count"], 71)
         for source_id in (
             "boursa_current",
             "boursa_reports_archive",
@@ -128,6 +128,7 @@ class SourceAccessRecipeTests(unittest.TestCase):
             "reuters_middle_east",
             "indexsignal_forum",
             "telegram_kuwaitstockex",
+            "lseg_workspace_authorized",
         ):
             self.assertIn(source_id, self.recipes.recipe_by_source)
         self.assertNotIn("authorized_broker_feed", self.recipes.recipe_by_source)
@@ -224,7 +225,7 @@ class SourceAccessRecipeTests(unittest.TestCase):
             self.network,
             planned_at=self.planned_at,
         )
-        self.assertEqual(len(plan["tasks"]), 31)
+        self.assertEqual(len(plan["tasks"]), 32)
         self.assertLessEqual(
             sum(task["budget"]["max_bytes"] for task in plan["tasks"]),
             128 * 1024 * 1024,

@@ -16,12 +16,12 @@
     },
     {
       "capability_id": "completed_eod_history",
-      "source_chain": ["boursa_reports_archive", "authorized_broker_feed", "ice_kuwait_archive", "investing_history", "yahoo_finance_kw"],
+      "source_chain": ["boursa_reports_archive", "authorized_broker_feed", "lseg_workspace_authorized", "ice_kuwait_archive", "investing_history", "yahoo_finance_kw"],
       "verified_zero_result_can_satisfy": false
     },
     {
       "capability_id": "corporate_actions",
-      "source_chain": ["boursa_current", "cma_ifsah", "issuer_ir_verified", "boursa_disclosure_archive"],
+      "source_chain": ["boursa_current", "cma_ifsah", "kcc_maqasa_official", "issuer_ir_verified", "boursa_disclosure_archive"],
       "verified_zero_result_can_satisfy": true
     },
     {
@@ -31,12 +31,12 @@
     },
     {
       "capability_id": "fundamentals",
-      "source_chain": ["cma_ifsah", "issuer_ir_verified", "boursa_reports_archive", "argaam_kuwait", "mubasher_kuwait"],
+      "source_chain": ["cma_ifsah", "issuer_ir_verified", "boursa_reports_archive", "lseg_workspace_authorized", "alphastocks_authorized_connector", "argaam_kuwait", "mubasher_kuwait"],
       "verified_zero_result_can_satisfy": false
     },
     {
       "capability_id": "news_context",
-      "source_chain": ["issuer_ir_verified", "kuna", "reuters_middle_east", "alrai_economy", "alanba_economy", "aljarida_economy", "alqabas_economy"],
+      "source_chain": ["issuer_ir_verified", "kuna", "reuters_middle_east", "lseg_workspace_authorized", "alqabas_economy", "alanba_economy", "alrai_economy", "aljarida_economy", "alphastocks_authorized_connector"],
       "verified_zero_result_can_satisfy": false
     },
     {
@@ -46,7 +46,7 @@
     },
     {
       "capability_id": "execution_context",
-      "source_chain": ["authorized_broker_feed", "ice_kuwait_archive"],
+      "source_chain": ["authorized_broker_feed", "lseg_workspace_authorized", "ice_kuwait_archive"],
       "verified_zero_result_can_satisfy": false
     }
   ],

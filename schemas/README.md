@@ -75,6 +75,9 @@ Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي ق
 - `issuer-universe.schema.json`: مقام Issuer/Security كويتي effective-dated مع Evidence membership رسمي وفجوات هوية صريحة.
 - `company-dossier.schema.json`: ملف شركة Point-in-Time للأقسام الأساسية والتجارية والمالية والسوقية والإفصاحات والإجراءات والحوكمة والمخاطر.
 - `company-dossier-validation-report.schema.json`: تقرير مقام الملفات والتغطية والفجوات الحرجة مع غلق التدريب والـBacktest والتوصية والتنفيذ.
+- `issuer-sequential-collection-policy.schema.json`: عقد المقام الثابت والموجات وترتيب سهم واحد نشط في كل مرة.
+- `issuer-sequential-collection-plan.schema.json`: خطة Queue مرتبطة بـUniverse خارجي وبـ29 محاولة مصدر لكل `security_code`.
+- `issuer-sequential-collection-run.schema.json`: إيصال اتساق داخلي لمحاولات الـAdapter وسلسلة Content hashes؛ لا يُعد توقيعًا أوإثباتًا لملفات Raw.
 - `codex-live-bootstrap.schema.json`: عقد تسليم Codex المقفل، ومسارات AI Rebuild المنطقية، وبروتوكول 50/200 ثم 500-600، وترتيب التشغيل اليومي وحدود الادعاء.
 - `champion-freeze-manifest.schema.json`: عقد Champion سابق معتمد ومربوط ببصمات، يمنع Challenger أو اعتماد اليوم نفسه من تشغيل تقرير اليوم.
 

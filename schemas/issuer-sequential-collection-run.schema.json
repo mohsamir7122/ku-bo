@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-sequential-collection-run.schema.json",
+  "title": "KU-BO security-by-security collection run receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "plan_id",
+    "plan_sha256",
+    "market",
+    "observed_at",
+    "execution_evidence_class",
+    "status",
+    "security_count",
+    "sealed_security_count",
+    "planned_source_attempt_count",
+    "terminal_source_attempt_count",
+    "artifact_count",
+    "observation_count",
+    "security_receipts",
+    "claim_boundaries",
+    "run_receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-sequential-collection-run-v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "plan_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "execution_evidence_class": {"const": "ADAPTER_ASSERTED_RECEIPTS"},
+    "status": {
+      "enum": ["ALL_SECURITIES_TERMINAL_NO_SOURCE_GAPS", "ALL_SECURITIES_TERMINAL_WITH_EXPLICIT_GAPS", "ALL_SECURITIES_TERMINAL_BLOCKED"]
+    },
+    "security_count": {"type": "integer", "minimum": 1},
+    "sealed_security_count": {"type": "integer", "minimum": 1},
+    "planned_source_attempt_count": {"type": "integer", "minimum": 1},
+    "terminal_source_attempt_count": {"type": "integer", "minimum": 1},
+    "artifact_count": {"type": "integer", "minimum": 0},
+    "observation_count": {"type": "integer", "minimum": 0},
+    "security_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/securityReceipt"}
+    },
+    "claim_boundaries": {
+      "const": {
+        "callback_execution_proves_live_source_access": false,
+        "terminal_receipt_proves_data_completeness": false,
+        "content_hashes_are_authenticated_evidence": false,
+        "artifact_manifests_were_reopened": false,
+        "explicit_gap_may_be_silently_omitted": false,
+        "run_unlocks_training_backtest_or_forecast": false,
+        "run_is_trading_advice": false
+      }
+    },
+    "run_receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "securityReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "issuer_id",
+        "security_code",
+        "ticker",
+        "started_at",
+        "completed_at",
+        "seal_status",
+        "planned_source_count",
+        "terminal_source_count",
+        "collected_source_count",
+        "explicit_gap_source_count",
+        "artifact_count",
+        "observation_count",
+        "previous_security_seal_sha256",
+        "source_receipts",
+        "security_seal_sha256"
+      ],
+      "properties": {
+        "ordinal": {"type": "integer", "minimum": 1},
+        "issuer_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+        "ticker": {"type": "string", "minLength": 1, "maxLength": 64},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "seal_status": {
+          "enum": ["SEALED_ALL_SOURCE_ATTEMPTS_TERMINAL", "SEALED_WITH_EXPLICIT_GAPS", "SEALED_BLOCKED"]
+        },
+        "planned_source_count": {"type": "integer", "minimum": 1},
+        "terminal_source_count": {"type": "integer", "minimum": 1},
+        "collected_source_count": {"type": "integer", "minimum": 0},
+        "explicit_gap_source_count": {"type": "integer", "minimum": 0},
+        "artifact_count": {"type": "integer", "minimum": 0},
+        "observation_count": {"type": "integer", "minimum": 0},
+        "previous_security_seal_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        },
+        "source_receipts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/sourceReceipt"}
+        },
+        "security_seal_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sourceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ordinal",
+        "wave_ordinal",
+        "wave_id",
+        "source_id",
+        "terminal_status",
+        "attempted_at",
+        "completed_at",
+        "artifact_count",
+        "observation_count",
+        "requested_domain",
+        "activation_id",
+        "entitlement_id",
+        "artifact_manifest_sha256",
+        "runtime_authority_bound",
+        "authority_registry_id",
+        "authority_registry_sha256",
+        "authority_authenticated_key_id",
+        "limitation",
+        "security_code",
+        "source_receipt_sha256"
+      ],
+      "properties": {
+        "source_ordinal": {"type": "integer", "minimum": 1},
+        "wave_ordinal": {"type": "integer", "minimum": 1},
+        "wave_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+        "source_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$"},
+        "terminal_status": {
+          "enum": [
+            "COLLECTED",
+            "VERIFIED_ZERO",
+            "REVIEWED_NOT_APPLICABLE",
+            "BLOCKED_RIGHTS",
+            "BLOCKED_ROBOTS",
+            "BLOCKED_ACCESS",
+            "AUTH_REQUIRED",
+            "ENTITLEMENT_REQUIRED",
+            "PAYWALL",
+            "RATE_LIMITED_EXHAUSTED",
+            "NETWORK_ERROR_EXHAUSTED",
+            "PARSER_DRIFT",
+            "ISSUER_OFFICIAL_SITE_UNRESOLVED"
+          ]
+        },
+        "attempted_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "artifact_count": {"type": "integer", "minimum": 0},
+        "observation_count": {"type": "integer", "minimum": 0},
+        "requested_domain": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "activation_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "entitlement_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "artifact_manifest_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        },
+        "runtime_authority_bound": {"type": "boolean"},
+        "authority_registry_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "authority_registry_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        },
+        "authority_authenticated_key_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 255},
+        "limitation": {"type": "string", "maxLength": 2000},
+        "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+        "source_receipt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
