@@ -4,8 +4,10 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 import ipaddress
 import json
+import math
 import os
 from pathlib import Path
+import random
 import stat
 import time
 from typing import Any, Callable, Iterable, Mapping
@@ -21,6 +23,11 @@ from .foundation_io import (
 from .hashing import canonical_json_bytes, hash_json, sha256_bytes
 from .ingestion import CaptureConnector, CapturePacketWriter, CaptureRequest, CaptureResult
 from .source_network import SourceNetworkCatalog
+from .source_resilience import (
+    SourceResilienceController,
+    classify_source_result,
+    source_attempt_idempotency_key,
+)
 from .strict import https_url, parse_aware
 
 
@@ -67,6 +74,7 @@ _ATTEMPT_FIELDS = frozenset(
         "schema_version",
         "run_id",
         "attempt_id",
+        "idempotency_key",
         "sequence",
         "previous_attempt_hash",
         "event_type",
@@ -647,7 +655,8 @@ def _validate_capture_attempt_disposition(row: Mapping[str, Any], *, line: int) 
         "STOP_QUALIFIED",
         "STOP_HARD_BLOCK",
         "STOP_CAPTURE_PENDING_PARSER",
-        "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED",
+        "STOP_ADAPTER_QUARANTINED",
+        "STOP_TRANSIENT_SOURCE_FAILOVER",
         "STOP_RATE_LIMITED",
         "STOP_RETRY_BUDGET",
         "NEXT_REJECTED_STRATEGY",
@@ -655,7 +664,7 @@ def _validate_capture_attempt_disposition(row: Mapping[str, Any], *, line: int) 
     }
     if disposition not in allowed:
         raise ValueError(f"source capture disposition is invalid at line {line}")
-    for field, maximum in (("strategy_ordinal", 4), ("attempt_ordinal", 3)):
+    for field, maximum in (("strategy_ordinal", 4), ("attempt_ordinal", 2)):
         value = row.get(field)
         if isinstance(value, bool) or not isinstance(value, int) or value < 1 or value > maximum:
             raise ValueError(f"source capture {field} is invalid at line {line}")
@@ -698,23 +707,41 @@ def _validate_capture_attempt_disposition(row: Mapping[str, Any], *, line: int) 
         ):
             raise ValueError(f"STOP_QUALIFIED contradicts capture state at line {line}")
     elif disposition == "STOP_HARD_BLOCK":
-        if (state, query_status) not in {
-            ("BLOCKED", "BLOCKED"),
-            ("AUTH_REQUIRED", "AUTH_REQUIRED"),
-        } or has_content:
+        policy_block = (
+            (state, query_status) == ("ERROR", "ERROR")
+            and error_code
+            in {
+                "MISSING_SECRET",
+                "ROBOTS_POLICY_UNAVAILABLE",
+                "TERMS_NOT_PERMITTED",
+                "TERMS_REVIEW_REQUIRED",
+                "TOS_NOT_PERMITTED",
+                "TOS_REVIEW_REQUIRED",
+            }
+        )
+        if (
+            (state, query_status)
+            not in {("BLOCKED", "BLOCKED"), ("AUTH_REQUIRED", "AUTH_REQUIRED")}
+            and not policy_block
+        ) or has_content:
             raise ValueError(f"STOP_HARD_BLOCK contradicts capture state at line {line}")
     elif disposition == "STOP_CAPTURE_PENDING_PARSER":
         if state in HARD_STOP_STATES or not has_content:
             raise ValueError(
                 f"STOP_CAPTURE_PENDING_PARSER contradicts capture state at line {line}"
             )
+    elif disposition == "STOP_ADAPTER_QUARANTINED":
+        if query_status != "PARSER_DRIFT" and not any(
+            "PARSER" in flag or "SCHEMA" in flag for flag in flags
+        ):
+            raise ValueError(f"adapter quarantine lacks parser/schema failure at line {line}")
     elif disposition == "STOP_RATE_LIMITED":
         if error_code != "HTTP_RATE_LIMITED" or state != "BLOCKED" or has_content:
             raise ValueError(f"STOP_RATE_LIMITED contradicts capture state at line {line}")
     elif disposition in {"RETRY_TRANSIENT", "STOP_RETRY_BUDGET"}:
         if not (state == "ERROR" or error_code == "HTTP_RATE_LIMITED") or has_content:
             raise ValueError(f"retry disposition contradicts capture state at line {line}")
-    elif disposition == "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED":
+    elif disposition == "STOP_TRANSIENT_SOURCE_FAILOVER":
         if state != "ERROR" or has_content:
             raise ValueError(f"transient exhaustion contradicts capture state at line {line}")
     elif disposition == "NEXT_EMPTY_STRATEGY":
@@ -764,7 +791,6 @@ def _reconcile_route(
                 previous["retry_disposition"]
                 not in {
                     "NEXT_EMPTY_STRATEGY",
-                    "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED",
                     "NEXT_REJECTED_STRATEGY",
                 }
                 or row["attempt_ordinal"] != 1
@@ -808,6 +834,9 @@ def _reconcile_route(
             status, coverage_complete = "QUALIFIED", True
         elif terminal == "STOP_CAPTURE_PENDING_PARSER":
             status, coverage_complete = "CAPTURED_PENDING_PARSER", False
+        elif terminal == "STOP_ADAPTER_QUARANTINED":
+            status = "CAPTURED_PENDING_PARSER" if _has_persisted_content(last) else "ERROR"
+            coverage_complete = False
         elif terminal == "STOP_HARD_BLOCK":
             status, coverage_complete = str(last["state"]), False
         elif terminal in {"STOP_RATE_LIMITED", "STOP_RETRY_BUDGET"} and last["error_code"] == "HTTP_RATE_LIMITED":
@@ -819,7 +848,6 @@ def _reconcile_route(
         last["retry_disposition"]
         in {
             "NEXT_EMPTY_STRATEGY",
-            "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED",
             "NEXT_REJECTED_STRATEGY",
         }
         and last["strategy_ordinal"] < 4
@@ -1201,8 +1229,8 @@ def load_orchestrator_policy(path: Path) -> OrchestratorPolicy:
         raise ValueError("source query strategy config has unknown/missing fields or version")
     if payload.get("context_days") != 120:
         raise ValueError("source query strategy context_days must remain 120")
-    if payload.get("max_transient_attempts") != 3:
-        raise ValueError("source query strategy max_transient_attempts must remain 3")
+    if payload.get("max_transient_attempts") != 2:
+        raise ValueError("source query strategy max_transient_attempts must remain 2")
     for field, expected in (
         ("target_distinct_registrable_domains", 50),
         ("max_distinct_registrable_domains", 50),
@@ -1212,10 +1240,10 @@ def load_orchestrator_policy(path: Path) -> OrchestratorPolicy:
         if payload.get(field) != expected:
             raise ValueError(f"source query strategy {field} must remain {expected}")
     delays = payload.get("retry_delays_seconds")
-    if not isinstance(delays, list) or len(delays) != 2 or any(
+    if not isinstance(delays, list) or len(delays) != 1 or any(
         isinstance(item, bool) or not isinstance(item, (int, float)) or item < 0 for item in delays
     ):
-        raise ValueError("retry_delays_seconds must contain two non-negative numbers")
+        raise ValueError("retry_delays_seconds must contain one non-negative jitter ceiling")
     boundaries = payload.get("claim_boundaries")
     if not isinstance(boundaries, dict) or not boundaries or any(value is not False for value in boundaries.values()):
         raise ValueError("source strategy claim boundaries must be explicit false values")
@@ -1302,7 +1330,7 @@ def load_orchestrator_policy(path: Path) -> OrchestratorPolicy:
         max_distinct_registrable_domains=50,
         max_requests=600,
         max_wall_seconds=1800,
-        max_transient_attempts=3,
+        max_transient_attempts=2,
         retry_delays_seconds=tuple(float(item) for item in delays),
         transient_error_codes=frozenset(str(item) for item in transient),
         empty_result_error_codes=frozenset(str(item) for item in empty_codes),
@@ -1347,6 +1375,8 @@ class AppendOnlyAttemptLedger:
         return sum(row.get("event_type") == "CAPTURE_ATTEMPT" for row in self.rows)
 
     def append(self, values: dict[str, Any]) -> dict[str, Any]:
+        if "idempotency_key" in values:
+            raise ValueError("source attempt idempotency key is derived, not caller supplied")
         sequence = len(self.rows) + 1
         previous = self.rows[-1]["attempt_hash"] if self.rows else ZERO_HASH
         row = {
@@ -1357,6 +1387,19 @@ class AppendOnlyAttemptLedger:
             "previous_attempt_hash": previous,
             **values,
         }
+        row["idempotency_key"] = source_attempt_idempotency_key(
+            run_id=self.run_id,
+            event_type=row["event_type"],
+            source_id=row["source_id"],
+            route_id=row["route_id"],
+            strategy_id=row["strategy_id"],
+            attempt_ordinal=row["attempt_ordinal"],
+            requested_url=row["requested_url"],
+            window_from=row["window_from"],
+            window_to=row["window_to"],
+        )
+        if any(existing["idempotency_key"] == row["idempotency_key"] for existing in self.rows):
+            raise ValueError("duplicate source attempt idempotency key")
         row["attempt_hash"] = hash_json(row)
         if set(row) != _ATTEMPT_FIELDS:
             raise ValueError("source attempt row has unknown or missing fields")
@@ -1429,6 +1472,7 @@ class AppendOnlyAttemptLedger:
     def verify(self) -> tuple[dict[str, Any], ...]:
         rows: list[dict[str, Any]] = []
         previous = ZERO_HASH
+        idempotency_keys: set[str] = set()
         try:
             lines = safe_regular_file(
                 self.path,
@@ -1455,6 +1499,22 @@ class AppendOnlyAttemptLedger:
                 or supplied != hash_json(unhashed)
             ):
                 raise ValueError(f"attempt ledger hash chain failed at line {index}")
+            expected_idempotency_key = source_attempt_idempotency_key(
+                run_id=self.run_id,
+                event_type=row.get("event_type"),
+                source_id=row.get("source_id"),
+                route_id=row.get("route_id"),
+                strategy_id=row.get("strategy_id"),
+                attempt_ordinal=row.get("attempt_ordinal"),
+                requested_url=row.get("requested_url"),
+                window_from=row.get("window_from"),
+                window_to=row.get("window_to"),
+            )
+            if row.get("idempotency_key") != expected_idempotency_key:
+                raise ValueError(f"attempt ledger idempotency key failed at line {index}")
+            if expected_idempotency_key in idempotency_keys:
+                raise ValueError(f"attempt ledger repeats an idempotency key at line {index}")
+            idempotency_keys.add(expected_idempotency_key)
             _validate_attempt_event(row, line=index)
             artifact_path = row.get("artifact_path")
             if artifact_path is None:
@@ -1602,12 +1662,22 @@ class SourceSearchOrchestrator:
         connector: CaptureConnector,
         clock: Callable[[], datetime] = _utc_now,
         sleeper: Callable[[float], None] = time.sleep,
+        jitter: Callable[[float], float] | None = None,
     ):
         self.catalog = catalog
         self.policy = load_orchestrator_policy(strategy_path)
         self.connector = connector
         self.clock = clock
         self.sleeper = sleeper
+        system_random = random.SystemRandom()
+        self.jitter = jitter or (lambda ceiling: system_random.uniform(0.0, ceiling))
+        self.resilience = SourceResilienceController(
+            max_attempts=self.policy.max_transient_attempts
+        )
+
+    @property
+    def circuit_breakers(self) -> tuple[dict[str, Any], ...]:
+        return self.resilience.snapshot()
 
     def run(
         self,
@@ -1625,6 +1695,9 @@ class SourceSearchOrchestrator:
         selected = None if source_ids is None else frozenset(str(item) for item in source_ids)
         if selected is not None and (not selected or selected - set(self.catalog.sources)):
             raise ValueError("source_ids must be a non-empty subset of the source catalog")
+        self.resilience = SourceResilienceController(
+            max_attempts=self.policy.max_transient_attempts
+        )
         parsed_watermarks: dict[str, datetime] = {}
         for source_id, value in (watermarks or {}).items():
             if source_id not in self.catalog.sources:
@@ -1924,6 +1997,8 @@ class SourceSearchOrchestrator:
             )
             route_results.append(route)
             strategies_attempted.extend(route.strategies_attempted)
+            if not self.resilience.adapter_available(source.source_id):
+                break
         route_statuses = {item.status for item in route_results}
         if route_results and all(item.coverage_complete for item in route_results):
             status = "QUALIFIED" if "QUALIFIED" in route_statuses else "ZERO_RESULT"
@@ -2008,6 +2083,21 @@ class SourceSearchOrchestrator:
                     raise _BudgetStop("MAX_WALL_SECONDS_EXHAUSTED")
                 started = _aware(self.clock(), "clock")
                 attempted_domains.add(requested_domain)
+                idempotency_key = source_attempt_idempotency_key(
+                    run_id=ledger.run_id,
+                    event_type="CAPTURE_ATTEMPT",
+                    source_id=source.source_id,
+                    route_id=route_id,
+                    strategy_id=strategy.strategy_id,
+                    attempt_ordinal=attempt_ordinal,
+                    requested_url=request.source_url,
+                    window_from=window_from.isoformat(),
+                    window_to=decision.isoformat(),
+                )
+                self.resilience.reserve(
+                    idempotency_key,
+                    attempt_ordinal=attempt_ordinal,
+                )
                 try:
                     result = self.connector.capture(request)
                     _validate_connector_result(request, result)
@@ -2063,6 +2153,26 @@ class SourceSearchOrchestrator:
                     and result.retry_after_seconds is None
                 ):
                     attempt_limitations.add("RATE_LIMIT_RETRY_AFTER_UNAVAILABLE")
+                classification = classify_source_result(result)
+                if disposition in {
+                    "STOP_RATE_LIMITED",
+                    "STOP_HARD_BLOCK",
+                    "STOP_ADAPTER_QUARANTINED",
+                    "STOP_TRANSIENT_SOURCE_FAILOVER",
+                }:
+                    circuit = self.resilience.open_circuit(
+                        source_id=source.source_id,
+                        error_code=result.error_code or classification,
+                        registrable_domain=requested_domain,
+                        classification=classification,
+                        opened_at=completed,
+                        attempt_count=attempt_ordinal,
+                        retry_after_seconds=result.retry_after_seconds,
+                    )
+                    attempt_limitations.add("IMMEDIATE_SOURCE_FAILOVER")
+                    attempt_limitations.add(f"ADAPTER_{circuit.state}")
+                    if circuit.retry_after_at is not None:
+                        attempt_limitations.add("CIRCUIT_RETRY_AFTER_RECORDED")
                 ledger.append(
                     {
                         "event_type": "CAPTURE_ATTEMPT",
@@ -2182,7 +2292,26 @@ class SourceSearchOrchestrator:
                             sorted(
                                 {
                                     *limitations,
-                                    "RATE_LIMIT_RETRY_EXHAUSTED",
+                                    "RATE_LIMIT_CIRCUIT_OPEN",
+                                    "IMMEDIATE_SOURCE_FAILOVER",
+                                }
+                            )
+                        ),
+                    )
+                if disposition == "STOP_TRANSIENT_SOURCE_FAILOVER":
+                    return RouteResult(
+                        route_id,
+                        source.source_id,
+                        "ERROR",
+                        tuple(strategies_attempted),
+                        ledger.network_attempt_count - route_start,
+                        False,
+                        tuple(
+                            sorted(
+                                {
+                                    *limitations,
+                                    "TRANSIENT_ATTEMPT_BUDGET_EXHAUSTED",
+                                    "IMMEDIATE_SOURCE_FAILOVER",
                                 }
                             )
                         ),
@@ -2232,6 +2361,26 @@ class SourceSearchOrchestrator:
                         False,
                         tuple(sorted({*limitations, "RAW_CAPTURE_REQUIRES_PARSER"})),
                     )
+                if disposition == "STOP_ADAPTER_QUARANTINED":
+                    return RouteResult(
+                        route_id,
+                        source.source_id,
+                        "CAPTURED_PENDING_PARSER"
+                        if result.content is not None
+                        else "ERROR",
+                        tuple(strategies_attempted),
+                        ledger.network_attempt_count - route_start,
+                        False,
+                        tuple(
+                            sorted(
+                                {
+                                    *limitations,
+                                    "PARSER_SCHEMA_DATA_QUARANTINED",
+                                    "IMMEDIATE_SOURCE_FAILOVER",
+                                }
+                            )
+                        ),
+                    )
                 if disposition == "STOP_HARD_BLOCK":
                     return RouteResult(
                         route_id,
@@ -2272,17 +2421,13 @@ class SourceSearchOrchestrator:
         attempt_ordinal: int,
         strategy_ordinal: int,
     ) -> tuple[str, float]:
-        if result.error_code == "HTTP_RATE_LIMITED":
-            if attempt_ordinal < self.policy.max_transient_attempts:
-                return (
-                    "RETRY_TRANSIENT",
-                    result.retry_after_seconds
-                    if result.retry_after_seconds is not None
-                    else self.policy.retry_delays_seconds[attempt_ordinal - 1],
-                )
+        classification = classify_source_result(result)
+        if classification == "RATE_LIMITED":
             return "STOP_RATE_LIMITED", 0.0
-        if result.state in HARD_STOP_STATES:
+        if classification == "HARD_BLOCK":
             return "STOP_HARD_BLOCK", 0.0
+        if classification == "QUARANTINE":
+            return "STOP_ADAPTER_QUARANTINED", 0.0
         if (
             result.state == "AVAILABLE"
             and result.query_status == "QUALIFIED"
@@ -2297,14 +2442,24 @@ class SourceSearchOrchestrator:
         )
         if explicit_empty:
             return "NEXT_EMPTY_STRATEGY", 0.0
-        transient = result.state in TRANSIENT_STATES and (
+        transient = classification == "TRANSIENT" and (
             result.error_code in self.policy.transient_error_codes
             or result.error_code == "CONNECTOR_INTERNAL_ERROR"
         )
         if transient and attempt_ordinal < self.policy.max_transient_attempts:
-            return "RETRY_TRANSIENT", self.policy.retry_delays_seconds[attempt_ordinal - 1]
+            ceiling = self.policy.retry_delays_seconds[attempt_ordinal - 1]
+            delay = self.jitter(ceiling)
+            if (
+                isinstance(delay, bool)
+                or not isinstance(delay, (int, float))
+                or delay < 0
+                or delay > ceiling
+                or not math.isfinite(float(delay))
+            ):
+                return "STOP_RETRY_BUDGET", 0.0
+            return "RETRY_TRANSIENT", float(delay)
         if transient:
-            return "NEXT_STRATEGY_AFTER_TRANSIENT_EXHAUSTED", 0.0
+            return "STOP_TRANSIENT_SOURCE_FAILOVER", 0.0
         if result.content is not None:
             return "STOP_CAPTURE_PENDING_PARSER", 0.0
         return (

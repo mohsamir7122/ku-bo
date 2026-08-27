@@ -6,17 +6,15 @@
   "max_distinct_registrable_domains": 50,
   "max_requests": 600,
   "max_wall_seconds": 1800,
-  "max_transient_attempts": 3,
-  "retry_delays_seconds": [0.25, 1.0],
+  "max_transient_attempts": 2,
+  "retry_delays_seconds": [0.25],
   "transient_error_codes": [
     "CONNECTOR_INTERNAL_ERROR",
     "HTTP_SERVER_ERROR",
     "HTTP_DNS_ERROR",
     "HTTP_TIMEOUT",
     "HTTP_TRANSPORT_ERROR",
-    "HTTP_RATE_LIMITED",
     "ROBOTS_DNS_ERROR",
-    "ROBOTS_POLICY_UNAVAILABLE",
     "ROBOTS_UNREACHABLE"
   ],
   "empty_result_error_codes": [

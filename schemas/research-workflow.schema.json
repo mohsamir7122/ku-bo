@@ -38,7 +38,7 @@
               "maximum_distinct_registrable_domains": {"const": 50},
               "maximum_requests": {"const": 600},
               "maximum_wall_seconds": {"const": 1800},
-              "transient_attempts_per_strategy": {"const": 3},
+              "transient_attempts_per_strategy": {"const": 2},
               "empty_result_query_strategies": {"const": 4},
               "incremental_corpus": {"const": true},
               "wave_order": {
