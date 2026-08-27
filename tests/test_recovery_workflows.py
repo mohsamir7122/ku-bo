@@ -76,7 +76,10 @@ class RecoveryWorkflowTests(unittest.TestCase):
         self.assertEqual(triggers["workflow_run"]["types"], ["completed"])
         self.assertEqual(
             triggers["schedule"],
-            [{"cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"}],
+            [
+                {"cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"},
+                {"cron": "13,43 * * * *"},
+            ],
         )
         self.assertEqual(
             triggers["repository_dispatch"]["types"],
@@ -86,6 +89,21 @@ class RecoveryWorkflowTests(unittest.TestCase):
         self.assertNotRegex(text, r"\bsleep\s+\d+")
         self.assertIn("github-control", text)
         self.assertIn("github.token", text)
+
+    def test_pipeline_backfill_is_bounded_prioritized_and_fail_closed(self) -> None:
+        workflow = _base_yaml(PIPELINE)
+        triggers = workflow["on"]
+        self.assertEqual(triggers["schedule"][-1], {"cron": "23 */2 * * *"})
+        backfill = workflow["jobs"]["backfill_gate"]
+        self.assertEqual(backfill["timeout-minutes"], "5")
+        self.assertIn("23 */2 * * *", backfill["if"])
+        text = _text(PIPELINE)
+        self.assertIn("priority=BACKFILL_90D:10", text)
+        self.assertIn("--production", text)
+        self.assertIn("BLOCKED_CHECKPOINT_STORE", text)
+        self.assertIn("BLOCKED_UNWIRED_PRODUCTION_COORDINATOR", text)
+        self.assertIn("Preserve backfill blocker exit code", text)
+        self.assertNotRegex(text, r"\bsleep\s+\d+")
 
     def test_legacy_sequential_workflow_is_manual_only(self) -> None:
         workflow = _base_yaml(LEGACY)

@@ -14,6 +14,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 
 from kubo.automation_schedule import (  # noqa: E402
     AutomationScheduleError,
+    resolve_background_backfill_occurrence,
     resolve_automation_run,
     validate_automation_schedule,
 )
@@ -35,6 +36,7 @@ def parser() -> argparse.ArgumentParser:
     )
     value.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
     value.add_argument("--resolve", action="store_true")
+    value.add_argument("--resolve-background-backfill", action="store_true")
     value.add_argument("--event-schedule")
     value.add_argument("--slot-id")
     value.add_argument("--actual-started-at")
@@ -60,7 +62,15 @@ def _write_new(path: Path, content: bytes) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
-        if args.resolve:
+        if args.resolve and args.resolve_background_backfill:
+            raise AutomationScheduleError("choose only one schedule resolver")
+        if args.resolve_background_backfill:
+            report = resolve_background_backfill_occurrence(
+                actual_started_at=args.actual_started_at
+                or datetime.now(timezone.utc).isoformat(),
+                event_schedule=args.event_schedule or "",
+            )
+        elif args.resolve:
             report = resolve_automation_run(
                 args.project_root,
                 actual_started_at=args.actual_started_at
@@ -92,10 +102,15 @@ def main(argv: list[str] | None = None) -> int:
             "run_validation": str(report.get("should_run_validation", False)).lower(),
             "run_live_scoring": str(report.get("should_run_live_scoring", False)).lower(),
         }
+        if "scheduled_at" in report:
+            outputs["scheduled_at"] = str(report["scheduled_at"])
+            outputs["actual_started_at"] = str(report["actual_started_at"])
         with args.github_output.open("a", encoding="utf-8", newline="\n") as handle:
             for key, value in outputs.items():
                 handle.write(f"{key}={value}\n")
 
+    if args.resolve_background_backfill:
+        return 0
     if not args.resolve or args.mode == "CONTRACT_CHECK":
         return 0
     if report["status"] in {

@@ -51,6 +51,8 @@ CONTROLLER_WORKFLOW = "recovery-controller.yml"
 PIPELINE_WORKFLOW_NAME = "Kuwait Market Pipeline"
 CI_WORKFLOW_NAME = "CI"
 RECOVERY_EVENT = "market-recovery-request"
+MISSED_EVENT_WATCHDOG_CRON = "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+SCHEDULED_RECOVERY_CRON = "13,43 * * * *"
 ALLOWED_DISPATCH_ACTORS = frozenset({"mohsamir7122", "github-actions[bot]"})
 ALLOWED_SLOTS = frozenset(
     {
@@ -1038,7 +1040,20 @@ def run_github_controller(
 
 def workflow_event_context(event_name: str, event: Mapping[str, Any]) -> dict[str, Any]:
     if event_name == "schedule":
-        return {"kind": "watchdog", "workflow_name": None}
+        schedule = str(event.get("schedule") or "")
+        if schedule == MISSED_EVENT_WATCHDOG_CRON:
+            return {
+                "kind": "watchdog",
+                "workflow_name": None,
+                "schedule": schedule,
+            }
+        if schedule == SCHEDULED_RECOVERY_CRON:
+            return {
+                "kind": "scheduled_recovery",
+                "workflow_name": None,
+                "schedule": schedule,
+            }
+        raise RecoveryError("controller schedule identity is not allowlisted")
     if event_name in {"workflow_dispatch", "repository_dispatch"}:
         return {"kind": "manual", "workflow_name": None}
     if event_name != "workflow_run":

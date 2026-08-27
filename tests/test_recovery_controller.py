@@ -11,8 +11,10 @@ import zipfile
 from kubo.recovery import build_incident, record_retry_attempt, load_recovery_policy
 from scripts.recovery_controller import (
     CI_WORKFLOW_NAME,
+    MISSED_EVENT_WATCHDOG_CRON,
     PIPELINE_WORKFLOW_NAME,
     RecoveryError,
+    SCHEDULED_RECOVERY_CRON,
     _safe_write_json,
     _safe_zip_rows,
     run_github_controller,
@@ -193,6 +195,26 @@ class RecoveryControllerTests(unittest.TestCase):
         )
         self.assertEqual(stale_api.rerun_ids, [42])
         self.assertEqual(stale["decisions"][0]["action"], "DISPATCH_RETRY")
+
+    def test_scheduled_recovery_is_bounded_and_does_not_wait_for_watchdog(self) -> None:
+        context = workflow_event_context(
+            "schedule",
+            {"schedule": SCHEDULED_RECOVERY_CRON},
+        )
+        self.assertEqual(context["kind"], "scheduled_recovery")
+        api = FakeGitHubApi()
+        result = self.control(api, self.incident(), context=context)
+        self.assertEqual(api.rerun_ids, [42])
+        self.assertEqual(result["trigger_kind"], "scheduled_recovery")
+
+    def test_schedule_identities_are_exactly_allowlisted(self) -> None:
+        watchdog = workflow_event_context(
+            "schedule",
+            {"schedule": MISSED_EVENT_WATCHDOG_CRON},
+        )
+        self.assertEqual(watchdog["kind"], "watchdog")
+        with self.assertRaisesRegex(RecoveryError, "not allowlisted"):
+            workflow_event_context("schedule", {"schedule": "* * * * *"})
 
     def test_active_run_suppresses_retry(self) -> None:
         api = FakeGitHubApi()

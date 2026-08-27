@@ -98,11 +98,14 @@ def main(argv: list[str] | None = None) -> int:
         OSError,
         ValueError,
     ) as exc:
+        failure_code = getattr(exc, "failure_code", None)
+        if failure_code is None and isinstance(exc, BlockedCheckpointStore):
+            failure_code = "BLOCKED_CHECKPOINT_STORE"
         _print(
             {
                 "status": "BLOCKED",
                 "error_class": type(exc).__name__,
-                "failure_code": getattr(exc, "failure_code", None),
+                "failure_code": failure_code,
                 "sanitized_summary": sanitize_text(exc, max_length=1000),
                 "publish_allowed": False,
                 "strict_forecast_status": "LOCKED",

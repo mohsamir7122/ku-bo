@@ -9,6 +9,7 @@ on:
     - cron: "0 8 * * 0-4"
     - cron: "0 9 * * 0-4"
     - cron: "0 10 * * 0-4"
+    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -57,7 +58,118 @@ env:
   PYTHONUNBUFFERED: "1"
 
 jobs:
+  backfill_gate:
+    if: ${{ github.event_name == 'schedule' && github.event.schedule == '23 */2 * * *' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Resolve scheduled and actual background timestamps
+        id: timing
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/validate_kuwait_automation_schedule.py \
+            --project-root . \
+            --resolve-background-backfill \
+            --event-schedule "$EVENT_SCHEDULE" \
+            --actual-started-at "$actual_started_at" \
+            --output runtime/backfill-schedule.json \
+            --github-output "$GITHUB_OUTPUT"
+      - name: Validate priority and rights-aware backfill gates
+        id: backfill
+        continue-on-error: true
+        env:
+          SCHEDULED_AT: ${{ steps.timing.outputs.scheduled_at }}
+          CODE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -uo pipefail
+          mkdir -p runtime
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/backfill_90d.py --project-root . policy \
+            > runtime/backfill-policy.json
+          set +e
+          python scripts/backfill_90d.py --project-root . build \
+            --output runtime/forbidden-backfill-output \
+            --run-id "github-${RUN_ID}-${RUN_ATTEMPT}" \
+            --code-sha "$CODE_SHA" \
+            --scheduled-at "$SCHEDULED_AT" \
+            --actual-started-at "$actual_started_at" \
+            --finished-at "$actual_started_at" \
+            --production \
+            > runtime/backfill-production-gate.json 2>&1
+          backfill_exit_code=$?
+          set -e
+          if [[ "$backfill_exit_code" -eq 0 ]]; then
+            echo '{"status":"BLOCKED_UNWIRED_PRODUCTION_COORDINATOR","publish_allowed":false}' \
+              > runtime/backfill-production-gate.json
+            backfill_exit_code=2
+          fi
+          finished_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          {
+            echo "scheduled_at=$SCHEDULED_AT"
+            echo "scheduled_at_basis=MOST_RECENT_ELIGIBLE_CRON_OCCURRENCE"
+            echo "actual_started_at=$actual_started_at"
+            echo "finished_at=$finished_at"
+            echo "priority=BACKFILL_90D:10"
+            echo "checkpoint_store=BLOCKED_CHECKPOINT_STORE"
+            echo "schedule_active_claim=false"
+          } > runtime/backfill-timing.txt
+          echo "exit_code=$backfill_exit_code" >> "$GITHUB_OUTPUT"
+          exit "$backfill_exit_code"
+      - name: Create fail-closed backfill incident
+        if: ${{ steps.backfill.outcome == 'failure' }}
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CODE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/recovery_controller.py --project-root . create-incident \
+            --market KUWAIT --stage backfill --error-class permission_required \
+            --component durable_checkpoint_store --failure-code BLOCKED_CHECKPOINT_STORE \
+            --code-sha "$CODE_SHA" --failed-run-id "$RUN_ID" --run-url "$RUN_URL" \
+            --completed-run-attempt "$RUN_ATTEMPT" \
+            --summary "Kuwait background backfill stopped before collection because no trusted durable checkpoint store is configured." \
+            --required-user-action "Configure one reviewed allowlisted durable checkpoint store; an ephemeral runner directory is not sufficient." \
+            --output runtime/recovery-incident.json
+          echo "NO-TRADE"
+      - name: Write backfill gate summary
+        if: always()
+        run: |
+          echo "BACKFILL_90D_FAIL_CLOSED" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f runtime/backfill-timing.txt ]]; then
+            sed -n '1,20p' runtime/backfill-timing.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "No source request, training, forecast, or publication is authorized by this gate." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload sanitized backfill diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: recovery-diagnostics-backfill-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve backfill blocker exit code
+        if: ${{ steps.backfill.outcome == 'failure' }}
+        env:
+          BACKFILL_EXIT_CODE: ${{ steps.backfill.outputs.exit_code || '2' }}
+        run: exit "$BACKFILL_EXIT_CODE"
+
   gate:
+    if: ${{ github.event_name != 'schedule' || github.event.schedule != '23 */2 * * *' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from contextlib import redirect_stderr
+import io
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -14,6 +17,7 @@ from kubo.backfill_90d import (
     validate_rights_aware_bundle,
 )
 from kubo.priority_runtime import BlockedCheckpointStore
+from scripts.backfill_90d import main as backfill_main
 
 from tests.backfill_90d_helpers import (
     CODE_SHA,
@@ -147,6 +151,36 @@ class RightsAwareBackfillTests(unittest.TestCase):
                     production=True,
                 )
             self.assertFalse((root / "production").exists())
+
+    def test_cli_preserves_nonzero_checkpoint_blocker(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                exit_code = backfill_main(
+                    [
+                        "--project-root",
+                        str(ROOT),
+                        "build",
+                        "--output",
+                        str(root / "production"),
+                        "--run-id",
+                        "cli-production-fixture",
+                        "--code-sha",
+                        CODE_SHA,
+                        "--scheduled-at",
+                        "2026-08-27T03:00:00Z",
+                        "--actual-started-at",
+                        "2026-08-27T03:01:00Z",
+                        "--finished-at",
+                        "2026-08-27T03:01:00Z",
+                        "--production",
+                    ]
+                )
+            report = json.loads(stderr.getvalue())
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(report["failure_code"], "BLOCKED_CHECKPOINT_STORE")
+        self.assertFalse(report["publish_allowed"])
 
 
 if __name__ == "__main__":

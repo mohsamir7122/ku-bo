@@ -7,7 +7,7 @@ scheduled invocation into a research candidate.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 import hashlib
 from pathlib import Path
 import re
@@ -21,6 +21,7 @@ from .strict import https_url, parse_aware, parse_iso_date
 SCHEDULE_CONFIG = Path("config/kuwait_automation_schedule.json")
 WORKFLOW_PATH = Path(".github/workflows/kuwait-market-pipeline.yml")
 KUWAIT_TZ = ZoneInfo("Asia/Kuwait")
+BACKGROUND_BACKFILL_CRON = "23 */2 * * *"
 
 EXPECTED_MARKET = {
     "jurisdiction_code": "KW",
@@ -205,7 +206,9 @@ def _validate_workflow(path: Path) -> str:
     if "\t" in text:
         raise AutomationScheduleError("workflow must not contain tab indentation")
     crons = re.findall(r'^\s*- cron: "([^"]+)"\s*$', text, flags=re.MULTILINE)
-    expected_crons = [row["cron"] for row in EXPECTED_SLOTS]
+    expected_crons = [row["cron"] for row in EXPECTED_SLOTS] + [
+        BACKGROUND_BACKFILL_CRON
+    ]
     if crons != expected_crons:
         raise AutomationScheduleError("workflow cron order differs from the locked slots")
     required = (
@@ -502,11 +505,55 @@ def resolve_automation_run(
     }
 
 
+def resolve_background_backfill_occurrence(
+    *,
+    actual_started_at: datetime | str,
+    event_schedule: str,
+) -> dict[str, Any]:
+    """Resolve the latest eligible minute-23 occurrence without claiming punctuality."""
+
+    if event_schedule != BACKGROUND_BACKFILL_CRON:
+        raise AutomationScheduleError("background backfill schedule is not allowlisted")
+    actual = (
+        parse_aware(actual_started_at, "actual_started_at")
+        if isinstance(actual_started_at, str)
+        else actual_started_at
+    )
+    if actual.tzinfo is None or actual.utcoffset() is None:
+        raise AutomationScheduleError("actual_started_at must be timezone-aware")
+    actual_utc = actual.astimezone(timezone.utc)
+    scheduled_hour = actual_utc.hour - (actual_utc.hour % 2)
+    scheduled = actual_utc.replace(
+        hour=scheduled_hour,
+        minute=23,
+        second=0,
+        microsecond=0,
+    )
+    if scheduled > actual_utc:
+        scheduled -= timedelta(hours=2)
+    delay_seconds = int((actual_utc - scheduled).total_seconds())
+    return {
+        "schema_version": "1.0",
+        "status": "PASS_BACKGROUND_OCCURRENCE_RESOLUTION",
+        "workload_class": "BACKFILL_90D",
+        "priority": 10,
+        "event_schedule": BACKGROUND_BACKFILL_CRON,
+        "scheduled_at": scheduled.isoformat().replace("+00:00", "Z"),
+        "scheduled_at_basis": "MOST_RECENT_ELIGIBLE_CRON_OCCURRENCE",
+        "actual_started_at": actual_utc.isoformat().replace("+00:00", "Z"),
+        "start_delay_seconds": delay_seconds,
+        "scheduled_minute_is_guaranteed": False,
+        "schedule_active_claim": False,
+    }
+
+
 __all__ = [
     "AutomationScheduleError",
+    "BACKGROUND_BACKFILL_CRON",
     "EXPECTED_SLOTS",
     "SCHEDULE_CONFIG",
     "WORKFLOW_PATH",
     "resolve_automation_run",
+    "resolve_background_backfill_occurrence",
     "validate_automation_schedule",
 ]

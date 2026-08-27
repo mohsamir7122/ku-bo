@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover - optional test dependency
 from kubo.automation_schedule import (
     AutomationScheduleError,
     EXPECTED_SLOTS,
+    resolve_background_backfill_occurrence,
     resolve_automation_run,
     validate_automation_schedule,
 )
@@ -189,6 +190,35 @@ class AutomationScheduleTests(unittest.TestCase):
                 legacy = path.read_text(encoding="utf-8")
                 self.assertNotIn("schedule:", legacy)
                 self.assertIn("workflow_dispatch:", legacy)
+
+    def test_background_backfill_cron_is_separate_from_live_slots(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertEqual(workflow.count('cron: "23 */2 * * *"'), 1)
+        self.assertIn("backfill_gate:", workflow)
+        self.assertIn("BLOCKED_CHECKPOINT_STORE", workflow)
+        self.assertIn("schedule_active_claim=false", workflow)
+
+    def test_background_occurrence_records_delay_without_punctuality_claim(self) -> None:
+        report = resolve_background_backfill_occurrence(
+            actual_started_at="2026-08-27T04:31:00Z",
+            event_schedule="23 */2 * * *",
+        )
+        self.assertEqual(report["scheduled_at"], "2026-08-27T04:23:00Z")
+        self.assertEqual(report["start_delay_seconds"], 480)
+        self.assertFalse(report["scheduled_minute_is_guaranteed"])
+        self.assertFalse(report["schedule_active_claim"])
+
+        prior_day = resolve_background_backfill_occurrence(
+            actual_started_at="2026-08-27T00:10:00Z",
+            event_schedule="23 */2 * * *",
+        )
+        self.assertEqual(prior_day["scheduled_at"], "2026-08-26T22:23:00Z")
+
+        with self.assertRaisesRegex(AutomationScheduleError, "not allowlisted"):
+            resolve_background_backfill_occurrence(
+                actual_started_at="2026-08-27T04:31:00Z",
+                event_schedule="* * * * *",
+            )
 
     def test_workflow_cron_drift_is_rejected(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8").replace(
