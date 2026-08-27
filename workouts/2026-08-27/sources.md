@@ -1,6 +1,6 @@
 # Sources and Access Status
 
-Status at 2026-08-27T05:02:48Z: BOUNDED ACCESS PROBES EXECUTED; REAL COLLECTION BLOCKED
+Status at 2026-08-27T05:41:08Z: BOUNDED ACCESS PROBES EXECUTED; OFFICIAL SCHEDULE VERIFIED; REAL COLLECTION BLOCKED
 
 | Source class | Intended priority | Current status |
 | --- | --- | --- |
@@ -58,3 +58,17 @@ run.
   failed attempt and controlled reason. This is not a successful access result.
 - Raw probe bundles remain outside Git. No proxy credential, session, CAPTCHA,
   paywall, robots bypass, or guessed download path was used.
+
+## Stage 4 official schedule basis
+
+The current official Boursa Kuwait trading-information and trading-extension
+pages confirm a 09:00–13:00 continuous session and a 13:15 trade-at-last end,
+effective from 2025-10-12. The official 2026 holidays page identifies
+2026-08-27 as Prophet Mohammed Birthday. All three URLs, publisher, separate
+publication/event fields, and access timestamp `2026-08-27T05:14:28Z` are
+recorded in `config/kuwait_automation_schedule.json`.
+
+These source checks support only the schedule/calendar contract. They do not
+admit a company, price, disclosure, corporate action, historical event, or live
+candidate. The official calendar coverage ends at 2026-12-31 and later live
+slots fail closed until a new official calendar is admitted.

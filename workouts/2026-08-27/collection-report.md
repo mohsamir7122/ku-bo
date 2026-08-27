@@ -27,3 +27,8 @@ Two real capability probes were attempted after the source contracts were
 implemented: `kcc_maqasa_official` and `boursa_reports_archive`. Both ended
 `ROBOTS_POLICY_UNAVAILABLE`, with no readable artifact. They increase only the
 failed-attempt count; every market-data count remains zero.
+
+Stage 4 accessed official public schedule/holiday pages solely to verify the
+automation calendar. Those administrative facts are not company or market-data
+collection and do not change any count above. All seven schedule dry runs kept
+collection disabled.

@@ -4,14 +4,19 @@
   "measurement_status": "NO_ADMITTED_LOCKED_MARKET_TEST",
   "evidence_class": "NO_ADMITTED_MARKET_TEST_SET",
   "repository_candidate": {
-    "tests_total": 2316,
-    "tests_passed": 2316,
+    "tests_total": 2329,
+    "tests_passed": 2329,
     "tests_failed": 0,
     "tests_errors": 0,
-    "duration_seconds": 617.951,
+    "duration_seconds": 621.603,
     "source_evidence_tests": 30,
     "company_dossier_tests": 34,
     "source_access_executor_tests": 7,
+    "automation_schedule_tests": 13,
+    "automation_slot_dry_runs": 7,
+    "automation_holiday_no_trade_tests": 1,
+    "automation_missing_controls_nonzero_exit_tests": 1,
+    "actionlint": "pass",
     "package_build_install_cli_smoke": "pass"
   },
   "investment_metrics": {

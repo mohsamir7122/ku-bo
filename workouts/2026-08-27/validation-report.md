@@ -161,3 +161,46 @@ SECRET_GUARD: PASS
 COMPILEALL: PASS
 GIT_DIFF_CHECK: PASS
 ```
+
+Stage 3 receipt head `cfd0f4858f9fc3a0a35484b8dafa2bd8a60a0578`
+subsequently passed exact-head GitHub CI run `33041621326` on Python 3.11,
+3.12, 3.13, and 3.14. No PR was opened and no merge occurred.
+
+## Stage 4 fail-closed Kuwait automation schedule
+
+```text
+SCHEDULE_CONTRACT: PASS
+SCHEDULE_FOCUSED_TESTS: PASS — 13/13
+SEVEN_SLOT_CONTRACT_DRY_RUNS: PASS — 7/7
+OFFICIAL_HOLIDAY_NO_TRADE_DRY_RUN: PASS
+MISSING_CONTROLS_EXIT_2_DRY_RUN: PASS
+ACTIONLINT: PASS — 1.7.12, all workflows
+ACTIONLINT_ARCHIVE_SHA256: 325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6
+JSON_SCHEMA: PASS
+CONTROL_VALIDATOR: PASS
+SECRET_GUARD: PASS
+COMPILEALL: PASS
+GIT_DIFF_CHECK: PASS
+FULL_COMMAND: PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+FULL_RESULT: PASS — 2329/2329
+FULL_DURATION_SECONDS: 621.603
+```
+
+The schedule SHA-256 is
+`ac27b55b30465b80090762b86badf74c1b54e2d322066391007923f4b484d093`;
+the workflow SHA-256 is
+`89f77e55fc59a36f04979d0e02c4eae65fa973e30b8b88e24cefcd7ea12f8293`;
+and its JSON Schema SHA-256 is
+`58e5c6c15f717b2f18c77b05cd40d4943a3aebfc9e93b28b01ced54819a2e18f`.
+
+A fresh wheel was built and installed outside the checkout. The installed module
+reopened the repository schedule and workflow and returned
+`PASS_SCHEDULE_CONTRACT`; wheel SHA-256 is
+`28911ded022223a57436ddd619c48216bfa132209eb0d2b0fa1764054414b8cc`.
+
+The 2026-08-27 market-open `EXECUTE` dry run returned
+`MAINTENANCE_ONLY_NO_TRADE` because the date is in the official holiday list.
+The enabled-but-missing-controls dry run exited 2. Every `CONTRACT_CHECK` run
+kept collection, validation, and live scoring false. These results prove
+schedule behavior only: market data, company/event coverage, model validation,
+and candidate generation remain zero/false.

@@ -1,6 +1,6 @@
 # Day-One Execution Plan
 
-Status: STAGES_1_TO_3_IMPLEMENTED_AND_TESTED; LIVE SOURCE ADMISSION BLOCKED
+Status: STAGES_1_TO_4_IMPLEMENTED_AND_TESTED; AUTOMATION AND LIVE SOURCE ADMISSION BLOCKED
 
 1. Complete PRE-FLIGHT and record immutable starting SHAs, resources, tools,
    auth state, clean worktrees, Drive structure, baseline tests, and blockers.
@@ -21,13 +21,16 @@ Status: STAGES_1_TO_3_IMPLEMENTED_AND_TESTED; LIVE SOURCE ADMISSION BLOCKED
    Company official source, implement a bounded public access executor, and
    probe KCC plus Boursa reports without bypassing robots or access controls.
    Both real probes returned no readable artifact and remain unadmitted.
-8. Prepare but do not activate sequential scheduled workflows until secrets,
-   calendars, source admission, and dry-run gates are satisfied.
-9. Define issuer, source, provenance, event, split, blind-test, metrics, and live
+8. **Completed and tested disabled:** prepare the seven-slot sequential Kuwait
+   workflow, official 2026 market calendar, UTC mappings, activation gate,
+   timeouts, bounded transient retry contract, and no-trade holiday behavior.
+9. Implement the unified recovery/resume upgrade and repair the prior Kuwait
+   review findings before wiring any live schedule stage.
+10. Define issuer, source, provenance, event, split, blind-test, metrics, and live
    candidate schemas before admitting real data.
-10. Collect Kuwait first from terms-compliant, authorized sources; report actual
+11. Collect Kuwait first from terms-compliant, authorized sources; report actual
    counts and gaps. Train/evaluate only with point-in-time and locked splits.
-11. Replicate the verified architecture for Saudi only after Kuwait's blind-test
+12. Replicate the verified architecture for Saudi only after Kuwait's blind-test
    and measurement gates pass.
 
 No irreversible action is part of this plan. No order placement, broker access,

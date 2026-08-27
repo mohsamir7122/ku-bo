@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T05:08:49Z (2026-08-27T08:08:49+03:00, Asia/Kuwait)
+Updated: 2026-08-27T05:44:55Z (2026-08-27T08:44:55+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_3_OFFICIAL_SOURCE_ACCESS_IMPLEMENTED_PROBES_BLOCKED
+STAGE: STAGE_4_KUWAIT_SCHEDULE_IMPLEMENTED_TESTED_DISABLED
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -14,6 +14,7 @@ WORKTREE_AT_START: CLEAN
 STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
 STAGE_2_COMMIT: 2a37ac81e440bd1ce609abdfab61993e118ccb57
 STAGE_3_COMMIT: a64ad7c6996ecec354bbf02bfa0b7fcbc048c086
+STAGE_4_COMMIT: 810b077cbd56267e897546237c3a354be3838f98
 ```
 
 ## Completed and evidenced
@@ -115,14 +116,39 @@ STAGE_3_COMMIT: a64ad7c6996ecec354bbf02bfa0b7fcbc048c086
   SHA-256 is
   `d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff`.
 - Stage 3 is preserved in commit
-  `a64ad7c6996ecec354bbf02bfa0b7fcbc048c086`; exact-head CI is pending and it
-  has not been merged.
+  `a64ad7c6996ecec354bbf02bfa0b7fcbc048c086`; receipt head
+  `cfd0f4858f9fc3a0a35484b8dafa2bd8a60a0578` passed exact-head CI run
+  `33041621326` on Python 3.11 through 3.14. It has not been merged.
+- Implemented a locked seven-slot Kuwait automation schedule: 15:00 daily and
+  04:00, 07:00, 09:00 market-open, 11:00, 12:00, and 13:00 on Kuwait trading
+  weekdays, converted respectively to 12:00, 01:00, 04:00, 06:00, 08:00,
+  09:00, and 10:00 UTC.
+- Bound the schedule to Boursa Kuwait's current official 09:00–13:00 continuous
+  session, 13:15 trade-at-last end, Sunday–Thursday week, and the verified 2026
+  holiday list. The 27 August 2026 market-open dry run produced
+  `MAINTENANCE_ONLY_NO_TRADE` because today is an official holiday.
+- Added the sequential `gate → collection → validation → live_scoring`
+  workflow with one Kuwait concurrency group, job timeouts, bounded transient
+  retry policy, actual execution timestamps, secret-presence booleans, pinned
+  Actions, and permanent safety tripwires. The legacy 15:07/15:37 schedule is
+  retained as manual-only compatibility so it cannot overlap.
+- Stage 4 schedule tests pass 13/13; seven contract dry runs, the holiday dry
+  run, and the expected missing-control exit-2 dry run pass. Actionlint 1.7.12,
+  JSON/Schema, control, compile, whitespace, and Secret Guard checks pass.
+- The full candidate suite passes 2,329/2,329 tests in 621.603 seconds. A fresh
+  installed wheel revalidated the schedule contract; wheel SHA-256 is
+  `28911ded022223a57436ddd619c48216bfa132209eb0d2b0fa1764054414b8cc`.
+- Stage 4 remains intentionally disabled: `implementation_ready=false`, source
+  admission is incomplete, required repository controls are absent, scheduled
+  workflows run only from the default branch, and no PR or merge exists.
+- Stage 4 is preserved in commit
+  `810b077cbd56267e897546237c3a354be3838f98`; exact-head CI is pending.
 
 ## Next active stage
 
-- Build the sequential fail-closed GitHub Actions schedule and continue source
-  admission through separately authorized routes. Rights, robots, licensing,
-  provenance, retries, and point-in-time gates remain mandatory.
+- Implement the requested unified incident, recovery, lease-lock, robots,
+  retry/resume, and alerting upgrade on this branch. Preserve fail-closed source,
+  provenance, temporal, and no-trade gates; Saudi remains design-only.
 
 ## Not started or not yet evidenced
 
@@ -144,9 +170,11 @@ STAGE_3_COMMIT: a64ad7c6996ecec354bbf02bfa0b7fcbc048c086
   jobs as bound/reimplemented while the preparation manifest and parity matrix
   still say all fourteen are not started. Filesystem audit confirms canonical
   gaps, so predecessor migration completion is not claimed.
-- The stale local task/branch control mismatch was repaired without weakening
-  the assertion. Exact-head CI passed for the pushed Stage 2 receipt head;
-  Stage 3 exact-head CI is pending and merge remains forbidden.
+- Exact-head CI run `33041621326` passed for the pushed Stage 3 receipt head.
+  Stage 4 exact-head CI is pending; schedule activation and merge remain
+  forbidden.
+- The official holiday contract is verified only through 2026. A later live
+  slot fails closed if official calendar coverage is absent or stale.
 - PRoot exposes phone storage through existing binds. All writes in this run are
   restricted to the project workspace; no external storage is used.
 - Synthetic fixtures are software evidence only. No return, accuracy,

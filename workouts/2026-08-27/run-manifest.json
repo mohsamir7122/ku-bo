@@ -51,12 +51,12 @@
     "compileall": "pass"
   },
   "candidate_full_validation": {
-    "recorded_at_utc": "2026-08-27T05:02:48Z",
-    "tests_total": 2316,
-    "tests_passed": 2316,
+    "recorded_at_utc": "2026-08-27T05:41:08Z",
+    "tests_total": 2329,
+    "tests_passed": 2329,
     "tests_failures": 0,
     "tests_errors": 0,
-    "duration_seconds": 617.951
+    "duration_seconds": 621.603
   },
   "stage_1_artifacts": {
     "source_evidence_input_schema": "source-evidence-lifecycle-v1",
@@ -103,9 +103,28 @@
     "market_data_collected": false,
     "stage_commit_sha": "a64ad7c6996ecec354bbf02bfa0b7fcbc048c086"
   },
+  "stage_4_artifacts": {
+    "schedule_id": "kuwait-market-ai-sequential-v1",
+    "schedule_slot_count": 7,
+    "official_holiday_count": 15,
+    "schedule_sha256": "ac27b55b30465b80090762b86badf74c1b54e2d322066391007923f4b484d093",
+    "workflow_sha256": "89f77e55fc59a36f04979d0e02c4eae65fa973e30b8b88e24cefcd7ea12f8293",
+    "schema_sha256": "58e5c6c15f717b2f18c77b05cd40d4943a3aebfc9e93b28b01ced54819a2e18f",
+    "focused_tests": 13,
+    "slot_contract_dry_runs": 7,
+    "holiday_no_trade_dry_run": "pass",
+    "missing_controls_exit_2_dry_run": "pass",
+    "actionlint_version": "1.7.12",
+    "actionlint_status": "pass",
+    "wheel_sha256": "28911ded022223a57436ddd619c48216bfa132209eb0d2b0fa1764054414b8cc",
+    "implementation_ready": false,
+    "scheduled_workflow_active": false,
+    "market_data_collected": false,
+    "stage_commit_sha": "810b077cbd56267e897546237c3a354be3838f98"
+  },
   "exact_head_ci": {
-    "run_id": 33039583311,
-    "head_sha": "3a100ac220b7545e438dc0ee8afae2bbcf7da2c7",
+    "run_id": 33041621326,
+    "head_sha": "cfd0f4858f9fc3a0a35484b8dafa2bd8a60a0578",
     "python_versions": ["3.11", "3.12", "3.13", "3.14"],
     "status": "success",
     "pull_request_created": false,
