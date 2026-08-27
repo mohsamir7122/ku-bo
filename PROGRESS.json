@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T08:23:51Z",
-  "updated_at_kuwait": "2026-08-27T11:23:52+03:00",
+  "updated_at_utc": "2026-08-27T09:04:10Z",
+  "updated_at_kuwait": "2026-08-27T12:04:10+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "STAGE_5_KUWAIT_RECOVERY_IMPLEMENTED_TESTED_PENDING_PUSH_CI",
+  "stage": "STAGE_6_PRIORITY_CHECKPOINT_IMPLEMENTED_TESTED_PUSHED_CI_RUNNING",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -26,7 +26,11 @@
     "research_forecast_separation": "bdbfb5c55a376f0976cfcf912066d310d88f0f55",
     "recovery_policy": "cb4808a13489cad0c14e2e41622fdbdeb8644631",
     "recovery_controller": "0170fa1549e32d29577aac5f9ef8f8528131247c",
-    "recovery_workflows": "94e384f297e53019df644312c99c8529deefd7df"
+    "recovery_workflows": "94e384f297e53019df644312c99c8529deefd7df",
+    "recovery_documentation": "bd17767e992b57d5833a0bf92c7045294c7633fc",
+    "issue_24_delta_preflight": "758dcd3d762385f88444a34b26530a3a6855add7",
+    "release_metadata_ci_fix": "ee07f00382dc5eba1fb9b903a4fd7f10deac4523",
+    "priority_checkpoint_runtime": "3195ba768382a063dac18053645c8dcd7fe4dd70"
   },
   "stages": [
     {"name": "contract_read", "status": "completed"},
@@ -40,7 +44,10 @@
     {"name": "source_immediate_failover", "status": "implemented_tested"},
     {"name": "trusted_research_network", "status": "implemented_tested_zero_real_observations"},
     {"name": "strict_forecast", "status": "locked_training_and_blind_test_missing"},
-    {"name": "kuwait_recovery", "status": "implemented_tested_pending_push_ci"},
+    {"name": "kuwait_recovery", "status": "implemented_tested_pushed_ci_rerun_in_progress"},
+    {"name": "issue_24_delta_preflight", "status": "completed"},
+    {"name": "priority_checkpoint_runtime", "status": "implemented_tested_pushed_ci_running"},
+    {"name": "rights_aware_backfill_90d", "status": "not_started"},
     {"name": "kuwait_collection", "status": "blocked_by_source_admission"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
@@ -83,6 +90,17 @@
     "secret_guard": "pass",
     "diff_check": "pass"
   },
+  "stage_6_focused_validation": {
+    "priority_checkpoint_tests_total": 16,
+    "priority_checkpoint_tests_passed": 16,
+    "recovery_lease_tests_total": 35,
+    "recovery_lease_tests_passed": 35,
+    "integrated_preemption_resume_test": "pass_synthetic_coordination_only",
+    "checkpoint_schema_validation": "pass",
+    "compile": "pass",
+    "secret_guard": "pass",
+    "diff_check": "pass"
+  },
   "candidate_full_validation": {
     "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
     "total": 2329,
@@ -98,6 +116,16 @@
     "python_versions": ["3.11", "3.12", "3.13", "3.14"],
     "pull_request_created": false,
     "merged_to_main": false
+  },
+  "latest_branch_ci": {
+    "run_id": 33056857748,
+    "head_sha": "3195ba768382a063dac18053645c8dcd7fe4dd70",
+    "status": "in_progress",
+    "prior_failed_run_id": 33054455755,
+    "prior_failure_class": "release_metadata_test_dependency_mismatch",
+    "fix_commit": "ee07f00382dc5eba1fb9b903a4fd7f10deac4523",
+    "release_metadata_fix_run_id": 33056375121,
+    "priority_commit_included": true
   },
   "source_evidence_lifecycle": {
     "implementation_status": "implemented_tested_synthetic",
@@ -179,7 +207,7 @@
     "stage_commit_sha": "810b077cbd56267e897546237c3a354be3838f98"
   },
   "kuwait_recovery": {
-    "implementation_status": "implemented_tested_pending_push_ci",
+    "implementation_status": "implemented_tested_pushed_ci_rerun_in_progress",
     "critical_path_initial_wait_seconds": 0,
     "maximum_automatic_attempts": 2,
     "workflow_rerun_scope": "FAILED_JOBS_ONLY",
@@ -189,7 +217,7 @@
     "watchdog_grace_seconds": 300,
     "idempotency_key_recomputed": true,
     "active_run_suppression": true,
-    "lease_contract": "validated_heartbeat_ttl_safe_stale_recovery",
+    "lease_contract": "validated_heartbeat_ttl_generation_fencing_cas_safe_stale_recovery",
     "duplicate_alert_suppression_hours": 6,
     "direct_email_status": "DIRECT_EMAIL_NOT_CONFIGURED",
     "pipeline_workflow_sha256": "b8d71a6cac3d5a426d75f1a3b74754da18ffafd08fcd9981b446716f6bcf0d61",
@@ -199,6 +227,23 @@
     "scheduled_workflows_active": false,
     "pull_request_created": false,
     "merged_to_main": false
+  },
+  "priority_checkpoint_runtime": {
+    "implementation_status": "implemented_tested_pushed_ci_running",
+    "priority_policy_sha256": "67d0ce841ebd7886bb5674f45ba6279d8b51e28b9e22ec3e3634098fe777f96b",
+    "priority_policy_schema_sha256": "178412bc8c0c62e8d8b891c910fbe117b0be2001fb3e0c4ae1595ef2468b4f46",
+    "checkpoint_schema_sha256": "8ab2b377ea781838f1a947a9ed20f2577c78df382105f159dd9bca94c30d7fb4",
+    "runtime_sha256": "d7317209d43408158de15a47eada7acde804df03956c84bfcfe1020fcb3fe0c2",
+    "backfill_window_from": "2026-05-30",
+    "backfill_window_to": "2026-08-27",
+    "backfill_window_day_count": 90,
+    "maximum_attempts_per_shard": 2,
+    "production_checkpoint_store_status": "BLOCKED_CHECKPOINT_STORE",
+    "production_checkpoint_store_configured": false,
+    "completed_shards_immutable": true,
+    "resume_only_non_completed": true,
+    "champion_mutation_allowed": false,
+    "scheduled_workflows_active": false
   },
   "research_network": {
     "implementation_status": "software_operational_zero_real_observations",
@@ -244,6 +289,7 @@
   },
   "blockers": [
     "GITHUB_SECRETS_AND_VARIABLES_ABSENT",
+    "BLOCKED_CHECKPOINT_STORE",
     "KUWAIT_SCHEDULE_IMPLEMENTATION_GATE_CLOSED",
     "OFFICIAL_MARKET_CALENDAR_VERIFIED_ONLY_THROUGH_2026",
     "OFFICIAL_SOURCE_ROBOTS_POLICY_UNAVAILABLE",

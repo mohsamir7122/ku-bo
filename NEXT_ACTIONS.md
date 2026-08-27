@@ -1,37 +1,43 @@
 # Ordered Next Actions
 
-Updated: 2026-08-27T08:23:51Z
+Updated: 2026-08-27T09:04:10Z
 
-1. Push the completed recovery commits to
-   `codex/kuwait-market-ai-day1-v1`, run exact-head CI, and keep all schedules
-   inactive. Do not create a PR or merge to `main`.
-2. Read GitHub Issue #24 and every comment as binding contract additions. Record
-   a Delta PRE-FLIGHT (repository, branch, HEAD, upstream, worktree, modules,
-   workflows) without repeating completed pre-flight work.
-3. Extend the existing source/recovery/provenance modules with one priority
-   scheduler: `LIVE_DAILY_1500=100`, `LIVE_RECOVERY=90`,
-   `VALIDATION_AND_PUBLISH=70`, `CHALLENGER_TRAINING=40`, and
-   `BACKFILL_90D=10`. Use durable atomic checkpoints, lease heartbeat/TTL,
-   generation fencing, and resumable market/source/date-or-page shards.
-4. Build the rights-aware Kuwait 90-day backfill for the inclusive window
-   2026-05-30 through 2026-08-27. The initial bundle must remain named
-   `INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`; blocked commercial or official
-   sources must be recorded and skipped without bypass.
-5. Produce the required per-market manifests/JSONL ledgers and coverage reports.
-   Report source attempts, actual records, unique records, training-admitted
-   records, and blocked-source reasons; do not call the bundle a training dataset
-   before rights/provenance/point-in-time/leakage/split gates pass.
-6. Continue official-first Kuwait source admission. KCC and Boursa remain blocked
-   from prior public probes; try only documented official exports, alternate
-   official surfaces, issuer/regulator records, or a user-authorized export.
-7. Keep `research_network` at `ABSTAIN` until real admissible observations exist.
+1. Commit this Stage 6 status evidence, push only
+   `codex/kuwait-market-ai-day1-v1`, and require exact-head CI for the resulting
+   documentation head. Priority-head CI run `33056857748` is in progress. Do not
+   create a PR, merge to `main`, or claim schedules are active.
+2. Extend the existing source/evidence modules with the rights-aware Kuwait
+   backfill for the inclusive 2026-05-30 through 2026-08-27 window. Keep the
+   package name exactly `INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`.
+3. Materialize and validate the required Kuwait files: `run-manifest.json`,
+   `source-attempts.jsonl`, `provenance-records.jsonl`, `events-unique.jsonl`,
+   `research-context-90d.jsonl`, `training-candidates.jsonl`,
+   `blocked-records.jsonl`, `contradictions.jsonl`, `coverage-report.json`, and
+   `coverage-report.md`.
+4. Use only trusted source-registry roles and the existing canonical validators.
+   Record `ADMITTED_RESEARCH_CONTEXT`, `ADMITTED_TRAINING`, `BLOCKED_RIGHTS`,
+   `BLOCKED_ROBOTS`, `BLOCKED_ACCESS`, `MISSING`, or `UNVERIFIED` per record.
+   Never bypass 403, robots, paywall, login, Terms, or license controls.
+5. Keep production backfill execution at `BLOCKED_CHECKPOINT_STORE` until an
+   allowlisted authorized durable store is configured. Local filesystem tests
+   prove coordination mechanics only, not GitHub-runner durability.
+6. Add bounded background/recovery schedules only by extending current
+   workflows: minute 23 every two hours for backfill and minutes 13/43 for
+   recovery, with priority checks, one Kuwait concurrency policy, no sleeps, and
+   no infinite retry. Schedules remain inactive until reviewed files reach the
+   default branch.
+7. Continue official-first Kuwait source admission. KCC and Boursa remain
+   blocked from the two prior public probes; try only documented official
+   exports, alternate official surfaces, issuer/regulator records, or a
+   user-authorized export.
+8. Keep `research_network` at `ABSTAIN` until real admissible observations exist.
    Keep `strict_forecast` locked through dataset release, challenger training,
    temporal validation, locked Blind Test, prospective shadow, and explicit
    promote/reject/rollback. Champion cannot self-update.
-8. Saudi remains design-only behind the five frozen gates in
-   `config/saudi-deferred-design-gates.json`. Research staging may be considered
-   only under the Issue #24 contract; Saudi training/promotion cannot start until
-   Kuwait training and Blind Test gates pass.
+9. Saudi remains design-only behind the five frozen gates in
+   `config/saudi-deferred-design-gates.json`. Isolated research staging may be
+   built only without Saudi training or promotion before Kuwait's locked Blind
+   Test succeeds.
 
 Resume command:
 

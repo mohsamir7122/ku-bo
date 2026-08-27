@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T08:23:51Z (2026-08-27T11:23:52+03:00, Asia/Kuwait)
+Updated: 2026-08-27T09:04:10Z (2026-08-27T12:04:10+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_5_KUWAIT_RECOVERY_IMPLEMENTED_TESTED_PENDING_PUSH_CI
+STAGE: STAGE_6_PRIORITY_CHECKPOINT_IMPLEMENTED_TESTED_PUSHED_CI_RUNNING
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -21,6 +21,10 @@ RESEARCH_MODE_COMMIT: bdbfb5c55a376f0976cfcf912066d310d88f0f55
 RECOVERY_POLICY_COMMIT: cb4808a13489cad0c14e2e41622fdbdeb8644631
 RECOVERY_CONTROLLER_COMMIT: 0170fa1549e32d29577aac5f9ef8f8528131247c
 RECOVERY_WORKFLOWS_COMMIT: 94e384f297e53019df644312c99c8529deefd7df
+RECOVERY_DOCUMENTATION_COMMIT: bd17767e992b57d5833a0bf92c7045294c7633fc
+ISSUE_24_DELTA_PREFLIGHT_COMMIT: 758dcd3d762385f88444a34b26530a3a6855add7
+RELEASE_METADATA_CI_FIX_COMMIT: ee07f00382dc5eba1fb9b903a4fd7f10deac4523
+PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
 ```
 
 ## Completed and evidenced
@@ -176,13 +180,45 @@ RECOVERY_WORKFLOWS_COMMIT: 94e384f297e53019df644312c99c8529deefd7df
 - Saudi runtime work did not start. Five review invariants are frozen in a
   design-only schema/config/test contract and remain blocked behind Kuwait's
   training, locked Blind Test, and measurement report.
+- Read Issue #24 and its only comment through the official GitHub REST API after
+  the requested `gh issue view` command failed on GitHub's removed Projects
+  Classic GraphQL field. The binding issue/comment digests and Delta PRE-FLIGHT
+  are recorded in commit `758dcd3d762385f88444a34b26530a3a6855add7`.
+- Added one locked priority order: `LIVE_DAILY_1500=100`, `LIVE_RECOVERY=90`,
+  `VALIDATION_AND_PUBLISH=70`, `CHALLENGER_TRAINING=40`, and
+  `BACKFILL_90D=10`. No second source, provenance, or recovery system was
+  created.
+- Extended the recovery lease with priority, owner/run identity, heartbeat/TTL,
+  generation, fencing token, checkpoint binding, CAS preemption, and atomic
+  durable writes. Active leases remain protected and only strictly higher
+  priority can request cooperative preemption.
+- Added market/source/date-or-page shards, stable idempotency keys, a two-attempt
+  budget, atomic checkpoint writes, immutable completed shards, reopened output
+  SHA-256 validation, generation/fencing CAS, and resume of non-completed shards
+  only. The inclusive 2026-05-30 through 2026-08-27 window is verified as 90
+  days.
+- Priority/checkpoint unit and adversarial tests pass 16/16; the expanded
+  recovery/lease tests pass 35/35; compile, whitespace, and Secret Guard pass.
+  The integrated preemption test is synthetic coordination evidence only: it
+  proves two completed shards remain at attempt 1, the interrupted shard resumes
+  at attempt 2, and Champion bytes remain unchanged.
+- Production use remains fail-closed as `BLOCKED_CHECKPOINT_STORE`: no trusted
+  durable production store kind is configured. This phase did not make a source
+  attempt and did not create a backfill record, observation, event, training row,
+  prediction, or live candidate.
+- Exact-head CI run `33054455755` failed only because the release metadata test
+  had not been updated when the pinned PyYAML workflow-parser dependency was
+  added. Commit `ee07f00382dc5eba1fb9b903a4fd7f10deac4523` binds that dependency;
+  its focused tests and Secret Guard pass, and CI run `33056375121` is in
+  progress. The priority commit is pushed and exact-head CI run `33056857748`
+  is in progress; it is not yet CI-validated.
 
 ## Next active stage
 
-- Push the current branch and require exact-head CI, then read Issue #24 and all
-  comments as binding additions. Perform Delta PRE-FLIGHT and extend the current
-  modules with the requested priority/checkpoint/backfill layer; do not duplicate
-  the source, provenance, or recovery systems.
+- Commit the updated status evidence, push the priority/checkpoint commits to the
+  work branch, and require exact-head CI. Then implement the rights-aware Kuwait
+  90-day bundle named `INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`, extending the
+  current source/provenance validators and retaining zero-data/blocker truth.
 
 ## Not started or not yet evidenced
 
@@ -199,6 +235,10 @@ RECOVERY_WORKFLOWS_COMMIT: 94e384f297e53019df644312c99c8529deefd7df
 - Required GitHub Secrets and repository variables are absent in both final
   repositories. Scheduled collection/live workflows must remain disabled or
   fail closed until exact contracts are supplied and validated.
+- No trusted durable production checkpoint store is configured. Local atomic
+  checkpoint tests do not prove GitHub runner persistence; background backfill
+  execution must fail with `BLOCKED_CHECKPOINT_STORE` until an allowlisted,
+  authorized store is configured.
 - Direct safe HTTP probes could not retrieve a usable robots policy from the
   KCC or Boursa reports hosts. No bypass, proxy credential, browser session, or
   alternate scraped route was used; both sources remain unadmitted.
@@ -207,9 +247,10 @@ RECOVERY_WORKFLOWS_COMMIT: 94e384f297e53019df644312c99c8529deefd7df
   still say all fourteen are not started. Filesystem audit confirms canonical
   gaps, so predecessor migration completion is not claimed.
 - Exact-head CI run `33041621326` passed for the Stage 3 receipt head, and Stage
-  4 CI run `33043529715` passed at its reviewed head. The current recovery head
-  has not yet been pushed or validated by exact-head CI; activation and merge
-  remain forbidden.
+  4 CI run `33043529715` passed at its reviewed head. Recovery run `33054455755`
+  exposed the release-metadata mismatch described above; corrected run
+  `33056375121` is in progress. Priority-head run `33056857748` is also in
+  progress; activation and merge remain forbidden until exact-head validation.
 - The official holiday contract is verified only through 2026. A later live
   slot fails closed if official calendar coverage is absent or stale.
 - PRoot exposes phone storage through existing binds. All writes in this run are

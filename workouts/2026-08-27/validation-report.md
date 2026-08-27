@@ -236,3 +236,42 @@ admitted records, and zero locked predictions. Consequently the research network
 can only return `ABSTAIN`, and strict forecast remains `LOCKED`. Workflow
 schedules are not active because the reviewed files have not reached the default
 branch.
+
+## Stage 6 Issue #24 Delta PRE-FLIGHT and priority checkpoints
+
+The requested `gh issue view 24 --comments` command failed because GitHub removed
+the Projects Classic `projectCards` GraphQL field. The issue and its one comment
+were then read through the official REST API and recorded with content digests in
+`workouts/2026-08-27/delta-preflight-issue-24.md`. No web instructions or code
+were executed.
+
+```text
+PRIORITY/CHECKPOINT UNIT + ADVERSARIAL: PASS — 16/16
+RECOVERY/LEASE UNIT + ADVERSARIAL: PASS — 35/35
+CHECKPOINT POLICY SCHEMA: PASS
+CHECKPOINT DOCUMENT SCHEMA: PASS
+INCLUSIVE WINDOW: PASS — 2026-05-30..2026-08-27, 90 days
+SYNTHETIC PREEMPT/RESUME: PASS — completed attempts [1,1], resumed attempt 2
+CHAMPION MUTATION IN SYNTHETIC TEST: 0 bytes
+COMPILE: PASS
+SECRET_GUARD: PASS
+GIT_DIFF_CHECK: PASS
+```
+
+The test-only atomic store reopens shard artifacts and validates SHA-256 before
+completion, rejects path traversal and symlinks, uses generation/fencing CAS and
+atomic writes, and resumes only non-completed shards. It is not proof of a
+durable production backend. The trusted policy deliberately returns
+`BLOCKED_CHECKPOINT_STORE`, and no scheduled backfill was executed.
+
+CI run `33054455755` at recovery documentation head `bd17767` failed one release
+metadata assertion after PyYAML was added for workflow parsing. Commit `ee07f00`
+updates the locked expected test extras; its focused metadata tests pass 3/3 and
+Secret Guard passes. Corrected CI run `33056375121` is still in progress.
+Priority commit `3195ba7` is pushed; exact-head CI run `33056857748` is in
+progress and therefore is not yet claimed as validated.
+
+Evidence counts did not change in this stage: 2 source attempts, 0 readable
+artifacts, 0 real observations, 0 unique admitted events, 0 training-admitted
+records, and 0 locked predictions. No forecast, return, or investment-improvement
+claim is made.
