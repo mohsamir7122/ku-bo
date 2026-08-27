@@ -1,17 +1,17 @@
 # KU-BO-ONE-SECURITY-CHECKPOINT-V2 — One-security durable checkpoint v2
 
 ```text
-FINAL_STATUS: PARTIAL
+FINAL_STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 8514438ab2011dcabfabbe5e0439ac6caf33f276
 TASK_BRANCH: codex/one-security-checkpoint-v2
-FINAL_SHA: PENDING — working tree is not yet a validated committed head
+FINAL_SHA: f39e19df76f2fb15f7a7801bf3874fc3e5455a23 — validated implementation head
 DRAFT_PR: #26
 PR_BASE: main
-CI_RUN: PENDING — no new exact-head CI run exists for the in-progress implementation
-STARTED_AT: NOT_RECORDED
-COMPLETED_AT: NOT_APPLICABLE — task remains in progress
+CI_RUN: 33124534059 — PASS on Python 3.11-3.14 for the validated implementation head
+STARTED_AT: 2026-08-27T18:37:57Z
+COMPLETED_AT: 2026-08-28T02:15:13+03:00
 ```
 
 ## User goal
@@ -35,15 +35,15 @@ changing legacy checkpoint v1 behavior or enabling live/private-runtime access.
   historical migration-control compatibility fields were absent from
   `CURRENT_TASK`; this was a control mismatch, not proof of a checkpoint-runtime
   failure.
-- The frozen working tree passed 2,568/2,568 local tests; commit/push and a clean
-  exact-head GitHub CI result remain `PENDING`.
-- Issue #27 (`KU-BO-HYBRID-001`) remains queued behind the PR #26 readiness gate;
-  it has not been started by this partial handoff.
+- The frozen tree passed 2,568/2,568 local tests, was pushed as `f39e19d`, and
+  exact-head GitHub CI run `33124534059` passed on Python 3.11-3.14.
+- Issue #27 (`KU-BO-HYBRID-001`) remains queued until the terminal status commit
+  receives its own exact-head CI; it is not started by this handoff alone.
 
 ## Changes made
 
-The working tree currently contains an in-progress synthetic checkpoint-v2
-candidate:
+Validated implementation head `f39e19d` contains the completed synthetic
+checkpoint-v2 software contract:
 
 - a separate `issuer_checkpoint_v2` implementation with proposed CAS/fencing,
   resume, reopening, reconciliation, and HMAC terminal-seal behavior;
@@ -53,8 +53,8 @@ candidate:
 - restored historical migration-control compatibility metadata and task-agnostic
   control-test repairs.
 
-These changes are not yet represented by a final commit SHA and are not claimed
-as accepted until the validation gates below complete.
+These changes are represented by validated implementation head `f39e19d`; the
+validation gates below completed successfully.
 
 ## Validation performed
 
@@ -114,8 +114,8 @@ DETAIL: Wheel SHA-256 86d5965fbccaad3b76b649488b47e00afc0d01b74b1d38af47bef39909
 
 ```text
 COMMAND_OR_JOB: GitHub Actions exact-head CI on Python 3.11-3.14
-RESULT: SKIPPED
-DETAIL: PENDING until a clean final head is committed and pushed to Draft PR #26.
+RESULT: PASS
+DETAIL: Run 33124534059 passed for implementation head f39e19df76f2fb15f7a7801bf3874fc3e5455a23. The terminal docs/control commit is intentionally followed by one fresh CI run before Issue #27 begins.
 ```
 
 ## Evidence and data status
@@ -126,8 +126,8 @@ SYNTHETIC_ONLY
 
 Only generated temporary fixtures are permitted. No public-market collection,
 private runtime, Google Drive write, licensed feed, or real checkpoint evidence
-is part of this task. The current deliverable is `PARTIAL` because its acceptance
-and exact-head validation gates remain open.
+is part of this task. The completed deliverable proves the synthetic software
+contract only.
 
 ## Claims allowed
 
@@ -136,7 +136,8 @@ and exact-head validation gates remain open.
   sequential v1 contracts by design.
 - The task boundary is synthetic-only and enables no live source or private
   runtime operation.
-- Final implementation correctness and durability are not yet claimed.
+- The synthetic checkpoint-v2 implementation passed its functional,
+  adversarial, installed-wheel, and exact-head CI gates.
 
 ## Claims still forbidden
 
@@ -160,7 +161,7 @@ licensed data:                  NO
 destructive cleanup:            NO
 ```
 
-No exception is authorized. This partial handoff does not grant runtime access
+No exception is authorized. This terminal handoff does not grant runtime access
 or weaken the final repository-safety gates.
 
 ## User decisions required
@@ -175,7 +176,7 @@ Neither decision blocks completing and validating this synthetic-only PR #26.
 
 ```text
 KEEP: separate checkpoint-v2 module, versioned schemas, focused/adversarial tests, bounded validator CLI, task control metadata
-REFACTOR: none classified at this partial boundary
+REFACTOR: none classified at this terminal boundary
 ARCHIVE: none
 SUPERSEDE: starting-head control mismatch once a new validated head replaces it
 DELETE_CANDIDATE: none
@@ -184,12 +185,9 @@ PRIVATE_ONLY: any future real checkpoint roots, raw evidence, runtime grants, HM
 
 ## Known limitations and risks
 
-- The implementation is locally validated and frozen but remains uncommitted;
-  its final SHA and exact-head GitHub CI do not exist yet.
-- The local targeted/adversarial, full-suite, schema, Secret Guard, and
-  installed-wheel/CLI gates pass; commit/push and exact-head GitHub CI remain pending.
-- No final SHA can be recorded until the implementation is committed; recording
-  the starting SHA as a final head would be false.
+- The validated implementation is pushed at `f39e19d` with exact-head CI green.
+- The terminal docs/control commit must also receive fresh exact-head CI before
+  the queued Issue #27 branch is created.
 - Synthetic temporary-filesystem success, when established, will not prove
   production storage durability or authorize private-runtime writes.
 - PR #26 must remain Draft and must not be merged under the current task contract.
@@ -202,7 +200,7 @@ PROPOSED_BRANCH: codex/kuwait-hybrid-full-market-collection-v1
 DEPENDENCY: Draft PR #26 at its exact final green head
 GOAL: Begin the bounded Kuwait hybrid full-market collection task under Issue #27's rights, reuse, append-only, test, and acceptance gates.
 ENTRY_GATE: PR #26 has a terminal handoff, a clean pushed exact head, all applicable exact-head GitHub CI green, and no unresolved control mismatch; then create the stacked branch from that exact green head and record PR #26 as its dependency before marking Issue #27 STARTED.
-EXIT_GATE: Defined by Issue #27; this partial handoff makes no completion claim for it.
+EXIT_GATE: Defined by Issue #27; this terminal handoff makes no completion claim for it.
 ```
 
 Issue #27 remains gated and queued. This document does not start it.
