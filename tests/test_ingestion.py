@@ -6,7 +6,8 @@ import socket
 import ssl
 import tempfile
 import unittest
-from datetime import datetime
+from dataclasses import replace
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib import error
 
@@ -17,6 +18,7 @@ from kubo.ingestion import (
     CaptureRequest,
     FileConnector,
     PublicHttpConnector,
+    RobotsAccessGrant,
     capture_sources,
 )
 import kubo.ingestion as ingestion
@@ -91,6 +93,19 @@ class QueueOpener:
 
 def robots_response(body: bytes = b"User-agent: *\nDisallow:\n") -> FakeResponse:
     return FakeResponse(body, "https://example.com/robots.txt", headers={"Content-Type": "text/plain"})
+
+
+def robots_access_grant(source_id: str = "fixture_source") -> RobotsAccessGrant:
+    return RobotsAccessGrant(
+        source_id=source_id,
+        registry_id="reviewed-robots-access-v1",
+        registry_sha256="a" * 64,
+        rights_status="PERMITTED",
+        terms_status="REVIEWED_PERMITTED",
+        public_access_status="CONFIRMED_PUBLIC",
+        reviewed_at=FIXED_TIME - timedelta(days=1),
+        expires_at=FIXED_TIME + timedelta(days=30),
+    )
 
 
 class CaptureContractTests(unittest.TestCase):
@@ -260,7 +275,7 @@ class PublicHttpConnectorTests(unittest.TestCase):
             capture_request(resource_path=None)
         )
         self.assertEqual(result.state, "ERROR")
-        self.assertEqual(result.error_code, "ROBOTS_DNS_ERROR")
+        self.assertEqual(result.error_code, "ROBOTS_UNREACHABLE")
 
     def test_dns_resolution_to_non_public_address_is_blocked_before_connect(self):
         def private_resolver(*_args, **_kwargs):
@@ -312,18 +327,40 @@ class PublicHttpConnectorTests(unittest.TestCase):
         self.assertEqual(result.error_code, "ROBOTS_DISALLOWED")
         self.assertEqual(len(opener.calls), 1)
 
-    def test_missing_robots_is_not_treated_as_a_published_restriction(self):
+    def test_missing_robots_requires_trusted_rights_terms_and_public_access(self):
         robots_404 = error.HTTPError(
             "https://example.com/robots.txt", 404, "Not Found", {}, io.BytesIO(b"")
         )
+        blocked = PublicHttpConnector(
+            clock=fixed_clock,
+            opener=QueueOpener(robots_404),
+        ).capture(capture_request(source_url="https://example.com/data", resource_path=None))
+        self.assertEqual(blocked.state, "BLOCKED")
+        self.assertEqual(blocked.error_code, "ACCESS_REVIEW_REQUIRED")
+        self.assertEqual(blocked.robots_policy_receipt.http_status, 404)
+        self.assertFalse(
+            blocked.robots_policy_receipt.to_dict()["access_receipt_proves_collection"]
+        )
+
+        granted_404 = error.HTTPError(
+            "https://example.com/robots.txt", 404, "Not Found", {}, io.BytesIO(b"")
+        )
         opener = QueueOpener(
-            robots_404,
+            granted_404,
             FakeResponse(b"ok", "https://example.com/data", headers={"Content-Type": "text/plain"}),
         )
-        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+        result = PublicHttpConnector(
+            clock=fixed_clock,
+            opener=opener,
+            robots_access_grants={"fixture_source": robots_access_grant()},
+        ).capture(
             capture_request(source_url="https://example.com/data", resource_path=None)
         )
         self.assertTrue(result.captured)
+        receipt = result.robots_policy_receipt.to_dict()
+        self.assertEqual(receipt["decision"], "ROBOTS_NOT_PUBLISHED")
+        self.assertEqual(receipt["access_registry_sha256"], "a" * 64)
+        self.assertFalse(receipt["access_receipt_proves_collection"])
 
     def test_unavailable_robots_fails_closed(self):
         opener = QueueOpener(error.URLError("offline"))
@@ -331,7 +368,8 @@ class PublicHttpConnectorTests(unittest.TestCase):
             capture_request(resource_path=None)
         )
         self.assertEqual(result.state, "ERROR")
-        self.assertEqual(result.error_code, "ROBOTS_POLICY_UNAVAILABLE")
+        self.assertEqual(result.error_code, "ROBOTS_UNREACHABLE")
+        self.assertEqual(result.robots_policy_receipt.decision, "ROBOTS_UNREACHABLE")
         self.assertEqual(len(opener.calls), 1)
 
     def test_transient_robots_failure_is_not_cached_across_retry(self):
@@ -347,7 +385,7 @@ class PublicHttpConnectorTests(unittest.TestCase):
         connector = PublicHttpConnector(clock=fixed_clock, opener=opener)
         first = connector.capture(capture_request(resource_path=None))
         second = connector.capture(capture_request(resource_path=None))
-        self.assertEqual(first.error_code, "ROBOTS_POLICY_UNAVAILABLE")
+        self.assertEqual(first.error_code, "ROBOTS_UNREACHABLE")
         self.assertTrue(second.captured)
         self.assertEqual(len(opener.calls), 3)
 
@@ -463,7 +501,233 @@ class PublicHttpConnectorTests(unittest.TestCase):
         self.assertEqual(result.error_code, "HTTP_RATE_LIMITED")
         self.assertEqual(result.retry_after_seconds, 19.0)
         self.assertIn("ROBOTS_ENDPOINT_RATE_LIMITED", result.limitations)
+        self.assertEqual(result.robots_policy_receipt.decision, "RETRYABLE_RATE_LIMIT")
+        self.assertEqual(result.robots_policy_receipt.http_status, 429)
         self.assertEqual(len(opener.calls), 1)
+
+    def test_robots_auth_and_gone_statuses_require_access_review(self):
+        for status in (401, 403, 410):
+            with self.subTest(status=status):
+                failure = error.HTTPError(
+                    "https://example.com/robots.txt",
+                    status,
+                    "blocked",
+                    {},
+                    io.BytesIO(b""),
+                )
+                result = PublicHttpConnector(
+                    clock=fixed_clock, opener=QueueOpener(failure)
+                ).capture(capture_request(resource_path=None))
+                self.assertEqual(result.state, "BLOCKED")
+                self.assertEqual(result.error_code, "ACCESS_REVIEW_REQUIRED")
+                self.assertEqual(result.robots_policy_receipt.http_status, status)
+                self.assertFalse(result.captured)
+
+    def test_robots_server_and_tls_failures_are_temporarily_unreachable(self):
+        cases = (
+            error.HTTPError(
+                "https://example.com/robots.txt",
+                503,
+                "unavailable",
+                {},
+                io.BytesIO(b""),
+            ),
+            error.URLError(ssl.SSLError("certificate verify failed")),
+        )
+        for failure in cases:
+            with self.subTest(failure=type(failure).__name__):
+                result = PublicHttpConnector(
+                    clock=fixed_clock, opener=QueueOpener(failure)
+                ).capture(capture_request(resource_path=None))
+                self.assertEqual(result.state, "ERROR")
+                self.assertEqual(result.error_code, "ROBOTS_UNREACHABLE")
+                receipt = result.robots_policy_receipt.to_dict()
+                self.assertEqual(receipt["decision"], "ROBOTS_UNREACHABLE")
+                self.assertIn("HEALTH_PROBE_REQUIRED", receipt["access_gates"])
+
+    def test_robots_receipt_records_redirect_metadata_and_redacts_query(self):
+        redirected = FakeResponse(
+            b"User-agent: *\nDisallow:\n",
+            "https://cdn.example.com/robots.txt",
+            headers={"Content-Type": "text/plain"},
+        )
+        opener = QueueOpener(
+            redirected,
+            FakeResponse(b"ok", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+        )
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        receipt = result.robots_policy_receipt.to_dict()
+        self.assertEqual(receipt["http_status"], 200)
+        self.assertEqual(
+            receipt["redirect_chain"],
+            ["https://example.com/robots.txt", "https://cdn.example.com/robots.txt"],
+        )
+        self.assertEqual(receipt["origin"], "https://example.com/")
+        digest = receipt.pop("receipt_sha256")
+        self.assertEqual(digest, sha256_bytes(ingestion.canonical_json_bytes(receipt)))
+
+        signed_query_key = "X-Amz-" + "Signature"
+        signed = FakeResponse(
+            b"ignored",
+            f"https://example.com/robots.txt?{signed_query_key}=never-store-this",
+        )
+        blocked = PublicHttpConnector(
+            clock=fixed_clock, opener=QueueOpener(signed)
+        ).capture(capture_request(resource_path=None))
+        serialized = json.dumps(blocked.robots_policy_receipt.to_dict())
+        self.assertEqual(blocked.error_code, "ROBOTS_REDIRECT_BLOCKED")
+        self.assertNotIn("never-store-this", serialized)
+        self.assertIn("__kubo_query_sha256", serialized)
+
+    def test_robots_cache_is_dated_bounded_and_revalidated_after_expiry(self):
+        current = [FIXED_TIME]
+
+        def clock() -> datetime:
+            return current[0]
+
+        opener = QueueOpener(
+            robots_response(),
+            FakeResponse(b"first", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+            FakeResponse(b"cached", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+            FakeResponse(
+                b"User-agent: *\nDisallow:\n",
+                "https://example.com/robots.txt",
+                headers={"Content-Type": "text/plain"},
+            ),
+            FakeResponse(b"second", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+        )
+        connector = PublicHttpConnector(clock=clock, opener=opener)
+        first = connector.capture(capture_request(resource_path=None))
+        cached = connector.capture(capture_request(resource_path=None))
+        self.assertFalse(first.robots_policy_receipt.cache_hit)
+        self.assertTrue(cached.robots_policy_receipt.cache_hit)
+        self.assertLessEqual(
+            cached.robots_policy_receipt.cache_expires_at
+            - cached.robots_policy_receipt.fetched_at,
+            timedelta(hours=24),
+        )
+        self.assertEqual(len(opener.calls), 3)
+
+        current[0] = FIXED_TIME + timedelta(hours=25)
+        refreshed = connector.capture(capture_request(resource_path=None))
+        self.assertFalse(refreshed.robots_policy_receipt.cache_hit)
+        self.assertEqual(refreshed.content, b"second")
+        self.assertEqual(len(opener.calls), 5)
+
+    def test_redirect_handler_blocks_sixth_redirect_loop_and_unregistered_domain(self):
+        handler = ingestion._AllowlistRedirectHandler(("example.com",))
+        current = ingestion.request.Request("https://example.com/start")
+        handler.reset_trace(current.full_url)
+        for index in range(5):
+            current = handler.redirect_request(
+                current, None, 302, "redirect", {}, f"/step-{index}"
+            )
+        with self.assertRaisesRegex(ingestion._RedirectPolicyError, "REDIRECT_LIMIT_EXCEEDED"):
+            handler.redirect_request(current, None, 302, "redirect", {}, "/step-6")
+
+        loop_handler = ingestion._AllowlistRedirectHandler(("example.com",))
+        original = ingestion.request.Request("https://example.com/start")
+        redirected_request = loop_handler.redirect_request(
+            original, None, 302, "redirect", {}, "/next"
+        )
+        with self.assertRaisesRegex(ingestion._RedirectPolicyError, "REDIRECT_LOOP"):
+            loop_handler.redirect_request(
+                redirected_request, None, 302, "redirect", {}, "/start"
+            )
+
+        with self.assertRaisesRegex(
+            ingestion._RedirectPolicyError, "UNREGISTERED_REDIRECT_DOMAIN"
+        ):
+            handler.redirect_request(
+                ingestion.request.Request("https://example.com/start"),
+                None,
+                302,
+                "redirect",
+                {},
+                "https://attacker.invalid/robots.txt",
+            )
+
+    def test_writer_persists_robots_receipt_without_promoting_collection(self):
+        opener = QueueOpener(
+            robots_response(),
+            FakeResponse(b"raw", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+        )
+        result = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            CapturePacketWriter(Path(directory) / "run").write((result,))
+            payload = json.loads(
+                (Path(directory) / "run" / "robots-policy-receipts.json").read_text()
+            )
+        self.assertEqual(len(payload["receipts"]), 1)
+        self.assertFalse(payload["claim_boundaries"]["access_receipt_proves_collection"])
+        self.assertEqual(result.query_status, "DATA_QUALITY_REJECTED")
+
+    def test_expired_or_miskeyed_access_grant_cannot_authorize_missing_robots(self):
+        expired = RobotsAccessGrant(
+            source_id="fixture_source",
+            registry_id="reviewed-robots-access-v1",
+            registry_sha256="b" * 64,
+            rights_status="PERMITTED",
+            terms_status="REVIEWED_PERMITTED",
+            public_access_status="CONFIRMED_PUBLIC",
+            reviewed_at=FIXED_TIME - timedelta(days=2),
+            expires_at=FIXED_TIME - timedelta(days=1),
+        )
+        gone = error.HTTPError(
+            "https://example.com/robots.txt", 410, "Gone", {}, io.BytesIO(b"")
+        )
+        result = PublicHttpConnector(
+            clock=fixed_clock,
+            opener=QueueOpener(gone),
+            robots_access_grants={"fixture_source": expired},
+        ).capture(capture_request(resource_path=None))
+        self.assertEqual(result.error_code, "ACCESS_REVIEW_REQUIRED")
+        self.assertEqual(result.robots_policy_receipt.access_gates, ("ACCESS_GRANT_EXPIRED",))
+
+        with self.assertRaisesRegex(ValueError, "keyed"):
+            PublicHttpConnector(
+                robots_access_grants={"different_source": robots_access_grant()}
+            )
+        with self.assertRaisesRegex(ValueError, "no greater than 24"):
+            PublicHttpConnector(robots_cache_ttl=timedelta(hours=24, seconds=1))
+        with self.assertRaisesRegex(TypeError, "timedelta"):
+            PublicHttpConnector(robots_cache_ttl="24 hours")
+
+    def test_robots_receipt_rejects_unredacted_urls_and_expired_cache_claims(self):
+        opener = QueueOpener(
+            robots_response(),
+            FakeResponse(b"raw", "https://example.com/public/data", headers={"Content-Type": "text/plain"}),
+        )
+        receipt = PublicHttpConnector(clock=fixed_clock, opener=opener).capture(
+            capture_request(resource_path=None)
+        ).robots_policy_receipt
+        credential_part = "user" + ":" + "pass" + "word" + "@"
+        sensitive_key = "to" + "ken"
+        unsafe = (
+            "https://"
+            + credential_part
+            + "example.com/robots.txt?"
+            + sensitive_key
+            + "=secret"
+        )
+        with self.assertRaisesRegex(ValueError, "unsafe|sanitized"):
+            replace(
+                receipt,
+                final_url=unsafe,
+                redirect_chain=(receipt.robots_url, unsafe),
+            )
+        with self.assertRaisesRegex(ValueError, "expired cache"):
+            replace(
+                receipt,
+                cache_hit=True,
+                evaluated_at=receipt.cache_expires_at,
+            )
+        with self.assertRaisesRegex(ValueError, "retry delay"):
+            replace(receipt, retry_after_seconds=1.0)
 
     def test_captcha_paywall_and_login_pages_are_not_saved(self):
         cases = (

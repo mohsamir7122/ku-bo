@@ -21,6 +21,7 @@ from kubo.recovery import (
     current_process_identity,
     heartbeat_recovery_lease,
     load_recovery_policy,
+    next_source_fallback,
     mark_alert_sent,
     read_recovery_lease,
     record_retry_attempt,
@@ -221,6 +222,14 @@ class RecoveryContractTests(unittest.TestCase):
             )["mode"],
             "resume",
         )
+
+    def test_source_fallbacks_follow_primary_first_order(self) -> None:
+        expected = list(self.policy["source_fallback_order"])
+        tried: list[str] = []
+        for fallback in expected:
+            self.assertEqual(next_source_fallback(self.policy, tried), fallback)
+            tried.append(fallback)
+        self.assertIsNone(next_source_fallback(self.policy, tried))
 
 
 class RecoveryLeaseTests(unittest.TestCase):

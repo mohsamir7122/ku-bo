@@ -14,6 +14,7 @@ from kubo.recovery import (
     acquire_recovery_lease,
     build_incident,
     load_recovery_policy,
+    next_source_fallback,
     read_recovery_lease,
     record_retry_attempt,
     recovery_decision,
@@ -111,6 +112,26 @@ class RecoveryAdversarialTests(unittest.TestCase):
             record_retry_attempt(
                 self.incident(), now=NOW + timedelta(minutes=29), policy=self.policy
             )
+
+    def test_source_fallback_cannot_skip_reorder_or_start_with_secondary(self) -> None:
+        invalid_attempts = (
+            ["alternate_official_page_or_repository"],
+            [
+                "official_documented_api_or_export",
+                "issuer_official_disclosures",
+            ],
+            ["secondary_discovery_only"],
+        )
+        for attempted in invalid_attempts:
+            with self.subTest(attempted=attempted), self.assertRaisesRegex(
+                RecoveryError, "ordered prefix"
+            ):
+                next_source_fallback(self.policy, attempted)
+
+        weakened = json.loads(json.dumps(self.policy))
+        weakened["source_fallback_order"].reverse()
+        with self.assertRaisesRegex(RecoveryError, "trusted policy"):
+            next_source_fallback(weakened, [])
 
 
 class RecoveryLeaseAdversarialTests(unittest.TestCase):

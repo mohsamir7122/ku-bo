@@ -13,10 +13,10 @@ import socket
 import ssl
 import stat
 import tempfile
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Iterable, Protocol
+from typing import Callable, Iterable, Mapping, Protocol
 from urllib import error, request, robotparser
 from urllib.parse import parse_qsl, urljoin, urlparse, urlsplit, urlunsplit
 
@@ -29,6 +29,8 @@ from .strict import sensitive_query_key
 DEFAULT_USER_AGENT = f"KU-BOResearchBot/{__version__} (public research capture; no authentication)"
 MAX_CAPTURE_BYTES = 50 * 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
+MAX_ROBOTS_REDIRECTS = 5
+MAX_ROBOTS_CACHE_HOURS = 24
 CAPTURE_KINDS = frozenset(
     {"RAW_PAGE", "RAW_DOWNLOAD", "USER_EXPORT", "ACCESS_RECEIPT", "ARCHIVE_CAPTURE"}
 )
@@ -168,6 +170,22 @@ def _provenance_url(value: str) -> str:
     )
 
 
+def _sanitized_trace_url(value: str, *, fallback: str) -> str:
+    """Keep redirect provenance while removing credentials and raw query values."""
+
+    try:
+        parsed = urlsplit(str(value))
+        port = parsed.port
+        host = (parsed.hostname or "").encode("idna").decode("ascii").lower()
+    except (UnicodeError, ValueError):
+        return _provenance_url(fallback)
+    if parsed.scheme.lower() not in {"http", "https"} or not host:
+        return _provenance_url(fallback)
+    netloc = host if port in (None, 443) else f"{host}:{port}"
+    clean = urlunsplit((parsed.scheme.lower(), netloc, parsed.path or "/", parsed.query, ""))
+    return _provenance_url(clean)
+
+
 def _retry_after_seconds(headers, attempted_at: datetime) -> float | None:
     """Parse Retry-After without shortening the server's requested delay.
 
@@ -242,6 +260,178 @@ class CaptureRequest:
 
 
 @dataclass(frozen=True)
+class RobotsAccessGrant:
+    """Trusted registry grant required before treating a 404/410 as no policy.
+
+    The grant is deliberately supplied to ``PublicHttpConnector`` rather than
+    accepted from ``CaptureRequest``.  Production callers therefore fail
+    closed unless a separately reviewed registry has established all three
+    gates for the exact source.
+    """
+
+    source_id: str
+    registry_id: str
+    registry_sha256: str
+    rights_status: str
+    terms_status: str
+    public_access_status: str
+    reviewed_at: datetime
+    expires_at: datetime
+
+    def __post_init__(self) -> None:
+        if not _SOURCE_ID_RE.fullmatch(str(self.source_id)):
+            raise ValueError("robots access grant source_id is invalid")
+        if not _SOURCE_ID_RE.fullmatch(str(self.registry_id)):
+            raise ValueError("robots access grant registry_id is invalid")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(self.registry_sha256)):
+            raise ValueError("robots access grant registry_sha256 is invalid")
+        if self.rights_status != "PERMITTED":
+            raise ValueError("robots access grant requires PERMITTED rights")
+        if self.terms_status != "REVIEWED_PERMITTED":
+            raise ValueError("robots access grant requires reviewed permitted terms")
+        if self.public_access_status != "CONFIRMED_PUBLIC":
+            raise ValueError("robots access grant requires confirmed public access")
+        reviewed = _aware(self.reviewed_at, "robots grant reviewed_at")
+        expires = _aware(self.expires_at, "robots grant expires_at")
+        if expires <= reviewed:
+            raise ValueError("robots access grant must expire after review")
+
+    def permits(self, source_id: str, at: datetime) -> bool:
+        moment = _aware(at, "robots grant evaluation time")
+        return self.source_id == source_id and self.reviewed_at <= moment < self.expires_at
+
+
+@dataclass(frozen=True)
+class RobotsPolicyReceipt:
+    """Sanitized, hash-addressed evidence of one robots policy decision."""
+
+    source_id: str
+    origin: str
+    robots_url: str
+    final_url: str
+    http_status: int | None
+    redirect_chain: tuple[str, ...]
+    fetched_at: datetime
+    evaluated_at: datetime
+    cache_expires_at: datetime
+    cache_hit: bool
+    decision: str
+    access_gates: tuple[str, ...]
+    access_registry_id: str | None = None
+    access_registry_sha256: str | None = None
+    retry_after_seconds: float | None = None
+
+    def __post_init__(self) -> None:
+        if not _SOURCE_ID_RE.fullmatch(str(self.source_id)):
+            raise ValueError("robots receipt source_id is invalid")
+        for value, field_name in (
+            (self.origin, "origin"),
+            (self.robots_url, "robots_url"),
+            (self.final_url, "final_url"),
+        ):
+            parsed = urlsplit(str(value))
+            allowed_schemes = (
+                {"https", "http"}
+                if field_name == "final_url" and self.decision == "ROBOTS_REDIRECT_BLOCKED"
+                else {"https"}
+            )
+            if (
+                parsed.scheme not in allowed_schemes
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+            ):
+                raise ValueError(f"robots receipt {field_name} must be sanitized HTTPS")
+        if self.http_status is not None and (
+            type(self.http_status) is not int or not 100 <= self.http_status <= 599
+        ):
+            raise ValueError("robots receipt http_status is invalid")
+        if (
+            not self.redirect_chain
+            or len(self.redirect_chain) > MAX_ROBOTS_REDIRECTS + 2
+            or self.redirect_chain[0] != self.robots_url
+            or self.redirect_chain[-1] != self.final_url
+        ):
+            raise ValueError("robots receipt redirect chain is invalid")
+        for index, value in enumerate(self.redirect_chain):
+            parsed = urlsplit(value)
+            if (
+                parsed.scheme not in {"https", "http"}
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or (
+                    parsed.scheme == "http"
+                    and self.decision != "ROBOTS_REDIRECT_BLOCKED"
+                )
+            ):
+                raise ValueError(f"robots receipt redirect_chain[{index}] is unsafe")
+            if parsed.query and not re.fullmatch(
+                r"__kubo_query_sha256=[0-9a-f]{64}", parsed.query
+            ):
+                raise ValueError("robots receipt contains an unhashed query")
+        if (
+            len(self.redirect_chain) != len(set(self.redirect_chain))
+            and self.decision != "ROBOTS_REDIRECT_BLOCKED"
+        ):
+            raise ValueError("robots receipt redirect chain contains a loop")
+        fetched = _aware(self.fetched_at, "robots receipt fetched_at")
+        evaluated = _aware(self.evaluated_at, "robots receipt evaluated_at")
+        expires = _aware(self.cache_expires_at, "robots receipt cache_expires_at")
+        if evaluated < fetched or expires < fetched:
+            raise ValueError("robots receipt timestamps are inconsistent")
+        if expires > fetched + timedelta(hours=MAX_ROBOTS_CACHE_HOURS):
+            raise ValueError("robots receipt cache exceeds the maximum policy")
+        if type(self.cache_hit) is not bool:
+            raise ValueError("robots receipt cache_hit must be boolean")
+        if self.cache_hit and evaluated >= expires:
+            raise ValueError("robots receipt cannot use an expired cache entry")
+        if not _CODE_RE.fullmatch(str(self.decision)):
+            raise ValueError("robots receipt decision is invalid")
+        if len(self.access_gates) != len(set(self.access_gates)):
+            raise ValueError("robots receipt access gates must be unique")
+        if (self.access_registry_id is None) != (self.access_registry_sha256 is None):
+            raise ValueError("robots receipt access registry identity is incomplete")
+        if self.access_registry_id is not None:
+            if not _SOURCE_ID_RE.fullmatch(self.access_registry_id):
+                raise ValueError("robots receipt access_registry_id is invalid")
+            if not re.fullmatch(r"[0-9a-f]{64}", str(self.access_registry_sha256)):
+                raise ValueError("robots receipt access_registry_sha256 is invalid")
+        if self.retry_after_seconds is not None and (
+            isinstance(self.retry_after_seconds, bool)
+            or not isinstance(self.retry_after_seconds, (int, float))
+            or not math.isfinite(float(self.retry_after_seconds))
+            or float(self.retry_after_seconds) < 0
+        ):
+            raise ValueError("robots receipt retry_after_seconds is invalid")
+        if self.retry_after_seconds is not None and self.decision != "RETRYABLE_RATE_LIMIT":
+            raise ValueError("robots receipt retry delay requires RETRYABLE_RATE_LIMIT")
+
+    def to_dict(self) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "schema_version": "1.0",
+            "source_id": self.source_id,
+            "origin": self.origin,
+            "robots_url": self.robots_url,
+            "final_url": self.final_url,
+            "http_status": self.http_status,
+            "redirect_chain": list(self.redirect_chain),
+            "fetched_at": self.fetched_at.astimezone(timezone.utc).isoformat(),
+            "evaluated_at": self.evaluated_at.astimezone(timezone.utc).isoformat(),
+            "cache_expires_at": self.cache_expires_at.astimezone(timezone.utc).isoformat(),
+            "cache_hit": self.cache_hit,
+            "decision": self.decision,
+            "access_gates": list(self.access_gates),
+            "access_registry_id": self.access_registry_id,
+            "access_registry_sha256": self.access_registry_sha256,
+            "retry_after_seconds": self.retry_after_seconds,
+            "access_receipt_proves_collection": False,
+        }
+        payload["receipt_sha256"] = sha256_bytes(canonical_json_bytes(payload))
+        return payload
+
+
+@dataclass(frozen=True)
 class CaptureResult:
     """The outcome of one capture attempt; operational failures are data, not exceptions."""
 
@@ -265,6 +455,7 @@ class CaptureResult:
     limitations: tuple[str, ...]
     retry_after_seconds: float | None = None
     material_query_route_proof_sha256: str | None = None
+    robots_policy_receipt: RobotsPolicyReceipt | None = None
 
     def __post_init__(self) -> None:
         if not _SOURCE_ID_RE.fullmatch(self.source_id):
@@ -316,6 +507,11 @@ class CaptureResult:
                 raise ValueError(
                     "material query route proof must hash the persisted zero-result bytes"
                 )
+        if self.robots_policy_receipt is not None:
+            if not isinstance(self.robots_policy_receipt, RobotsPolicyReceipt):
+                raise TypeError("robots_policy_receipt must be a RobotsPolicyReceipt")
+            if self.robots_policy_receipt.source_id != self.source_id:
+                raise ValueError("robots receipt source_id differs from capture result")
 
     @property
     def captured(self) -> bool:
@@ -507,6 +703,13 @@ class _UnsafeRedirectError(RuntimeError):
     pass
 
 
+class _RedirectPolicyError(_UnsafeRedirectError):
+    def __init__(self, reason: str, chain: tuple[str, ...]):
+        super().__init__(reason)
+        self.reason = reason
+        self.chain = chain
+
+
 class _UnsafeNetworkTargetError(RuntimeError):
     pass
 
@@ -618,20 +821,66 @@ class _PinnedHTTPSHandler(request.HTTPSHandler):
 
 
 class _AllowlistRedirectHandler(request.HTTPRedirectHandler):
-    max_redirections = 3
+    max_redirections = MAX_ROBOTS_REDIRECTS
     max_repeats = 1
 
     def __init__(self, allowed_domains: tuple[str, ...]):
         super().__init__()
         self.allowed_domains = allowed_domains
+        self.last_redirect_chain: tuple[str, ...] = ()
+
+    def reset_trace(self, initial_url: str) -> None:
+        self.last_redirect_chain = (_provenance_url(initial_url),)
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
         target = urljoin(req.full_url, newurl)
+        raw_chain = tuple(getattr(req, "_kubo_redirect_chain", (req.full_url,)))
+        safe_chain = tuple(_provenance_url(item) for item in raw_chain)
+        safe_target = _provenance_url(target)
+        if target in raw_chain:
+            chain = (*safe_chain, safe_target)
+            raise _RedirectPolicyError("REDIRECT_LOOP", chain)
+        if len(raw_chain) > MAX_ROBOTS_REDIRECTS:
+            chain = (*safe_chain, safe_target)
+            raise _RedirectPolicyError("REDIRECT_LIMIT_EXCEEDED", chain)
         try:
             _validate_public_url(target, self.allowed_domains)
         except ValueError as exc:
-            raise _UnsafeRedirectError("redirect target violates public allowlist policy") from exc
-        return super().redirect_request(req, fp, code, msg, headers, target)
+            chain = (*safe_chain, safe_target)
+            raise _RedirectPolicyError("UNREGISTERED_REDIRECT_DOMAIN", chain) from exc
+        redirected = super().redirect_request(req, fp, code, msg, headers, target)
+        if redirected is None:
+            return None
+        chain = (*raw_chain, target)
+        setattr(redirected, "_kubo_redirect_chain", chain)
+        self.last_redirect_chain = tuple(_provenance_url(item) for item in chain)
+        return redirected
+
+
+def _redirect_handler(opener) -> _AllowlistRedirectHandler | None:
+    for handler in getattr(opener, "handlers", ()):
+        if isinstance(handler, _AllowlistRedirectHandler):
+            return handler
+    return None
+
+
+def _begin_redirect_trace(opener, initial_url: str) -> None:
+    handler = _redirect_handler(opener)
+    if handler is not None:
+        handler.reset_trace(initial_url)
+
+
+def _observed_redirect_chain(opener, initial_url: str, final_url: str) -> tuple[str, ...]:
+    initial = _provenance_url(initial_url)
+    final = _provenance_url(final_url)
+    handler = _redirect_handler(opener)
+    if handler is not None and handler.last_redirect_chain:
+        chain = handler.last_redirect_chain
+        if chain[0] == initial:
+            if chain[-1] != final:
+                chain = (*chain, final)
+            return chain
+    return (initial,) if initial == final else (initial, final)
 
 
 def _build_public_opener(
@@ -652,6 +901,7 @@ def _build_public_opener(
 class _RobotsDecision:
     allowed: bool
     code: str
+    receipt: RobotsPolicyReceipt
     retry_after_seconds: float | None = None
 
 
@@ -664,10 +914,23 @@ class PublicHttpConnector:
         clock: Callable[[], datetime] = _utc_now,
         opener=None,
         resolver: Callable[..., list[tuple]] = socket.getaddrinfo,
+        robots_access_grants: Mapping[str, RobotsAccessGrant] | None = None,
+        robots_cache_ttl: timedelta = timedelta(hours=MAX_ROBOTS_CACHE_HOURS),
     ):
         self._clock = clock
         self._opener = opener
         self._resolver = resolver
+        grants = dict(robots_access_grants or {})
+        for source_id, grant in grants.items():
+            if not isinstance(grant, RobotsAccessGrant) or source_id != grant.source_id:
+                raise ValueError("robots access grants must be keyed by their trusted source_id")
+        if not isinstance(robots_cache_ttl, timedelta):
+            raise TypeError("robots_cache_ttl must be a timedelta")
+        ttl_seconds = robots_cache_ttl.total_seconds()
+        if not 0 < ttl_seconds <= timedelta(hours=MAX_ROBOTS_CACHE_HOURS).total_seconds():
+            raise ValueError("robots cache TTL must be positive and no greater than 24 hours")
+        self._robots_access_grants = grants
+        self._robots_cache_ttl = robots_cache_ttl
         self._robots_cache: dict[tuple[str, str], _RobotsDecision] = {}
 
     def capture(self, capture_request: CaptureRequest) -> CaptureResult:
@@ -695,9 +958,12 @@ class PublicHttpConnector:
             resolver=self._resolver,
         )
         robots_decision = self._robots_allowed(opener, capture_request, attempted_at)
+        def finalize(result: CaptureResult) -> CaptureResult:
+            return replace(result, robots_policy_receipt=robots_decision.receipt)
+
         if not robots_decision.allowed:
-            if robots_decision.code == "ROBOTS_HTTP_RATE_LIMITED":
-                return _failure(
+            if robots_decision.code == "RETRYABLE_RATE_LIMIT":
+                return finalize(_failure(
                     capture_request,
                     attempted_at,
                     state="BLOCKED",
@@ -708,19 +974,16 @@ class PublicHttpConnector:
                         "ROBOTS_POLICY_NOT_BYPASSED",
                     ),
                     retry_after_seconds=robots_decision.retry_after_seconds,
-                )
-            transient_robots = robots_decision.code in {
-                "ROBOTS_DNS_ERROR",
-                "ROBOTS_POLICY_UNAVAILABLE",
-            }
-            return _failure(
+                ))
+            transient_robots = robots_decision.code == "ROBOTS_UNREACHABLE"
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="ERROR" if transient_robots else "BLOCKED",
                 query_status="ERROR" if transient_robots else "BLOCKED",
                 error_code=robots_decision.code,
                 limitations=("ROBOTS_POLICY_NOT_BYPASSED",),
-            )
+            ))
 
         public_request = request.Request(
             capture_request.source_url,
@@ -732,78 +995,78 @@ class PublicHttpConnector:
         )
         try:
             response = opener.open(public_request, timeout=capture_request.timeout_seconds)
-            return self._read_response(response, capture_request, attempted_at)
+            return finalize(self._read_response(response, capture_request, attempted_at))
         except _UnsafeRedirectError:
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="BLOCKED",
                 query_status="BLOCKED",
                 error_code="REDIRECT_OUTSIDE_ALLOWLIST",
-            )
+            ))
         except _DnsResolutionError:
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="ERROR",
                 query_status="ERROR",
                 error_code="HTTP_DNS_ERROR",
-            )
+            ))
         except _UnsafeNetworkTargetError:
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="BLOCKED",
                 query_status="BLOCKED",
                 error_code="NON_PUBLIC_NETWORK_TARGET",
-            )
+            ))
         except error.HTTPError as exc:
             try:
                 final_url = str(exc.geturl() or capture_request.source_url)
                 try:
                     _validate_public_url(final_url, capture_request.allowed_domains)
                 except ValueError:
-                    return _failure(
+                    return finalize(_failure(
                         capture_request,
                         attempted_at,
                         state="BLOCKED",
                         query_status="BLOCKED",
                         error_code="REDIRECT_OUTSIDE_ALLOWLIST",
-                    )
-                return self._http_failure(
+                    ))
+                return finalize(self._http_failure(
                     capture_request,
                     attempted_at,
                     int(exc.code),
                     final_url=final_url,
                     headers=exc.headers,
-                )
+                ))
             finally:
                 exc.close()
         except (TimeoutError, socket.timeout):
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="ERROR",
                 query_status="ERROR",
                 error_code="HTTP_TIMEOUT",
-            )
+            ))
         except error.URLError as exc:
             code = "HTTP_TIMEOUT" if isinstance(exc.reason, (TimeoutError, socket.timeout)) else "HTTP_TRANSPORT_ERROR"
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="ERROR",
                 query_status="ERROR",
                 error_code=code,
-            )
+            ))
         except (OSError, ValueError):
-            return _failure(
+            return finalize(_failure(
                 capture_request,
                 attempted_at,
                 state="ERROR",
                 query_status="ERROR",
                 error_code="HTTP_TRANSPORT_ERROR",
-            )
+            ))
 
     def _robots_allowed(
         self,
@@ -814,77 +1077,286 @@ class PublicHttpConnector:
         parsed = urlparse(capture_request.source_url)
         origin = urlunsplit(("https", parsed.netloc, "", "", ""))
         cache_key = (capture_request.source_url, capture_request.user_agent)
-        if cache_key in self._robots_cache:
-            return self._robots_cache[cache_key]
-
         robots_url = urlunsplit(("https", parsed.netloc, "/robots.txt", "", ""))
+
+        cached = self._robots_cache.get(cache_key)
+        if cached is not None:
+            if attempted_at < cached.receipt.cache_expires_at:
+                receipt = replace(
+                    cached.receipt,
+                    evaluated_at=attempted_at,
+                    cache_hit=True,
+                )
+                return replace(cached, receipt=receipt)
+            self._robots_cache.pop(cache_key, None)
+
+        def decide(
+            allowed: bool,
+            code: str,
+            *,
+            status: int | None = None,
+            final_url: str | None = None,
+            chain: tuple[str, ...] | None = None,
+            gates: tuple[str, ...] = (),
+            grant: RobotsAccessGrant | None = None,
+            retry_after: float | None = None,
+            cacheable: bool = False,
+        ) -> _RobotsDecision:
+            safe_robots = _sanitized_trace_url(robots_url, fallback=robots_url)
+            safe_final = _sanitized_trace_url(final_url or robots_url, fallback=robots_url)
+            observed_chain = chain or _observed_redirect_chain(
+                opener, robots_url, final_url or robots_url
+            )
+            safe_chain = tuple(
+                _sanitized_trace_url(item, fallback=robots_url) for item in observed_chain
+            )
+            if not safe_chain or safe_chain[0] != safe_robots:
+                safe_chain = (safe_robots, *safe_chain)
+            if safe_chain[-1] != safe_final:
+                safe_chain = (*safe_chain, safe_final)
+            expires = attempted_at + self._robots_cache_ttl if cacheable else attempted_at
+            receipt = RobotsPolicyReceipt(
+                source_id=capture_request.source_id,
+                origin=_sanitized_trace_url(origin, fallback=robots_url),
+                robots_url=safe_robots,
+                final_url=safe_final,
+                http_status=status,
+                redirect_chain=safe_chain,
+                fetched_at=attempted_at,
+                evaluated_at=attempted_at,
+                cache_expires_at=expires,
+                cache_hit=False,
+                decision=code,
+                access_gates=tuple(gates),
+                access_registry_id=grant.registry_id if grant is not None else None,
+                access_registry_sha256=(
+                    grant.registry_sha256 if grant is not None else None
+                ),
+                retry_after_seconds=retry_after,
+            )
+            decision = _RobotsDecision(allowed, code, receipt, retry_after)
+            if cacheable:
+                self._robots_cache[cache_key] = decision
+            return decision
+
+        def not_published(
+            status: int,
+            final_url: str,
+            chain: tuple[str, ...],
+        ) -> _RobotsDecision:
+            grant = self._robots_access_grants.get(capture_request.source_id)
+            if grant is not None and grant.permits(capture_request.source_id, attempted_at):
+                return decide(
+                    True,
+                    "ROBOTS_NOT_PUBLISHED",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=(
+                        "RIGHTS_PERMITTED",
+                        "TERMS_REVIEWED_PERMITTED",
+                        "PUBLIC_ACCESS_CONFIRMED",
+                    ),
+                    grant=grant,
+                    cacheable=True,
+                )
+            gates = (
+                ("ACCESS_GRANT_EXPIRED",)
+                if grant is not None
+                else (
+                    "RIGHTS_STATUS_UNVERIFIED",
+                    "TERMS_STATUS_UNVERIFIED",
+                    "PUBLIC_ACCESS_UNVERIFIED",
+                )
+            )
+            return decide(
+                False,
+                "ACCESS_REVIEW_REQUIRED",
+                status=status,
+                final_url=final_url,
+                chain=chain,
+                gates=gates,
+                cacheable=True,
+            )
+
+        def classify_status(
+            status: int,
+            final_url: str,
+            headers,
+            chain: tuple[str, ...],
+        ) -> _RobotsDecision | None:
+            if status in {404, 410}:
+                return not_published(status, final_url, chain)
+            if status in {401, 403}:
+                return decide(
+                    False,
+                    "ACCESS_REVIEW_REQUIRED",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("AUTHENTICATION_OR_PERMISSION_NOT_BYPASSED",),
+                    cacheable=True,
+                )
+            if status == 429:
+                retry_after = _retry_after_seconds(headers, attempted_at)
+                return decide(
+                    False,
+                    "RETRYABLE_RATE_LIMIT",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("RETRY_AFTER_RESPECTED",),
+                    retry_after=retry_after,
+                )
+            if status >= 500:
+                return decide(
+                    False,
+                    "ROBOTS_UNREACHABLE",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("TEMPORARY_COLLECTION_BLOCK", "HEALTH_PROBE_REQUIRED"),
+                )
+            if 300 <= status < 400:
+                return decide(
+                    False,
+                    "ROBOTS_REDIRECT_BLOCKED",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("UNRESOLVED_REDIRECT",),
+                    cacheable=True,
+                )
+            if status < 200 or status >= 300:
+                return decide(
+                    False,
+                    "ACCESS_REVIEW_REQUIRED",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("UNRECOGNIZED_ROBOTS_STATUS",),
+                    cacheable=True,
+                )
+            return None
+
         robots_request = request.Request(
             robots_url,
             headers={"User-Agent": capture_request.user_agent, "Accept": "text/plain,*/*;q=0.1"},
             method="GET",
         )
+        _begin_redirect_trace(opener, robots_url)
         try:
             response = opener.open(robots_request, timeout=capture_request.timeout_seconds)
             try:
                 status = int(getattr(response, "status", response.getcode()))
                 final_url = str(response.geturl() or robots_url)
-                _validate_public_url(final_url, capture_request.allowed_domains)
-                if status in {404, 410}:
-                    decision = _RobotsDecision(True, "ROBOTS_NOT_PUBLISHED")
-                    self._robots_cache[cache_key] = decision
-                    return decision
-                if status == 429:
-                    return _RobotsDecision(
+                chain = _observed_redirect_chain(opener, robots_url, final_url)
+                try:
+                    _validate_public_url(final_url, capture_request.allowed_domains)
+                except ValueError:
+                    return decide(
                         False,
-                        "ROBOTS_HTTP_RATE_LIMITED",
-                        _retry_after_seconds(response.headers, attempted_at),
+                        "ROBOTS_REDIRECT_BLOCKED",
+                        status=status,
+                        final_url=final_url,
+                        chain=chain,
+                        gates=("UNREGISTERED_REDIRECT_DOMAIN",),
+                        cacheable=True,
                     )
-                if status < 200 or status >= 300:
-                    return _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
+                classified = classify_status(status, final_url, response.headers, chain)
+                if classified is not None:
+                    return classified
                 body = response.read(MAX_ROBOTS_BYTES + 1)
             finally:
                 response.close()
             if len(body) > MAX_ROBOTS_BYTES:
-                decision = _RobotsDecision(False, "ROBOTS_POLICY_TOO_LARGE")
-                self._robots_cache[cache_key] = decision
-                return decision
+                return decide(
+                    False,
+                    "ROBOTS_POLICY_TOO_LARGE",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("POLICY_BODY_LIMIT_ENFORCED",),
+                    cacheable=True,
+                )
             policy = robotparser.RobotFileParser()
             policy.set_url(robots_url)
             policy.parse(body.decode("utf-8", errors="replace").splitlines())
             allowed = policy.can_fetch(capture_request.user_agent, capture_request.source_url)
-            decision = _RobotsDecision(allowed, "ROBOTS_ALLOWED" if allowed else "ROBOTS_DISALLOWED")
-            self._robots_cache[cache_key] = decision
-            return decision
+            return decide(
+                allowed,
+                "ROBOTS_ALLOWED" if allowed else "ROBOTS_DISALLOWED",
+                status=status,
+                final_url=final_url,
+                chain=chain,
+                gates=("ROBOTS_POLICY_PARSED",),
+                cacheable=True,
+            )
+        except _RedirectPolicyError as exc:
+            return decide(
+                False,
+                "ROBOTS_REDIRECT_BLOCKED",
+                final_url=exc.chain[-1] if exc.chain else robots_url,
+                chain=exc.chain or (robots_url,),
+                gates=(exc.reason,),
+                cacheable=True,
+            )
         except _UnsafeRedirectError:
-            decision = _RobotsDecision(False, "ROBOTS_REDIRECT_OUTSIDE_ALLOWLIST")
+            return decide(
+                False,
+                "ROBOTS_REDIRECT_BLOCKED",
+                gates=("REDIRECT_POLICY_REJECTED",),
+                cacheable=True,
+            )
         except _DnsResolutionError:
-            decision = _RobotsDecision(False, "ROBOTS_DNS_ERROR")
+            return decide(
+                False,
+                "ROBOTS_UNREACHABLE",
+                gates=("DNS_FAILURE", "TEMPORARY_COLLECTION_BLOCK", "HEALTH_PROBE_REQUIRED"),
+            )
         except _UnsafeNetworkTargetError:
-            decision = _RobotsDecision(False, "ROBOTS_NON_PUBLIC_NETWORK_TARGET")
+            return decide(
+                False,
+                "ROBOTS_NON_PUBLIC_NETWORK_TARGET",
+                gates=("NON_PUBLIC_NETWORK_TARGET_REJECTED",),
+                cacheable=True,
+            )
         except error.HTTPError as exc:
             try:
                 status = int(exc.code)
-                if status in {404, 410}:
-                    decision = _RobotsDecision(True, "ROBOTS_NOT_PUBLISHED")
-                elif status == 429:
-                    decision = _RobotsDecision(
+                final_url = str(exc.geturl() or robots_url)
+                chain = _observed_redirect_chain(opener, robots_url, final_url)
+                try:
+                    _validate_public_url(final_url, capture_request.allowed_domains)
+                except ValueError:
+                    return decide(
                         False,
-                        "ROBOTS_HTTP_RATE_LIMITED",
-                        _retry_after_seconds(exc.headers, attempted_at),
+                        "ROBOTS_REDIRECT_BLOCKED",
+                        status=status,
+                        final_url=final_url,
+                        chain=chain,
+                        gates=("UNREGISTERED_REDIRECT_DOMAIN",),
+                        cacheable=True,
                     )
-                else:
-                    decision = _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
+                classified = classify_status(status, final_url, exc.headers, chain)
+                if classified is not None:
+                    return classified
+                return decide(
+                    False,
+                    "ROBOTS_UNREACHABLE",
+                    status=status,
+                    final_url=final_url,
+                    chain=chain,
+                    gates=("UNEXPECTED_HTTP_ERROR", "HEALTH_PROBE_REQUIRED"),
+                )
             finally:
                 exc.close()
-        except (TimeoutError, socket.timeout, error.URLError, OSError, ValueError):
-            decision = _RobotsDecision(False, "ROBOTS_POLICY_UNAVAILABLE")
-        if decision.code not in {
-            "ROBOTS_DNS_ERROR",
-            "ROBOTS_HTTP_RATE_LIMITED",
-            "ROBOTS_POLICY_UNAVAILABLE",
-        }:
-            self._robots_cache[cache_key] = decision
-        return decision
+        except (TimeoutError, socket.timeout, error.URLError, ssl.SSLError, OSError, ValueError):
+            return decide(
+                False,
+                "ROBOTS_UNREACHABLE",
+                gates=("NETWORK_OR_TLS_FAILURE", "TEMPORARY_COLLECTION_BLOCK", "HEALTH_PROBE_REQUIRED"),
+            )
 
     def _read_response(
         self,
@@ -1247,6 +1719,26 @@ class CapturePacketWriter:
             self.run_root / "source_observations.json",
             canonical_json_bytes({"schema_version": "3.0", "sources": observations}),
         )
+        robots_receipts: dict[str, dict[str, object]] = {}
+        for result in result_rows:
+            if result.robots_policy_receipt is None:
+                continue
+            row = result.robots_policy_receipt.to_dict()
+            robots_receipts[str(row["receipt_sha256"])] = row
+        if robots_receipts:
+            self._atomic_write(
+                self.run_root / "robots-policy-receipts.json",
+                canonical_json_bytes(
+                    {
+                        "schema_version": "1.0",
+                        "receipts": [robots_receipts[key] for key in sorted(robots_receipts)],
+                        "claim_boundaries": {
+                            "access_receipt_proves_collection": False,
+                            "robots_policy_may_bypass_access_control": False,
+                        },
+                    }
+                ),
+            )
         degraded = tuple(source_id for source_id, state in source_states if state != "AVAILABLE")
         status = "COMPLETE" if not degraded else "DEGRADED" if artifacts else "FAILED"
         return CaptureWriteReport(
@@ -1445,7 +1937,11 @@ __all__ = [
     "FixtureConnector",
     "FixtureFileConnector",
     "MAX_CAPTURE_BYTES",
+    "MAX_ROBOTS_CACHE_HOURS",
+    "MAX_ROBOTS_REDIRECTS",
     "PublicHttpConnector",
     "QUERY_STATUSES",
+    "RobotsAccessGrant",
+    "RobotsPolicyReceipt",
     "capture_sources",
 ]

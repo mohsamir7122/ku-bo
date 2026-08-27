@@ -51,6 +51,14 @@ INCIDENT_STATUSES = frozenset(
     {"OPEN", "RETRY_SCHEDULED", "PROBE_ONLY", "BLOCKED", "EXHAUSTED", "RESOLVED"}
 )
 ACTIVE_RUN_STATES = frozenset({"queued", "in_progress"})
+SOURCE_FALLBACK_ORDER = (
+    "official_documented_api_or_export",
+    "alternate_official_page_or_repository",
+    "issuer_official_disclosures",
+    "regulator_official_records",
+    "user_supplied_authorized_export",
+    "secondary_discovery_only",
+)
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _CODE_SHA_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 _INCIDENT_KEYS = frozenset(
@@ -281,14 +289,7 @@ def _expected_policy() -> dict[str, Any]:
             "not_found_requires_rights_terms_and_public_access": True,
             "access_receipt_proves_collection": False,
         },
-        "source_fallback_order": [
-            "official_documented_api_or_export",
-            "alternate_official_page_or_repository",
-            "issuer_official_disclosures",
-            "regulator_official_records",
-            "user_supplied_authorized_export",
-            "secondary_discovery_only",
-        ],
+        "source_fallback_order": list(SOURCE_FALLBACK_ORDER),
         "claim_boundaries": {
             "recovery_may_disable_safety_gate": False,
             "recovery_may_bypass_access_control": False,
@@ -354,6 +355,26 @@ def validate_recovery_policy(project_root: Path | str) -> dict[str, Any]:
         "direct_email_status": payload["alerts"]["direct_email_status"],
         "publish_allowed_while_blocked": False,
     }
+
+
+def next_source_fallback(
+    policy: Mapping[str, Any], fallbacks_tried: Sequence[str]
+) -> str | None:
+    """Return only the next legal fallback in the locked primary-first order."""
+
+    configured = policy.get("source_fallback_order")
+    if configured != list(SOURCE_FALLBACK_ORDER):
+        raise RecoveryError("source fallback order differs from trusted policy")
+    attempted = tuple(str(item) for item in fallbacks_tried)
+    if len(attempted) > len(SOURCE_FALLBACK_ORDER):
+        raise RecoveryError("source fallback attempts exceed the trusted chain")
+    if attempted != SOURCE_FALLBACK_ORDER[: len(attempted)]:
+        raise RecoveryError("source fallbacks must be an ordered prefix of the trusted chain")
+    return (
+        SOURCE_FALLBACK_ORDER[len(attempted)]
+        if len(attempted) < len(SOURCE_FALLBACK_ORDER)
+        else None
+    )
 
 
 def fingerprint_basis(
@@ -1047,6 +1068,7 @@ __all__ = [
     "fingerprint_basis",
     "heartbeat_recovery_lease",
     "load_recovery_policy",
+    "next_source_fallback",
     "mark_alert_sent",
     "read_recovery_lease",
     "record_retry_attempt",

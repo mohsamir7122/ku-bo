@@ -41,6 +41,20 @@ gh workflow run recovery-controller.yml --ref main -f incident_id="INCIDENT_ID" 
 
 الجدولة و`repository_dispatch` لا يتفعّلان من هذا الفرع وحده؛ يحتاجان مراجعة ودمجًا مصرحًا به إلى `main`. وحدة التحكم ممنوعة من تعديل أو دمج `main`.
 
+## robots.txt وبدائل المصدر
+
+كل فحص `robots.txt` ينتج `RobotsPolicyReceipt` منقحًا ومربوطًا بـSHA-256. يسجل الإيصال `source_id` والأصل وstatus code وسلسلة redirects ووقت الجلب ووقت التقييم وانتهاء cache والقرار، ولا يسجل query values أو credentials. الحد الأقصى خمسة redirects، وأي loop أو انتقال إلى domain غير مسجل ينتج `ROBOTS_REDIRECT_BLOCKED`. مدة cache موجبة ولا تتجاوز 24 ساعة، ولا تستخدم نتيجة منتهية.
+
+- 2xx: تُحلل السياسة وتطبق على الـURL المطلوب.
+- 404/410: ليست حظرًا آليًا، لكنها لا تسمح بالطلب التالي إلا بوجود grant موثوق ومؤرخ يثبت `PERMITTED` للحقوق و`REVIEWED_PERMITTED` للشروط و`CONFIRMED_PUBLIC` للوصول. غياب أي بوابة ينتج `ACCESS_REVIEW_REQUIRED`.
+- 401/403: `ACCESS_REVIEW_REQUIRED` دون محاولة التفاف.
+- 429: `RETRYABLE_RATE_LIMIT` داخل إيصال السياسة، مع حفظ `Retry-After` الصحيح؛ نتيجة الالتقاط الخارجية تبقى `HTTP_RATE_LIMITED` للتوافق التشغيلي.
+- 5xx أو DNS أو TLS أو network failure: `ROBOTS_UNREACHABLE` مع منع مؤقت للجمع وطلب health probe لاحق.
+
+إيصال الوصول لا يثبت جمع بيانات ولا يرفع raw bytes إلى market evidence؛ تحفظ ملفات `robots-policy-receipts.json` الحد `access_receipt_proves_collection=false`. وبغياب grant إنتاجي موثق، يظل 404/410 مغلقًا افتراضيًا، بما في ذلك KCC وBoursa.
+
+عند تعذر المصدر الأولي، يفرض `next_source_fallback` ترتيبًا متتابعًا لا يقبل التخطي أو إعادة الترتيب: API أو export رسمي موثق، ثم صفحة أو مستودع رسمي بديل، ثم إفصاحات الشركة الرسمية، ثم سجلات الجهة التنظيمية، ثم export مصرح يقدمه المستخدم، وأخيرًا مصدر ثانوي للاستكشاف فقط. المرحلة الثانوية لا تؤكد الحقيقة ولا تسمح بالنشر دون أصل أولي.
+
 ## حدود الصلاحيات
 
 الحل القانوني يستخدم أقل permission، وواجهات GitHub الرسمية، و`GITHUB_TOKEN` عندما يكفي، وcredential موجودًا أصلًا في GitHub Secrets. إذا لزم secret أو scope جديد فيطلب من المستخدم. الممنوعات تشمل تجاوز CAPTCHA أو paywall أو Authentication، وتدوير IP، واستخراج credentials، وتجاهل rate limit، واستعمال proxy غير مصرح، أو خفض بوابات provenance/freshness/temporal.
