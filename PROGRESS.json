@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "updated_at_utc": "2026-08-27T02:41:58Z",
+  "updated_at_kuwait": "2026-08-27T05:41:58+03:00",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "market_order": [
+    "Kuwait",
+    "Saudi Arabia"
+  ],
+  "active_market": "Kuwait",
+  "repository": "mohsamir7122/ku-bo",
+  "task_id": "KU-BO-2026-08-27-DAY1",
+  "stage": "PRE_FLIGHT_COMPLETE_REPOSITORY_AUDIT_IN_PROGRESS",
+  "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
+  "work_branch": "codex/kuwait-market-ai-day1-v1",
+  "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
+  "stages": [
+    {"name": "contract_read", "status": "completed"},
+    {"name": "pre_flight", "status": "completed"},
+    {"name": "repository_audit", "status": "in_progress"},
+    {"name": "integration_plan", "status": "in_progress"},
+    {"name": "kuwait_collection", "status": "not_started"},
+    {"name": "event_library", "status": "not_started"},
+    {"name": "training_validation", "status": "not_started"},
+    {"name": "locked_blind_test", "status": "not_started"},
+    {"name": "live_research", "status": "blocked"},
+    {"name": "saudi_replication", "status": "sequenced_after_kuwait"}
+  ],
+  "baseline_tests": {
+    "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
+    "total": 2243,
+    "passed": 2242,
+    "failures": 1,
+    "errors": 0,
+    "skipped": null,
+    "duration_seconds": 601.17,
+    "failure_class": "stale_control_task_branch_expectation"
+  },
+  "candidate_focused_validation": {
+    "control_validator": "pass",
+    "control_tests_total": 4,
+    "control_tests_passed": 4,
+    "json_parse": "pass",
+    "diff_check": "pass",
+    "private_drive_link_scan": "pass",
+    "secret_guard": "pass"
+  },
+  "evidence_counts": {
+    "verified_drive_project_folders": 2,
+    "verified_drive_subfolders_per_project": 16,
+    "verified_companies": 0,
+    "admitted_unique_events": 0,
+    "locked_test_predictions": 0,
+    "live_candidates": 0
+  },
+  "claims": {
+    "real_collection_complete": false,
+    "training_complete": false,
+    "blind_test_complete": false,
+    "forecast_accuracy_known": false,
+    "improvement_percent_known": false,
+    "live_ready": false,
+    "trading_authorized": false
+  },
+  "blockers": [
+    "GITHUB_SECRETS_AND_VARIABLES_ABSENT",
+    "REAL_SOURCE_ADMISSION_NOT_COMPLETE",
+    "COMPANY_UNIVERSE_NOT_RECONCILED",
+    "HISTORICAL_EVENTS_NOT_ADMITTED",
+    "BLIND_TEST_NOT_RUN"
+  ]
+}

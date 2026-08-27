@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "started_at_utc": "2026-08-27T02:06:35Z",
+  "started_at_kuwait": "2026-08-27T05:06:35+03:00",
+  "market": "Kuwait",
+  "repository": "mohsamir7122/ku-bo",
+  "base_branch": "main",
+  "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
+  "work_branch": "codex/kuwait-market-ai-day1-v1",
+  "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
+  "contract": {
+    "filename": "CODEX_MARKET_AI_MASTER_EXECUTION_CONTRACT_AR.md",
+    "line_count": 478,
+    "sha256": "2720a8778ade69a7d53a1ac5aa4a12c518ef4f845819601b662b0046773733d2"
+  },
+  "environment": {
+    "os": "Ubuntu 24.04 PRoot",
+    "architecture": "aarch64",
+    "codex": "0.148.0",
+    "git": "2.43.0",
+    "gh": "2.45.0",
+    "python": "3.12.3",
+    "node": "26.4.0",
+    "tmux": "3.4",
+    "rclone": "1.74.4-termux"
+  },
+  "drive_structure": {
+    "project_folders_verified": 2,
+    "subfolders_per_project": 16,
+    "identifiers_persisted": false
+  },
+  "baseline": {
+    "tests_total": 2243,
+    "tests_passed": 2242,
+    "tests_failed": 1,
+    "tests_errors": 0,
+    "duration_seconds": 601.17
+  },
+  "candidate_focused_validation": {
+    "completed_at_utc": "2026-08-27T02:41:58Z",
+    "control_validator": "pass",
+    "control_tests_total": 4,
+    "control_tests_passed": 4,
+    "json_parse": "pass",
+    "diff_check": "pass",
+    "private_drive_link_scan": "pass",
+    "secret_guard": "pass"
+  },
+  "secrets_logged": false,
+  "real_market_data_written": false,
+  "trades_submitted": false
+}

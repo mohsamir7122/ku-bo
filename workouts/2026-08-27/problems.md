@@ -1,0 +1,11 @@
+# Problems and Blockers
+
+| ID | Status | Evidence and likely cause | Safe next action |
+| --- | --- | --- | --- |
+| P-001 | FIX_IN_PROGRESS | Kuwait `main` full suite has one stale control branch expectation after the previous task was marked complete. | Activate today's task/branch and keep the assertion strict. |
+| P-002 | RESOLVED_FOR_LOCAL_TEST | System Python lacked `jsonschema`, causing eight environment errors in an exploratory run. | Use ignored `.venv` with declared test extras; do not change dependency contracts without need. |
+| P-003 | BLOCKED | Final repositories expose no required GitHub Secrets or variables. | Build fail-closed workflows and document exact required names; owner supplies values later. |
+| P-004 | OPEN_RISK | PRoot cannot access the existing tmux socket although the process is visible. | Keep the current process and wake lock; do not create competing build sessions. |
+| P-005 | OPEN_RISK | Existing PRoot binds expose phone storage. | Restrict writes to workspace and keep credentials/runtime evidence out of Git. |
+| P-006 | DOCUMENTED | Contract says 15 Drive subfolders but enumerates and currently contains 16. | Treat the 16 exact names as authoritative; do not delete any folder. |
+| P-007 | BLOCKED | No reconciled Kuwait issuer universe or admitted historical event corpus exists yet. | Complete schema/source admission before collection or evaluation. |

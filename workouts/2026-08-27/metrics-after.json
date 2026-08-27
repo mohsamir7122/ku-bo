@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "measurement_status": "PENDING_SAME_LOCKED_TEST",
+  "evidence_class": "NO_ADMITTED_MARKET_TEST_SET",
+  "investment_metrics": {
+    "hit_rate": null,
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "return": null,
+    "maximum_drawdown": null,
+    "calibration": null
+  },
+  "improvement_percent": null,
+  "reason": "No before/after model comparison has been executed."
+}

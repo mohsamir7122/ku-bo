@@ -1,10 +1,43 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-26
+Status date: 2026-08-27
 
 Repository: `mohsamir7122/ku-bo`
 
-## Live orientation
+## Active master-contract execution
+
+```text
+task:                         KU-BO-2026-08-27-DAY1
+base main:                    93e4cab09915a4a4b58455d3cc45eb48be4bd499
+checkpoint branch:           checkpoint/pre-market-ai-20260827-kuwait
+working branch:              codex/kuwait-market-ai-day1-v1
+worktree at start:            clean
+pre-flight started UTC:       2026-08-27T02:06:35Z
+pre-flight started Kuwait:    2026-08-27T05:06:35+03:00
+baseline full suite:          FAIL — 2,243 tests, one stale control mismatch
+live collection:              NOT_STARTED
+verified company records:     0
+verified unique events:       0
+blind test:                   NOT_STARTED
+live research output:         ABSTAIN / NO-TRADE
+```
+
+The only baseline test failure is a repository-control mismatch: the completed
+task document had been changed to `main`, while its test still expected the old
+integration branch. No market, model, pricing, provenance, or risk test failed.
+The active day-one task restores an explicit task branch rather than weakening
+the assertion.
+
+Both contract-designated Drive project folders were verified read-only at
+runtime. Each contains the same 16 named subfolders listed by the contract.
+No folder ID or private URL is committed here. The contract says "15" in one
+sentence but enumerates 16 names; the observed structures match the names.
+
+Required GitHub Secrets and repository variables are absent. Scheduled live or
+collection workflows therefore remain unactivated and must fail closed until
+the exact secret/variable contracts and dry-run gates are satisfied.
+
+## Previous integration orientation (2026-08-26)
 
 ```text
 base main:                    59833bf73510b3aa3901f628cbf2c13c0d01cf79

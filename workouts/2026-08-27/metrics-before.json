@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "measurement_status": "NOT_AVAILABLE",
+  "evidence_class": "NO_ADMITTED_MARKET_TEST_SET",
+  "repository_baseline": {
+    "tests_total": 2243,
+    "tests_passed": 2242,
+    "tests_failed": 1,
+    "duration_seconds": 601.17
+  },
+  "investment_metrics": {
+    "hit_rate": null,
+    "precision": null,
+    "recall": null,
+    "f1_score": null,
+    "return": null,
+    "maximum_drawdown": null,
+    "calibration": null
+  },
+  "reason": "No admitted historical event corpus or locked blind-test split exists."
+}
