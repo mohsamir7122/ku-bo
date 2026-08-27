@@ -44,7 +44,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             self._copy_control(root)
             task_path = root / TASK
             task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                "TASK_ID: KU-BO-ONE-SECURITY-CHECKPOINT-V2",
                 "TASK_ID: KU-BO-MIG-001",
                 1,
             )
@@ -74,10 +74,10 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
                 "CONTROL_BASE_BRANCH: main": (
                     "CONTROL_BASE_BRANCH: agent/ku-bo-016-codex-live-bootstrap"
                 ),
-                "CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499": (
+                "CONTROL_BASE_SHA: 8860989f6a2affdc66bc790f639757c9a897f353": (
                     "CONTROL_BASE_SHA: 6e9ab870e727494d5eb9e1ec9fa98829d6391d68"
                 ),
-                "EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1": (
+                "EXPECTED_NEW_BRANCH: codex/one-security-checkpoint-v2": (
                     "EXPECTED_NEW_BRANCH: agent/private-predecessor-capability-migration-v1"
                 ),
                 "EXPECTED_PR_BASE: main": (
@@ -118,7 +118,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             self._copy_control(root)
             task_path = root / TASK
             task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                "TASK_ID: KU-BO-ONE-SECURITY-CHECKPOINT-V2",
                 "TASK_ID: KU-BO-MIG-001",
                 1,
             )
@@ -135,7 +135,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
 
     def test_duplicate_task_metadata_keys_are_rejected(self) -> None:
         for key_line in (
-            "TASK_ID: KU-BO-2026-08-27-DAY1",
+            "TASK_ID: KU-BO-ONE-SECURITY-CHECKPOINT-V2",
             "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
         ):
             with self.subTest(key_line=key_line), tempfile.TemporaryDirectory() as directory:
