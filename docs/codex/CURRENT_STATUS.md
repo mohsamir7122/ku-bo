@@ -8,16 +8,16 @@ Repository: `mohsamir7122/ku-bo`
 
 ```text
 working branch:                codex/kuwait-market-ai-day1-v1
-validated implementation head: d31911940ab9970d4409189f58db1d75b85be5b3
+validated implementation head: 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
 main:                          93e4cab09915a4a4b58455d3cc45eb48be4bd499
-ahead/behind main:             29 / 0
+ahead/behind main:             31 / 0
 worktree:                      clean
-current-branch PR:             none
+current-branch PR:             Draft #25
 merge:                         not performed
 focused sequential tests:     PASS — 84/84
 recovery/ledger tests:         PASS — 38/38
-full local suite:              PASS — 2,502/2,502
-exact-head CI:                 PASS — run 33070160262, Python 3.11-3.14
+full local suite:              PASS — 2,512/2,512
+exact-head CI:                 PASS — run 33098426912, Python 3.11-3.14
 security-by-security contract: IMPLEMENTED_AND_TESTED_SYNTHETICALLY
 admitted live security runs:   0
 current research decision:     ABSTAIN
@@ -34,8 +34,8 @@ training, backtest, prediction, and live-run counts remain zero.
 The owner delegated repository reconciliation and later continuation to Codex CLI
 under `KU-BO-MOBILE-CODEX-D01`. `MERGE_ALLOWED:NO` remains the implementation
 default; the decision can be exercised only at a fully proven exact-head merge
-boundary. The later mobile-control handoff commit must receive fresh exact-head
-CI; the green run above applies to the implementation checkpoint `d319119`.
+boundary. The green run above applies to implementation checkpoint `48d139c`;
+the later evidence-only control head must receive its own fresh exact-head CI.
 
 ## Active master-contract execution
 

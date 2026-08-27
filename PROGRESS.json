@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T11:56:00Z",
-  "updated_at_kuwait": "2026-08-27T14:56:00+03:00",
+  "updated_at_utc": "2026-08-27T17:45:00Z",
+  "updated_at_kuwait": "2026-08-27T20:45:00+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_LOCAL_PASS_EXACT_HEAD_CI_PENDING",
+  "stage": "STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_EXACT_IMPLEMENTATION_CI_PASS_DRAFT_PR_OPEN",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -33,7 +33,7 @@
     "priority_checkpoint_runtime": "3195ba768382a063dac18053645c8dcd7fe4dd70",
     "rights_aware_backfill_90d": "e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d",
     "backfill_recovery_workflows": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
-    "security_sequential_collection": "PUBLISHED_TASK_HEAD"
+    "security_sequential_collection": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad"
   },
   "stages": [
     {"name": "contract_read", "status": "completed"},
@@ -51,7 +51,7 @@
     {"name": "issue_24_delta_preflight", "status": "completed"},
     {"name": "priority_checkpoint_runtime", "status": "implemented_tested_pushed_ci_success"},
     {"name": "rights_aware_backfill_90d", "status": "implemented_tested_real_receipt_audit_incomplete_production_blocked_ci_success"},
-    {"name": "security_sequential_collection", "status": "implemented_tested_synthetic_live_adapters_blocked_ci_pending"},
+    {"name": "security_sequential_collection", "status": "implemented_tested_synthetic_exact_implementation_ci_pass_live_adapters_blocked"},
     {"name": "kuwait_collection", "status": "blocked_by_source_admission"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
@@ -128,9 +128,9 @@
     "combined_sequential_source_cli_tests_passed": 84,
     "recovery_and_ledger_regression_tests_total": 38,
     "recovery_and_ledger_regression_tests_passed": 38,
-    "full_suite_tests_total": 2502,
-    "full_suite_tests_passed": 2502,
-    "full_suite_duration_seconds": 195.597,
+    "full_suite_tests_total": 2512,
+    "full_suite_tests_passed": 2512,
+    "full_suite_duration_seconds": 855.702,
     "strict_json_files": 170,
     "schema_metaschemas": 107,
     "control_text_files": 31,
@@ -144,29 +144,29 @@
     "diff_check": "pass",
     "secret_guard": "pass",
     "package_build_install_cli_smoke": "pass",
-    "wheel_sha256": "fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72",
-    "wheel_size_bytes": 605193,
+    "wheel_sha256": "f5536d4621081c269ca525e9e253491bc247e48ea214ef177f52dec11ecb6c13",
+    "wheel_size_bytes": 605602,
     "network_collection_executed": false
   },
   "candidate_full_validation": {
     "command": "PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -q",
-    "total": 2502,
-    "passed": 2502,
+    "total": 2512,
+    "passed": 2512,
     "failures": 0,
     "errors": 0,
-    "duration_seconds": 195.597
+    "duration_seconds": 855.702
   },
   "exact_head_ci": {
-    "run_id": 33060045908,
-    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
     "status": "success",
     "python_versions": ["3.11", "3.12", "3.13", "3.14"],
-    "pull_request_created": false,
+    "pull_request_created": true,
     "merged_to_main": false
   },
   "latest_branch_ci": {
-    "run_id": 33060045908,
-    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
     "status": "success",
     "prior_failed_run_id": 33054455755,
     "prior_failure_class": "release_metadata_test_dependency_mismatch",
@@ -183,10 +183,12 @@
     "workflow_delta_run_status": "success"
   },
   "stage_8_candidate_ci": {
-    "head_sha": "PUBLISHED_TASK_HEAD",
-    "status": "pending_until_push",
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
+    "status": "success",
+    "push_run_id": 33098426912,
+    "pull_request_run_id": 33098464383,
     "required_python_versions": ["3.11", "3.12", "3.13", "3.14"],
-    "pull_request_created": false,
+    "pull_request_created": true,
     "merged_to_main": false
   },
   "source_evidence_lifecycle": {

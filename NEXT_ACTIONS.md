@@ -1,10 +1,11 @@
 # Ordered Next Actions
 
-Updated: 2026-08-27T11:56:00Z
+Updated: 2026-08-27T17:45:00Z
 
-1. Validate, commit, and push the owner-directed security-by-security contract,
-   then require exact-head CI for that new head. Do not create a PR, merge to
-   `main`, or claim schedules are active.
+1. Commit and push the reconciled evidence-only control head, require exact-head
+   CI, and re-audit Draft PR #25 against unchanged `main`. Exercise
+   `KU-BO-MOBILE-CODEX-D01` only for that exact validated head; PR #21 remains
+   unmerged while `KU-BO-MIG-D02` is open. Verify post-merge `main` CI green.
 2. Acquire and reconcile one real, point-in-time Boursa Kuwait issuer/security
    universe before using the phrase “all market securities”. Build the queue by
    official numeric `security_code`; two securities from one issuer remain two
@@ -18,7 +19,9 @@ Updated: 2026-08-27T11:56:00Z
 4. Populate the signed runtime trust registry with the verified official website
    domain for every issuer/security. Never infer a domain from a company name;
    an unresolved site must remain `ISSUER_OFFICIAL_SITE_UNRESOLVED`.
-5. Keep production `BACKFILL_90D` at `BLOCKED_CHECKPOINT_STORE`. Its existing
+5. Make `KU-BO-ONE-SECURITY-CHECKPOINT-V2` the next bounded task from green
+   merged `main`, with recorded narrow private-runtime write authority. Keep
+   production `BACKFILL_90D` at `BLOCKED_CHECKPOINT_STORE`. Its existing
    990 market/source/date shards are a legacy market-level package, not proof of
    stock-by-stock collection. Add a reviewed checkpoint v2 with `security_code`
    before resuming sequential per-security work; an ephemeral runner directory

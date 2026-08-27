@@ -338,8 +338,8 @@ ISSUER_SEQUENTIAL_COLLECTION_TESTS: PASS — 26/26
 SEQUENTIAL/SOURCE/CLI FOCUSED GATE: PASS — 84/84
 RECOVERY/LEDGER REGRESSION GATE: PASS — 38/38
 FULL_COMMAND: PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -q
-FULL_RESULT: PASS — 2502/2502
-FULL_DURATION_SECONDS: 195.597
+FULL_RESULT: PASS — 2512/2512
+FULL_DURATION_SECONDS: 855.702
 COMPILEALL: PASS
 STRICT_JSON: PASS — 170 files
 SCHEMA_METASCHEMA: PASS — 107 schemas
@@ -349,11 +349,15 @@ MIGRATION_CONTROL: PASS_PREPARATION_CONTROL
 SMOKE: PASS — synthetic only
 SECRET_GUARD: PASS
 GIT_DIFF_CHECK: PASS
-WHEEL_BUILD_INSTALL: PASS — 605193 bytes
+WHEEL_BUILD_INSTALL: PASS — 605602 bytes
 INSTALLED_VALIDATE_CONFIG: PASS
 INSTALLED_POLICY_VALIDATE: PASS_CONTRACT_NOT_EXECUTED
 INSTALLED_PLAN/REOPEN: PASS_PLAN_NOT_EXECUTED — 1 synthetic security, 29 attempts
-WHEEL_SHA256: fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72
+WHEEL_SHA256: f5536d4621081c269ca525e9e253491bc247e48ea214ef177f52dec11ecb6c13
+EXACT_IMPLEMENTATION_HEAD: 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
+EXACT_PUSH_CI: PASS — run 33098426912, Python 3.11-3.14
+EXACT_PR_CI: PASS — run 33098464383, Python 3.11-3.14
+DRAFT_PR: #25
 ```
 
 Adversarial validation rejects grouped execution, a second active security,
@@ -363,9 +367,12 @@ untrusted issuer domains, and licensed positive results without entitlement.
 The run validator proves internal receipt/hash-chain consistency only; it does
 not authenticate raw artifacts or prove complete company coverage.
 
-No network source was executed in this stage. The repository still contains no
+The hardened head also passes 37/37 source-quality/network tests and 41/41
+combined market/source tests; it binds quality roles to the trusted registry and
+normalizes malformed catalog failures. No network source was executed in this
+stage. The repository still contains no
 real complete Kuwait issuer/security universe, no populated official-domain
 runtime registry, no admitted 29-source adapter set, and no security-aware
 durable checkpoint v2. Real artifacts, observations, issuer dossiers, events,
-training rows, predictions, and Drive publications remain zero. Exact-head CI
-for the published Stage 8 candidate is pending; no PR or merge is authorized.
+training rows, predictions, and Drive publications remain zero. Exact
+implementation-head CI passed and Draft PR #25 is open; merge is not performed.

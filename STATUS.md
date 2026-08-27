@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T11:56:00Z (2026-08-27T14:56:00+03:00, Asia/Kuwait)
+Updated: 2026-08-27T17:45:00Z (2026-08-27T20:45:00+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_LOCAL_PASS_EXACT_HEAD_CI_PENDING
+STAGE: STAGE_8_SECURITY_SEQUENTIAL_COLLECTION_CONTRACT_EXACT_IMPLEMENTATION_CI_PASS_DRAFT_PR_OPEN
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -27,7 +27,7 @@ RELEASE_METADATA_CI_FIX_COMMIT: ee07f00382dc5eba1fb9b903a4fd7f10deac4523
 PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
 RIGHTS_AWARE_BACKFILL_COMMIT: e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d
 BACKFILL_RECOVERY_WORKFLOW_COMMIT: 85a9068d05b9c015d2044f78d0bdc9b1558d569e
-SECURITY_SEQUENTIAL_COLLECTION_COMMIT: PUBLISHED_TASK_HEAD
+SECURITY_SEQUENTIAL_COLLECTION_COMMIT: 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
 ```
 
 ## Completed and evidenced
@@ -266,13 +266,16 @@ SECURITY_SEQUENTIAL_COLLECTION_COMMIT: PUBLISHED_TASK_HEAD
   receipt consistency only; it does not authenticate raw bytes or prove dossier
   completeness.
 - The security-sequential focused gate passes 84/84 tests; recovery and ledger
-  regressions pass 38/38; the full candidate suite passes 2,502/2,502 in
-  195.597 seconds. Compile, 170 strict JSON files, 107 schema metaschemas,
+  regressions pass 38/38; the hardened full candidate suite passes 2,512/2,512
+  in 855.702 seconds. Compile, strict JSON/schema,
   control (31 text files, 10 required), bootstrap, migration-control, smoke,
   whitespace, Secret Guard, wheel
   build/install, installed `validate-config`, policy validation, plan generation,
   and plan reopening pass. Candidate wheel SHA-256 is
-  `fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72`.
+  `f5536d4621081c269ca525e9e253491bc247e48ea214ef177f52dec11ecb6c13`.
+- Trusted-source quality resolution is fail-closed for invented/excluded IDs,
+  role escalation, and malformed catalogs. Exact implementation push CI run
+  `33098426912` passed Python 3.11 through 3.14; Draft PR #25 is open.
 - This stage executed no network collection. The real issuer/security universe,
   issuer-domain trust bindings, live adapters, and a security-aware durable
   checkpoint v2 remain absent. Real artifacts, observations, events, training
@@ -280,7 +283,9 @@ SECURITY_SEQUENTIAL_COLLECTION_COMMIT: PUBLISHED_TASK_HEAD
 
 ## Next active stage
 
-- Push the Stage 8 candidate and require exact-head CI. Then admit one real,
+- Reconcile the evidence-only control head, require its own exact-head CI, and
+  exercise D01 only if PR #25 remains the exact clean candidate. Then create
+  checkpoint-v2 work from verified-green merged main. Admit one real,
   point-in-time Kuwait issuer/security universe, populate the signed official-
   company-domain registry, implement the 29 per-security adapters, and execute
   one authorized security end to end before expanding the queue. Production

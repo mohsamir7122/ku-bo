@@ -6,10 +6,10 @@ REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 TASK_BRANCH: codex/kuwait-market-ai-day1-v1
-FINAL_SHA: d31911940ab9970d4409189f58db1d75b85be5b3
-DRAFT_PR: NONE
+FINAL_SHA: 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
+DRAFT_PR: #25 / https://github.com/mohsamir7122/ku-bo/pull/25
 PR_BASE: main
-CI_RUN: 33070160262 / PASS / Python 3.11-3.14
+CI_RUNS: 33098426912 push / PASS; 33098464383 PR / PASS; Python 3.11-3.14
 STARTED_AT: 2026-08-27T02:06:35Z
 COMPLETED_AT: 2026-08-27T12:04:03Z
 ```
@@ -95,9 +95,13 @@ COMMAND_OR_JOB: PYTHONPATH=src python3 -m unittest -q tests.test_recovery tests.
 RESULT: PASS
 DETAIL: 38/38 in 0.178 seconds.
 
-COMMAND_OR_JOB: PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -q
+COMMAND_OR_JOB: PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -q
 RESULT: PASS
-DETAIL: 2502/2502 in 195.597 seconds; 0 failures and 0 errors.
+DETAIL: 2512/2512 in 855.702 seconds; 0 failures and 0 errors.
+
+COMMAND_OR_JOB: source-quality, adversarial, and research-network focused gates
+RESULT: PASS
+DETAIL: 37/37 source-quality/network tests; 41/41 combined market/source tests.
 
 COMMAND_OR_JOB: compile, strict JSON/schema, control, bootstrap, migration-control, smoke, whitespace, and Secret Guard gates
 RESULT: PASS
@@ -105,12 +109,31 @@ DETAIL: 170 JSON files; 107 schema metaschemas; 31 control text files; 10 requir
 
 COMMAND_OR_JOB: isolated wheel build/install and installed CLI smoke
 RESULT: PASS
-DETAIL: 605193-byte wheel; validate-config, policy validation, one-security/29-attempt synthetic plan generation, and external plan reopening passed. SHA-256 fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72.
+DETAIL: 605602-byte wheel; validate-config, policy validation, one-security/29-attempt synthetic plan generation, external plan reopening, and access-denial checks passed. SHA-256 f5536d4621081c269ca525e9e253491bc247e48ea214ef177f52dec11ecb6c13.
 
-COMMAND_OR_JOB: GitHub exact-head CI on d31911940ab9970d4409189f58db1d75b85be5b3
+COMMAND_OR_JOB: GitHub exact-head push CI on 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
 RESULT: PASS
-DETAIL: run 33070160262 passed on Python 3.11, 3.12, 3.13, and 3.14.
+DETAIL: run 33098426912 passed on Python 3.11, 3.12, 3.13, and 3.14, including the installed-wheel gate.
 ```
+
+## Live repository reconciliation
+
+- `MERGE_CANDIDATE`: Draft PR #25, exact head
+  `48d139ca7d7f496228f2909b3c2549c6a5cd96ad`; independent push and PR CI are
+  green on Python 3.11-3.14. The audited base `main` is
+  `93e4cab09915a4a4b58455d3cc45eb48be4bd499`; its existing CI is red only on
+  the stale task-branch control mismatch repaired by this branch.
+- `SUPERSEDED`: PRs #2 and #3 are stale, conflicting, and explicitly excluded.
+- `USER_DECISION_REQUIRED`: PR #17 has unique archive capability and remains
+  preserved; PR #21 remains Draft and unmerged because `KU-BO-MIG-D02` is open.
+- `BLOCKED`: PR #18 has unique disclosure work but conflicts and fails its exact
+  head checks; it is preserved for a separate repair/decision.
+- `ALREADY_INTEGRATED`: PRs #19, #20, and #22 are capability duplicates of
+  merged PR #23; all other zero-ahead historical branch heads are ancestry-
+  integrated. Cached pull merge refs are not independent candidate heads.
+- No branch or PR was deleted, rewritten, force-pushed, or merged during this
+  reconciliation. `KU-BO-MOBILE-CODEX-D01` applies only at a newly revalidated
+  exact-head boundary and never overrides the narrower migration decision.
 
 ## Evidence and data status
 
@@ -155,7 +178,7 @@ DETAIL: run 33070160262 passed on Python 3.11, 3.12, 3.13, and 3.14.
 
 The branch contains no credentials or sessions, private Drive IDs, raw
 conversations, real runtime market data, or licensed bytes. No destructive
-cleanup, force-push, PR creation, or merge was performed.
+cleanup, force-push, or merge was performed. Draft PR #25 is the review boundary.
 
 ## User decisions required
 
@@ -185,18 +208,19 @@ issuer/security universe, and private runtime trust material.
   `COLLECTION_ADAPTER_NOT_ADMITTED` or `BLOCKED_CHECKPOINT_STORE`.
 - The official-domain registry is intentionally external and currently has no
   public entries. No issuer website can be claimed bound from this repository.
-- Exact-head CI passed. This result remains `PARTIAL` because the branch is not
+- Exact-head implementation CI passed. This result remains `PARTIAL` because
+  the branch is not
   merged and all real-data/runtime admission dependencies remain blocked.
 
 ## Smallest logical next task
 
 ```text
-TASK_ID: KU-BO-MOBILE-REPOSITORY-RECONCILIATION
-PROPOSED_BRANCH: continue codex/kuwait-market-ai-day1-v1 until its merge boundary; then create the next task from exact merged main
-DEPENDENCY: KU-BO-MOBILE-CODEX-D01; fresh audit of main, all branches/PRs, dependencies, mergeability, and CI.
-GOAL: Preserve and repair unique useful work, classify stale/duplicate refs, merge only validated exact heads in dependency order, verify green main, then open the bounded real-one-security task.
-ENTRY_GATE: clean checkout; remote/PR/CI verification; decision and privacy gates; no blind merging.
-EXIT_GATE: every relevant ref classified; useful merge candidates tested and resolved; exact merged main verified; next task records rights, trust, adapter, checkpoint, and no-real-data-in-Git gates.
+TASK_ID: KU-BO-ONE-SECURITY-CHECKPOINT-V2
+PROPOSED_BRANCH: create from exact green merged main after the D01 boundary
+DEPENDENCY: merge only exact validated PR #25 head; KU-BO-MIG-D02 remains open and PR #21 remains unmerged.
+GOAL: Add security-aware durable checkpoint/resume, raw-manifest reopening, reconciliation, and terminal sealing for exactly one authorized official numeric security.
+ENTRY_GATE: green merged main; recorded narrow private-runtime write authority; admitted official universe, adapters, trust, rights, and entitlements or explicit blocked receipts.
+EXIT_GATE: exactly 29 terminal source receipts in seven waves; crash/resume and stale-writer rejection; reopened raw evidence; reconciled denominator; terminal seal before any second security.
 ```
 
 `MERGE_NOT_PERFORMED`.

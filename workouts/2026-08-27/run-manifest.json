@@ -251,16 +251,16 @@
     "market_data_collected": false
   },
   "exact_head_ci": {
-    "run_id": 33060045908,
-    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
     "python_versions": ["3.11", "3.12", "3.13", "3.14"],
     "status": "success",
-    "pull_request_created": false,
+    "pull_request_created": true,
     "merged_to_main": false
   },
   "latest_branch_ci": {
-    "run_id": 33060045908,
-    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "run_id": 33098426912,
+    "head_sha": "48d139ca7d7f496228f2909b3c2549c6a5cd96ad",
     "status": "success"
   },
   "repository_audit": {
