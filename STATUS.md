@@ -11,6 +11,7 @@ BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
 WORKTREE_AT_START: CLEAN
+STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
 ```
 
 ## Completed and evidenced
@@ -64,6 +65,8 @@ WORKTREE_AT_START: CLEAN
 - Existing live dry work was replayed fail-closed with zero candidates and no
   sealed output because authorized source access is not configured. This is the
   expected `ABSTAIN / NO-TRADE` result, not live readiness.
+- Stage 1 is preserved in commit
+  `23895a19f18f87ddb1f61489dd4bcef13fe6e88a`; it has not been pushed or merged.
 
 ## Next active stage
 

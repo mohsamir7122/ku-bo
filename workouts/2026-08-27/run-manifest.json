@@ -68,7 +68,7 @@
     "deterministic_repeat_match": true,
     "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
     "package_install_cli_smoke": "pass",
-    "stage_commit_sha": null
+    "stage_commit_sha": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a"
   },
   "repository_audit": {
     "completed_at_utc": "2026-08-27T02:53:38Z",
