@@ -141,6 +141,7 @@ jobs:
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-config
           "$installed_kubo" --project-root "$GITHUB_WORKSPACE" validate-research-workflow
           "$installed_kubo" --help | grep -q "run-source-search"
+          "$installed_kubo" --help | grep -q "execute-public-source-access-probe"
           "$installed_kubo" --help | grep -q "build-kuwait-research-bundle"
           "$installed_kubo" --help | grep -q "evaluate-forty-session-replay"
           "$installed_kubo" --help | grep -q "validate-source-quality-policy"

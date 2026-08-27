@@ -24,7 +24,7 @@ class ResearchWorkflowTests(unittest.TestCase):
         spec = load_research_workflow(ROOT / "config")
         domains = catalog_registrable_domains(SourceNetworkCatalog(ROOT / "config"))
         self.assertGreaterEqual(len(domains), 50)
-        self.assertEqual(len(domains), 53)
+        self.assertEqual(len(domains), 54)
         self.assertEqual(spec.catalog_distinct_registrable_domains, len(domains))
         self.assertNotIn("google.com", domains)
 

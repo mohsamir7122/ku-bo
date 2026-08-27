@@ -590,7 +590,11 @@ class _PinnedHTTPSHandler(request.HTTPSHandler):
         resolver: Callable[..., list[tuple]],
         context: ssl.SSLContext,
     ):
-        super().__init__(context=context, check_hostname=True)
+        # ``ssl.create_default_context`` already enables certificate and
+        # hostname verification.  Python 3.12 removed the legacy
+        # ``check_hostname`` keyword from ``HTTPSConnection``; forwarding it
+        # through ``AbstractHTTPHandler.do_open`` fails before any request.
+        super().__init__(context=context)
         self.allowed_domains = allowed_domains
         self.resolver = resolver
 
@@ -610,7 +614,6 @@ class _PinnedHTTPSHandler(request.HTTPSHandler):
             connection_factory,
             req,
             context=self._context,
-            check_hostname=True,
         )
 
 

@@ -72,6 +72,20 @@
       "notes": "Official filing and regulation source; not a quote or execution feed."
     },
     {
+      "source_id": "kcc_maqasa_official",
+      "name": "Kuwait Clearing Company (Maqasa)",
+      "source_class": "PRIMARY_OFFICIAL",
+      "roles": ["IDENTITY_REFERENCE", "OFFICIAL_EVENT", "FUNDAMENTAL_ARCHIVE"],
+      "domains": ["maqasa.com", "www.maqasa.com"],
+      "start_urls": ["https://www.maqasa.com/ar/"],
+      "access_modes": ["PUBLIC_PAGE", "PUBLIC_DOWNLOAD"],
+      "independence_group": "kuwait_clearing_company",
+      "timing_grade_ceiling": "A",
+      "fact_eligibility": ["CORPORATE_ACTION", "DISTRIBUTION", "GENERAL_ASSEMBLY", "FOREIGN_OWNERSHIP", "CLEARING_RULE", "SETTLEMENT_RULE", "REGISTRAR_EVENT"],
+      "enabled_by_default": true,
+      "notes": "Official clearing-company surface for registrar, distribution, assembly, ownership, clearing, and settlement facts. Public access does not prove completeness or execution-grade data."
+    },
+    {
       "source_id": "issuer_ir_verified",
       "name": "Verified per-issuer investor-relations site",
       "source_class": "PRIMARY_ISSUER",

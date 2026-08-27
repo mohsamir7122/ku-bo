@@ -73,16 +73,24 @@ class SourceNetworkTests(unittest.TestCase):
     def test_network_catalog_is_research_only(self):
         report = self.catalog.report()
         self.assertEqual(report["status"], "PASS")
-        self.assertEqual(report["sources"], 68)
-        self.assertEqual(report["independence_groups"], 62)
+        self.assertEqual(report["sources"], 69)
+        self.assertEqual(report["independence_groups"], 63)
         self.assertEqual(report["profiles"], 5)
         self.assertEqual(
             report["capability_status_counts"],
-            {"DEFINED_ONLY": 66, "END_TO_END_TESTED": 2},
+            {"DEFINED_ONLY": 67, "END_TO_END_TESTED": 2},
         )
         self.assertEqual(report["live_operational_sources"], [])
         self.assertFalse(report["claim_boundaries"]["probability_allowed"])
         self.assertFalse(report["claim_boundaries"]["recommendation_allowed"])
+
+    def test_kuwait_clearing_company_is_registered_as_primary_official(self):
+        source = self.catalog.sources["kcc_maqasa_official"]
+        self.assertEqual(source.source_class, "PRIMARY_OFFICIAL")
+        self.assertEqual(source.independence_group, "kuwait_clearing_company")
+        self.assertIn("OFFICIAL_EVENT", source.roles)
+        self.assertIn("CORPORATE_ACTION", source.fact_eligibility)
+        self.assertEqual(source.start_urls, ("https://www.maqasa.com/ar/",))
 
     def test_same_platform_surfaces_share_one_independence_group(self):
         self.assertEqual(

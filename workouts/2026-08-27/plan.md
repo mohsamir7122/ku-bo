@@ -1,6 +1,6 @@
 # Day-One Execution Plan
 
-Status: STAGES_1_AND_2_COMPLETE; STAGE_3_NEXT
+Status: STAGES_1_TO_3_IMPLEMENTED_AND_TESTED; LIVE SOURCE ADMISSION BLOCKED
 
 1. Complete PRE-FLIGHT and record immutable starting SHAs, resources, tools,
    auth state, clean worktrees, Drive structure, baseline tests, and blockers.
@@ -17,13 +17,17 @@ Status: STAGES_1_AND_2_COMPLETE; STAGE_3_NEXT
 6. **Completed and tested synthetically:** add effective-dated issuer-universe
    and company-dossier contracts with eight required sections, frozen
    denominators, explicit gaps, source quality, and point-in-time validation.
-7. Prepare but do not activate sequential scheduled workflows until secrets,
+7. **Completed with blocked live receipts:** register the Kuwait Clearing
+   Company official source, implement a bounded public access executor, and
+   probe KCC plus Boursa reports without bypassing robots or access controls.
+   Both real probes returned no readable artifact and remain unadmitted.
+8. Prepare but do not activate sequential scheduled workflows until secrets,
    calendars, source admission, and dry-run gates are satisfied.
-8. Define issuer, source, provenance, event, split, blind-test, metrics, and live
+9. Define issuer, source, provenance, event, split, blind-test, metrics, and live
    candidate schemas before admitting real data.
-9. Collect Kuwait first from terms-compliant, authorized sources; report actual
+10. Collect Kuwait first from terms-compliant, authorized sources; report actual
    counts and gaps. Train/evaluate only with point-in-time and locked splits.
-10. Replicate the verified architecture for Saudi only after Kuwait's blind-test
+11. Replicate the verified architecture for Saudi only after Kuwait's blind-test
    and measurement gates pass.
 
 No irreversible action is part of this plan. No order placement, broker access,

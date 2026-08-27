@@ -1,11 +1,11 @@
 # Sources and Access Status
 
-Status at 2026-08-27T02:38:26Z: REGISTRY/AUDIT ONLY; REAL COLLECTION NOT STARTED
+Status at 2026-08-27T05:02:48Z: BOUNDED ACCESS PROBES EXECUTED; REAL COLLECTION BLOCKED
 
 | Source class | Intended priority | Current status |
 | --- | --- | --- |
-| Boursa Kuwait | Primary official | Defined; not collected in this run |
-| Kuwait Clearing Company | Primary official | Defined; not collected in this run |
+| Boursa Kuwait | Primary official | Reports archive probe: `ERROR / ROBOTS_POLICY_UNAVAILABLE`; 0 raw artifacts; not admitted or collected |
+| Kuwait Clearing Company | Primary official | Official `maqasa.com` source registered; probe: `ERROR / ROBOTS_POLICY_UNAVAILABLE`; 0 raw artifacts; not admitted or collected |
 | Issuer official sites/disclosures | Primary official | Universe not reconciled; not collected |
 | Kuwait regulator/official records | Primary official | Defined; not collected |
 | Investing | Secondary market discovery | Terms/access review pending |
@@ -45,3 +45,16 @@ Stage 2 binds dossier fields to those reconciled evidence references and require
 source-quality rows derived from actual field links. Its source URLs are
 `example.test` fixtures only; no listed company website was accessed by this dry
 run.
+
+## Stage 3 bounded access receipts
+
+- The KCC plan/receipt bindings are SHA-256
+  `e752c630bcc1651fa45d74697bbcf33c399d057b9e3d425c50a20c7c54301f7e` and
+  `b2c07ec0a7b157aa10fb9c7e2a29a6e97c1531e1ca927f728e8eaa3562615cd1`.
+- The Boursa reports plan/receipt bindings are SHA-256
+  `79a78c16b49f7dea6288c029a26dd163e09f1eec163dab8215b7cfebb1b6a24a` and
+  `89d524ce3f6a5cf718627ed55cd96523886bf733d5df3b025bdbf7c559bcaf1d`.
+- Both receipts passed `PASS_ACCESS_ONLY` because they faithfully preserve the
+  failed attempt and controlled reason. This is not a successful access result.
+- Raw probe bundles remain outside Git. No proxy credential, session, CAPTCHA,
+  paywall, robots bypass, or guessed download path was used.

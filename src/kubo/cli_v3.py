@@ -48,6 +48,7 @@ from .source_access_recipes import (
     compile_source_probe_plan,
     validate_access_probe_against_plan,
 )
+from .source_access_executor import execute_public_source_probe
 from .source_quality import validate_source_quality_policy
 from .source_fallback import plan_source_fallback, validate_source_fallback_policy
 from .source_orchestrator import (
@@ -105,6 +106,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-source-network",
         "validate-source-access-recipes",
         "plan-source-access-probe",
+        "execute-public-source-access-probe",
         "validate-source-access-probe",
         "validate-source-quality-policy",
         "validate-source-fallback-policy",
@@ -339,6 +341,10 @@ def parser() -> argparse.ArgumentParser:
     source_probe_validate.add_argument("--plan", type=Path, required=True)
     source_probe_validate.add_argument("--probe", type=Path, required=True)
 
+    source_probe_execute = sub.add_parser("execute-public-source-access-probe")
+    source_probe_execute.add_argument("--plan", type=Path, required=True)
+    source_probe_execute.add_argument("--output-root", type=Path, required=True)
+
     factor9 = sub.add_parser("validate-factor9-admission")
     factor9.add_argument("--manifest", type=Path, required=True)
     factor9.add_argument("--output", type=Path)
@@ -452,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
         "validate-source-network",
         "validate-source-access-recipes",
         "plan-source-access-probe",
+        "execute-public-source-access-probe",
         "validate-source-access-probe",
         "validate-research-workflow",
         "evaluate-forty-session-replay",
@@ -471,6 +478,7 @@ def main(argv: list[str] | None = None) -> int:
         "validate-config",
         "validate-source-access-recipes",
         "plan-source-access-probe",
+        "execute-public-source-access-probe",
         "validate-source-access-probe",
     }:
         assert network_catalog is not None
@@ -675,6 +683,15 @@ def main(argv: list[str] | None = None) -> int:
         report = validate_access_probe_against_plan(
             probe_path=args.probe,
             plan_path=args.plan,
+            recipes=recipe_catalog,
+            source_catalog=network_catalog,
+        )
+    elif args.command == "execute-public-source-access-probe":
+        assert network_catalog is not None
+        assert recipe_catalog is not None
+        report = execute_public_source_probe(
+            plan_path=args.plan,
+            output_root=args.output_root,
             recipes=recipe_catalog,
             source_catalog=network_catalog,
         )

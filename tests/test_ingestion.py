@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import socket
+import ssl
 import tempfile
 import unittest
 from datetime import datetime
@@ -18,6 +19,7 @@ from kubo.ingestion import (
     PublicHttpConnector,
     capture_sources,
 )
+import kubo.ingestion as ingestion
 from kubo.source_network import SourceNetworkCatalog, SourceNetworkRunValidator
 
 
@@ -221,6 +223,35 @@ class FileConnectorTests(unittest.TestCase):
 
 
 class PublicHttpConnectorTests(unittest.TestCase):
+    def test_pinned_https_handler_uses_python_312_connection_signature(self):
+        context = ssl.create_default_context()
+
+        def resolver(*_args, **_kwargs):
+            return [(2, 1, 6, "", ("93.184.216.34", 443))]
+
+        handler = ingestion._PinnedHTTPSHandler(
+            ("example.com",), resolver=resolver, context=context
+        )
+        observed = {}
+
+        def do_open(factory, requested, **kwargs):
+            observed["kwargs"] = kwargs
+            connection = factory(
+                "example.com",
+                timeout=7,
+                context=kwargs["context"],
+            )
+            self.assertIsInstance(connection, ingestion._PinnedHTTPSConnection)
+            self.assertEqual(connection._pinned_addresses, ("93.184.216.34",))
+            return "opened"
+
+        handler.do_open = do_open
+        requested = ingestion.request.Request("https://example.com/data")
+        self.assertEqual(handler.https_open(requested), "opened")
+        self.assertEqual(observed["kwargs"], {"context": context})
+        self.assertTrue(context.check_hostname)
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+
     def test_dns_resolution_failure_is_transient_but_non_public_is_blocked(self):
         def failed_resolver(*_args, **_kwargs):
             raise socket.gaierror("temporary failure")

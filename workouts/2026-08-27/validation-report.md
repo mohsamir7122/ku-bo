@@ -72,10 +72,11 @@ DURATION_SECONDS: 490.736
   `18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad`.
 - Fresh-environment install, `validate-config`, and reconciliation CLI smoke: PASS.
 
-Exact-head GitHub CI has not run because the Stage 1 commit has not yet been
-pushed. These results prove local software behavior only, not real source access,
-company coverage, model training, blind-test validity, market readiness, or
-investment performance.
+The branch was later pushed without a PR or merge. Exact-head GitHub CI run
+`33039583311` passed on Python 3.11 through 3.14 for head
+`3a100ac220b7545e438dc0ee8afae2bbcf7da2c7`. These results prove software
+behavior only, not real source access, company coverage, model training,
+blind-test validity, market readiness, or investment performance.
 
 ## Stage 2 issuer universe and company dossier
 
@@ -109,3 +110,54 @@ CLI completed successfully. Wheel SHA-256:
 The fixture company is intentionally fictional and excluded from real coverage.
 Stage 2 does not prove an exact Kuwait issuer universe, source admission, current
 prices, training data, blind-test performance, or readiness for live research.
+
+## Stage 3 official source access
+
+```text
+SOURCE/WORKFLOW FOCUSED TESTS: PASS — 110/110
+ACCESS EXECUTOR TESTS: PASS — 7/7
+INGESTION + EXECUTOR TESTS: PASS — 40/40
+VALIDATE_CONFIG: PASS
+CONTROL_VALIDATOR: PASS
+SECRET_GUARD: PASS
+COMPILEALL: PASS
+GIT_DIFF_CHECK: PASS
+FULL_COMMAND: PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+FULL_RESULT: PASS — 2316/2316
+FULL_DURATION_SECONDS: 617.951
+```
+
+The first KCC execution exposed a Python 3.12 `HTTPSConnection` compatibility
+exception before network access. TLS context certificate and hostname checks
+remain enabled; the obsolete forwarded keyword was removed and regression
+tested. Connector exceptions are now converted into bounded audit receipts, and
+a two-source test proves a failed source does not stop a readable sibling.
+
+Two subsequent real, one-off, public capability probes were completed and
+reopened successfully by the access validator:
+
+- `kcc_maqasa_official`: `ERROR / ROBOTS_POLICY_UNAVAILABLE`, 0 artifacts;
+- `boursa_reports_archive`: `ERROR / ROBOTS_POLICY_UNAVAILABLE`, 0 artifacts.
+
+Both reports are `PASS_ACCESS_ONLY`: the pass means the failed attempts are
+auditable, not that access succeeded. Market data, evidence, parsers, historical
+coverage, and forecasts all remain false. Private bundles are outside Git.
+
+An isolated wheel was built and installed, `validate-source-access-recipes`
+passed from the installed command, and CLI help exposed
+`execute-public-source-access-probe`. Wheel SHA-256:
+`d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff`.
+
+Post-documentation gates were rerun at `2026-08-27T05:07:48Z`. The first
+focused command selected `pytest`, which is not installed in the isolated
+runtime, and exited before collecting any test with `No module named pytest`.
+The canonical repository runner was then used:
+
+```text
+COMMAND: PYTHONPATH=src .venv/bin/python -m unittest tests/test_ingestion.py tests/test_source_access_executor.py tests/test_source_access_recipes.py tests/test_source_network.py tests/test_research_workflow.py tests/test_kuwait_workflow_cli.py
+RESULT: PASS — 109/109
+CONTROL_VALIDATOR: PASS
+SECRET_GUARD: PASS
+COMPILEALL: PASS
+GIT_DIFF_CHECK: PASS
+```

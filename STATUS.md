@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T04:24:26Z (2026-08-27T07:24:26+03:00, Asia/Kuwait)
+Updated: 2026-08-27T05:02:48Z (2026-08-27T08:02:48+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_2_ISSUER_UNIVERSE_AND_DOSSIER_COMPLETE
+STAGE: STAGE_3_OFFICIAL_SOURCE_ACCESS_IMPLEMENTED_PROBES_BLOCKED
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -85,12 +85,39 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
   `86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9`.
 - Stage 2 is preserved in commit
   `2a37ac81e440bd1ce609abdfab61993e118ccb57`; it has not been merged.
+- Pushed the work branch without opening a PR or merging. Exact-head GitHub CI
+  run `33039583311` passed for head
+  `3a100ac220b7545e438dc0ee8afae2bbcf7da2c7` on Python 3.11, 3.12, 3.13,
+  and 3.14.
+- Registered the official Kuwait Clearing Company surface as
+  `kcc_maqasa_official` after verifying the public `maqasa.com` domain. The
+  catalog now contains 69 definitions in 63 independence groups; capabilities
+  remain 67 `DEFINED_ONLY`, 2 fixture-only `END_TO_END_TESTED`, and 0
+  `LIVE_OPERATIONAL`.
+- Added a one-off public source-access executor. It accepts only validated
+  `PUBLIC_ACCESS_ONLY`/`HTTP_GET` plans, reserves a fresh output root before
+  network access, enforces HTTPS/domain/robots/timeout/byte limits, sends no
+  credentials, stores readable bytes content-addressed, reopens every receipt,
+  and isolates per-source connector exceptions.
+- The first real KCC command exposed a Python 3.12 TLS-handler compatibility
+  defect before network access. The defect was fixed without weakening TLS
+  hostname/certificate verification and is covered by a regression test.
+- Two completed real one-off capability probes were executed: Kuwait Clearing
+  Company and the Boursa Kuwait reports archive. Both receipts passed the
+  access-only audit but ended `ERROR / ROBOTS_POLICY_UNAVAILABLE` with 0 raw
+  artifacts. They prove bounded attempts and a blocker only; they do not prove
+  source availability, market data, historical coverage, or collection.
+- Stage 3 focused source/ingestion validation passes, and the full candidate
+  suite passes 2,316/2,316 tests in 617.951 seconds. Config, control, compile,
+  whitespace, Secret Guard, and installed-wheel CLI gates pass. Candidate wheel
+  SHA-256 is
+  `d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff`.
 
 ## Next active stage
 
-- Build the official-first source-admission ledger and bounded dry probes before
-  any real Kuwait collection. Rights, robots, licensing, provenance, retries,
-  and point-in-time gates remain mandatory.
+- Build the sequential fail-closed GitHub Actions schedule and continue source
+  admission through separately authorized routes. Rights, robots, licensing,
+  provenance, retries, and point-in-time gates remain mandatory.
 
 ## Not started or not yet evidenced
 
@@ -105,13 +132,16 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
 - Required GitHub Secrets and repository variables are absent in both final
   repositories. Scheduled collection/live workflows must remain disabled or
   fail closed until exact contracts are supplied and validated.
+- Direct safe HTTP probes could not retrieve a usable robots policy from the
+  KCC or Boursa reports hosts. No bypass, proxy credential, browser session, or
+  alternate scraped route was used; both sources remain unadmitted.
 - Existing migration control artifacts disagree: one catalog describes fourteen
   jobs as bound/reimplemented while the preparation manifest and parity matrix
   still say all fourteen are not started. Filesystem audit confirms canonical
   gaps, so predecessor migration completion is not claimed.
 - The stale local task/branch control mismatch was repaired without weakening
-  the assertion. Exact-head GitHub CI for the unpushed Stage 1 commit is still
-  pending; merge remains forbidden.
+  the assertion. Exact-head CI passed for the pushed Stage 2 receipt head;
+  Stage 3 exact-head CI is pending and merge remains forbidden.
 - PRoot exposes phone storage through existing binds. All writes in this run are
   restricted to the project workspace; no external storage is used.
 - Synthetic fixtures are software evidence only. No return, accuracy,

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T04:24:26Z",
-  "updated_at_kuwait": "2026-08-27T07:24:26+03:00",
+  "updated_at_utc": "2026-08-27T05:02:48Z",
+  "updated_at_kuwait": "2026-08-27T08:02:48+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "STAGE_2_ISSUER_UNIVERSE_AND_DOSSIER_COMPLETE",
+  "stage": "STAGE_3_OFFICIAL_SOURCE_ACCESS_IMPLEMENTED_PROBES_BLOCKED",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -27,7 +27,8 @@
     {"name": "integration_plan", "status": "completed"},
     {"name": "source_evidence_lifecycle", "status": "completed_tested_synthetic"},
     {"name": "issuer_universe_and_company_dossier", "status": "completed_tested_synthetic"},
-    {"name": "kuwait_collection", "status": "not_started"},
+    {"name": "official_source_access", "status": "implemented_tested_live_probes_blocked"},
+    {"name": "kuwait_collection", "status": "blocked_by_source_admission"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
     {"name": "locked_blind_test", "status": "not_started"},
@@ -46,8 +47,8 @@
   },
   "candidate_focused_validation": {
     "control_validator": "pass",
-    "targeted_consistency_tests_total": 57,
-    "targeted_consistency_tests_passed": 57,
+    "targeted_consistency_tests_total": 110,
+    "targeted_consistency_tests_passed": 110,
     "source_evidence_tests_total": 30,
     "source_evidence_tests_passed": 30,
     "json_parse": "pass",
@@ -59,11 +60,19 @@
   },
   "candidate_full_validation": {
     "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
-    "total": 2307,
-    "passed": 2307,
+    "total": 2316,
+    "passed": 2316,
     "failures": 0,
     "errors": 0,
-    "duration_seconds": 565.428
+    "duration_seconds": 617.951
+  },
+  "exact_head_ci": {
+    "run_id": 33039583311,
+    "head_sha": "3a100ac220b7545e438dc0ee8afae2bbcf7da2c7",
+    "status": "success",
+    "python_versions": ["3.11", "3.12", "3.13", "3.14"],
+    "pull_request_created": false,
+    "merged_to_main": false
   },
   "source_evidence_lifecycle": {
     "implementation_status": "implemented_tested_synthetic",
@@ -96,6 +105,32 @@
     "real_company_dossier_count": 0,
     "training_or_recommendation_authorized": false
   },
+  "official_source_access": {
+    "implementation_status": "implemented_tested_live_probes_blocked",
+    "catalog_source_count": 69,
+    "independence_group_count": 63,
+    "recipe_count": 15,
+    "recipe_covered_source_count": 31,
+    "executor_focused_tests_total": 7,
+    "executor_focused_tests_passed": 7,
+    "completed_validated_probe_receipts": 2,
+    "completed_probe_source_ids": [
+      "boursa_reports_archive",
+      "kcc_maqasa_official"
+    ],
+    "readable_raw_artifact_count": 0,
+    "source_state_counts": {"ERROR": 2},
+    "terminal_code": "ROBOTS_POLICY_UNAVAILABLE",
+    "kcc_plan_sha256": "e752c630bcc1651fa45d74697bbcf33c399d057b9e3d425c50a20c7c54301f7e",
+    "kcc_probe_hash": "b2c07ec0a7b157aa10fb9c7e2a29a6e97c1531e1ca927f728e8eaa3562615cd1",
+    "boursa_reports_plan_sha256": "79a78c16b49f7dea6288c029a26dd163e09f1eec163dab8215b7cfebb1b6a24a",
+    "boursa_reports_probe_hash": "89d524ce3f6a5cf718627ed55cd96523886bf733d5df3b025bdbf7c559bcaf1d",
+    "wheel_sha256": "d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff",
+    "network_access_attempted": true,
+    "market_data_collected": false,
+    "market_evidence_created": false,
+    "live_operational_claim_allowed": false
+  },
   "repository_audit": {
     "private_runtime_receipt_sha256": "9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5",
     "private_predecessor_tests_passed": 937,
@@ -123,6 +158,7 @@
   },
   "blockers": [
     "GITHUB_SECRETS_AND_VARIABLES_ABSENT",
+    "OFFICIAL_SOURCE_ROBOTS_POLICY_UNAVAILABLE",
     "PREDECESSOR_MIGRATION_CONTROL_ARTIFACTS_DISAGREE",
     "REAL_SOURCE_ADMISSION_NOT_COMPLETE",
     "COMPANY_UNIVERSE_NOT_RECONCILED",
