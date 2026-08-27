@@ -275,3 +275,45 @@ Evidence counts did not change in this stage: 2 source attempts, 0 readable
 artifacts, 0 real observations, 0 unique admitted events, 0 training-admitted
 records, and 0 locked predictions. No forecast, return, or investment-improvement
 claim is made.
+
+## Stage 7 rights-aware 90-day package and scheduler extension
+
+Implementation commits:
+
+- package/schema/runtime/tests: `e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d`;
+- backfill/recovery workflow extension: `85a9068d05b9c015d2044f78d0bdc9b1558d569e`.
+
+```text
+RIGHTS_AWARE_BACKFILL UNIT + ADVERSARIAL: PASS — 18/18
+COMBINED BACKFILL/SCHEDULE/RECOVERY/LEASE/PRIORITY/WORKFLOW: PASS — 106/106
+REAL RECEIPT BUNDLE REOPEN: PASS
+JSON SCHEMA VALIDATION: PASS
+WORKFLOW YAML PARSE: PASS
+ACTIONLINT: PASS — 1.7.12
+PRODUCTION BLOCKER DRY RUN: PASS — exit 2, no output created
+COMPILE: PASS
+SECRET_GUARD: PASS
+GIT_DIFF_CHECK: PASS
+```
+
+The private non-Git audit package is named
+`INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`; its reopened manifest digest is
+`d5c07df65a7b80ed8a332b3e472eadfd6a7633a6718bff07e498b0ba14a96069`.
+It covers the inclusive 2026-05-30 through 2026-08-27 plan: 11 trusted source
+groups × 90 dates = 990 planned date shards. Two source attempts were audited,
+both were blocked before fetch, 180 shards are blocked, 810 are unattempted, and
+0 are completed. Readable artifacts, observations, provenance rows, unique
+events, research-context rows, training candidates, and contradictions are all
+zero.
+
+The local schedule Dry Run resolved nominal time
+`2026-08-27T04:23:00Z`, recorded actual start `2026-08-27T04:31:00Z`, and
+therefore recorded a 480-second delay. It failed closed at
+`BLOCKED_CHECKPOINT_STORE`; this is scheduling/gating evidence only.
+
+Exact-head CI run `33059176971` passed package head `e9d1a7f` on Python 3.11,
+3.12, 3.13, and 3.14. CI run `33060045908` passed workflow head `85a9068` on
+the same four Python versions. A final local pre-commit rerun passed the 106-test
+combined gate, 102/102 source/research/control/secret-unit tests, and standalone
+Secret Guard. The schedules remain inactive because no reviewed workflow has
+been merged to the default branch.

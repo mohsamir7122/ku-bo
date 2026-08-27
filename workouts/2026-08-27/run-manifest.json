@@ -80,6 +80,45 @@
     "actionlint": "pass",
     "secret_guard": "pass"
   },
+  "stage_6_focused_validation": {
+    "recorded_at_utc": "2026-08-27T09:07:00Z",
+    "priority_checkpoint_tests": {
+      "total": 16,
+      "passed": 16
+    },
+    "recovery_lease_tests": {
+      "total": 35,
+      "passed": 35
+    },
+    "integrated_preemption_resume_test": "pass_synthetic_coordination_only",
+    "checkpoint_schema_validation": "pass",
+    "compile": "pass",
+    "secret_guard": "pass"
+  },
+  "stage_7_focused_validation": {
+    "recorded_at_utc": "2026-08-27T10:02:25Z",
+    "rights_aware_backfill_tests": {
+      "total": 18,
+      "passed": 18
+    },
+    "combined_backfill_schedule_recovery_lease_priority_workflow_tests": {
+      "total": 106,
+      "passed": 106
+    },
+    "source_research_control_secret_unit_tests": {
+      "total": 102,
+      "passed": 102
+    },
+    "real_receipt_bundle_reopen": "pass",
+    "schema_validation": "pass",
+    "workflow_yaml_parse": "pass",
+    "actionlint_version": "1.7.12",
+    "actionlint": "pass",
+    "production_blocker_dry_run": "pass_exit_2_no_output",
+    "compile": "pass",
+    "diff_check": "pass",
+    "secret_guard": "pass"
+  },
   "stage_1_artifacts": {
     "source_evidence_input_schema": "source-evidence-lifecycle-v1",
     "source_evidence_report_schema": "source-evidence-reconciliation-report-v1",
@@ -163,13 +202,66 @@
     "strict_forecast_status": "LOCKED",
     "scheduled_workflows_active": false
   },
+  "stage_6_artifacts": {
+    "priority_checkpoint_commit": "3195ba768382a063dac18053645c8dcd7fe4dd70",
+    "window_from": "2026-05-30",
+    "window_to": "2026-08-27",
+    "window_day_count": 90,
+    "maximum_attempts_per_shard": 2,
+    "production_checkpoint_store_status": "BLOCKED_CHECKPOINT_STORE",
+    "completed_shards_immutable": true,
+    "resume_only_non_completed": true,
+    "champion_mutation_allowed": false
+  },
+  "stage_7_artifacts": {
+    "package_commit": "e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d",
+    "workflow_commit": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "package_name": "INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT",
+    "window_from": "2026-05-30",
+    "window_to": "2026-08-27",
+    "window_day_count": 90,
+    "manifest_digest": "d5c07df65a7b80ed8a332b3e472eadfd6a7633a6718bff07e498b0ba14a96069",
+    "source_group_denominator": 11,
+    "planned_date_shards": 990,
+    "source_attempts": 2,
+    "blocked_sources": 2,
+    "blocked_before_fetch_date_shards": 180,
+    "unattempted_date_shards": 810,
+    "completed_date_shards": 0,
+    "readable_artifacts": 0,
+    "real_observations": 0,
+    "provenance_records": 0,
+    "unique_events": 0,
+    "research_context_records": 0,
+    "training_candidates": 0,
+    "contradictions": 0,
+    "blocked_source_ids": [
+      "boursa_reports_archive",
+      "kcc_maqasa_official"
+    ],
+    "terminal_code": "ROBOTS_POLICY_UNAVAILABLE",
+    "pipeline_workflow_sha256": "597a5519586ec25468a2757654e5babf1cd1262cde665368ae3f23e0086ee0ea",
+    "controller_workflow_sha256": "a789212b05147b84f184d066518c0d0487c9e3bf486abad5931618fc6e5b3732",
+    "background_backfill_cron_utc": "23 */2 * * *",
+    "scheduled_recovery_cron_utc": "13,43 * * * *",
+    "watchdog_interval_minutes": 5,
+    "research_network_status": "SOFTWARE_OPERATIONAL_ABSTAIN",
+    "strict_forecast_status": "LOCKED",
+    "scheduled_workflows_active": false,
+    "market_data_collected": false
+  },
   "exact_head_ci": {
-    "run_id": 33041621326,
-    "head_sha": "cfd0f4858f9fc3a0a35484b8dafa2bd8a60a0578",
+    "run_id": 33060045908,
+    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
     "python_versions": ["3.11", "3.12", "3.13", "3.14"],
     "status": "success",
     "pull_request_created": false,
     "merged_to_main": false
+  },
+  "latest_branch_ci": {
+    "run_id": 33060045908,
+    "head_sha": "85a9068d05b9c015d2044f78d0bdc9b1558d569e",
+    "status": "success"
   },
   "repository_audit": {
     "completed_at_utc": "2026-08-27T02:53:38Z",

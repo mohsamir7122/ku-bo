@@ -32,3 +32,28 @@ Stage 4 accessed official public schedule/holiday pages solely to verify the
 automation calendar. Those administrative facts are not company or market-data
 collection and do not change any count above. All seven schedule dry runs kept
 collection disabled.
+
+## Rights-aware 90-day attempt audit
+
+The initial package for 2026-05-30 through 2026-08-27 is deliberately named
+`INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`. It is an attempt/coverage ledger,
+not a completed collection or training dataset.
+
+| Measure | Actual count |
+| --- | ---: |
+| Trusted source groups in denominator | 11 |
+| Planned source/date shards | 990 |
+| Source attempts | 2 |
+| Blocked sources | 2 |
+| Blocked-before-fetch shards | 180 |
+| Unattempted shards | 810 |
+| Completed shards | 0 |
+| Readable raw artifacts | 0 |
+| Real observations | 0 |
+| Unique events | 0 |
+| Research-context rows | 0 |
+| Training candidates | 0 |
+
+The attempted sources were `boursa_reports_archive` and
+`kcc_maqasa_official`; both remain `BLOCKED_ROBOTS` with terminal code
+`ROBOTS_POLICY_UNAVAILABLE`. No bypass or substitute data was used.

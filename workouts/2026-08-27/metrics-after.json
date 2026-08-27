@@ -23,7 +23,10 @@
     "implementation_heads": [
       "cb4808a13489cad0c14e2e41622fdbdeb8644631",
       "0170fa1549e32d29577aac5f9ef8f8528131247c",
-      "94e384f297e53019df644312c99c8529deefd7df"
+      "94e384f297e53019df644312c99c8529deefd7df",
+      "3195ba768382a063dac18053645c8dcd7fe4dd70",
+      "e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d",
+      "85a9068d05b9c015d2044f78d0bdc9b1558d569e"
     ],
     "critical_path_initial_wait_seconds": 0,
     "maximum_automatic_attempts": 2,
@@ -37,6 +40,21 @@
     "controlled_resume_tests_passed": 1,
     "duplicate_retry_suppression_tests_passed": 3,
     "alert_deduplication_tests_passed": 1,
+    "priority_checkpoint_tests_total": 16,
+    "priority_checkpoint_tests_passed": 16,
+    "rights_aware_backfill_tests_total": 18,
+    "rights_aware_backfill_tests_passed": 18,
+    "combined_stage_7_gate_tests_total": 106,
+    "combined_stage_7_gate_tests_passed": 106,
+    "source_research_control_secret_unit_tests_total": 102,
+    "source_research_control_secret_unit_tests_passed": 102,
+    "real_source_attempts_audited": 2,
+    "blocked_source_attempts": 2,
+    "readable_artifacts": 0,
+    "real_observations": 0,
+    "unique_events": 0,
+    "training_candidates": 0,
+    "production_blocker_dry_run": "pass_exit_2_no_output",
     "secret_guard": "pass",
     "actionlint": "pass"
   },

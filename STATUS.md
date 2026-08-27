@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T09:04:10Z (2026-08-27T12:04:10+03:00, Asia/Kuwait)
+Updated: 2026-08-27T10:02:25Z (2026-08-27T13:02:25+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_6_PRIORITY_CHECKPOINT_IMPLEMENTED_TESTED_PUSHED_CI_RUNNING
+STAGE: STAGE_7_RIGHTS_AWARE_BACKFILL_AUDITED_WORKFLOWS_CI_SUCCESS_STATUS_PENDING
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -25,6 +25,8 @@ RECOVERY_DOCUMENTATION_COMMIT: bd17767e992b57d5833a0bf92c7045294c7633fc
 ISSUE_24_DELTA_PREFLIGHT_COMMIT: 758dcd3d762385f88444a34b26530a3a6855add7
 RELEASE_METADATA_CI_FIX_COMMIT: ee07f00382dc5eba1fb9b903a4fd7f10deac4523
 PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
+RIGHTS_AWARE_BACKFILL_COMMIT: e9d1a7fde8fde98d131c61c8aef97eb0619b6d0d
+BACKFILL_RECOVERY_WORKFLOW_COMMIT: 85a9068d05b9c015d2044f78d0bdc9b1558d569e
 ```
 
 ## Completed and evidenced
@@ -209,16 +211,53 @@ PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
 - Exact-head CI run `33054455755` failed only because the release metadata test
   had not been updated when the pinned PyYAML workflow-parser dependency was
   added. Commit `ee07f00382dc5eba1fb9b903a4fd7f10deac4523` binds that dependency;
-  its focused tests and Secret Guard pass, and CI run `33056375121` is in
-  progress. The priority commit is pushed and exact-head CI run `33056857748`
-  is in progress; it is not yet CI-validated.
+  its focused tests and Secret Guard pass. Corrected CI run `33056375121`,
+  priority-head run `33056857748`, and status-head run `33056986858` all passed.
+- Implemented the immutable initial Kuwait package
+  `INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT` for the inclusive 2026-05-30
+  through 2026-08-27 window. It reopens canonical source plan/probe receipts,
+  verifies hashes and trusted source roles, rejects symlinks/path traversal,
+  prevents temporal leakage and overwrite, and keeps every observation/event/
+  training file empty until separate admission succeeds.
+- Materialized one private, non-Git audit package at code head `e9d1a7f` from
+  the two existing real source receipts. The independently reopened result is:
+  2 source attempts, 2 blocked sources, 0 readable artifacts, 0 real
+  observations, 0 unique events, 0 research-context records, and 0 training
+  candidates. Both attempts are `BLOCKED_ROBOTS / ROBOTS_POLICY_UNAVAILABLE`.
+  The package manifest digest is
+  `d5c07df65a7b80ed8a332b3e472eadfd6a7633a6718bff07e498b0ba14a96069`.
+- The denominator is 11 trusted source independence groups × 90 dates = 990
+  planned date shards. The two blocked official groups account for 180
+  blocked-before-fetch shards; 810 shards remain unattempted and 0 are complete.
+  This is an audited attempt ledger, not completed market collection or a
+  training dataset.
+- Extended the existing workflows without adding a competing scheduler:
+  background backfill is declared at minute 23 every two hours; bounded
+  scheduled recovery is declared at minutes 13/43; the five-minute watchdog
+  remains missed-event-only; and completed `workflow_run` remains the immediate
+  first retry path. All use the one non-cancelling Kuwait concurrency group.
+- The scheduled backfill path validates priority/timing, then exits nonzero at
+  `BLOCKED_CHECKPOINT_STORE` before any source request. Its local Dry Run exited
+  2, created no output, and recorded inferred scheduled time, actual start, and
+  the non-punctuality boundary. An additional gate blocks an accidentally
+  unwired production coordinator.
+- Rights-aware backfill unit/adversarial tests pass 18/18. The combined
+  backfill, schedule, recovery, lease, priority, and workflow gate passes
+  106/106. PyYAML workflow parsing, Actionlint 1.7.12, compile, diff checks, and
+  Secret Guard pass. Commits `e9d1a7f` and `85a9068` are pushed only to the work
+  branch. Exact-head CI `33059176971` passed `e9d1a7f`; workflow-head CI
+  `33060045908` passed `85a9068` on Python 3.11 through 3.14.
+- Final pre-commit local revalidation passed 106/106 combined backfill/recovery/
+  workflow tests, 102/102 source/research/control/secret-unit tests, standalone
+  Secret Guard, JSON parsing, and whitespace checks.
 
 ## Next active stage
 
-- Commit the updated status evidence, push the priority/checkpoint commits to the
-  work branch, and require exact-head CI. Then implement the rights-aware Kuwait
-  90-day bundle named `INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT`, extending the
-  current source/provenance validators and retaining zero-data/blocker truth.
+- Require exact-head CI for the Stage 7 status head, then continue official-first
+  Kuwait source admission and fallback discovery. Production backfill remains
+  blocked until a reviewed durable checkpoint store exists; admissible market
+  observations, issuer coverage, event deduplication, temporal dataset release,
+  training, and the locked Blind Test remain subsequent gates.
 
 ## Not started or not yet evidenced
 
@@ -249,8 +288,10 @@ PRIORITY_CHECKPOINT_COMMIT: 3195ba768382a063dac18053645c8dcd7fe4dd70
 - Exact-head CI run `33041621326` passed for the Stage 3 receipt head, and Stage
   4 CI run `33043529715` passed at its reviewed head. Recovery run `33054455755`
   exposed the release-metadata mismatch described above; corrected run
-  `33056375121` is in progress. Priority-head run `33056857748` is also in
-  progress; activation and merge remain forbidden until exact-head validation.
+  `33056375121`, priority run `33056857748`, and status run `33056986858`
+  passed. Stage 7 package run `33059176971` and workflow-head run `33060045908`
+  passed. Activation and merge remain forbidden; the subsequent status-only head
+  still requires its own exact-head CI.
 - The official holiday contract is verified only through 2026. A later live
   slot fails closed if official calendar coverage is absent or stale.
 - PRoot exposes phone storage through existing binds. All writes in this run are
