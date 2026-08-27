@@ -14,8 +14,12 @@ from kubo.research_network import (
     build_research_observation,
     detect_copied_news,
     resolve_trusted_source,
+    run_research_network,
+    strict_forecast_gate,
+    validate_research_observation,
     validate_research_source_registry,
 )
+from kubo.hashing import canonical_json_bytes, hash_json
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,6 +76,7 @@ def input_row(
     return {
         "observation_id": observation_id,
         "market": "KUWAIT",
+        "evidence_class": "SYNTHETIC_CONTRACT",
         "source_id": source_id,
         "claimed_source_role": role,
         "security_code": "KFH",
@@ -204,6 +209,18 @@ class ResearchObservationTests(unittest.TestCase):
         with self.assertRaisesRegex(ResearchNetworkError, "finite canonical JSON"):
             self.build(row)
 
+    def test_serialized_credibility_self_promotion_is_rejected(self) -> None:
+        observation = self.build(input_row())
+        observation["credibility_score"] = 100
+        with self.assertRaisesRegex(ResearchNetworkError, "do not recompute"):
+            validate_research_observation(ROOT, observation)
+
+    def test_evidence_class_must_be_explicit(self) -> None:
+        row = input_row()
+        row["evidence_class"] = "REAL_OR_SYNTHETIC_UNKNOWN"
+        with self.assertRaisesRegex(ResearchNetworkError, "evidence_class"):
+            self.build(row)
+
 
 class CopyAndConflictTests(unittest.TestCase):
     def build(self, row: dict[str, object]) -> dict[str, object]:
@@ -265,6 +282,81 @@ class CopyAndConflictTests(unittest.TestCase):
         self.assertEqual(ledger["conflicts"][0]["aggregation_method"], "NO_AVERAGING")
         self.assertIsNone(ledger["conflicts"][0]["resolved_value"])
         self.assertFalse(ledger["conflicting_values_averaged"])
+
+
+class ResearchModeSeparationTests(unittest.TestCase):
+    def test_current_repository_strict_forecast_is_locked(self) -> None:
+        gate = strict_forecast_gate(ROOT)
+        self.assertEqual(gate["status"], "LOCKED")
+        self.assertFalse(gate["publish_allowed"])
+        self.assertIn("TRAINING_VALIDATION_RECEIPT_MISSING", gate["blockers"])
+        self.assertIn("BLIND_TEST_VALIDATION_RECEIPT_MISSING", gate["blockers"])
+
+    def test_empty_research_network_is_operational_but_abstains(self) -> None:
+        report = run_research_network(ROOT, [], generated_at=KNOWN)
+        self.assertTrue(report["software_operational"])
+        self.assertFalse(report["live_evidence_operational"])
+        self.assertEqual(report["decision"], "ABSTAIN")
+        self.assertEqual(report["real_observation_count"], 0)
+        self.assertEqual(report["strict_forecast"]["status"], "LOCKED")
+        schema = json.loads(
+            (ROOT / "schemas" / "research-network-run.schema.json").read_text()
+        )
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema, format_checker=FormatChecker()).validate(report)
+
+    def test_synthetic_observation_never_contributes_to_live_rank(self) -> None:
+        synthetic = build_research_observation(ROOT, input_row(), known_at=KNOWN)
+        report = run_research_network(ROOT, [synthetic], generated_at=KNOWN)
+        self.assertEqual(report["synthetic_observation_count"], 1)
+        self.assertEqual(report["real_observation_count"], 0)
+        self.assertEqual(report["securities"][0]["decision"], "ABSTAIN")
+        self.assertIn("NO_REAL_OBSERVATIONS", report["securities"][0]["reasons"])
+
+    def test_readiness_receipt_requires_real_counts_blind_controls_and_digest(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "artifacts" / "validated" / "forecast-readiness.json"
+            path.parent.mkdir(parents=True)
+            payload = {
+                "schema_version": "1.0",
+                "market": "KUWAIT",
+                "evidence_class": "REAL_MARKET_EVIDENCE",
+                "run_id": "validated-readiness-fixture",
+                "code_sha": "a" * 40,
+                "training": {
+                    "status": "VALIDATED",
+                    "ten_year_events": 20,
+                    "five_year_events": 50,
+                    "additional_events": 300,
+                    "unique_events": 370,
+                    "temporal_split": "PASS",
+                    "leakage_test": "PASS",
+                    "report_sha256": "b" * 64,
+                },
+                "blind_test": {
+                    "status": "VALIDATED",
+                    "locked_predictions": 10,
+                    "revealed_outcomes": 10,
+                    "identity_hidden": True,
+                    "future_hidden": True,
+                    "baseline_compared": True,
+                    "metrics_sha256": "c" * 64,
+                    "report_sha256": "d" * 64,
+                },
+            }
+            payload["readiness_digest"] = hash_json(payload)
+            path.write_bytes(canonical_json_bytes(payload))
+            gate = strict_forecast_gate(root)
+            self.assertEqual(gate["status"], "READY")
+            self.assertTrue(gate["publish_allowed"])
+            payload["training"]["unique_events"] = 0
+            payload["readiness_digest"] = "f" * 64
+            path.write_bytes(canonical_json_bytes(payload))
+            with self.assertRaisesRegex(ResearchNetworkError, "digest mismatch"):
+                strict_forecast_gate(root)
 
 
 if __name__ == "__main__":

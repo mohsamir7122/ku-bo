@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/forecast-readiness.schema.json",
+  "title": "KU-BO strict forecast readiness receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "market", "evidence_class", "run_id", "code_sha", "training", "blind_test", "readiness_digest"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "market": {"const": "KUWAIT"},
+    "evidence_class": {"const": "REAL_MARKET_EVIDENCE"},
+    "run_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "code_sha": {"type": "string", "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"},
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "ten_year_events", "five_year_events", "additional_events", "unique_events", "temporal_split", "leakage_test", "report_sha256"],
+      "properties": {
+        "status": {"const": "VALIDATED"},
+        "ten_year_events": {"type": "integer", "minimum": 20},
+        "five_year_events": {"type": "integer", "minimum": 50},
+        "additional_events": {"type": "integer", "minimum": 300},
+        "unique_events": {"type": "integer", "minimum": 370},
+        "temporal_split": {"const": "PASS"},
+        "leakage_test": {"const": "PASS"},
+        "report_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "blind_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "locked_predictions", "revealed_outcomes", "identity_hidden", "future_hidden", "baseline_compared", "metrics_sha256", "report_sha256"],
+      "properties": {
+        "status": {"const": "VALIDATED"},
+        "locked_predictions": {"type": "integer", "minimum": 1},
+        "revealed_outcomes": {"type": "integer", "minimum": 1},
+        "identity_hidden": {"const": true},
+        "future_hidden": {"const": true},
+        "baseline_compared": {"const": true},
+        "metrics_sha256": {"$ref": "#/$defs/sha256"},
+        "report_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "readiness_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

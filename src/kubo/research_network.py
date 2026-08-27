@@ -16,8 +16,8 @@ import re
 from typing import Any, Iterable, Mapping
 from urllib.parse import parse_qsl, urlsplit
 
-from .foundation_io import load_strict_json_object
-from .hashing import canonical_json_bytes
+from .foundation_io import load_strict_json_object, safe_regular_file, strict_json_object
+from .hashing import canonical_json_bytes, hash_json
 from .source_network import SourceNetworkCatalog
 from .strict import parse_aware, require_sha256, sensitive_query_key
 
@@ -96,6 +96,14 @@ OBSERVATION_BOUNDARIES = {
     "access_rights_inferred_from_registry": False,
     "independent_confirmation_established_by_observation": False,
 }
+RUN_BOUNDARIES = {
+    "probability_generated": False,
+    "recommendation_generated": False,
+    "synthetic_evidence_contributes_to_live_rank": False,
+    "copied_news_counts_as_independent_confirmation": False,
+    "conflicts_averaged": False,
+}
+READINESS_PATH = Path("artifacts/validated/forecast-readiness.json")
 REQUIRED_NAMED_SOURCES = {
     "boursa_current": "OFFICIAL_PRIMARY",
     "cma_ifsah": "OFFICIAL_PRIMARY",
@@ -113,6 +121,7 @@ INPUT_KEYS = frozenset(
     {
         "observation_id",
         "market",
+        "evidence_class",
         "source_id",
         "claimed_source_role",
         "security_code",
@@ -133,6 +142,43 @@ INPUT_KEYS = frozenset(
         "access_method",
         "transformation_history",
         "origin_id",
+    }
+)
+OBSERVATION_KEYS = frozenset(
+    {
+        "schema_version",
+        "observation_id",
+        "market",
+        "evidence_class",
+        "source_id",
+        "source_role",
+        "source_independence_group",
+        "rights_status",
+        "security_code",
+        "claim_id",
+        "claim_key",
+        "claim_type",
+        "field_name",
+        "claim_value",
+        "claim_text",
+        "publisher",
+        "canonical_url",
+        "published_at",
+        "event_at",
+        "observed_at",
+        "fetched_at",
+        "provider_as_of",
+        "known_at",
+        "content_hash",
+        "access_method",
+        "transformation_history",
+        "transformed_content_hash",
+        "origin_id",
+        "credibility_score",
+        "credibility_components",
+        "credibility_score_is_stock_probability",
+        "admission_status",
+        "claim_boundaries",
     }
 )
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
@@ -413,6 +459,11 @@ def build_research_observation(
     assert cutoff is not None
     if row["market"] != "KUWAIT":
         raise ResearchNetworkError("research observation escaped the Kuwait market")
+    evidence_class = str(row["evidence_class"])
+    if evidence_class not in {"REAL_CAPTURE", "SYNTHETIC_CONTRACT"}:
+        raise ResearchNetworkError(
+            "evidence_class must explicitly identify real or synthetic evidence"
+        )
     source = resolve_trusted_source(
         project_root,
         str(row["source_id"]),
@@ -485,6 +536,7 @@ def build_research_observation(
         "schema_version": "1.0",
         "observation_id": _identifier(row["observation_id"], "observation_id"),
         "market": "KUWAIT",
+        "evidence_class": evidence_class,
         "source_id": source.source_id,
         "source_role": source.source_role,
         "source_independence_group": source.independence_group,
@@ -520,6 +572,269 @@ def build_research_observation(
         "credibility_score_is_stock_probability": False,
         "admission_status": admission_status,
         "claim_boundaries": OBSERVATION_BOUNDARIES,
+    }
+
+
+def validate_research_observation(
+    project_root: Path | str, value: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Recompute every derived field so serialized observations cannot self-promote."""
+
+    row = _exact(value, OBSERVATION_KEYS, "research observation")
+    if row["schema_version"] != "1.0":
+        raise ResearchNetworkError("unsupported research observation schema")
+    rebuilt = build_research_observation(
+        project_root,
+        {
+            "observation_id": row["observation_id"],
+            "market": row["market"],
+            "evidence_class": row["evidence_class"],
+            "source_id": row["source_id"],
+            "claimed_source_role": row["source_role"],
+            "security_code": row["security_code"],
+            "claim_id": row["claim_id"],
+            "claim_key": row["claim_key"],
+            "claim_type": row["claim_type"],
+            "field_name": row["field_name"],
+            "claim_value": row["claim_value"],
+            "claim_text": row["claim_text"],
+            "publisher": row["publisher"],
+            "canonical_url": row["canonical_url"],
+            "published_at": row["published_at"],
+            "event_at": row["event_at"],
+            "observed_at": row["observed_at"],
+            "fetched_at": row["fetched_at"],
+            "provider_as_of": row["provider_as_of"],
+            "content_hash": row["content_hash"],
+            "access_method": row["access_method"],
+            "transformation_history": row["transformation_history"],
+            "origin_id": row["origin_id"],
+        },
+        known_at=row["known_at"],
+    )
+    if canonical_json_bytes(rebuilt) != canonical_json_bytes(dict(row)):
+        raise ResearchNetworkError("research observation derived fields do not recompute")
+    return rebuilt
+
+
+def strict_forecast_gate(project_root: Path | str) -> dict[str, Any]:
+    """Unlock only from one rooted, hash-bound real-evidence readiness receipt."""
+
+    root = Path(project_root).resolve()
+    path = root / READINESS_PATH
+    blockers = []
+    if path.is_symlink() or not path.is_file():
+        return {
+            "status": "LOCKED",
+            "publish_allowed": False,
+            "blockers": [
+                "TRAINING_VALIDATION_RECEIPT_MISSING",
+                "BLIND_TEST_VALIDATION_RECEIPT_MISSING",
+            ],
+            "receipt_path": None,
+        }
+    try:
+        payload = strict_json_object(
+            safe_regular_file(
+                path,
+                field="forecast readiness receipt",
+                max_bytes=512 * 1024,
+            ),
+            "forecast readiness receipt",
+        )
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ResearchNetworkError("forecast readiness receipt is unsafe or invalid") from exc
+    expected_keys = frozenset(
+        {
+            "schema_version",
+            "market",
+            "evidence_class",
+            "run_id",
+            "code_sha",
+            "training",
+            "blind_test",
+            "readiness_digest",
+        }
+    )
+    _exact(payload, expected_keys, "forecast readiness receipt")
+    supplied_digest = require_sha256(payload["readiness_digest"], "readiness_digest")
+    material = dict(payload)
+    material.pop("readiness_digest")
+    if supplied_digest != hash_json(material):
+        raise ResearchNetworkError("forecast readiness receipt digest mismatch")
+    if (
+        payload["schema_version"] != "1.0"
+        or payload["market"] != "KUWAIT"
+        or payload["evidence_class"] != "REAL_MARKET_EVIDENCE"
+        or not re.fullmatch(r"[a-f0-9]{40}(?:[a-f0-9]{24})?", str(payload["code_sha"]))
+    ):
+        blockers.append("READINESS_IDENTITY_INVALID")
+    training = _exact(
+        payload["training"],
+        frozenset(
+            {
+                "status",
+                "ten_year_events",
+                "five_year_events",
+                "additional_events",
+                "unique_events",
+                "temporal_split",
+                "leakage_test",
+                "report_sha256",
+            }
+        ),
+        "forecast readiness training",
+    )
+    blind = _exact(
+        payload["blind_test"],
+        frozenset(
+            {
+                "status",
+                "locked_predictions",
+                "revealed_outcomes",
+                "identity_hidden",
+                "future_hidden",
+                "baseline_compared",
+                "metrics_sha256",
+                "report_sha256",
+            }
+        ),
+        "forecast readiness blind_test",
+    )
+    if not (
+        training.get("status") == "VALIDATED"
+        and type(training.get("ten_year_events")) is int
+        and training["ten_year_events"] >= 20
+        and type(training.get("five_year_events")) is int
+        and training["five_year_events"] >= 50
+        and type(training.get("additional_events")) is int
+        and training["additional_events"] >= 300
+        and type(training.get("unique_events")) is int
+        and training["unique_events"] >= 370
+        and training.get("temporal_split") == "PASS"
+        and training.get("leakage_test") == "PASS"
+    ):
+        blockers.append("TRAINING_NOT_VALIDATED")
+    if not (
+        blind.get("status") == "VALIDATED"
+        and type(blind.get("locked_predictions")) is int
+        and blind["locked_predictions"] > 0
+        and blind.get("revealed_outcomes") == blind.get("locked_predictions")
+        and blind.get("identity_hidden") is True
+        and blind.get("future_hidden") is True
+        and blind.get("baseline_compared") is True
+    ):
+        blockers.append("BLIND_TEST_NOT_VALIDATED")
+    for section, fields in (
+        (training, ("report_sha256",)),
+        (blind, ("metrics_sha256", "report_sha256")),
+    ):
+        for field in fields:
+            try:
+                require_sha256(section.get(field), field)
+            except (AttributeError, ValueError):
+                blockers.append(f"{field.upper()}_INVALID")
+    if blockers:
+        return {
+            "status": "LOCKED",
+            "publish_allowed": False,
+            "blockers": sorted(set(blockers)),
+            "receipt_path": READINESS_PATH.as_posix(),
+        }
+    return {
+        "status": "READY",
+        "publish_allowed": True,
+        "blockers": [],
+        "receipt_path": READINESS_PATH.as_posix(),
+    }
+
+
+def run_research_network(
+    project_root: Path | str,
+    observations: Iterable[Mapping[str, Any]],
+    *,
+    generated_at: datetime | str,
+) -> dict[str, Any]:
+    """Produce research dispositions while keeping strict forecasting separate."""
+
+    generated = _time(generated_at, "generated_at")
+    assert generated is not None
+    validated = [validate_research_observation(project_root, row) for row in observations]
+    identifiers = [row["observation_id"] for row in validated]
+    if len(identifiers) != len(set(identifiers)):
+        raise ResearchNetworkError("research observations contain duplicate IDs")
+    real = [row for row in validated if row["evidence_class"] == "REAL_CAPTURE"]
+    synthetic = [row for row in validated if row["evidence_class"] == "SYNTHETIC_CONTRACT"]
+    copy_analysis = detect_copied_news(real)
+    conflict_ledger = build_conflict_ledger(real)
+    conflict_by_security: dict[str, list[dict[str, Any]]] = {}
+    for conflict in conflict_ledger["conflicts"]:
+        conflict_by_security.setdefault(conflict["security_code"], []).append(conflict)
+
+    security_codes = sorted({str(row["security_code"]) for row in validated})
+    securities = []
+    for security_code in security_codes:
+        rows = [row for row in real if row["security_code"] == security_code]
+        reasons: set[str] = set()
+        conflicts = conflict_by_security.get(security_code, [])
+        if not rows:
+            decision = "ABSTAIN"
+            reasons.add("NO_REAL_OBSERVATIONS")
+        elif any(item["disposition"] == "ABSTAIN" for item in conflicts):
+            decision = "ABSTAIN"
+            reasons.add("MATERIAL_CONFLICT")
+        elif conflicts:
+            decision = "WATCH"
+            reasons.add("UNRESOLVED_CONFLICT")
+        elif all(row["source_role"] == "COMMUNITY_DISCOVERY" for row in rows):
+            decision = "WATCH"
+            reasons.add("COMMUNITY_DISCOVERY_ONLY")
+        elif any(row["admission_status"] != "RESEARCH_ONLY" for row in rows):
+            decision = "WATCH"
+            reasons.add("ACCESS_OR_AUTHORITY_REVIEW_REQUIRED")
+        elif max(int(row["credibility_score"]) for row in rows) < 50:
+            decision = "WATCH"
+            reasons.add("LOW_EVIDENCE_CREDIBILITY")
+        else:
+            decision = "RESEARCH_RANK"
+            reasons.add("RESEARCH_EVIDENCE_GATES_PASSED")
+        securities.append(
+            {
+                "security_code": security_code,
+                "decision": decision,
+                "real_observation_count": len(rows),
+                "maximum_credibility_score": (
+                    max(int(row["credibility_score"]) for row in rows) if rows else None
+                ),
+                "reasons": sorted(reasons),
+            }
+        )
+    decisions = {row["decision"] for row in securities}
+    decision = (
+        "ABSTAIN"
+        if not securities or decisions == {"ABSTAIN"}
+        else "RESEARCH_RANK"
+        if "RESEARCH_RANK" in decisions
+        else "WATCH"
+    )
+    live_operational = bool(real) and "RESEARCH_RANK" in decisions
+    return {
+        "schema_version": "1.0",
+        "status": "RESEARCH_NETWORK_COMPLETE",
+        "mode": "research_network",
+        "market": "KUWAIT",
+        "generated_at": _timestamp(generated),
+        "decision": decision,
+        "observation_count": len(validated),
+        "real_observation_count": len(real),
+        "synthetic_observation_count": len(synthetic),
+        "software_operational": True,
+        "live_evidence_operational": live_operational,
+        "securities": securities,
+        "copy_analysis": copy_analysis,
+        "conflict_ledger": conflict_ledger,
+        "strict_forecast": strict_forecast_gate(project_root),
+        "claim_boundaries": RUN_BOUNDARIES,
     }
 
 
@@ -632,5 +947,8 @@ __all__ = [
     "build_research_observation",
     "detect_copied_news",
     "resolve_trusted_source",
+    "run_research_network",
+    "strict_forecast_gate",
+    "validate_research_observation",
     "validate_research_source_registry",
 ]
