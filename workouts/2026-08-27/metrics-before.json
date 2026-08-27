@@ -9,6 +9,15 @@
     "tests_failed": 1,
     "duration_seconds": 601.17
   },
+  "recovery_engineering_baseline": {
+    "measurement_head": "a6dfd75",
+    "critical_path_initial_wait_seconds": 1800,
+    "maximum_automatic_attempts": 3,
+    "recomputed_idempotency_key": false,
+    "workflow_run_failed_jobs_rerun": false,
+    "missed_event_only_watchdog": false,
+    "controller_controlled_resume_tests": 0
+  },
   "investment_metrics": {
     "hit_rate": null,
     "precision": null,

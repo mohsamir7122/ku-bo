@@ -58,6 +58,28 @@
     "tests_errors": 0,
     "duration_seconds": 621.603
   },
+  "stage_5_focused_validation": {
+    "recorded_at_utc": "2026-08-27T08:23:51Z",
+    "recovery_adversarial_controller_workflow_schedule_tests": {
+      "total": 64,
+      "passed": 64,
+      "failures": 0,
+      "errors": 0
+    },
+    "source_resilience_orchestrator_quality_research_tests": {
+      "total": 88,
+      "passed": 88,
+      "failures": 0,
+      "errors": 0
+    },
+    "saudi_deferred_design_tests": {
+      "total": 2,
+      "passed": 2
+    },
+    "workflow_yaml_parse": "pass",
+    "actionlint": "pass",
+    "secret_guard": "pass"
+  },
   "stage_1_artifacts": {
     "source_evidence_input_schema": "source-evidence-lifecycle-v1",
     "source_evidence_report_schema": "source-evidence-reconciliation-report-v1",
@@ -121,6 +143,25 @@
     "scheduled_workflow_active": false,
     "market_data_collected": false,
     "stage_commit_sha": "810b077cbd56267e897546237c3a354be3838f98"
+  },
+  "stage_5_artifacts": {
+    "source_failover_commit": "1309e52b6396c1ff6218d16d411dfc3d0d8d09a6",
+    "research_registry_commit": "9e6db2052b1f8c7a6db0363f1071cec924f72860",
+    "research_mode_commit": "bdbfb5c55a376f0976cfcf912066d310d88f0f55",
+    "recovery_policy_commit": "cb4808a13489cad0c14e2e41622fdbdeb8644631",
+    "recovery_controller_commit": "0170fa1549e32d29577aac5f9ef8f8528131247c",
+    "recovery_workflows_commit": "94e384f297e53019df644312c99c8529deefd7df",
+    "recovery_policy_sha256": "a5848fa82a518e650953c173e1acf0e50ce046b42c51fbf2351d570d185bef8b",
+    "incident_schema_sha256": "c49a731a9faee13259b7b0508a396d08d7b0b3e56f4e825a2803c65680830aa3",
+    "pipeline_workflow_sha256": "b8d71a6cac3d5a426d75f1a3b74754da18ffafd08fcd9981b446716f6bcf0d61",
+    "controller_workflow_sha256": "32f74a31cff2da0d5699a67b1a342398f69838cda3eef901531ebc650f41c674",
+    "real_source_attempt_count": 2,
+    "real_observation_count": 0,
+    "unique_admitted_event_count": 0,
+    "training_admitted_record_count": 0,
+    "research_network_status": "SOFTWARE_OPERATIONAL_ABSTAIN",
+    "strict_forecast_status": "LOCKED",
+    "scheduled_workflows_active": false
   },
   "exact_head_ci": {
     "run_id": 33041621326,

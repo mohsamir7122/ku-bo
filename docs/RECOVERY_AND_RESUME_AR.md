@@ -5,13 +5,31 @@
 ## التصنيف والقرار
 
 - الأعطال العابرة فقط (`transient_network` و`transient_source` و`github_infrastructure` و`robots_unreachable` و`rate_limited`) مؤهلة لإعادة آلية محدودة.
-- التأخيرات المقفلة هي 30 ثم 60 ثم 120 دقيقة، بحد أقصى ثلاث محاولات خلال نافذة 24 ساعة.
+- لا توجد مهلة ثابتة في المسار الحرج. حدث `workflow_run` المكتمل يعيد الوظائف
+  الفاشلة فقط فورًا عبر واجهة GitHub الرسمية، بحد أقصى محاولتين آليتين لكل
+  fingerprint خلال نافذة 24 ساعة.
+- كل محاولة تحمل `idempotency_key` مشتقًا من fingerprint وSHA الكود ومعرّف
+  التشغيل ورقم المحاولة. يعيد المدقق حسابه ولا يقبل قيمة يختارها المستدعي.
 - `missing_secret` لا يشغّل المسار الثقيل. ينفذ فحص وجود خفيفًا، ثم يسمح بالاستئناف فقط إذا ظهر الـSecret المطلوب.
 - `deterministic_code` يحتاج SHA جديدًا ذا صلة، وCI ناجحًا، وsmoke test ناجحًا قبل الاستئناف.
 - `security` و`temporal_leakage` يمنعان النشر وإعادة التشغيل الآلية ويستوجبان تنبيهًا فوريًا.
 - وجود تشغيل `queued` أو `in_progress` للكويت يمنع dispatch إضافيًا.
 
-الـJSON Schema موجود في `schemas/recovery-incident.schema.json`، والسياسة المقفلة في `config/recovery-policy.json`. التحقق البرمجي يعيد حساب البصمة، ويطابق التصنيف مع السياسة الموثوقة، ويفرض اتساق التوقيت وعدد المحاولات وحالة النشر.
+الـJSON Schema موجود في `schemas/recovery-incident.schema.json`، والسياسة المقفلة في `config/recovery-policy.json`. التحقق البرمجي يعيد حساب البصمة ومفتاح idempotency، ويطابق التصنيف مع السياسة الموثوقة، ويفرض أن تكون المحاولة الآلية مستحقة فورًا، مع اتساق التوقيت وعدد المحاولات وحالة النشر.
+
+## الاستئناف الفوري والـwatchdog
+
+- يستمع `recovery-controller.yml` إلى اكتمال `Kuwait Market Pipeline` و`CI`.
+- أعطال runner وnetwork وtimeout/5xx المؤهلة تستخدم endpoint الرسمي
+  `rerun-failed-jobs`؛ لا تعيد pipeline كاملًا ولا تستخدم `sleep`.
+- يربط controller الميزانية بـ`github.run_attempt` الموثوق ويمنع معالجة حدث
+  مكرر بنفس idempotency state.
+- الـwatchdog يعمل كل خمس دقائق، لكنه لا يؤخر المحاولة الأولى. لا يتدخل قبل
+  مرور 300 ثانية على incident بلا معالجة، ويستعيد الأحداث المفقودة فقط.
+- `missing_secret` يبقى health probe خفيفًا، و`security` لا يعاد آليًا.
+- pipeline والـcontroller يشتركان في concurrency group واحدة مع
+  `cancel-in-progress=false`، وتمنع probes التشغيل إذا وُجد run في
+  `queued` أو `in_progress`.
 
 ## التشخيص الآمن
 
@@ -42,6 +60,14 @@ gh workflow run recovery-controller.yml --ref main -f incident_id="INCIDENT_ID" 
 الجدولة و`repository_dispatch` لا يتفعّلان من هذا الفرع وحده؛ يحتاجان مراجعة ودمجًا مصرحًا به إلى `main`. وحدة التحكم ممنوعة من تعديل أو دمج `main`.
 
 ## robots.txt وبدائل المصدر
+
+مسار المصدر منفصل عن إعادة workflow: timeout وDNS و5xx يحصلون على محاولتين
+سريعتين كحد أقصى مع jitter قبل الانتقال فورًا للمصدر التالي. 429 يسجل
+`Retry-After` ويفتح circuit للمصدر دون حبس المسار الحرج. 401/403 وpaywall
+وrobots/ToS وmissing secret تعطل adapter فقط ولا يعاد طلبها أو تجاوزها.
+فشل schema/parser يعزل bytes والـadapter، ثم تستمر المصادر الأخرى. كل محاولة
+مقيدة بـfingerprint وidempotency وattempt budget، ولا توجد حلقة retry غير
+محدودة.
 
 كل فحص `robots.txt` ينتج `RobotsPolicyReceipt` منقحًا ومربوطًا بـSHA-256. يسجل الإيصال `source_id` والأصل وstatus code وسلسلة redirects ووقت الجلب ووقت التقييم وانتهاء cache والقرار، ولا يسجل query values أو credentials. الحد الأقصى خمسة redirects، وأي loop أو انتقال إلى domain غير مسجل ينتج `ROBOTS_REDIRECT_BLOCKED`. مدة cache موجبة ولا تتجاوز 24 ساعة، ولا تستخدم نتيجة منتهية.
 

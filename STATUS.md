@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T05:44:55Z (2026-08-27T08:44:55+03:00, Asia/Kuwait)
+Updated: 2026-08-27T08:23:51Z (2026-08-27T11:23:52+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_4_KUWAIT_SCHEDULE_IMPLEMENTED_TESTED_DISABLED
+STAGE: STAGE_5_KUWAIT_RECOVERY_IMPLEMENTED_TESTED_PENDING_PUSH_CI
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -15,6 +15,12 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
 STAGE_2_COMMIT: 2a37ac81e440bd1ce609abdfab61993e118ccb57
 STAGE_3_COMMIT: a64ad7c6996ecec354bbf02bfa0b7fcbc048c086
 STAGE_4_COMMIT: 810b077cbd56267e897546237c3a354be3838f98
+SOURCE_FAILOVER_COMMIT: 1309e52b6396c1ff6218d16d411dfc3d0d8d09a6
+RESEARCH_REGISTRY_COMMIT: 9e6db2052b1f8c7a6db0363f1071cec924f72860
+RESEARCH_MODE_COMMIT: bdbfb5c55a376f0976cfcf912066d310d88f0f55
+RECOVERY_POLICY_COMMIT: cb4808a13489cad0c14e2e41622fdbdeb8644631
+RECOVERY_CONTROLLER_COMMIT: 0170fa1549e32d29577aac5f9ef8f8528131247c
+RECOVERY_WORKFLOWS_COMMIT: 94e384f297e53019df644312c99c8529deefd7df
 ```
 
 ## Completed and evidenced
@@ -143,12 +149,40 @@ STAGE_4_COMMIT: 810b077cbd56267e897546237c3a354be3838f98
   workflows run only from the default branch, and no PR or merge exists.
 - Stage 4 is preserved in commit
   `810b077cbd56267e897546237c3a354be3838f98`; exact-head CI is pending.
+- Replaced source-level waiting with immediate rights-aware failover. Timeout,
+  DNS, and 5xx receive at most two quick attempts with jitter; 429 opens a
+  source circuit and records `Retry-After` without blocking the critical path;
+  access/policy blockers are not retried; parser/schema failures quarantine one
+  adapter while sibling sources continue.
+- Added the trusted research source registry, full observation provenance,
+  field-level evidence credibility, copied-news origin clustering, and a
+  conflict ledger that never averages contradictory prices. IndexSignal remains
+  capped community discovery only.
+- Split modes explicitly: `research_network` software is operational and
+  currently returns `ABSTAIN` with zero real observations; `strict_forecast`
+  remains locked because training, temporal validation, and the Blind Test have
+  not occurred.
+- Upgraded recovery incidents with recomputed idempotency keys, immediate due
+  time, a two-attempt budget, existing safe lease/heartbeat/TTL controls, secret
+  redaction, active-run suppression, and six-hour alert deduplication.
+- Added the canonical Kuwait pipeline and recovery controller. A completed
+  `workflow_run` uses GitHub's failed-jobs rerun endpoint immediately; a
+  five-minute watchdog handles missed events only. Both workflows share one
+  non-cancelling concurrency group and every Action is pinned to a full SHA.
+- Recovery, adversarial, controller, workflow, and schedule suites pass 64/64.
+  Source resilience, orchestrator, source-quality, research-network, and
+  research-workflow suites pass 88/88. Saudi design-only gates pass 2/2.
+  Actionlint and Secret Guard pass.
+- Saudi runtime work did not start. Five review invariants are frozen in a
+  design-only schema/config/test contract and remain blocked behind Kuwait's
+  training, locked Blind Test, and measurement report.
 
 ## Next active stage
 
-- Implement the requested unified incident, recovery, lease-lock, robots,
-  retry/resume, and alerting upgrade on this branch. Preserve fail-closed source,
-  provenance, temporal, and no-trade gates; Saudi remains design-only.
+- Push the current branch and require exact-head CI, then read Issue #24 and all
+  comments as binding additions. Perform Delta PRE-FLIGHT and extend the current
+  modules with the requested priority/checkpoint/backfill layer; do not duplicate
+  the source, provenance, or recovery systems.
 
 ## Not started or not yet evidenced
 
@@ -157,6 +191,8 @@ STAGE_4_COMMIT: 810b077cbd56267e897546237c3a354be3838f98
 - Training, validation, locked blind test, and before/after investment metrics.
 - Live research candidates. Current output is `ABSTAIN / NO-TRADE`.
 - Saudi implementation. It remains sequenced after Kuwait gates pass.
+- Real research observations: 0. The implemented research network is software-
+  operational but not live-evidence operational.
 
 ## Active blockers and safeguards
 
@@ -170,9 +206,10 @@ STAGE_4_COMMIT: 810b077cbd56267e897546237c3a354be3838f98
   jobs as bound/reimplemented while the preparation manifest and parity matrix
   still say all fourteen are not started. Filesystem audit confirms canonical
   gaps, so predecessor migration completion is not claimed.
-- Exact-head CI run `33041621326` passed for the pushed Stage 3 receipt head.
-  Stage 4 exact-head CI is pending; schedule activation and merge remain
-  forbidden.
+- Exact-head CI run `33041621326` passed for the Stage 3 receipt head, and Stage
+  4 CI run `33043529715` passed at its reviewed head. The current recovery head
+  has not yet been pushed or validated by exact-head CI; activation and merge
+  remain forbidden.
 - The official holiday contract is verified only through 2026. A later live
   slot fails closed if official calendar coverage is absent or stale.
 - PRoot exposes phone storage through existing binds. All writes in this run are

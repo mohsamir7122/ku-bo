@@ -204,3 +204,35 @@ The enabled-but-missing-controls dry run exited 2. Every `CONTRACT_CHECK` run
 kept collection, validation, and live scoring false. These results prove
 schedule behavior only: market data, company/event coverage, model validation,
 and candidate generation remain zero/false.
+
+## Stage 5 immediate failover, evidence network, and recovery controller
+
+```text
+RECOVERY/ADVERSARIAL/CONTROLLER/WORKFLOW/SCHEDULE: PASS — 64/64
+SOURCE_RESILIENCE/ORCHESTRATOR/QUALITY/RESEARCH_NETWORK/WORKFLOW: PASS — 88/88
+SAUDI_DEFERRED_DESIGN_GATES: PASS — 2/2
+WORKFLOW_YAML_PARSE: PASS — PyYAML 6.0.3
+ACTIONLINT: PASS — all current workflows
+SECRET_GUARD: PASS
+GIT_DIFF_CHECK: PASS
+```
+
+Controlled recovery checks prove immediate failed-job reruns, a two-attempt cap,
+stable fingerprint plus recomputed idempotency, duplicate-event suppression,
+active-run suppression, missing-secret probes, deterministic-code gating,
+security blocking, stale-lease safety, ZIP/path/symlink rejection, alert
+deduplication, and a missed-event-only watchdog. No test disables provenance,
+temporal, rights, or NO-TRADE gates.
+
+Controlled source checks prove two fast transient attempts with jitter, immediate
+fallback, 429 circuit behavior without critical-path sleep, hard-block adapter
+disablement, parser/schema quarantine, source-role registry resolution,
+field-level provenance/credibility, copied-news clustering, conflict abstention,
+IndexSignal caps, and temporal leakage rejection.
+
+Real evidence counts are unchanged: two prior source attempts, zero readable raw
+artifacts, zero real observations, zero unique admitted events, zero training-
+admitted records, and zero locked predictions. Consequently the research network
+can only return `ABSTAIN`, and strict forecast remains `LOCKED`. Workflow
+schedules are not active because the reviewed files have not reached the default
+branch.

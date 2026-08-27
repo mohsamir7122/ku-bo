@@ -19,6 +19,32 @@
     "actionlint": "pass",
     "package_build_install_cli_smoke": "pass"
   },
+  "recovery_engineering_candidate": {
+    "implementation_heads": [
+      "cb4808a13489cad0c14e2e41622fdbdeb8644631",
+      "0170fa1549e32d29577aac5f9ef8f8528131247c",
+      "94e384f297e53019df644312c99c8529deefd7df"
+    ],
+    "critical_path_initial_wait_seconds": 0,
+    "maximum_automatic_attempts": 2,
+    "recomputed_idempotency_key": true,
+    "workflow_run_failed_jobs_rerun": true,
+    "missed_event_only_watchdog": true,
+    "recovery_gate_tests_total": 64,
+    "recovery_gate_tests_passed": 64,
+    "source_and_research_gate_tests_total": 88,
+    "source_and_research_gate_tests_passed": 88,
+    "controlled_resume_tests_passed": 1,
+    "duplicate_retry_suppression_tests_passed": 3,
+    "alert_deduplication_tests_passed": 1,
+    "secret_guard": "pass",
+    "actionlint": "pass"
+  },
+  "recovery_engineering_deltas": {
+    "fixed_wait_reduction_percent": 100.0,
+    "automatic_attempt_cap_reduction_percent": 33.33,
+    "investment_performance_claim": false
+  },
   "investment_metrics": {
     "hit_rate": null,
     "precision": null,
