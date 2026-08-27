@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/execution-priority-policy.schema.json",
+  "title": "KU-BO execution priority policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "status",
+    "priorities",
+    "preemption",
+    "checkpoint_store",
+    "lease",
+    "sharding",
+    "backfill_window",
+    "timestamps",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "ku-bo-market-execution-priority-v1"},
+    "status": {"const": "FAIL_CLOSED"},
+    "priorities": {
+      "const": {
+        "LIVE_DAILY_1500": 100,
+        "LIVE_RECOVERY": 90,
+        "VALIDATION_AND_PUBLISH": 70,
+        "CHALLENGER_TRAINING": 40,
+        "BACKFILL_90D": 10
+      }
+    },
+    "preemption": {
+      "const": {
+        "strictly_higher_priority_required": true,
+        "cooperative_shard_boundary": true,
+        "completed_shards_are_immutable": true,
+        "in_progress_shard_returns_to_pending": true,
+        "champion_mutation_during_live": false
+      }
+    },
+    "checkpoint_store": {
+      "const": {
+        "production_status": "BLOCKED_CHECKPOINT_STORE",
+        "configured_production_kind": null,
+        "allowed_production_kinds": [
+          "AUTHORIZED_FILESYSTEM",
+          "AUTHORIZED_OBJECT_STORE",
+          "GITHUB_ARTIFACT_JOURNAL"
+        ],
+        "ephemeral_runner_directory_is_durable": false,
+        "atomic_replace_required": true,
+        "compare_and_swap_required": true,
+        "fencing_token_required": true
+      }
+    },
+    "lease": {
+      "const": {
+        "ttl_seconds": 900,
+        "heartbeat_seconds": 60,
+        "generation_starts_at": 1
+      }
+    },
+    "sharding": {
+      "const": {
+        "dimensions": ["market", "source", "date_or_page"],
+        "maximum_attempts_per_shard": 2,
+        "completed_requires_reopened_output_hash": true,
+        "resume_only_non_completed": true
+      }
+    },
+    "backfill_window": {
+      "const": {
+        "inclusive_from": "2026-05-30",
+        "inclusive_to": "2026-08-27",
+        "day_count": 90
+      }
+    },
+    "timestamps": {
+      "const": ["scheduled_at", "actual_started_at", "finished_at"]
+    },
+    "claim_boundaries": {
+      "const": {
+        "checkpoint_structure_proves_durable_production_store": false,
+        "completed_checkpoint_proves_source_rights": false,
+        "backfill_checkpoint_unlocks_training": false,
+        "priority_scheduler_may_update_champion": false,
+        "workflow_schedule_is_active_on_feature_branch": false
+      }
+    }
+  }
+}

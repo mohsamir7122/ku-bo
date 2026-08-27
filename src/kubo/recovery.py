@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import socket
 import stat
 from typing import Any, Callable, Iterator, Mapping, Sequence
@@ -95,11 +96,21 @@ _LEASE_KEYS = frozenset(
         "schema_version",
         "fingerprint",
         "run_id",
+        "owner_run_id",
         "owner",
         "process_identity",
+        "priority",
+        "generation",
+        "fencing_token",
+        "checkpoint_id",
         "created_at",
         "expires_at",
         "heartbeat",
+        "heartbeat_at",
+        "preempt_requested",
+        "preempt_requested_by_run_id",
+        "preempt_requested_priority",
+        "preempt_requested_at",
         "lease_digest",
     }
 )
@@ -931,20 +942,84 @@ def _lease_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(_canonical_json(material)).hexdigest()
 
 
+def _lease_priority(value: Any, field: str = "priority") -> int:
+    if type(value) is not int or not 0 <= value <= 100:
+        raise LeaseError(f"{field} must be an integer from 0 through 100")
+    return value
+
+
+def _lease_generation(value: Any, field: str = "generation") -> int:
+    if type(value) is not int or value < 1:
+        raise LeaseError(f"{field} must be a positive integer")
+    return value
+
+
+def lease_fencing_token(
+    *, fingerprint: Any, owner_run_id: Any, generation: Any, created_at: Any
+) -> str:
+    try:
+        checked_fingerprint = require_sha256(fingerprint, "fingerprint")
+    except ValueError as exc:
+        raise LeaseError(str(exc)) from exc
+    basis = {
+        "fingerprint": checked_fingerprint,
+        "owner_run_id": _identifier(owner_run_id, "owner_run_id"),
+        "generation": _lease_generation(generation),
+        "created_at": _timestamp(_utc(created_at, "created_at")),
+    }
+    return hashlib.sha256(_canonical_json(basis)).hexdigest()
+
+
 def _validate_lease(payload: Mapping[str, Any], *, fingerprint: str) -> dict[str, Any]:
     row = dict(_exact_mapping(payload, _LEASE_KEYS, "recovery lease"))
-    if row["schema_version"] != "1.0" or row["fingerprint"] != fingerprint:
+    if row["schema_version"] != "2.0" or row["fingerprint"] != fingerprint:
         raise LeaseError("lease identity differs from its trusted path")
-    for key in ("run_id", "owner"):
+    for key in ("run_id", "owner_run_id", "owner"):
         _identifier(row[key], f"lease.{key}")
+    if row["run_id"] != row["owner_run_id"]:
+        raise LeaseError("lease run_id and owner_run_id must match")
     identity = str(row["process_identity"] or "")
     if not identity or len(identity) > 256 or any(ord(char) < 32 for char in identity):
         raise LeaseError("lease.process_identity is invalid")
     created = _utc(row["created_at"], "lease.created_at")
     heartbeat = _utc(row["heartbeat"], "lease.heartbeat")
+    heartbeat_at = _utc(row["heartbeat_at"], "lease.heartbeat_at")
     expires = _utc(row["expires_at"], "lease.expires_at")
-    if heartbeat < created or expires <= heartbeat:
+    if heartbeat != heartbeat_at or heartbeat < created or expires <= heartbeat:
         raise LeaseError("lease timestamps are inconsistent")
+    priority = _lease_priority(row["priority"], "lease.priority")
+    generation = _lease_generation(row["generation"], "lease.generation")
+    try:
+        fencing_token = require_sha256(row["fencing_token"], "lease.fencing_token")
+    except ValueError as exc:
+        raise LeaseError(str(exc)) from exc
+    if fencing_token != lease_fencing_token(
+        fingerprint=fingerprint,
+        owner_run_id=row["owner_run_id"],
+        generation=generation,
+        created_at=created,
+    ):
+        raise LeaseError("lease fencing_token does not match canonical lease state")
+    if row["checkpoint_id"] is not None:
+        _identifier(row["checkpoint_id"], "lease.checkpoint_id")
+    preempt_requested = _strict_boolean(
+        row["preempt_requested"], "lease.preempt_requested"
+    )
+    preempt_fields = (
+        row["preempt_requested_by_run_id"],
+        row["preempt_requested_priority"],
+        row["preempt_requested_at"],
+    )
+    if preempt_requested:
+        _identifier(preempt_fields[0], "lease.preempt_requested_by_run_id")
+        requested_priority = _lease_priority(
+            preempt_fields[1], "lease.preempt_requested_priority"
+        )
+        requested_at = _utc(preempt_fields[2], "lease.preempt_requested_at")
+        if requested_priority <= priority or requested_at < created:
+            raise LeaseError("lease preemption request is not a valid priority upgrade")
+    elif preempt_fields != (None, None, None):
+        raise LeaseError("lease has preemption details without a request")
     try:
         submitted = require_sha256(row["lease_digest"], "lease.lease_digest")
     except ValueError as exc:
@@ -955,8 +1030,14 @@ def _validate_lease(payload: Mapping[str, Any], *, fingerprint: str) -> dict[str
 
 
 def _read_lease(path: Path, *, fingerprint: str) -> dict[str, Any] | None:
-    if not path.exists():
+    try:
+        metadata = os.lstat(path)
+    except FileNotFoundError:
         return None
+    except OSError as exc:
+        raise LeaseError("cannot inspect recovery lease safely") from exc
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+        raise LeaseError("recovery lease must be a real regular file")
     try:
         content = safe_regular_file(path, field="recovery lease", max_bytes=64 * 1024)
         payload = strict_json_object(content, "recovery lease")
@@ -967,28 +1048,59 @@ def _read_lease(path: Path, *, fingerprint: str) -> dict[str, Any] | None:
 
 def _write_lease(path: Path, payload: Mapping[str, Any]) -> None:
     content = _canonical_json(payload) + b"\n"
+    try:
+        existing = os.lstat(path)
+    except FileNotFoundError:
+        existing = None
+    except OSError as exc:
+        raise LeaseError("cannot inspect lease target safely") from exc
+    if existing is not None and (
+        stat.S_ISLNK(existing.st_mode) or not stat.S_ISREG(existing.st_mode)
+    ):
+        raise LeaseError("lease target must be a real regular file")
+    temporary = path.with_name(
+        f".{path.name}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+    )
     flags = (
         os.O_WRONLY
         | os.O_CREAT
-        | os.O_TRUNC
+        | os.O_EXCL
         | getattr(os, "O_CLOEXEC", 0)
         | getattr(os, "O_NOFOLLOW", 0)
     )
     try:
-        descriptor = os.open(path, flags, 0o600)
-    except OSError as exc:
-        raise LeaseError("cannot write lease safely") from exc
-    try:
-        metadata = os.fstat(descriptor)
-        if not stat.S_ISREG(metadata.st_mode):
-            raise LeaseError("lease target must be a regular file")
-        os.fchmod(descriptor, 0o600)
-        offset = 0
-        while offset < len(content):
-            offset += os.write(descriptor, content[offset:])
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
+        try:
+            descriptor = os.open(temporary, flags, 0o600)
+        except OSError as exc:
+            raise LeaseError("cannot write lease safely") from exc
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise LeaseError("lease target must be a regular file")
+            os.fchmod(descriptor, 0o600)
+            offset = 0
+            while offset < len(content):
+                offset += os.write(descriptor, content[offset:])
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        os.replace(temporary, path)
+        directory = os.open(
+            path.parent,
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0),
+        )
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    except (OSError, LeaseError) as exc:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+        if isinstance(exc, LeaseError):
+            raise
+        raise LeaseError("cannot publish lease atomically") from exc
 
 
 def acquire_recovery_lease(
@@ -1001,15 +1113,32 @@ def acquire_recovery_lease(
     now: datetime,
     policy: Mapping[str, Any],
     active_run_probe: Callable[[str], bool] | None = None,
+    priority: int = 90,
+    generation: int = 1,
+    checkpoint_id: Any = None,
+    expected_generation: int | None = None,
 ) -> dict[str, Any]:
     lease_path, guard_path = _lease_paths(Path(lease_root), fingerprint)
     current = _utc(now, "now")
     identity = process_identity or current_process_identity()
     checked_run = _identifier(run_id, "run_id")
     checked_owner = _identifier(owner, "owner")
+    checked_priority = _lease_priority(priority)
+    checked_generation = _lease_generation(generation)
+    checked_checkpoint = (
+        None
+        if checkpoint_id in (None, "")
+        else _identifier(checkpoint_id, "checkpoint_id")
+    )
+    if expected_generation is not None and (
+        type(expected_generation) is not int or expected_generation < 0
+    ):
+        raise LeaseError("expected_generation must be a non-negative integer")
     with _guard(guard_path):
         existing = _read_lease(lease_path, fingerprint=fingerprint)
         if existing is not None:
+            if expected_generation is not None and existing["generation"] != expected_generation:
+                raise LeaseRecoveryBlockedError("lease generation CAS mismatch")
             expires = _utc(existing["expires_at"], "lease.expires_at")
             if expires > current:
                 raise ActiveLeaseError("active lease must not be replaced")
@@ -1028,16 +1157,40 @@ def acquire_recovery_lease(
                     raise LeaseRecoveryBlockedError("active-run probe returned a non-boolean")
                 if active:
                     raise ActiveLeaseError("an active run exists for the lease fingerprint")
+            if generation == 1 and expected_generation is None:
+                checked_generation = existing["generation"] + 1
+            if checked_generation <= existing["generation"]:
+                raise LeaseRecoveryBlockedError(
+                    "recovered lease generation must increase monotonically"
+                )
+        elif expected_generation not in (None, 0):
+            raise LeaseRecoveryBlockedError("new lease generation CAS mismatch")
         duration = policy["lease"]["duration_seconds"]
+        created_at = _timestamp(current)
         lease = {
-            "schema_version": "1.0",
+            "schema_version": "2.0",
             "fingerprint": fingerprint,
             "run_id": checked_run,
+            "owner_run_id": checked_run,
             "owner": checked_owner,
             "process_identity": identity,
-            "created_at": _timestamp(current),
+            "priority": checked_priority,
+            "generation": checked_generation,
+            "fencing_token": lease_fencing_token(
+                fingerprint=fingerprint,
+                owner_run_id=checked_run,
+                generation=checked_generation,
+                created_at=created_at,
+            ),
+            "checkpoint_id": checked_checkpoint,
+            "created_at": created_at,
             "expires_at": _timestamp(current + timedelta(seconds=duration)),
             "heartbeat": _timestamp(current),
+            "heartbeat_at": _timestamp(current),
+            "preempt_requested": False,
+            "preempt_requested_by_run_id": None,
+            "preempt_requested_priority": None,
+            "preempt_requested_at": None,
             "lease_digest": "",
         }
         lease["lease_digest"] = _lease_digest(lease)
@@ -1073,9 +1226,53 @@ def heartbeat_recovery_lease(
         if current < _utc(row["heartbeat"], "lease.heartbeat"):
             raise LeaseError("heartbeat timestamp cannot move backwards")
         row["heartbeat"] = _timestamp(current)
+        row["heartbeat_at"] = _timestamp(current)
         row["expires_at"] = _timestamp(
             current + timedelta(seconds=policy["lease"]["duration_seconds"])
         )
+        row["lease_digest"] = _lease_digest(row)
+        validated = _validate_lease(row, fingerprint=fingerprint)
+        _write_lease(lease_path, validated)
+        return validated
+
+
+def request_recovery_lease_preemption(
+    lease_root: Path | str,
+    *,
+    fingerprint: str,
+    requester_run_id: Any,
+    requester_priority: int,
+    expected_generation: int,
+    now: datetime,
+) -> dict[str, Any]:
+    """CAS-mark an active lower-priority lease for cooperative preemption."""
+
+    lease_path, guard_path = _lease_paths(Path(lease_root), fingerprint)
+    current = _utc(now, "now")
+    checked_requester = _identifier(requester_run_id, "requester_run_id")
+    checked_priority = _lease_priority(requester_priority, "requester_priority")
+    checked_generation = _lease_generation(expected_generation, "expected_generation")
+    with _guard(guard_path):
+        row = _read_lease(lease_path, fingerprint=fingerprint)
+        if row is None:
+            raise LeaseRecoveryBlockedError("cannot preempt a missing lease")
+        if row["generation"] != checked_generation:
+            raise LeaseRecoveryBlockedError("lease generation CAS mismatch")
+        if _utc(row["expires_at"], "lease.expires_at") <= current:
+            raise LeaseRecoveryBlockedError("expired lease requires safe recovery, not preemption")
+        if checked_priority <= row["priority"]:
+            raise LeaseRecoveryBlockedError("preemption requires strictly higher priority")
+        if row["preempt_requested"]:
+            if (
+                row["preempt_requested_by_run_id"] == checked_requester
+                and row["preempt_requested_priority"] == checked_priority
+            ):
+                return row
+            raise LeaseRecoveryBlockedError("a different preemption request already exists")
+        row["preempt_requested"] = True
+        row["preempt_requested_by_run_id"] = checked_requester
+        row["preempt_requested_priority"] = checked_priority
+        row["preempt_requested_at"] = _timestamp(current)
         row["lease_digest"] = _lease_digest(row)
         validated = _validate_lease(row, fingerprint=fingerprint)
         _write_lease(lease_path, validated)
@@ -1129,11 +1326,13 @@ __all__ = [
     "current_process_identity",
     "fingerprint_basis",
     "heartbeat_recovery_lease",
+    "lease_fencing_token",
     "load_recovery_policy",
     "next_source_fallback",
     "mark_alert_sent",
     "read_recovery_lease",
     "record_retry_attempt",
+    "request_recovery_lease_preemption",
     "recovery_decision",
     "release_recovery_lease",
     "resolve_incident",

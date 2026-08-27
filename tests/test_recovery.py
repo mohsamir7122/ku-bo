@@ -28,6 +28,7 @@ from kubo.recovery import (
     recovery_idempotency_key,
     recovery_decision,
     release_recovery_lease,
+    request_recovery_lease_preemption,
     sanitize_diagnostics,
     stable_fingerprint,
     validate_dispatch_inputs,
@@ -310,6 +311,7 @@ class RecoveryLeaseTests(unittest.TestCase):
                 active_run_probe=lambda _: False,
             )
             self.assertEqual(recovered["run_id"], "run-2")
+            self.assertEqual(recovered["generation"], 2)
 
     def test_heartbeat_and_owned_release(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -344,6 +346,71 @@ class RecoveryLeaseTests(unittest.TestCase):
 
     def test_current_process_identity_is_stable_for_process(self) -> None:
         self.assertEqual(current_process_identity(), current_process_identity())
+
+    def test_priority_generation_fencing_and_checkpoint_are_bound_to_lease(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            lease = acquire_recovery_lease(
+                temp,
+                fingerprint=self.fingerprint,
+                run_id="background-1",
+                owner="backfill-worker",
+                process_identity="github:background-1:job",
+                now=NOW,
+                policy=self.policy,
+                priority=10,
+                generation=7,
+                checkpoint_id="checkpoint-7",
+                expected_generation=0,
+            )
+            self.assertEqual(lease["schema_version"], "2.0")
+            self.assertEqual(lease["owner_run_id"], "background-1")
+            self.assertEqual(lease["priority"], 10)
+            self.assertEqual(lease["generation"], 7)
+            self.assertEqual(lease["checkpoint_id"], "checkpoint-7")
+            self.assertEqual(len(lease["fencing_token"]), 64)
+            self.assertEqual(lease["heartbeat"], lease["heartbeat_at"])
+
+    def test_higher_priority_preemption_is_cas_bound_and_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            acquire_recovery_lease(
+                temp,
+                fingerprint=self.fingerprint,
+                run_id="background-1",
+                owner="backfill-worker",
+                process_identity="github:background-1:job",
+                now=NOW,
+                policy=self.policy,
+                priority=10,
+                generation=1,
+            )
+            requested = request_recovery_lease_preemption(
+                temp,
+                fingerprint=self.fingerprint,
+                requester_run_id="live-1",
+                requester_priority=100,
+                expected_generation=1,
+                now=NOW + timedelta(seconds=1),
+            )
+            repeated = request_recovery_lease_preemption(
+                temp,
+                fingerprint=self.fingerprint,
+                requester_run_id="live-1",
+                requester_priority=100,
+                expected_generation=1,
+                now=NOW + timedelta(seconds=2),
+            )
+            self.assertTrue(requested["preempt_requested"])
+            self.assertEqual(requested, repeated)
+            self.assertEqual(requested["preempt_requested_by_run_id"], "live-1")
+            with self.assertRaises(LeaseRecoveryBlockedError):
+                request_recovery_lease_preemption(
+                    temp,
+                    fingerprint=self.fingerprint,
+                    requester_run_id="late-background",
+                    requester_priority=10,
+                    expected_generation=1,
+                    now=NOW + timedelta(seconds=3),
+                )
 
 
 if __name__ == "__main__":

@@ -224,6 +224,24 @@ class RecoveryLeaseAdversarialTests(unittest.TestCase):
             with self.assertRaisesRegex(LeaseError, "digest"):
                 read_recovery_lease(temp, fingerprint=self.fingerprint)
 
+    def test_tampered_fencing_token_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            acquire_recovery_lease(
+                temp,
+                fingerprint=self.fingerprint,
+                run_id="run-1",
+                owner="owner-1",
+                process_identity="github:run-1:job",
+                now=NOW,
+                policy=self.policy,
+            )
+            path = Path(temp) / f"{self.fingerprint}.lease.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["fencing_token"] = "f" * 64
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(LeaseError, "fencing_token"):
+                read_recovery_lease(temp, fingerprint=self.fingerprint)
+
     def test_expired_lease_with_live_local_process_is_not_recovered(self) -> None:
         from kubo.recovery import current_process_identity
 
