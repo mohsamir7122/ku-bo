@@ -71,10 +71,12 @@
   },
   "claim_boundaries": {
     "catalog_presence_proves_quality": false,
+    "caller_supplied_source_role_is_authoritative": false,
     "drive_presence_grants_rights": false,
     "single_source_can_prove_market_view": false,
     "community_can_create_official_fact": false,
     "quality_score_is_probability": false,
+    "quality_routing_grants_access_rights": false,
     "automatic_source_promotion_allowed": false
   }
 }
