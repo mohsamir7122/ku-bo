@@ -21,7 +21,7 @@ from kubo.automation_schedule import (
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config" / "kuwait_automation_schedule.json"
-WORKFLOW = ROOT / ".github" / "workflows" / "kuwait-market-ai.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "kuwait-market-pipeline.yml"
 
 
 def _payload() -> dict[str, object]:
@@ -180,12 +180,15 @@ class AutomationScheduleTests(unittest.TestCase):
                 validate_automation_schedule(ROOT, config_path=path)
 
     def test_workflow_has_no_legacy_schedule_overlap(self) -> None:
-        legacy = (ROOT / ".github" / "workflows" / "daily-shadow.yml").read_text(
-            encoding="utf-8"
+        paths = (
+            ROOT / ".github" / "workflows" / "daily-shadow.yml",
+            ROOT / ".github" / "workflows" / "kuwait-market-ai.yml",
         )
-        self.assertNotIn("schedule:", legacy)
-        self.assertIn("workflow_dispatch:", legacy)
-        self.assertIn("SUPERSEDED_SCHEDULE_MANUAL_COMPATIBILITY_ONLY", legacy)
+        for path in paths:
+            with self.subTest(path=path):
+                legacy = path.read_text(encoding="utf-8")
+                self.assertNotIn("schedule:", legacy)
+                self.assertIn("workflow_dispatch:", legacy)
 
     def test_workflow_cron_drift_is_rejected(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8").replace(

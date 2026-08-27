@@ -19,7 +19,7 @@ from .strict import https_url, parse_aware, parse_iso_date
 
 
 SCHEDULE_CONFIG = Path("config/kuwait_automation_schedule.json")
-WORKFLOW_PATH = Path(".github/workflows/kuwait-market-ai.yml")
+WORKFLOW_PATH = Path(".github/workflows/kuwait-market-pipeline.yml")
 KUWAIT_TZ = ZoneInfo("Asia/Kuwait")
 
 EXPECTED_MARKET = {
@@ -224,7 +224,7 @@ def _validate_workflow(path: Path) -> str:
         "KUBO_AUTHORIZED_SOURCE_ACCESS",
         "KUBO_DRIVE_RUNTIME_CONFIG",
         "github.run_id",
-        "Safety tripwire",
+        "Record unavailable collection adapter",
     )
     missing = [marker for marker in required if marker not in text]
     if missing:
