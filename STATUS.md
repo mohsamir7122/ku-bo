@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T02:41:58Z (2026-08-27T05:41:58+03:00, Asia/Kuwait)
+Updated: 2026-08-27T02:53:38Z (2026-08-27T05:53:38+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: PRE-FLIGHT_COMPLETE_REPOSITORY_AUDIT_IN_PROGRESS
+STAGE: REPOSITORY_AUDIT_COMPLETE_STAGE_1_IN_PROGRESS
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -34,13 +34,22 @@ WORKTREE_AT_START: CLEAN
 - Activated the strict day-one control surface on the actual work branch. The
   control validator, four focused control tests, JSON parsing, diff whitespace
   checks, private-Drive-link scan, and Secret Guard now pass.
+- Completed an exact private-runtime repository audit and bound its sanitized
+  public matrix to SHA-256
+  `9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5`.
+- The private predecessor passed 937/937 tests and a clean secret scan; the
+  private history source passed 48/48 from an isolated exact-HEAD clone; the
+  archived Kuwait implementation passed 33/33. Every source worktree is clean.
+- Published a staged integration plan. The first selected gap is canonical
+  source-evidence lifecycle reconciliation; no bulk source merge is allowed.
 
 ## In progress
 
-- Produce a runtime-source-bound capability and gap matrix for KU-BO, the
-  `PRIVATE_PREDECESSOR_SOURCE`, the
-  Saudi target, and the relevant archived/source repositories.
-- Execute a deterministic synthetic dry run to verify plumbing only.
+- Reimplement the selected source-evidence lifecycle capability inside `kubo`
+  with strict schema, provenance, cutoff, revision, duplicate, conflict,
+  missing-cell, parser-drift, and source-failure tests.
+- Execute the existing deterministic synthetic live dry run and then rerun the
+  full target suite.
 
 ## Not started or not yet evidenced
 
@@ -55,6 +64,10 @@ WORKTREE_AT_START: CLEAN
 - Required GitHub Secrets and repository variables are absent in both final
   repositories. Scheduled collection/live workflows must remain disabled or
   fail closed until exact contracts are supplied and validated.
+- Existing migration control artifacts disagree: one catalog describes fourteen
+  jobs as bound/reimplemented while the preparation manifest and parity matrix
+  still say all fourteen are not started. Filesystem audit confirms canonical
+  gaps, so predecessor migration completion is not claimed.
 - Latest `main` CI is red only because its completed task says `main` while the
   control unit test expects the prior integration branch. The day-one task uses
   a real work branch and keeps the assertion strict.

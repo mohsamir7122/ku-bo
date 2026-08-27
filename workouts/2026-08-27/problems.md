@@ -9,3 +9,5 @@
 | P-005 | OPEN_RISK | Existing PRoot binds expose phone storage. | Restrict writes to workspace and keep credentials/runtime evidence out of Git. |
 | P-006 | DOCUMENTED | Contract says 15 Drive subfolders but enumerates and currently contains 16. | Treat the 16 exact names as authoritative; do not delete any folder. |
 | P-007 | BLOCKED | No reconciled Kuwait issuer universe or admitted historical event corpus exists yet. | Complete schema/source admission before collection or evaluation. |
+| P-008 | OPEN | Public migration artifacts disagree: a 14-job catalog says bound/reimplemented while the preparation parity files say all jobs are not started; canonical filesystem gaps remain. | Treat the exact runtime audit as the new denominator and reimplement/test each missing user job incrementally. |
+| P-009 | DOCUMENTED | A private-history test copying `.git` packs failed under the original PRoot worktree. | Isolated exact-HEAD clone passed all 48 tests; retain both results as environment evidence. |

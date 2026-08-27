@@ -6,9 +6,11 @@ Status: IN_PROGRESS
    auth state, clean worktrees, Drive structure, baseline tests, and blockers.
 2. Repair repository-control consistency on the fresh Kuwait branch and commit
    the dated control/workout records after validation.
-3. Audit final, legacy, experimental, and archived repositories at exact SHAs;
-   produce a capability/gap/duplication matrix and a staged integration plan.
-4. Run the existing synthetic dry-work path and all relevant local gates. A
+3. **Completed:** audit final, legacy, experimental, and archived repositories
+   at exact private-runtime SHAs; publish a sanitized capability/gap/duplication
+   matrix and staged integration plan.
+4. Reimplement the selected source-evidence lifecycle capability in canonical
+   `kubo`, then run the existing synthetic dry-work path and all relevant gates. A
    synthetic pass may prove plumbing only.
 5. Implement the smallest missing Kuwait capability, test it, and commit it as a
    separate stage. Never bulk-copy or rewrite history.

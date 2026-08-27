@@ -2,21 +2,20 @@
 
 Updated: 2026-08-27T02:38:26Z
 
-1. Run the repository control validator and its focused unit tests on
-   `codex/kuwait-market-ai-day1-v1`; retain the strict branch assertion.
-2. Run `git diff --check`, JSON parsing, secret scanning, and a focused test set,
-   then commit the PRE-FLIGHT/control stage as one reversible commit.
-3. Finish the exact-SHA private-runtime capability matrix for KU-BO, the
-   `PRIVATE_PREDECESSOR_SOURCE`, Saudi, and each relevant archived/source
-   checkout. Classify `KEEP`, `REFACTOR`, `ARCHIVE`,
-   `SUPERSEDE`, `PRIVATE_ONLY`, and gaps without bulk-merging a legacy tree.
-4. Exercise the existing Kuwait deterministic synthetic dry-run path, preserve
+1. Reimplement the audited source-evidence lifecycle reconciler as a canonical
+   `kubo` module and strict schema. Do not copy a parallel tool/database engine.
+2. Add happy/adversarial tests for lineage, point-in-time cutoff, parser drift,
+   blocked content, revisions, independent origins, duplicates, conflicts,
+   missing critical cells, and refusal to overwrite outputs.
+3. Exercise the existing Kuwait deterministic synthetic dry-run path, preserve
    its receipt, and run source-failure, provenance, temporal-leakage, duplicate,
    missing-data, and corporate-action tests.
+4. Run control, schema/JSON, Secret Guard, full suite, build/install/CLI smoke,
+   and exact diff review; commit Stage 1 independently.
 5. Design the sequential UTC GitHub Actions schedule with concurrency, timeout,
    bounded retries, market calendars, and a hard activation gate. Do not enable
    it while required Secrets/variables are absent.
-6. Define and validate the real Kuwait issuer/source schemas and admission
+6. Define and validate the real Kuwait issuer/company dossier schemas and admission
    contracts before collecting any source. Respect robots, paywalls, licensing,
    rate limits, and point-in-time boundaries.
 7. Begin real Kuwait collection only after source admission succeeds. Record the

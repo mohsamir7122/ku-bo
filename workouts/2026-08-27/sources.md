@@ -21,3 +21,17 @@ limits, and licensing restrictions must not be bypassed.
 
 The project Drive folder structure was verified read-only. Private folder IDs
 and URLs remain runtime-only and are intentionally absent from this file.
+
+## Repository-source audit
+
+- The private predecessor passed its structure validator, 937/937 tests, and
+  secret scan at its exact privately recorded HEAD.
+- The private history source passed 48/48 tests from an isolated exact-HEAD clone.
+- The archived Kuwait engine passed 33/33 tests; generated test reports were
+  moved to the temporary audit area and its worktree was restored clean.
+- The private exact repository/ref/tree inventory is outside Git. Its sanitized
+  binding digest is
+  `9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5`.
+
+These repository tests prove software behavior only. They do not grant source
+rights, establish current access, or turn bundled data into admitted evidence.

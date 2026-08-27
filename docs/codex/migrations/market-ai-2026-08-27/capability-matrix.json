@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "run_id": "market-ai-20260827T020635Z-kuwait",
+  "status": "AUDITED_IMPLEMENTATION_IN_PROGRESS",
+  "private_runtime_audit_sha256": "9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5",
+  "private_locator_publication_allowed": false,
+  "capabilities": [
+    {"id": "official_evidence_import_and_capture", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP"},
+    {"id": "identity_calendar_and_corporate_actions", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP"},
+    {"id": "event_canonicalization_and_role_boundaries", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP"},
+    {"id": "temporal_purge_embargo_and_causal_split", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP"},
+    {"id": "research_ranking_and_abstention", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP"},
+    {"id": "receipt_backed_daily_dry_run", "status": "IMPLEMENTED_TESTED_SYNTHETIC", "disposition": "KEEP_AND_DRY_RUN"},
+    {"id": "source_evidence_lifecycle_reconciliation", "status": "MISSING_CANONICAL_MODULE", "disposition": "REIMPLEMENT_STAGE_1"},
+    {"id": "governed_evidence_store", "status": "PARTIAL_CANONICAL_OVERLAP", "disposition": "REFACTOR_INCREMENTALLY"},
+    {"id": "company_daily_research_and_dossier", "status": "MISSING_FULL_CONTRACT", "disposition": "REIMPLEMENT_STAGE_2"},
+    {"id": "historical_event_archive_access_and_dedup", "status": "PRIVATE_SOURCE_ONLY", "disposition": "REFACTOR_AFTER_RIGHTS_REVIEW"},
+    {"id": "training_dataset_and_walk_forward_lab", "status": "MISSING_FULL_PIPELINE", "disposition": "REIMPLEMENT_AFTER_EVENT_ADMISSION"},
+    {"id": "locked_blind_test_and_requested_metrics", "status": "NOT_COMPLETED_ON_REAL_EVIDENCE", "disposition": "BUILD_STAGE_5"},
+    {"id": "contract_exact_scheduled_orchestration", "status": "MISSING_AND_UNCONFIGURED", "disposition": "BUILD_FAIL_CLOSED_STAGE_6"},
+    {"id": "real_kuwait_company_collection", "status": "NOT_STARTED", "disposition": "BLOCK_UNTIL_SOURCE_ADMISSION"},
+    {"id": "saudi_full_replication", "status": "SEQUENCED_AFTER_KUWAIT", "disposition": "DEFER_STAGE_7"}
+  ],
+  "claim_boundaries": {
+    "migration_complete": false,
+    "real_collection_complete": false,
+    "training_complete": false,
+    "blind_test_complete": false,
+    "live_ready": false,
+    "recommendation_allowed": false,
+    "execution_allowed": false
+  }
+}
