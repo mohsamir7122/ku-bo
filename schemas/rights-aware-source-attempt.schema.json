@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/rights-aware-source-attempt.schema.json",
+  "title": "KU-BO rights-aware source attempt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "record_type",
+    "classification",
+    "market",
+    "run_id",
+    "source_id",
+    "source_role",
+    "source_independence_group",
+    "rights_status",
+    "plan_id",
+    "probe_id",
+    "plan_path",
+    "probe_path",
+    "plan_sha256",
+    "probe_sha256",
+    "canonical_url",
+    "access_method",
+    "attempted_at",
+    "observed_at",
+    "http_status",
+    "source_state",
+    "terminal_code",
+    "artifact",
+    "data_quality_flags",
+    "validator",
+    "claim_boundaries",
+    "record_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "record_id": {"type": "string", "pattern": "^SRCATT-[A-F0-9]{24}$"},
+    "record_type": {"const": "SOURCE_ATTEMPT"},
+    "classification": {"$ref": "#/$defs/classification"},
+    "market": {"const": "KUWAIT"},
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "source_id": {"$ref": "#/$defs/identifier"},
+    "source_role": {
+      "enum": [
+        "OFFICIAL_PRIMARY",
+        "LICENSED_MARKET_DATA",
+        "STRUCTURED_SECONDARY",
+        "RELIABLE_NEWS",
+        "COMMUNITY_DISCOVERY"
+      ]
+    },
+    "source_independence_group": {"$ref": "#/$defs/identifier"},
+    "rights_status": {
+      "enum": [
+        "TERMS_REVIEW_REQUIRED",
+        "ENTITLEMENT_REQUIRED",
+        "RUNTIME_AUTHORITY_REQUIRED"
+      ]
+    },
+    "plan_id": {"$ref": "#/$defs/identifier"},
+    "probe_id": {"$ref": "#/$defs/identifier"},
+    "plan_path": {
+      "type": "string",
+      "pattern": "^receipts/SRCATT-[A-F0-9]{24}/plan\\.json$"
+    },
+    "probe_path": {
+      "type": "string",
+      "pattern": "^receipts/SRCATT-[A-F0-9]{24}/access-probe\\.json$"
+    },
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "probe_sha256": {"$ref": "#/$defs/sha256"},
+    "canonical_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "access_method": {"enum": ["HTTP_GET"]},
+    "attempted_at": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "http_status": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "integer", "minimum": 100, "maximum": 599}
+      ]
+    },
+    "source_state": {
+      "enum": ["AVAILABLE", "PARTIAL", "BLOCKED", "AUTH_REQUIRED", "ERROR", "UNTESTED"]
+    },
+    "terminal_code": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/identifier"}
+      ]
+    },
+    "artifact": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256", "size_bytes", "content_type", "capture_kind"],
+          "properties": {
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "size_bytes": {"type": "integer", "minimum": 0},
+            "content_type": {"type": "string", "minLength": 1, "maxLength": 256},
+            "capture_kind": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        }
+      ]
+    },
+    "data_quality_flags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "validator": {
+      "const": {
+        "validator_id": "kubo.source_access_recipes.validate_access_probe_against_plan@1.0",
+        "status": "PASS_ACCESS_ONLY",
+        "access_receipt_proves_collection": false
+      }
+    },
+    "claim_boundaries": {
+      "const": {
+        "market_observation_created": false,
+        "source_access_admitted": false,
+        "training_record_created": false,
+        "publish_allowed": false
+      }
+    },
+    "record_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "classification": {
+      "enum": [
+        "ADMITTED_RESEARCH_CONTEXT",
+        "ADMITTED_TRAINING",
+        "BLOCKED_RIGHTS",
+        "BLOCKED_ROBOTS",
+        "BLOCKED_ACCESS",
+        "MISSING",
+        "UNVERIFIED"
+      ]
+    }
+  }
+}

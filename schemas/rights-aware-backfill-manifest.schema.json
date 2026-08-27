@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/rights-aware-backfill-manifest.schema.json",
+  "title": "KU-BO incomplete rights-aware research context manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_name",
+    "package_status",
+    "execution_mode",
+    "evidence_class",
+    "market",
+    "run_id",
+    "code_sha",
+    "window",
+    "scheduled_at",
+    "actual_started_at",
+    "finished_at",
+    "policy_sha256",
+    "source_registry_sha256",
+    "production_checkpoint_store_status",
+    "counts",
+    "files",
+    "coverage_report_digest",
+    "training_cycle_status",
+    "claim_boundaries",
+    "manifest_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "package_name": {"const": "INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT"},
+    "package_status": {"const": "INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT"},
+    "execution_mode": {"const": "AUDIT_EXISTING_REAL_RECEIPTS"},
+    "evidence_class": {"const": "REAL_SOURCE_ATTEMPT_METADATA"},
+    "market": {"const": "KUWAIT"},
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "code_sha": {"type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"},
+    "window": {
+      "const": {
+        "inclusive_from": "2026-05-30",
+        "inclusive_to": "2026-08-27",
+        "day_count": 90
+      }
+    },
+    "scheduled_at": {"type": "string", "format": "date-time"},
+    "actual_started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "policy_sha256": {"$ref": "#/$defs/sha256"},
+    "source_registry_sha256": {"$ref": "#/$defs/sha256"},
+    "production_checkpoint_store_status": {"const": "BLOCKED_CHECKPOINT_STORE"},
+    "counts": {"$ref": "#/$defs/counts"},
+    "files": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 200,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "size_bytes", "record_count"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "size_bytes": {"type": "integer", "minimum": 0},
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "coverage_report_digest": {"$ref": "#/$defs/sha256"},
+    "training_cycle_status": {"const": "BLOCKED_DATASET_RELEASE"},
+    "claim_boundaries": {
+      "const": {
+        "package_is_complete_training_dataset": false,
+        "market_data_collected": false,
+        "training_allowed": false,
+        "strict_forecast_unlocked": false,
+        "champion_update_allowed": false,
+        "saudi_training_or_promotion_allowed": false,
+        "schedule_active": false,
+        "trade_submission_allowed": false
+      }
+    },
+    "manifest_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_source_denominator",
+        "attempted_denominator_sources",
+        "unattempted_denominator_sources",
+        "source_attempts",
+        "blocked_sources",
+        "planned_date_shards",
+        "blocked_before_fetch_date_shards",
+        "unattempted_date_shards",
+        "unverified_date_shards",
+        "completed_date_shards",
+        "readable_raw_artifacts",
+        "real_observations",
+        "provenance_records",
+        "unique_events",
+        "research_context_records",
+        "training_candidates",
+        "contradictions"
+      ],
+      "properties": {
+        "required_source_denominator": {"const": 11},
+        "attempted_denominator_sources": {"type": "integer", "minimum": 0, "maximum": 11},
+        "unattempted_denominator_sources": {"type": "integer", "minimum": 0, "maximum": 11},
+        "source_attempts": {"type": "integer", "minimum": 0},
+        "blocked_sources": {"type": "integer", "minimum": 0},
+        "planned_date_shards": {"const": 990},
+        "blocked_before_fetch_date_shards": {"type": "integer", "minimum": 0, "maximum": 990},
+        "unattempted_date_shards": {"type": "integer", "minimum": 0, "maximum": 990},
+        "unverified_date_shards": {"type": "integer", "minimum": 0, "maximum": 990},
+        "completed_date_shards": {"const": 0},
+        "readable_raw_artifacts": {"type": "integer", "minimum": 0},
+        "real_observations": {"const": 0},
+        "provenance_records": {"const": 0},
+        "unique_events": {"const": 0},
+        "research_context_records": {"const": 0},
+        "training_candidates": {"const": 0},
+        "contradictions": {"const": 0}
+      }
+    }
+  }
+}

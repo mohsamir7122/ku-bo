@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/rights-aware-backfill-policy.schema.json",
+  "title": "KU-BO rights-aware 90-day backfill policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "status",
+    "package_name",
+    "market",
+    "window",
+    "required_files",
+    "classifications",
+    "source_denominator",
+    "provenance_fields",
+    "admission_gates",
+    "training_cycle",
+    "source_blocking",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "policy_id": {"const": "ku-bo-kuwait-rights-aware-backfill-v1"},
+    "status": {"const": "FAIL_CLOSED"},
+    "package_name": {"const": "INCOMPLETE_RIGHTS_AWARE_RESEARCH_CONTEXT"},
+    "market": {"const": "KUWAIT"},
+    "window": {
+      "const": {
+        "inclusive_from": "2026-05-30",
+        "inclusive_to": "2026-08-27",
+        "day_count": 90
+      }
+    },
+    "required_files": {
+      "const": [
+        "run-manifest.json",
+        "source-attempts.jsonl",
+        "provenance-records.jsonl",
+        "events-unique.jsonl",
+        "research-context-90d.jsonl",
+        "training-candidates.jsonl",
+        "blocked-records.jsonl",
+        "contradictions.jsonl",
+        "coverage-report.json",
+        "coverage-report.md"
+      ]
+    },
+    "classifications": {
+      "const": [
+        "ADMITTED_RESEARCH_CONTEXT",
+        "ADMITTED_TRAINING",
+        "BLOCKED_RIGHTS",
+        "BLOCKED_ROBOTS",
+        "BLOCKED_ACCESS",
+        "MISSING",
+        "UNVERIFIED"
+      ]
+    },
+    "source_denominator": {
+      "const": {
+        "registry_path": "config/research_source_registry.json",
+        "mode": "REQUIRED_NAMED_SOURCES_FROM_TRUSTED_REGISTRY",
+        "expected_source_count": 11,
+        "expected_independence_group_count": 11
+      }
+    },
+    "provenance_fields": {
+      "const": [
+        "publisher",
+        "canonical_url",
+        "published_at",
+        "event_at",
+        "observed_at",
+        "fetched_at",
+        "provider_as_of",
+        "content_hash",
+        "source_role",
+        "access_method",
+        "transformation_history"
+      ]
+    },
+    "admission_gates": {
+      "const": [
+        "RIGHTS",
+        "PROVENANCE",
+        "PUBLICATION_EVENT_AVAILABILITY_TIMESTAMPS",
+        "IMMUTABLE_HASH",
+        "POINT_IN_TIME_AVAILABILITY",
+        "TEMPORAL_LEAKAGE_TEST",
+        "TEMPORAL_SPLIT"
+      ]
+    },
+    "training_cycle": {
+      "const": [
+        "DATASET_RELEASE",
+        "CHALLENGER_TRAINING",
+        "TEMPORAL_VALIDATION",
+        "LOCKED_BLIND_TEST",
+        "PROSPECTIVE_SHADOW",
+        "PROMOTE_REJECT_ROLLBACK"
+      ]
+    },
+    "source_blocking": {
+      "const": {
+        "access_receipt_proves_collection": false,
+        "source_level_blocker_applies_to_date_shards": true,
+        "same_run_retry_for_rights_robots_access": false,
+        "secondary_source_may_confirm_primary_fact": false
+      }
+    },
+    "claim_boundaries": {
+      "const": {
+        "package_is_complete_training_dataset": false,
+        "package_unlocks_training": false,
+        "package_unlocks_strict_forecast": false,
+        "backtest_or_return_claim_allowed": false,
+        "champion_direct_update_allowed": false,
+        "saudi_training_or_promotion_allowed": false,
+        "schedule_active_on_feature_branch": false,
+        "trade_submission_allowed": false
+      }
+    }
+  }
+}
