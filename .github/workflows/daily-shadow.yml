@@ -1,9 +1,6 @@
-name: Daily Shadow Contract
+name: Legacy Daily Shadow Contract (Manual Only)
 
 on:
-  schedule:
-    - cron: "7 12 * * *"
-    - cron: "37 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +12,6 @@ concurrency:
 
 jobs:
   contract-only:
-    if: github.event_name == 'workflow_dispatch' || vars.KUBO_DAILY_SHADOW_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -39,6 +35,7 @@ jobs:
             -v
       - name: State non-claims
         run: |
+          echo "SUPERSEDED_SCHEDULE_MANUAL_COMPATIBILITY_ONLY"
           echo "CONTRACT_ONLY"
           echo "NO_NETWORK_COLLECTION"
           echo "NO_MODEL_TRAINING"

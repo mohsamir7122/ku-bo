@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ku-bo.local/schemas/kuwait-automation-schedule.schema.json",
+  "title": "KU-BO Kuwait automation schedule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schedule_id",
+    "status",
+    "market",
+    "official_basis",
+    "activation",
+    "execution",
+    "slots",
+    "claim_boundaries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "schedule_id": {"const": "kuwait-market-ai-sequential-v1"},
+    "status": {"const": "BLOCKED_PENDING_REAL_SOURCE_ADMISSION"},
+    "market": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jurisdiction_code", "market_name", "currency", "timezone"],
+      "properties": {
+        "jurisdiction_code": {"const": "KW"},
+        "market_name": {"const": "BOURSA_KUWAIT"},
+        "currency": {"const": "KWD"},
+        "timezone": {"const": "Asia/Kuwait"}
+      }
+    },
+    "official_basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accessed_at_utc",
+        "trading_weekdays",
+        "continuous_session",
+        "calendar",
+        "sources"
+      ],
+      "properties": {
+        "accessed_at_utc": {"type": "string", "format": "date-time"},
+        "trading_weekdays": {
+          "const": ["SUN", "MON", "TUE", "WED", "THU"]
+        },
+        "continuous_session": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["start_local", "end_local", "trade_at_last_end_local"],
+          "properties": {
+            "start_local": {"const": "09:00"},
+            "end_local": {"const": "13:00"},
+            "trade_at_last_end_local": {"const": "13:15"}
+          }
+        },
+        "calendar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_start", "coverage_end", "holidays"],
+          "properties": {
+            "coverage_start": {"const": "2026-01-01"},
+            "coverage_end": {"const": "2026-12-31"},
+            "holidays": {
+              "type": "array",
+              "minItems": 15,
+              "maxItems": 15,
+              "items": {"$ref": "#/$defs/holiday"}
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/source"}
+        }
+      }
+    },
+    "activation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled_variable",
+        "admission_variable",
+        "required_secrets",
+        "implementation_ready",
+        "blocked_reason"
+      ],
+      "properties": {
+        "enabled_variable": {"const": "KUBO_KUWAIT_AUTOMATION_ENABLED"},
+        "admission_variable": {"const": "KUBO_KUWAIT_DATA_ADMISSION_READY"},
+        "required_secrets": {
+          "const": ["KUBO_AUTHORIZED_SOURCE_ACCESS", "KUBO_DRIVE_RUNTIME_CONFIG"]
+        },
+        "implementation_ready": {"const": false},
+        "blocked_reason": {"const": "REAL_SOURCE_ADMISSION_NOT_COMPLETE"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_order",
+        "concurrency_group",
+        "cancel_in_progress",
+        "timeouts_minutes",
+        "retry_policy",
+        "scheduled_minute_is_guaranteed",
+        "record_actual_execution_time"
+      ],
+      "properties": {
+        "stage_order": {"const": ["collection", "validation", "live_scoring"]},
+        "concurrency_group": {"const": "kubo-kuwait-market-ai"},
+        "cancel_in_progress": {"const": false},
+        "timeouts_minutes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gate", "collection", "validation", "live_scoring"],
+          "properties": {
+            "gate": {"const": 5},
+            "collection": {"const": 20},
+            "validation": {"const": 20},
+            "live_scoring": {"const": 15}
+          }
+        },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_transient_attempts", "backoff_seconds"],
+          "properties": {
+            "max_transient_attempts": {"const": 2},
+            "backoff_seconds": {"const": 5}
+          }
+        },
+        "scheduled_minute_is_guaranteed": {"const": false},
+        "record_actual_execution_time": {"const": true}
+      }
+    },
+    "slots": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {"$ref": "#/$defs/slot"}
+    },
+    "claim_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule_contract_is_live_collection",
+        "scheduled_minute_is_exactly_guaranteed",
+        "holiday_run_may_emit_live_candidate",
+        "missing_secret_may_be_replaced_with_placeholder",
+        "workflow_may_submit_trade",
+        "workflow_may_merge_code"
+      ],
+      "properties": {
+        "schedule_contract_is_live_collection": {"const": false},
+        "scheduled_minute_is_exactly_guaranteed": {"const": false},
+        "holiday_run_may_emit_live_candidate": {"const": false},
+        "missing_secret_may_be_replaced_with_placeholder": {"const": false},
+        "workflow_may_submit_trade": {"const": false},
+        "workflow_may_merge_code": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "holiday": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "name", "status"],
+      "properties": {
+        "date": {"type": "string", "format": "date"},
+        "name": {"type": "string", "minLength": 1},
+        "status": {"const": "CONFIRMED"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publisher",
+        "title",
+        "url",
+        "publication_date",
+        "event_date",
+        "accessed_at_utc",
+        "status"
+      ],
+      "properties": {
+        "publisher": {"const": "Boursa Kuwait"},
+        "title": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://www\\.boursakuwait\\.com\\.kw/"},
+        "publication_date": {"type": ["string", "null"], "format": "date"},
+        "event_date": {"type": ["string", "null"], "format": "date"},
+        "accessed_at_utc": {"type": "string", "format": "date-time"},
+        "status": {"const": "CONFIRMED"}
+      }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_id",
+        "purpose",
+        "cadence",
+        "local_time",
+        "utc_time",
+        "cron",
+        "requires_trading_day",
+        "live_scoring_requested"
+      ],
+      "properties": {
+        "slot_id": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1},
+        "cadence": {"enum": ["DAILY", "KUWAIT_TRADING_WEEKDAYS"]},
+        "local_time": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+        "utc_time": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+        "cron": {"type": "string", "minLength": 1},
+        "requires_trading_day": {"type": "boolean"},
+        "live_scoring_requested": {"type": "boolean"}
+      }
+    }
+  }
+}

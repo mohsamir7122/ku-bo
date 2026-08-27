@@ -208,6 +208,14 @@ kubo --project-root . execute-public-source-access-probe \
 و Hash ووحدة و Raw/Adjusted checks. التفاصيل في
 `docs/SOURCE_ACCESS_RECIPES_AR.md`.
 
+## جدولة الكويت الآمنة
+
+تُثبت النوافذ السبع المطلوبة بتوقيت الكويت وتحويلاتها إلى UTC في
+`config/kuwait_automation_schedule.json`، ويربطها المدقق بالـworkflow المتتابع
+`.github/workflows/kuwait-market-ai.yml`. يسجل التشغيل الوقت الفعلي، ويطبق
+تقويم السوق والعطلات، لكنه يبقى محجوبًا حتى قبول مصدر حقيقي وتوفير controls
+الخاصة. التفاصيل وأوامر الـdry run في `docs/AUTOMATION_SCHEDULE_AR.md`.
+
 ## طبقة المعرفة التاريخية الكويتية
 
 يضيف `KU-BO-013` عقد تخطيط مستقلًا يغطي ست طبقات سنوية: تاريخ الكويت من 1500،

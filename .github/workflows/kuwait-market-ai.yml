@@ -1,0 +1,157 @@
+name: Kuwait Market AI Sequential
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "0 1 * * 0-4"
+    - cron: "0 4 * * 0-4"
+    - cron: "0 6 * * 0-4"
+    - cron: "0 8 * * 0-4"
+    - cron: "0 9 * * 0-4"
+    - cron: "0 10 * * 0-4"
+  workflow_dispatch:
+    inputs:
+      slot_id:
+        description: Contract slot to inspect
+        required: true
+        default: main_1500
+        type: choice
+        options:
+          - main_1500
+          - live_0400
+          - live_0700
+          - market_open_0900
+          - live_1100
+          - live_1200
+          - live_1300
+      mode:
+        description: CONTRACT_CHECK never executes market stages
+        required: true
+        default: CONTRACT_CHECK
+        type: choice
+        options:
+          - CONTRACT_CHECK
+          - EXECUTE
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-kuwait-market-ai
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      status: ${{ steps.resolve.outputs.status }}
+      slot_id: ${{ steps.resolve.outputs.slot_id }}
+      market_day_status: ${{ steps.resolve.outputs.market_day_status }}
+      run_collection: ${{ steps.resolve.outputs.run_collection }}
+      run_validation: ${{ steps.resolve.outputs.run_validation }}
+      run_live_scoring: ${{ steps.resolve.outputs.run_live_scoring }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install schedule contract
+        run: python -m pip install --disable-pip-version-check -e .
+      - name: Resolve actual invocation and fail closed
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+          DISPATCH_SLOT: ${{ inputs.slot_id || '' }}
+          REQUESTED_MODE: ${{ inputs.mode || 'EXECUTE' }}
+          AUTOMATION_ENABLED: ${{ vars.KUBO_KUWAIT_AUTOMATION_ENABLED == 'true' }}
+          ADMISSION_READY: ${{ vars.KUBO_KUWAIT_DATA_ADMISSION_READY == 'true' }}
+          SOURCE_ACCESS_CONFIGURED: ${{ secrets.KUBO_AUTHORIZED_SOURCE_ACCESS != '' }}
+          DRIVE_RUNTIME_CONFIGURED: ${{ secrets.KUBO_DRIVE_RUNTIME_CONFIG != '' }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          actual_started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          mkdir -p runtime
+          args=(
+            --project-root .
+            --resolve
+            --actual-started-at "$actual_started_at"
+            --mode "$REQUESTED_MODE"
+            --activation-enabled "$AUTOMATION_ENABLED"
+            --admission-ready "$ADMISSION_READY"
+            --source-access-configured "$SOURCE_ACCESS_CONFIGURED"
+            --drive-runtime-configured "$DRIVE_RUNTIME_CONFIGURED"
+            --output runtime/schedule-gate.json
+            --github-output "$GITHUB_OUTPUT"
+          )
+          if [[ "$EVENT_NAME" == "schedule" ]]; then
+            args+=(--event-schedule "$EVENT_SCHEDULE")
+          else
+            args+=(--slot-id "$DISPATCH_SLOT")
+          fi
+          echo "workflow_run_id=$WORKFLOW_RUN_ID"
+          echo "actual_gate_started_at_utc=$actual_started_at"
+          python scripts/validate_kuwait_automation_schedule.py "${args[@]}"
+      - name: Record gate report in job summary
+        if: always()
+        run: |
+          {
+            echo '```json'
+            if [[ -f runtime/schedule-gate.json ]]; then
+              cat runtime/schedule-gate.json
+            else
+              echo '{"status":"BLOCKED_NO_GATE_REPORT"}'
+            fi
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve bounded gate receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        with:
+          name: kuwait-schedule-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/
+          if-no-files-found: error
+          retention-days: 14
+
+  collection:
+    needs: gate
+    if: ${{ needs.gate.outputs.run_collection == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MAX_TRANSIENT_ATTEMPTS: "2"
+      TRANSIENT_BACKOFF_SECONDS: "5"
+    steps:
+      - name: Safety tripwire — collection adapter is not admitted
+        run: |
+          echo "::error title=Collection blocked::Real source admission and an executable collection adapter are not complete."
+          echo "No retry is attempted for this permanent gate; transient retries are bounded at $MAX_TRANSIENT_ATTEMPTS once implemented."
+          exit 2
+
+  validation:
+    needs: collection
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Safety tripwire — no collected evidence exists
+        run: |
+          echo "::error title=Validation blocked::Collection did not produce an admitted evidence bundle."
+          exit 2
+
+  live_scoring:
+    needs: [gate, validation]
+    if: ${{ needs.gate.outputs.run_live_scoring == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Safety tripwire — live scoring is not authorized
+        run: |
+          echo "::error title=Live scoring blocked::No validated point-in-time bundle or locked model is available."
+          echo "NO-TRADE"
+          exit 2
