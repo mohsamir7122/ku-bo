@@ -24,9 +24,10 @@ MIGRATION_CONTROL_REFERENCE: KU-BO-MIG-001
 MIGRATION_CONTROL_BRANCH_REFERENCE: agent/private-predecessor-capability-migration-v1
 MIGRATION_CONTROL_EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
 EXPECTED_PR_BASE: main
-PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: YES
+PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO
 PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
 GOOGLE_DRIVE_RUNTIME_ACCESS: READ_ONLY_PREFLIGHT_VERIFICATION_ONLY
+MIGRATION_FIELDS_APPLICABILITY: HISTORICAL_REFERENCE_ONLY_UNLESS_TASK_ID_IS_KU-BO-MIG-001
 ```
 
 ## Mission
@@ -37,14 +38,49 @@ legacy capabilities, preserve provenance and Git history, repair the active
 control surface, and run the first deterministic dry work without claiming
 real market coverage or predictive performance.
 
+## Mobile Codex CLI delegation
+
+The owner has delegated the remaining repository repair and project continuation
+to Codex CLI running in the existing Android Termux/Ubuntu environment. ChatGPT's
+handoff is intentionally small; Codex CLI owns the inspect, repair, test, publish,
+conditional-merge, checkpoint, and resume cycles.
+
+Before any merge, Codex CLI must perform a fresh read-only audit of `main`, every
+remote branch, every open PR, exact SHAs, dependencies, mergeability, and CI. An
+unmerged branch is not automatically missing work: classify it as `MERGE_CANDIDATE`,
+`ALREADY_INTEGRATED`, `SUPERSEDED`, `BLOCKED`, or `USER_DECISION_REQUIRED`.
+Only useful non-duplicated engineering work may be repaired and merged, in
+dependency order, after its exact head passes all applicable acceptance gates.
+
+`MERGE_ALLOWED` remains `NO` during implementation and review. The separately
+recorded conditional authority in `KU-BO-MOBILE-CODEX-D01` may be exercised only
+at a proven merge boundary. It does not authorize force-push, history rewrite,
+deletion, gate weakening, secret exposure, private/licensed-data publication,
+paid access, scheduler activation, training on unadmitted data, financial
+recommendations, or trading.
+
+The mobile delegation does not override a narrower open decision. In particular,
+`KU-BO-MIG-001` and its Draft PR remain `USER_DECISION_REQUIRED` and unmerged
+while `KU-BO-MIG-D02` is open and Gate 12 requires `MERGE_NOT_PERFORMED`.
+
+After repository consolidation, Codex CLI must create the next bounded task from
+the exact merged `main` and continue the security-by-security sequence. It must
+finish all terminal source receipts and one security seal before starting the
+next security, persist resumable checkpoints outside Git, and store real/private
+artifacts only under the authorized logical `AI Rebuild/04_Curated_Core/KU_BO`
+runtime boundary. The current Day-One task does not authorize private-runtime or
+Drive writes: the later task must record explicit write authority before creating
+any such checkpoint or artifact.
+
 ## Required sequence
 
 1. Record UTC/Kuwait timestamps, host/tool/resource/network checks, GitHub
    authentication, repository state, pre-existing CI failures, and rollback
    checkpoints.
-2. Audit `ku-bo`, `PRIVATE_PREDECESSOR_SOURCE`, the Saudi target, and relevant archived/source
-   repositories read-only; classify unique, missing, broken, and duplicate
-   capabilities with exact source SHAs.
+2. Audit `ku-bo` and its public refs. Audit `PRIVATE_PREDECESSOR_SOURCE`, the
+   Saudi target, or other private/archived repositories only if a later
+   `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`; then follow its
+   migration plan, validator, exact-source handling, and narrower decisions.
 3. Keep private source locators, credentials, raw evidence, licensed bytes,
    and Google Drive identifiers outside this public repository.
 4. Repair the task/branch control mismatch and retain every fail-closed claim

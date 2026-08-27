@@ -25,7 +25,7 @@ Open this directory as the project root.
 
 ## Private predecessor capability migration
 
-- The single active task is the complete private-predecessor capability migration defined in `docs/codex/CURRENT_TASK.md`; the previous KU-BO-017 dry-run task is preserved in `docs/codex/backlog/` and is not active.
+- This section applies only when `docs/codex/CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`. The current authority is always the task actually named in `CURRENT_TASK.md`; do not revive the historical migration task merely because its controls remain in the repository.
 - Read `docs/codex/PRIVATE_PREDECESSOR_MIGRATION_EXECPLAN.md` and validate the machine-readable preparation controls before editing implementation code.
 - KU-BO is the only canonical target engine. Do not merge private-source Git history, copy a second engine/package, or preserve unsafe behavior merely for textual parity.
 - Read-only inspection of the configured private source repository code and Git metadata is authorized. Do not access unrelated private/runtime data or export credentials, tokens, sessions, connector locators, or secret material.

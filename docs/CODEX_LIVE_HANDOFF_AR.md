@@ -26,13 +26,53 @@ Factor 9: RESEARCH_ASSET_PENDING_ADMISSION
 
 أي اختلاف يوقف العمل حتى يُفهم سببه؛ لا يُعدّل Expected value لتجاوز الفشل.
 
-## الجملة التي يبدأ بها المستخدم في المنزل
+## المشغّل الأساسي على الهاتف
 
-```text
-اقرأ CODEX_START_HERE.md ونفّذ CURRENT_TASK كاملًا على فرع المهمة. ابدأ بمدقق
-Codex، ثم افحص AI Rebuild بصورة خاصة، وأنشئ Manifest قبول Factor 9، ونفّذ Daily
-dry-run والتجميد والاختبارات. افتح Draft PR ولا تدمج ولا تنشر بيانات Drive.
+Codex CLI داخل Ubuntu/Termux هو المشغّل الأساسي لبقية المشروع. دور ChatGPT هو
+تثبيت الـhandoff والحدود فقط. يجب أن يعمل Codex في وحدات مترابطة صغيرة، وينهي كل
+وحدة غيّرت ملفات فعلًا باختبارات وCommit وPush وHandoff، ثم يستأنف من آخر نقطة
+مثبتة بدل إعادة العمل من البداية. لا ينشئ Commit فارغًا لو كانت الوحدة تدقيقًا
+قرائيًا فقط.
+
+قبل تشغيله، افتح جذر المستودع الموجود على الهاتف وتأكد أن جلسة Codex وGitHub
+مسجلتان بالفعل. لا تستخدم `--yolo` أو
+`--dangerously-bypass-approvals-and-sandbox`. يشغّل الأمر أدناه
+`workspace-write` مع المراجع الآلية للطلبات وNetwork لأن فحص GitHub وجمع المصادر
+يحتاجانهما؛ وإذا رفض المراجع إجراءً عالي الخطورة يتوقف Codex ويسجل Blocker بدل
+تجاوز الحماية. تظل البيانات الخاصة عبر مسار/Connector `AI Rebuild` المخول ولا
+تُنشر في Git.
+
+## أمر START
+
+```bash
+cd /root/codexphone/workspaces/ku-bo
+codex --search exec \
+  --sandbox workspace-write \
+  -c 'approval_policy="on-request"' \
+  -c 'approvals_reviewer="auto_review"' \
+  -c 'sandbox_workspace_write.network_access=true' \
+  - <<'CODEX_PROMPT'
+Read AGENTS.md, CODEX_START_HERE.md, and docs/codex/CURRENT_TASK.md in the required order. Verify the repository, remote, clean/dirty state, exact local and remote SHAs, main, every branch, every open PR, dependencies, mergeability, and CI before changing anything. Treat KU-BO-MOBILE-CODEX-D01 as the owner's conditional delegation: classify every unmerged ref, preserve and repair unique useful work, run targeted and full tests plus exact-head CI, and merge only validated non-duplicated heads in dependency order. A narrower open or rejected decision always wins: KU-BO-MIG-001 remains USER_DECISION_REQUIRED and unmerged while KU-BO-MIG-D02 is open. Never blindly merge a stale branch. Never force-push, delete, weaken gates, expose secrets, publish private/licensed data, bypass access controls, spend money, fabricate evidence, or perform financial execution. Keep coherent checkpoints as focused commits, pushes, status updates, and handoffs, but never create an empty commit. After green verified main, create the next bounded task and continue KU-BO one security at a time: official identity, 29 terminal source receipts in seven waves, private raw evidence with provenance, durable security-aware checkpoint, reconciliation, and a terminal security seal before the next security. The current Day-One task is read-only for private runtime and Drive; write under AI Rebuild only after the later task explicitly records that authority. Continue until the active acceptance gates pass or a genuine external/user-decision blocker is recorded; do not turn a blocker into an invented success.
+CODEX_PROMPT
 ```
+
+## أمر RESUME
+
+```bash
+cd /root/codexphone/workspaces/ku-bo
+codex --search exec \
+  --sandbox workspace-write \
+  -c 'approval_policy="on-request"' \
+  -c 'approvals_reviewer="auto_review"' \
+  -c 'sandbox_workspace_write.network_access=true' \
+  resume --last \
+  'Resume from the last proven Git commit, checkpoint, and handoff. Recheck git status, exact local/remote heads, main, PRs, CI, CURRENT_TASK, USER_DECISIONS, and all recorded blockers before acting. Preserve completed work, repair only the next coherent unit, test it, checkpoint it, and continue until the active gates pass or a genuine external/user-decision blocker is recorded.'
+```
+
+وفق [OpenAI Docs](https://developers.openai.com/codex/non-interactive-mode)، يدعم
+`codex exec` التشغيل غير التفاعلي والقراءة من stdin، ويدعم
+`codex exec resume --last` استئناف آخر جلسة محفوظة من مجلد العمل الحالي. لا
+تستخدم `--ephemeral` لأن الاستئناف مطلوب.
 
 لا يحتاج المستخدم إلى إعادة شرح تاريخ المشروع؛ `CODEX_START_HERE.md` وملفات
 `docs/codex/` وملف bootstrap هي ذاكرة التشغيل الرسمية.

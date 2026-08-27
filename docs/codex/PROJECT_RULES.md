@@ -21,7 +21,14 @@ Archived or superseded prompts never override the single active task.
 - Start a new phase on the exact branch declared in `CURRENT_TASK.md`, after verifying it still exists and is the intended head.
 - Keep stacked PR dependencies explicit in every PR body.
 - Default every new PR to Draft.
-- Never merge, enable auto-merge, force-push, delete tags, or delete historical branches.
+- Never enable auto-merge, force-push, delete tags, or delete historical branches.
+- Merge only when an exact active-task boundary is covered by an `APPROVED`
+  decision in `USER_DECISIONS.md`, every applicable gate passes on the exact
+  candidate head, dependencies and mergeability are rechecked immediately before
+  merge, and post-merge verification is recorded. An unmerged branch is not by
+  itself a merge candidate. An unresolved narrower `OPEN`, `REJECTED`, or
+  `DEFERRED` decision, or an applicable no-merge gate not expressly resolved by
+  the active approved decision, takes precedence over a broader approval.
 - Never hide failures by weakening tests, changing expected values to match bad output, or marking a source operational without evidence.
 
 ## Data boundaries

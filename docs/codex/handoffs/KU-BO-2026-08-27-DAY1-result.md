@@ -6,12 +6,12 @@ REPOSITORY: mohsamir7122/ku-bo
 BASE_BRANCH: main
 STARTING_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 TASK_BRANCH: codex/kuwait-market-ai-day1-v1
-FINAL_SHA: PUBLISHED_TASK_HEAD
+FINAL_SHA: d31911940ab9970d4409189f58db1d75b85be5b3
 DRAFT_PR: NONE
 PR_BASE: main
-CI_RUN: PENDING_AFTER_PUSH
+CI_RUN: 33070160262 / PASS / Python 3.11-3.14
 STARTED_AT: 2026-08-27T02:06:35Z
-COMPLETED_AT: 2026-08-27T11:56:00Z
+COMPLETED_AT: 2026-08-27T12:04:03Z
 ```
 
 ## User goal
@@ -107,9 +107,9 @@ COMMAND_OR_JOB: isolated wheel build/install and installed CLI smoke
 RESULT: PASS
 DETAIL: 605193-byte wheel; validate-config, policy validation, one-security/29-attempt synthetic plan generation, and external plan reopening passed. SHA-256 fb6625fc8f6f4eb930366d5c149a6000e444e59cede34db6cf76b0e577954b72.
 
-COMMAND_OR_JOB: GitHub exact-head CI on PUBLISHED_TASK_HEAD
-RESULT: SKIPPED
-DETAIL: pending until the candidate commit is pushed; Python 3.11–3.14 are required before merge consideration.
+COMMAND_OR_JOB: GitHub exact-head CI on d31911940ab9970d4409189f58db1d75b85be5b3
+RESULT: PASS
+DETAIL: run 33070160262 passed on Python 3.11, 3.12, 3.13, and 3.14.
 ```
 
 ## Evidence and data status
@@ -122,8 +122,8 @@ DETAIL: pending until the candidate commit is pushed; Python 3.11–3.14 are req
   `authorized_broker_feed`, `alphastocks_authorized_connector`, and
   `web_search_router`.
 - `BLOCKED`: real complete issuer/security universe, populated official-site
-  authority registry, admitted live adapter set, security-aware durable
-  checkpoint v2, and exact-head CI.
+  authority registry, admitted live adapter set, and security-aware durable
+  checkpoint v2.
 - `LIVE_DEPENDENT`: source access, raw bytes, real observations, company
   dossiers, Drive publication, and scheduled execution.
 - `LICENSED_FEED_DEPENDENT`: LSEG, AlphaStocks, ICE, and broker-feed results.
@@ -185,17 +185,18 @@ issuer/security universe, and private runtime trust material.
   `COLLECTION_ADAPTER_NOT_ADMITTED` or `BLOCKED_CHECKPOINT_STORE`.
 - The official-domain registry is intentionally external and currently has no
   public entries. No issuer website can be claimed bound from this repository.
-- Exact-head CI is pending after push, so this result remains `PARTIAL`.
+- Exact-head CI passed. This result remains `PARTIAL` because the branch is not
+  merged and all real-data/runtime admission dependencies remain blocked.
 
 ## Smallest logical next task
 
 ```text
-TASK_ID: KU-BO-M0-REAL-SECURITY-PROOF
-PROPOSED_BRANCH: codex/kuwait-one-security-real-proof-v1
-DEPENDENCY: Stage 8 exact-head CI; one real admitted issuer/security universe; authorized source access; signed official-domain registry; durable security-aware checkpoint store.
-GOAL: Execute one real Kuwait security through all 29 planned source attempts, preserving every terminal receipt and at least one rights-admitted raw artifact, then seal and independently reopen the package without starting a second security.
-ENTRY_GATE: rights, provenance, runtime trust, source adapter, checkpoint, Secret Guard, and no-real-data-in-Git gates pass.
-EXIT_GATE: one real security; 29/29 terminal receipts; official-site binding verified; raw artifact reopened with SHA-256; per-security seal valid; durable reopen PASS; zero training/backtest/forecast actions.
+TASK_ID: KU-BO-MOBILE-REPOSITORY-RECONCILIATION
+PROPOSED_BRANCH: continue codex/kuwait-market-ai-day1-v1 until its merge boundary; then create the next task from exact merged main
+DEPENDENCY: KU-BO-MOBILE-CODEX-D01; fresh audit of main, all branches/PRs, dependencies, mergeability, and CI.
+GOAL: Preserve and repair unique useful work, classify stale/duplicate refs, merge only validated exact heads in dependency order, verify green main, then open the bounded real-one-security task.
+ENTRY_GATE: clean checkout; remote/PR/CI verification; decision and privacy gates; no blind merging.
+EXIT_GATE: every relevant ref classified; useful merge candidates tested and resolved; exact merged main verified; next task records rights, trust, adapter, checkpoint, and no-real-data-in-Git gates.
 ```
 
 `MERGE_NOT_PERFORMED`.

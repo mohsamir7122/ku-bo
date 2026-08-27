@@ -51,6 +51,31 @@ IMPLEMENTATION_GUARD: This authority is conditional, not absolute. It excludes f
 IMPLEMENTED_IN_BRANCH_OR_PR: PR #23 exact head 3fc478f4b656c80e4951e70410884efebb2bd09e; merged to main as 0f64d322ad7f1d089c05fbd75ad6b7020986d91c on 2026-08-26
 ```
 
+## Current approved mobile delegation
+
+```text
+DECISION_ID: KU-BO-MOBILE-CODEX-D01
+STATUS: APPROVED
+DATE_RAISED: 2026-08-27
+TARGET: Codex CLI repository consolidation and resumable security-by-security continuation
+CATEGORY: SCOPE; MERGE; OTHER
+CURRENT_STATE: The exact task head d31911940ab9970d4409189f58db1d75b85be5b3 passed CI, but it is not merged into main; repository controls are partly stale; real collection remains unadmitted and the security-aware durable checkpoint v2 remains absent.
+WHY_A_DECISION_IS_REQUIRED: The owner wants ChatGPT to perform only the minimum handoff and wants Codex CLI on the phone to own the remaining branch audit, repairs, conditional merges, checkpoints, and project continuation.
+OPTIONS:
+1. Delegate the work to Codex CLI with exact-head gates and bounded conditional merge authority.
+2. Keep every branch unmerged and require ChatGPT to supervise each step.
+3. Permit unconditional merging and unrestricted runtime actions.
+CODEX_RECOMMENDATION: Option 1.
+CONSEQUENCE_OF_APPROVAL: Codex CLI may inspect all repository refs and PRs, preserve unique work, repair useful branches, run all gates, and merge only validated non-duplicated exact heads in dependency order. It may then create the next bounded task and continue security-by-security work with private runtime checkpoints.
+CONSEQUENCE_OF_REJECTION: Work remains on task branches and the mobile Codex continuation cannot cross a merge boundary.
+SAFER_REVERSIBLE_ALTERNATIVE: Publish repaired Draft PRs and handoffs without merging.
+USER_DECISION: APPROVED by the active instruction to minimize work in ChatGPT and make Codex CLI perform the remaining GitHub repair, gated merging, and project continuation.
+DECIDED_AT: 2026-08-27
+DECIDED_BY: Mohamed Samir Rashed Shaheen
+IMPLEMENTATION_GUARD: This is conditional authority, not blanket merge authority. It never overrides a narrower OPEN/REJECTED/DEFERRED decision or an applicable task-specific no-merge gate. `KU-BO-MIG-001` remains USER_DECISION_REQUIRED and unmerged while `KU-BO-MIG-D02` is OPEN and Gate 12 requires a Draft PR plus MERGE_NOT_PERFORMED. Never merge obsolete, duplicated, failing, unaudited, or incorrectly based work. No force-push, protected-history rewrite, deletion, secret disclosure, credential export, access-control bypass, paid/licensed activation, private-data publication, gate weakening, automatic scheduler activation, unadmitted training, real-money action, or buy/sell recommendation is authorized. Stop and record a blocker when a required entitlement, credential, destructive action, or material policy choice is missing.
+IMPLEMENTED_IN_BRANCH_OR_PR: NOT YET EXERCISED; Codex CLI must bind every future merge to its exact-head gate receipt.
+```
+
 ## Open decisions
 
 ```text

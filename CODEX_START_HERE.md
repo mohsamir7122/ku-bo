@@ -17,16 +17,17 @@ publish private data without a separately recorded user decision.
 4. `docs/codex/PROJECT_RULES.md`
 5. `docs/codex/CURRENT_STATUS.md`
 6. `docs/codex/CURRENT_TASK.md`
-7. `docs/codex/PRIVATE_PREDECESSOR_MIGRATION_EXECPLAN.md`
-8. `docs/codex/migrations/private-predecessor-to-ku-bo/STATUS.md`
-9. `docs/codex/migrations/private-predecessor-to-ku-bo/PRIVATE_SOURCE_ORIENTATION.md`
-10. run `python scripts/validate_private_predecessor_migration_control.py --project-root . --json`
-11. `docs/PROJECT_CONVERSATION_SYNTHESIS_AR.md`
-12. `docs/FACTOR9_DRIVE_ADMISSION_AR.md`
-13. `docs/CODEX_LIVE_HANDOFF_AR.md`
-14. `docs/codex/ACCEPTANCE_GATES.md`
-15. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
-16. `docs/codex/USER_DECISIONS.md`
+7. only when `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`, read
+   `docs/codex/PRIVATE_PREDECESSOR_MIGRATION_EXECPLAN.md`,
+   `docs/codex/migrations/private-predecessor-to-ku-bo/STATUS.md`, and
+   `docs/codex/migrations/private-predecessor-to-ku-bo/PRIVATE_SOURCE_ORIENTATION.md`,
+   then run `python scripts/validate_private_predecessor_migration_control.py --project-root . --json`; otherwise skip this historical migration block
+8. `docs/PROJECT_CONVERSATION_SYNTHESIS_AR.md`
+9. `docs/FACTOR9_DRIVE_ADMISSION_AR.md`
+10. `docs/CODEX_LIVE_HANDOFF_AR.md`
+11. `docs/codex/ACCEPTANCE_GATES.md`
+12. `docs/codex/CONVERSATION_IMPORT_POLICY.md`
+13. `docs/codex/USER_DECISIONS.md`
 
 Do not edit code before the bootstrap passes and the remote, base branch, current
 HEAD, open PR dependency chain, and current CI state have been verified.
@@ -39,36 +40,32 @@ Repository:
 mohsamir7122/ku-bo
 ```
 
-Active migration branch:
+Current task branch:
 
 ```text
-agent/private-predecessor-capability-migration-v1
+codex/kuwait-market-ai-day1-v1
 ```
 
-The branch is stacked on `agent/ku-bo-016-codex-live-bootstrap`, which is stacked
-on `agent/ku-bo-015-source-access-recipes`. The exact heads and Draft PR state are
-recorded in `docs/codex/CURRENT_STATUS.md`; always verify them live. Continue on
-the existing migration branch when it exists. Do not create a duplicate branch.
+The last validated implementation head before this mobile-control handoff is
+`d31911940ab9970d4409189f58db1d75b85be5b3`; always verify it, the remote,
+the later control head, `main`, every PR/branch, and CI live before acting. The
+mobile-control commit requires its own fresh exact-head CI before any merge. Do
+not create a duplicate branch or assume that every unmerged historical branch
+contains unique work.
 
-## Active migration meaning
+## Active task meaning
 
-- The goal is complete user-job and capability parity, not a blind file or Git
-  history merge.
+- Complete the current Day-One task and reconcile the repository before opening
+  a later real-security task.
+- Audit `main`, every remote branch, and every PR. Preserve unique work, but mark
+  already integrated or superseded branches truthfully instead of blindly merging.
+- The security queue uses official numeric `security_code`, one active security,
+  29 source attempts in seven waves, and a terminal security seal before the next
+  security starts.
 - KU-BO remains the single canonical package, engine, CLI, evidence model, and
   decision boundary.
-- The configured private predecessor is a read-only source. Resolve its exact
-  repository and refs only in uncommitted private runtime storage; inspect every
-  materially unique ref before declaring the private census complete.
-- Treat source paths as potentially sensitive. Publish normal repository paths
-  only after review; represent sensitive ones by opaque IDs and reconcile the
-  census with Git-tree/blob counts and object-multiset digests.
-- Do not port unsafe self-asserted authorization, fixed confidence, look-ahead,
-  fabricated labels, or other behavior that conflicts with KU-BO gates. Preserve
-  the user job through safe reimplementation and retain the old behavior only as
-  a negative test or documented rejection.
-- Keep skills thin and discoverable; put shared logic in `src/kubo`.
-- A software migration may be complete while external data capabilities remain
-  `LIVE_DEPENDENT` or `LICENSED_FEED_DEPENDENT`.
+- Private-predecessor controls remain historical/supplemental unless
+  `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001` again.
 
 ## Locked runtime meaning
 
@@ -89,11 +86,14 @@ Codex may fetch, inspect, create the declared task branch, edit within task scop
 run checks, push without force, and open or update a Draft PR. It may also write
 sanitized manifests and reports while private evidence remains in Drive.
 
-Codex may not merge or enable auto-merge; force-push; rewrite shared history;
-delete branches, tags, evidence, conversations, or user files; commit credentials,
-Drive identifiers, raw private conversations, licensed/private datasets, freezes,
-or daily market evidence; or claim backtest readiness, accuracy, probability,
-recommendation, or `LIVE_OPERATIONAL` status without the applicable gates.
+Codex may merge only under an approved decision such as
+`KU-BO-MOBILE-CODEX-D01`, and only after the exact candidate head passes every
+applicable gate and a final dependency/mergeability review. It may not enable
+auto-merge; force-push; rewrite shared history; delete branches, tags, evidence,
+conversations, or user files; commit credentials, Drive identifiers, raw private
+conversations, licensed/private datasets, freezes, or daily market evidence; or
+claim backtest readiness, accuracy, probability, recommendation, or
+`LIVE_OPERATIONAL` status without the applicable gates.
 
 ## Completion behavior
 
@@ -107,14 +107,15 @@ recorded. Never fabricate evidence or weaken a gate. Use
 The user can start the next Codex session with:
 
 ```text
-Open `mohsamir7122/ku-bo`, check out the existing branch
-`agent/private-predecessor-capability-migration-v1`, and read
-`CODEX_START_HERE.md`. Resolve `PRIVATE_PREDECESSOR_SOURCE` only from the private
-source locator supplied in this ChatGPT session. Run both locked validators,
-verify the stacked PR chain, and execute `docs/codex/CURRENT_TASK.md` plus the
-migration ExecPlan. Keep exact source metadata private, inventory every source
-item and user job, safely reimplement them on KU-BO core, add the dedicated
-evidence-verifying completion validator, run all gates, and update the same Draft
-PR. Do not merge, modify the source, publish private metadata, train, run a real
-backtest, or claim live/financial readiness.
+Open `mohsamir7122/ku-bo`, fetch without force, and read `AGENTS.md`,
+`CODEX_START_HERE.md`, and `docs/codex/CURRENT_TASK.md` in the required order.
+Begin with a read-only audit of `main`, every remote branch, every PR, exact SHAs,
+dependencies, mergeability, and CI. Use `KU-BO-MOBILE-CODEX-D01`: preserve and
+repair unique useful work, run targeted and full tests plus exact-head CI, and
+merge only validated non-duplicated heads in dependency order. Never blindly
+merge a stale branch. Then create the next bounded task from exact merged `main`
+and continue the security-by-security mission with durable private checkpoints
+and terminal receipts. Never force-push, delete, weaken gates, publish private or
+licensed data, bypass access controls, fabricate evidence, or perform financial
+execution.
 ```
