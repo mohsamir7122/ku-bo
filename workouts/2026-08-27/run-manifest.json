@@ -101,7 +101,7 @@
     "boursa_reports_probe_hash": "89d524ce3f6a5cf718627ed55cd96523886bf733d5df3b025bdbf7c559bcaf1d",
     "wheel_sha256": "d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff",
     "market_data_collected": false,
-    "stage_commit_sha": null
+    "stage_commit_sha": "a64ad7c6996ecec354bbf02bfa0b7fcbc048c086"
   },
   "exact_head_ci": {
     "run_id": 33039583311,

@@ -1,6 +1,6 @@
 # Ordered Next Actions
 
-Updated: 2026-08-27T05:02:48Z
+Updated: 2026-08-27T05:08:49Z
 
 1. Design the sequential UTC GitHub Actions schedule with concurrency, timeout,
    bounded retries, market calendars, and a hard activation gate. Do not enable
@@ -8,8 +8,9 @@ Updated: 2026-08-27T05:02:48Z
 2. Continue official-first source admission through an explicitly authorized
    route. The direct KCC and Boursa reports probes are audit-valid but blocked at
    `ROBOTS_POLICY_UNAVAILABLE`; do not bypass or reinterpret this as access.
-3. Commit and push Stage 3, then require exact-head CI. Keep any PR draft-only
-   and do not merge while gates remain open.
+3. Push the Stage 3 implementation and receipt commits, then require exact-head
+   CI. Do not open or merge a PR while collection and blind-test gates remain
+   open.
 4. Begin real Kuwait collection only after at least the required official source
    admission succeeds. Record the
    actual company and unique-event counts; never fill gaps with invented data.

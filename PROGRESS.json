@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T05:02:48Z",
-  "updated_at_kuwait": "2026-08-27T08:02:48+03:00",
+  "updated_at_utc": "2026-08-27T05:08:49Z",
+  "updated_at_kuwait": "2026-08-27T08:08:49+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -18,7 +18,8 @@
     "preflight": "899c0376c92d28d03efe6f038764c366df085b7c",
     "repository_audit": "e590e2c5c4c70b837b83a16525659ed206ea1594",
     "source_evidence_lifecycle": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a",
-    "issuer_universe_and_company_dossier": "2a37ac81e440bd1ce609abdfab61993e118ccb57"
+    "issuer_universe_and_company_dossier": "2a37ac81e440bd1ce609abdfab61993e118ccb57",
+    "official_source_access": "a64ad7c6996ecec354bbf02bfa0b7fcbc048c086"
   },
   "stages": [
     {"name": "contract_read", "status": "completed"},

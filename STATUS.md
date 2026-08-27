@@ -1,6 +1,6 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T05:02:48Z (2026-08-27T08:02:48+03:00, Asia/Kuwait)
+Updated: 2026-08-27T05:08:49Z (2026-08-27T08:08:49+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
@@ -12,6 +12,8 @@ WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
 WORKTREE_AT_START: CLEAN
 STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
+STAGE_2_COMMIT: 2a37ac81e440bd1ce609abdfab61993e118ccb57
+STAGE_3_COMMIT: a64ad7c6996ecec354bbf02bfa0b7fcbc048c086
 ```
 
 ## Completed and evidenced
@@ -112,6 +114,9 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
   whitespace, Secret Guard, and installed-wheel CLI gates pass. Candidate wheel
   SHA-256 is
   `d5b13cac1c998c5b6884665883429776b27c7f88248d985231a46ab7a4e67aff`.
+- Stage 3 is preserved in commit
+  `a64ad7c6996ecec354bbf02bfa0b7fcbc048c086`; exact-head CI is pending and it
+  has not been merged.
 
 ## Next active stage
 
