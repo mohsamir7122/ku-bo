@@ -158,6 +158,7 @@ jobs:
           "$installed_kubo" --help | grep -q "validate-factor9-admission"
           "$installed_kubo" --help | grep -q "run-live-dry-run"
           "$installed_kubo" --help | grep -q "validate-live-dry-run"
+          "$installed_kubo" --help | grep -q "validate-issuer-checkpoint-v2"
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-pilot-config
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-ca-formulas
           "$installed_foundation" --project-root "$GITHUB_WORKSPACE" validate-benchmark-registry
@@ -175,6 +176,7 @@ jobs:
           from kubo.factor9_admission import validate_factor9_admission_manifest
           from kubo.capability_parity import validate_predecessor_capability_parity
           from kubo.ku_bo_live_program import validate_ku_bo_live_program
+          from kubo.issuer_checkpoint_v2 import IssuerCheckpointV2Store
           from kubo.live_dry_run import run_daily_dry_run, validate_live_dry_run
           from kubo.market_scope import validate_market_scope
           from kubo.portfolio_state import validate_portfolio_state
@@ -197,6 +199,7 @@ jobs:
           assert callable(validate_factor9_admission_manifest)
           assert callable(validate_predecessor_capability_parity)
           assert callable(validate_ku_bo_live_program)
+          assert callable(IssuerCheckpointV2Store)
           assert callable(run_daily_dry_run)
           assert callable(validate_live_dry_run)
           assert callable(validate_market_scope)

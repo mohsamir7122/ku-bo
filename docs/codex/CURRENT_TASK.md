@@ -1,12 +1,12 @@
-# CURRENT TASK — KU-BO-2026-08-27-DAY1
+# CURRENT TASK — KU-BO-ONE-SECURITY-CHECKPOINT-V2
 
 ```text
-TASK_ID: KU-BO-2026-08-27-DAY1
-STATUS: IN_PROGRESS
+TASK_ID: KU-BO-ONE-SECURITY-CHECKPOINT-V2
+STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
-EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1
+CONTROL_BASE_SHA: 8860989f6a2affdc66bc790f639757c9a897f353
+EXPECTED_NEW_BRANCH: codex/one-security-checkpoint-v2
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -15,122 +15,98 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-HISTORICAL_CORPUS_COLLECTION_REQUESTED: YES
-BLOCKED_ON: LIVE_SCHEDULE_SECRETS_AND_VARIABLES_MISSING; REAL_DATA_AND_EVALUATION_GATES_NOT_YET_SATISFIED
+PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
+PRIVATE_RUNTIME_CHECKPOINT_WRITE_ALLOWED: NO
+GOOGLE_DRIVE_RUNTIME_ACCESS: NO
+LIVE_SOURCE_ACCESS_ALLOWED: NO
+FINANCIAL_EXECUTION_ALLOWED: NO
+BLOCKED_ON: EXPLICIT_PRIVATE_RUNTIME_WRITE_AUTHORITY_MISSING; ADMITTED_OFFICIAL_ONE_SECURITY_UNIVERSE_MISSING; LIVE_ADAPTER_REGISTRY_MISSING; RUNTIME_TRUST_AND_ENTITLEMENTS_MISSING; PHYSICAL_DURABLE_STORE_NOT_CONFIGURED
 CONTROL_FILES: docs/codex/HANDOFF_TEMPLATE.md; docs/codex/USER_DECISIONS.md
-MERGE_GUARD: Do not merge until exact-head CI and every Section 8 gate pass.
-MASTER_CONTRACT: /root/codexphone/workspaces/CODEX_MARKET_AI_MASTER_EXECUTION_CONTRACT_AR.md (runtime-local; not committed)
+DEPENDENCY: merged PR #25 at main 8860989f6a2affdc66bc790f639757c9a897f353; post-merge CI 33102246889 PASS
+MIGRATION_EXCLUSION: KU-BO-MIG-D02 remains OPEN; PR #21 remains Draft and unmerged
 MIGRATION_CONTROL_REFERENCE: KU-BO-MIG-001
 MIGRATION_CONTROL_BRANCH_REFERENCE: agent/private-predecessor-capability-migration-v1
 MIGRATION_CONTROL_EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
-EXPECTED_PR_BASE: main
 PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO
-PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
-GOOGLE_DRIVE_RUNTIME_ACCESS: READ_ONLY_PREFLIGHT_VERIFICATION_ONLY
 MIGRATION_FIELDS_APPLICABILITY: HISTORICAL_REFERENCE_ONLY_UNLESS_TASK_ID_IS_KU-BO-MIG-001
 ```
 
 ## Mission
 
-Execute day one of the master Kuwait-first market research contract on a fresh
-branch. Establish a reproducible pre-flight baseline, reconcile repository and
-legacy capabilities, preserve provenance and Git history, repair the active
-control surface, and run the first deterministic dry work without claiming
-real market coverage or predictive performance.
+Implement and test a separate security-aware checkpoint v2 for exactly one
+official numeric Kuwait `security_code`. The software must persist the frozen
+29-source/seven-wave sequence, reopen retained manifests and raw bytes,
+reconcile the exact denominator, and authenticate a terminal seal. This task is
+synthetic-only because private-runtime writes and live source access are not
+authorized.
 
-## Mobile Codex CLI delegation
+The v2 contract extends the canonical `kubo` engine without changing the
+serialized legacy DATE/PAGE priority-checkpoint v1 contract or existing
+issuer-sequential run v1 behavior.
 
-The owner has delegated the remaining repository repair and project continuation
-to Codex CLI running in the existing Android Termux/Ubuntu environment. ChatGPT's
-handoff is intentionally small; Codex CLI owns the inspect, repair, test, publish,
-conditional-merge, checkpoint, and resume cycles.
+## Runtime boundary
 
-Before any merge, Codex CLI must perform a fresh read-only audit of `main`, every
-remote branch, every open PR, exact SHAs, dependencies, mergeability, and CI. An
-unmerged branch is not automatically missing work: classify it as `MERGE_CANDIDATE`,
-`ALREADY_INTEGRATED`, `SUPERSEDED`, `BLOCKED`, or `USER_DECISION_REQUIRED`.
-Only useful non-duplicated engineering work may be repaired and merged, in
-dependency order, after its exact head passes all applicable acceptance gates.
+No private-runtime or Google Drive write is authorized. Tests may use generated
+fixtures under temporary directories only. The repository may contain schemas,
+code, generated fixtures, and sanitized aggregate conclusions, never physical
+private paths, folder/file identifiers, HMAC keys, connector locators, raw
+private evidence, or licensed bytes.
 
-`MERGE_ALLOWED` remains `NO` during implementation and review. The separately
-recorded conditional authority in `KU-BO-MOBILE-CODEX-D01` may be exercised only
-at a proven merge boundary. It does not authorize force-push, history rewrite,
-deletion, gate weakening, secret exposure, private/licensed-data publication,
-paid access, scheduler activation, training on unadmitted data, financial
-recommendations, or trading.
+`KU-BO-CHK-D01` is OPEN. A real checkpoint remains blocked until the owner
+explicitly approves its exact logical root and operations and a separately
+authenticated runtime grant, physical durable store, admitted universe, adapter
+registry, source authorities, and entitlements exist.
 
-The mobile delegation does not override a narrower open decision. In particular,
-`KU-BO-MIG-001` and its Draft PR remain `USER_DECISION_REQUIRED` and unmerged
-while `KU-BO-MIG-D02` is open and Gate 12 requires `MERGE_NOT_PERFORMED`.
+## Required behavior
 
-After repository consolidation, Codex CLI must create the next bounded task from
-the exact merged `main` and continue the security-by-security sequence. It must
-finish all terminal source receipts and one security seal before starting the
-next security, persist resumable checkpoints outside Git, and store real/private
-artifacts only under the authorized logical `AI Rebuild/04_Curated_Core/KU_BO`
-runtime boundary. The current Day-One task does not authorize private-runtime or
-Drive writes: the later task must record explicit write authority before creating
-any such checkpoint or artifact.
-
-## Required sequence
-
-1. Record UTC/Kuwait timestamps, host/tool/resource/network checks, GitHub
-   authentication, repository state, pre-existing CI failures, and rollback
-   checkpoints.
-2. Audit `ku-bo` and its public refs. Audit `PRIVATE_PREDECESSOR_SOURCE`, the
-   Saudi target, or other private/archived repositories only if a later
-   `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`; then follow its
-   migration plan, validator, exact-source handling, and narrower decisions.
-3. Keep private source locators, credentials, raw evidence, licensed bytes,
-   and Google Drive identifiers outside this public repository.
-4. Repair the task/branch control mismatch and retain every fail-closed claim
-   boundary.
-5. Run a deterministic synthetic dry-run and the applicable test, schema,
-   provenance, leakage, duplicate, missing-data, corporate-action, workflow,
-   source-failure, and secret checks.
-6. Prepare gated sequential GitHub Actions without activating schedules until
-   required secrets, variables, calendars, and dry-run gates are verified.
-7. Apply the owner-directed collection correction: make `security_code` the
-   outer unit of work, allow only one active security, exhaust the frozen
-   per-security source denominator, seal it, and only then start the next
-   security. Include an authority-bound official company website source for
-   every security and enumerate licensed, secondary, news, community, and
-   search-routing sources without promoting any of them to live status.
+1. Reopen the exact sequential plan and issuer-universe binding.
+2. Reject any execution selection other than exactly one numeric security.
+3. Freeze exactly 29 ordered sources in seven waves and begin only the next
+   expected source ordinal.
+4. Persist every mutation through generation, revision, fencing token, owner,
+   and prior-checkpoint-digest compare-and-swap.
+5. Resume only a preempted/incomplete generated fixture, increment generation,
+   and preserve every terminal source receipt immutably.
+6. Continue after source-local blocks until all 29 terminal receipts exist.
+7. Reopen each retained generated manifest and every referenced raw fixture
+   before counting it.
+8. Build reconciliation only after all 29 receipts and all seven waves reconcile.
+9. Create an HMAC-SHA256 terminal seal from test-only injected key bytes and
+   reopen the full generated bundle before validation.
+10. Reject any second security until the prior terminal seal authenticates.
 
 ## Acceptance gates
 
-1. The dated workout contains the contract-required files and truthful status.
-2. Every adopted capability is locked to repository, branch, PR, and exact
-   source SHA in runtime evidence and summarized without secrets.
-3. `git diff` is reviewed and contains no unintended files or credentials.
-4. Baseline and candidate tests are recorded; no gate is weakened.
-5. The dry-run produces a valid, replayable receipt and preserves failures.
-6. Exact-head CI is green on the candidate SHA before any merge consideration.
-7. Privacy, licensing, robots/access, temporal, provenance, and claim-boundary
-   checks pass.
-8. Rollback, status, handoff, and next-action records are current.
-9. The security-sequential contract rejects group-level processing, partial
-   universes, source substitution, unresolved source receipts, and starting a
-   second security before the first security seal. It records the official
-   company-site gap explicitly when no signed runtime authority binding exists.
+1. The separate v2 contract leaves priority checkpoint v1 and issuer sequential
+   run v1 byte-compatible.
+2. Exactly one numeric `security_code`, 29 sources, seven waves, and one active
+   source are enforced.
+3. Crash/resume preserves terminal work and rejects stale generation, fence,
+   owner, revision, and prior digest.
+4. Skipped, duplicate, reordered, substituted, cross-security, and wrong-wave
+   receipts fail closed.
+5. Traversal, symlink, hard-link, root-swap, manifest mutation, raw mutation,
+   unlisted bytes, and overwrite attempts fail closed.
+6. Reconciliation at 28 receipts, early sealing, altered reconciliation,
+   missing/wrong HMAC key, and post-seal mutation fail closed.
+7. A generated one-security fixture reaches one terminal seal with exactly 29
+   terminal receipts across seven waves and reopens successfully.
+8. Smoke, full unit/adversarial, control, bootstrap, configuration, schema,
+   diff, installed-wheel, and Secret Guard gates pass.
+9. A Draft PR is opened and exact-head CI is green. Do not merge this task.
 
 ## Safety and non-claims
 
-- This remains a research and analysis system; it does not place orders or
-  move money.
-- No live source is promoted merely because it is catalogued or reachable.
-- Synthetic fixtures prove software behavior only, not prediction quality,
-  accuracy, full-market coverage, training completion, or live readiness.
-- An `EXACT` input universe proves exact agreement with its own expected codes;
-  it does not by itself prove that every Boursa Kuwait security is present.
-- The security-sequential coordinator accepts a separately admitted adapter;
-  this task does not authorize live source access, licensed bytes, or Drive
-  publication merely because the scheduling contract exists.
-- Do not bypass login, CAPTCHA, paywalls, robots controls, rate limits, or
-  licensing restrictions.
-- Do not merge, force-push, delete, expose secrets, or weaken gates while this
-  control surface says `MERGE_ALLOWED: NO`; the separate user decision permits
-  only a conditional merge after all contract gates pass.
+- Do not merge, force-push, delete, overwrite, weaken gates, expose secrets,
+  bypass access controls, activate paid/licensed access, or perform financial
+  execution.
+- A generated sealed fixture proves checkpoint software only, not durable
+  production operation, live access, real evidence, full-market coverage,
+  forecast accuracy, probability, recommendation quality, or execution readiness.
+- PR #21 remains `USER_DECISION_REQUIRED` and unmerged while
+  `KU-BO-MIG-D02` is open.
+- Record the missing private-runtime write authority as a genuine blocker; do
+  not infer it from silence or this software task.
 
-Write the final result using `docs/codex/HANDOFF_TEMPLATE.md` and record the
-exact candidate SHA, CI, receipts, unresolved blockers, and status.
+Use `docs/codex/HANDOFF_TEMPLATE.md` and
+`docs/codex/USER_DECISIONS.md`. Do not merge.

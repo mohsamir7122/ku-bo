@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-checkpoint-v2.schema.json",
+  "title": "KU-BO immutable one-security checkpoint v2 state snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "checkpoint_id",
+    "run_id",
+    "market",
+    "issuer_id",
+    "security_code",
+    "selected_queue_ordinal",
+    "plan_id",
+    "plan_sha256",
+    "plan_content_sha256",
+    "issuer_universe_sha256",
+    "universe_content_sha256",
+    "identity_sha256",
+    "source_plan_sha256",
+    "previous_security_terminal_seal_sha256",
+    "expected_source_count",
+    "expected_wave_count",
+    "status",
+    "event_type",
+    "generation",
+    "revision",
+    "owner_run_id",
+    "fencing_token",
+    "prior_checkpoint_digest",
+    "next_source_ordinal",
+    "active_source_ordinal",
+    "terminal_receipt_count",
+    "terminal_receipt_sha256s",
+    "reconciliation_sha256",
+    "terminal_seal_sha256",
+    "created_at",
+    "updated_at",
+    "claim_boundaries",
+    "checkpoint_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-checkpoint-v2"},
+    "checkpoint_id": {"$ref": "#/$defs/identifier"},
+    "run_id": {"$ref": "#/$defs/identifier"},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "issuer_id": {"$ref": "#/$defs/identifier"},
+    "security_code": {"$ref": "#/$defs/securityCode"},
+    "selected_queue_ordinal": {"type": "integer", "minimum": 1},
+    "plan_id": {"$ref": "#/$defs/identifier"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "plan_content_sha256": {"$ref": "#/$defs/sha256"},
+    "issuer_universe_sha256": {"$ref": "#/$defs/sha256"},
+    "universe_content_sha256": {"$ref": "#/$defs/sha256"},
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "source_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "previous_security_terminal_seal_sha256": {"$ref": "#/$defs/nullableSha256"},
+    "expected_source_count": {"const": 29},
+    "expected_wave_count": {"const": 7},
+    "status": {"enum": ["RUNNING", "PREEMPTED", "RECONCILED", "SEALED"]},
+    "event_type": {
+      "enum": [
+        "CREATED",
+        "SOURCE_STARTED",
+        "SOURCE_TERMINAL",
+        "PREEMPTED",
+        "RESUMED",
+        "RECONCILED",
+        "SEALED"
+      ]
+    },
+    "generation": {"type": "integer", "minimum": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "owner_run_id": {"$ref": "#/$defs/identifier"},
+    "fencing_token": {"$ref": "#/$defs/sha256"},
+    "prior_checkpoint_digest": {"$ref": "#/$defs/sha256"},
+    "next_source_ordinal": {"type": "integer", "minimum": 1, "maximum": 30},
+    "active_source_ordinal": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "integer", "minimum": 1, "maximum": 29}
+      ]
+    },
+    "terminal_receipt_count": {"type": "integer", "minimum": 0, "maximum": 29},
+    "terminal_receipt_sha256s": {
+      "type": "array",
+      "maxItems": 29,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "reconciliation_sha256": {"$ref": "#/$defs/nullableSha256"},
+    "terminal_seal_sha256": {"$ref": "#/$defs/nullableSha256"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "claim_boundaries": {"$ref": "#/$defs/claimBoundaries"},
+    "checkpoint_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"selected_queue_ordinal": {"const": 1}},
+        "required": ["selected_queue_ordinal"]
+      },
+      "then": {
+        "properties": {"previous_security_terminal_seal_sha256": {"type": "null"}}
+      },
+      "else": {
+        "properties": {
+          "previous_security_terminal_seal_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"not": {"const": "RUNNING"}}},
+        "required": ["status"]
+      },
+      "then": {"properties": {"active_source_ordinal": {"type": "null"}}}
+    },
+    {
+      "if": {
+        "properties": {"status": {"enum": ["RECONCILED", "SEALED"]}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "next_source_ordinal": {"const": 30},
+          "terminal_receipt_count": {"const": 29},
+          "terminal_receipt_sha256s": {"minItems": 29, "maxItems": 29},
+          "reconciliation_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      },
+      "else": {"properties": {"reconciliation_sha256": {"type": "null"}}}
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "SEALED"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "event_type": {"const": "SEALED"},
+          "terminal_seal_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      },
+      "else": {"properties": {"terminal_seal_sha256": {"type": "null"}}}
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "SEALED"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "status": {"const": "SEALED"},
+          "terminal_seal_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "CREATED"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "status": {"const": "RUNNING"},
+          "generation": {"const": 1},
+          "revision": {"const": 1},
+          "prior_checkpoint_digest": {"const": "0000000000000000000000000000000000000000000000000000000000000000"},
+          "next_source_ordinal": {"const": 1},
+          "active_source_ordinal": {"type": "null"},
+          "terminal_receipt_count": {"const": 0},
+          "terminal_receipt_sha256s": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "PREEMPTED"}},
+        "required": ["event_type"]
+      },
+      "then": {"properties": {"status": {"const": "PREEMPTED"}}}
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "RECONCILED"}},
+        "required": ["event_type"]
+      },
+      "then": {"properties": {"status": {"const": "RECONCILED"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["SOURCE_STARTED", "SOURCE_TERMINAL", "RESUMED"]
+          }
+        },
+        "required": ["event_type"]
+      },
+      "then": {"properties": {"status": {"const": "RUNNING"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}$"
+    },
+    "securityCode": {"type": "string", "pattern": "^[0-9]{1,12}$"},
+    "claimBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generated_fixture_is_real_market_evidence",
+        "checkpoint_structure_proves_production_durability",
+        "terminal_receipts_prove_live_source_access",
+        "terminal_receipts_prove_source_rights",
+        "terminal_seal_proves_market_completeness",
+        "sealed_fixture_unlocks_training_or_backtest",
+        "sealed_fixture_proves_forecast_or_recommendation_quality",
+        "sealed_fixture_authorizes_financial_execution"
+      ],
+      "properties": {
+        "generated_fixture_is_real_market_evidence": {"const": false},
+        "checkpoint_structure_proves_production_durability": {"const": false},
+        "terminal_receipts_prove_live_source_access": {"const": false},
+        "terminal_receipts_prove_source_rights": {"const": false},
+        "terminal_seal_proves_market_completeness": {"const": false},
+        "sealed_fixture_unlocks_training_or_backtest": {"const": false},
+        "sealed_fixture_proves_forecast_or_recommendation_quality": {"const": false},
+        "sealed_fixture_authorizes_financial_execution": {"const": false}
+      }
+    }
+  }
+}

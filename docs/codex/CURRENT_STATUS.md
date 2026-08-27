@@ -1,8 +1,48 @@
 # KU-BO Current Codex Status
 
-Status date: 2026-08-27
+Status date: 2026-08-28
 
 Repository: `mohsamir7122/ku-bo`
+
+## Completed checkpoint-v2 implementation (newest status)
+
+```text
+task:                          KU-BO-ONE-SECURITY-CHECKPOINT-V2
+base main:                     8860989f6a2affdc66bc790f639757c9a897f353
+working branch:                codex/one-security-checkpoint-v2
+starting git head:             8514438ab2011dcabfabbe5e0439ac6caf33f276
+validated implementation head: f39e19df76f2fb15f7a7801bf3874fc3e5455a23
+current-branch PR:             Draft #26
+merge:                         prohibited by the current task; not performed
+implementation worktree:       clean / pushed
+evidence classification:       SYNTHETIC_ONLY
+checkpoint-v2 + CLI tests:     PASS — 56/56
+v1/v2 compatibility group:    PASS — 98/98
+full local suite:              PASS — 2,568/2,568
+schema / smoke / Secret Guard: PASS
+installed wheel / CLI:         PASS — sealed 29/7 fixture reopened
+implementation exact-head CI:  PASS — run 33124534059, Python 3.11-3.14
+terminal status-head CI:       PENDING — fresh docs/control head required
+terminal handoff:              COMPLETED
+private-runtime writes:        PROHIBITED — KU-BO-CHK-D01 OPEN
+Issue #27:                     QUEUED / gated on exact-green PR #26 head
+```
+
+The starting PR #26 CI run `33104453671` failed because the task document was
+missing required historical migration-control compatibility fields. Those fields
+have been restored in the working tree. Control, the 2,568-test full suite,
+six checkpoint schemas, Smoke, Secret Guard, wheel build/install, and the
+installed terminal-seal CLI pass locally. Exact implementation head `f39e19d`
+passed GitHub CI run `33124534059` on Python 3.11-3.14. This terminal status
+update requires its own fresh exact-head CI before Issue #27 starts. No live source access, Google Drive write, real market data, training,
+backtest, prediction, recommendation, or financial execution is authorized or
+claimed.
+
+Issue #27 may start only after PR #26 has a terminal handoff, a clean pushed exact
+head, all applicable exact-head GitHub CI green, and no unresolved control
+mismatch. If PR #26 remains an unmerged Draft, its next task branch must be a
+declared stack from that exact green head and must record PR #26 as a dependency.
+PR #26 itself must remain Draft and unmerged.
 
 ## Last validated implementation checkpoint
 

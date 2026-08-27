@@ -73,7 +73,32 @@ USER_DECISION: APPROVED by the active instruction to minimize work in ChatGPT an
 DECIDED_AT: 2026-08-27
 DECIDED_BY: Mohamed Samir Rashed Shaheen
 IMPLEMENTATION_GUARD: This is conditional authority, not blanket merge authority. It never overrides a narrower OPEN/REJECTED/DEFERRED decision or an applicable task-specific no-merge gate. `KU-BO-MIG-001` remains USER_DECISION_REQUIRED and unmerged while `KU-BO-MIG-D02` is OPEN and Gate 12 requires a Draft PR plus MERGE_NOT_PERFORMED. Never merge obsolete, duplicated, failing, unaudited, or incorrectly based work. No force-push, protected-history rewrite, deletion, secret disclosure, credential export, access-control bypass, paid/licensed activation, private-data publication, gate weakening, automatic scheduler activation, unadmitted training, real-money action, or buy/sell recommendation is authorized. Stop and record a blocker when a required entitlement, credential, destructive action, or material policy choice is missing.
-IMPLEMENTED_IN_BRANCH_OR_PR: NOT YET EXERCISED; Codex CLI must bind every future merge to its exact-head gate receipt.
+IMPLEMENTED_IN_BRANCH_OR_PR: Exercised only for PR #25 exact head a9879b5c9a2eb63c553a3ba05035d9a6d05ff7f4; merged to main as 8860989f6a2affdc66bc790f639757c9a897f353; post-merge CI 33102246889 PASS.
+```
+
+## Open one-security checkpoint authority decision
+
+```text
+DECISION_ID: KU-BO-CHK-D01
+STATUS: OPEN
+DATE_RAISED: 2026-08-27
+TARGET: Any private-runtime checkpoint write under logical AI Rebuild/04_Curated_Core/KU_BO
+CATEGORY: PRIVATE_RUNTIME_WRITE; SCOPE; OTHER
+CURRENT_STATE: Day One PR #25 is merged at main 8860989f6a2affdc66bc790f639757c9a897f353 with green post-merge CI. Checkpoint-v2 software may be tested only with generated temporary fixtures; private-runtime and Google Drive writes remain prohibited.
+WHY_A_DECISION_IS_REQUIRED: The previous task explicitly prohibited private-runtime writes and required a later explicit decision before creating any private checkpoint or artifact. The permission reviewer did not accept the current instruction as that authorization.
+OPTIONS:
+1. Explicitly authorize CREATE_EXCLUSIVE, READ_REOPEN, and APPEND_GENERATION for exactly one bound security under the canonical logical private root.
+2. Keep checkpoint work synthetic and prohibit every private-runtime write.
+3. Authorize broad Drive/source writes or overwrites.
+CODEX_RECOMMENDATION: Option 1 only after the owner explicitly approves the exact logical root and three operations; until then enforce Option 2.
+CONSEQUENCE_OF_APPROVAL: A later task may validate a separately authenticated runtime grant and create versioned one-security checkpoint, reconciliation, and terminal-seal artifacts.
+CONSEQUENCE_OF_REJECTION: Software remains testable with generated temporary fixtures, but no real durable checkpoint may be created.
+SAFER_REVERSIBLE_ALTERNATIVE: Complete and test the software contract using temporary generated fixtures while leaving production BLOCKED_CHECKPOINT_STORE.
+USER_DECISION:
+DECIDED_AT:
+DECIDED_BY:
+IMPLEMENTATION_GUARD: No private-runtime or Google Drive write is authorized while this decision is OPEN. No physical private path, folder/file identifier, HMAC key, connector locator, raw private byte, or licensed byte may enter Git. No overwrite, deletion, source access, access-control bypass, entitlement activation, paid action, training, backtest, recommendation, or financial execution.
+IMPLEMENTED_IN_BRANCH_OR_PR: NOT AUTHORIZED
 ```
 
 ## Open decisions
