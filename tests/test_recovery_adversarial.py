@@ -53,6 +53,12 @@ class RecoveryAdversarialTests(unittest.TestCase):
         with self.assertRaisesRegex(RecoveryError, "fingerprint"):
             validate_incident(incident, policy=self.policy)
 
+    def test_forged_idempotency_key_is_rejected(self) -> None:
+        incident = self.incident()
+        incident["idempotency_key"] = "f" * 64
+        with self.assertRaisesRegex(RecoveryError, "idempotency_key"):
+            validate_incident(incident, policy=self.policy)
+
     def test_caller_cannot_override_retriable_policy(self) -> None:
         incident = self.incident("permission_required")
         incident["retriable"] = True
@@ -107,11 +113,11 @@ class RecoveryAdversarialTests(unittest.TestCase):
         self.assertFalse(decision["dispatch_allowed"])
         self.assertTrue(decision["alert_due"])
 
-    def test_attempt_cannot_be_recorded_before_it_is_due(self) -> None:
-        with self.assertRaisesRegex(RecoveryError, "not due"):
-            record_retry_attempt(
-                self.incident(), now=NOW + timedelta(minutes=29), policy=self.policy
-            )
+    def test_caller_cannot_reintroduce_a_retry_wait(self) -> None:
+        incident = self.incident()
+        incident["retry_after"] = "2026-08-27T12:30:00Z"
+        with self.assertRaisesRegex(RecoveryError, "immediately due"):
+            validate_incident(incident, policy=self.policy)
 
     def test_source_fallback_cannot_skip_reorder_or_start_with_secondary(self) -> None:
         invalid_attempts = (

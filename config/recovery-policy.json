@@ -22,12 +22,15 @@
     "terminal_unknown": {"category": "TERMINAL", "automatic_retry": false, "health_probe_only": false, "immediate_alert": true}
   },
   "retry": {
-    "delays_minutes": [30, 60, 120],
-    "max_automatic_attempts": 3,
+    "initial_delay_seconds": 0,
+    "max_automatic_attempts": 2,
     "window_hours": 24,
     "active_run_states": ["queued", "in_progress"],
     "require_relevant_commit_for_deterministic": true,
-    "require_ci_and_smoke_for_fixed_code_resume": true
+    "require_ci_and_smoke_for_fixed_code_resume": true,
+    "rerun_scope": "FAILED_JOBS_ONLY",
+    "watchdog_may_delay_first_attempt": false,
+    "idempotency_scope": "FINGERPRINT_CODE_SHA_RUN_ATTEMPT"
   },
   "lease": {
     "duration_seconds": 900,
@@ -43,12 +46,15 @@
     "direct_email_status": "DIRECT_EMAIL_NOT_CONFIGURED"
   },
   "controller": {
-    "schedule_cron": "7,17,27,37,47,57 * * * *",
+    "schedule_cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
     "dispatch_event": "market-recovery-request",
     "allowed_repository_dispatch_actions": ["retry", "resume", "probe"],
     "pipeline_workflow": "kuwait-market-pipeline.yml",
     "concurrency_group": "kubo-kuwait-market-ai",
-    "may_modify_default_branch": false
+    "may_modify_default_branch": false,
+    "watchdog_mode": "MISSED_EVENTS_ONLY",
+    "missed_event_grace_seconds": 300,
+    "critical_path_wait_seconds": 0
   },
   "robots": {
     "maximum_redirects": 5,

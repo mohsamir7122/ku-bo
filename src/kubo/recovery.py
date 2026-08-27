@@ -66,6 +66,7 @@ _INCIDENT_KEYS = frozenset(
         "schema_version",
         "incident_id",
         "fingerprint",
+        "idempotency_key",
         "fingerprint_basis",
         "market",
         "stage",
@@ -255,12 +256,15 @@ def sanitize_diagnostics(value: Any) -> Any:
 def _expected_policy() -> dict[str, Any]:
     return {
         "retry": {
-            "delays_minutes": [30, 60, 120],
-            "max_automatic_attempts": 3,
+            "initial_delay_seconds": 0,
+            "max_automatic_attempts": 2,
             "window_hours": 24,
             "active_run_states": ["queued", "in_progress"],
             "require_relevant_commit_for_deterministic": True,
             "require_ci_and_smoke_for_fixed_code_resume": True,
+            "rerun_scope": "FAILED_JOBS_ONLY",
+            "watchdog_may_delay_first_attempt": False,
+            "idempotency_scope": "FINGERPRINT_CODE_SHA_RUN_ATTEMPT",
         },
         "lease": {
             "duration_seconds": 900,
@@ -276,12 +280,15 @@ def _expected_policy() -> dict[str, Any]:
             "direct_email_status": "DIRECT_EMAIL_NOT_CONFIGURED",
         },
         "controller": {
-            "schedule_cron": "7,17,27,37,47,57 * * * *",
+            "schedule_cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *",
             "dispatch_event": "market-recovery-request",
             "allowed_repository_dispatch_actions": ["retry", "resume", "probe"],
             "pipeline_workflow": "kuwait-market-pipeline.yml",
             "concurrency_group": "kubo-kuwait-market-ai",
             "may_modify_default_branch": False,
+            "watchdog_mode": "MISSED_EVENTS_ONLY",
+            "missed_event_grace_seconds": 300,
+            "critical_path_wait_seconds": 0,
         },
         "robots": {
             "maximum_redirects": 5,
@@ -427,6 +434,32 @@ def _validated_run_url(value: Any) -> str | None:
     return url
 
 
+def recovery_idempotency_key(
+    *, fingerprint: Any, code_sha: Any, failed_run_id: Any, attempt_count: Any
+) -> str:
+    """Derive the retry identity from validated incident state.
+
+    Callers cannot choose this value: validation recomputes it from the stable
+    failure fingerprint, exact code revision, failed run, and bounded attempt.
+    """
+
+    try:
+        normalized_fingerprint = require_sha256(fingerprint, "fingerprint")
+    except ValueError as exc:
+        raise RecoveryError(str(exc)) from exc
+    normalized_code_sha = _validated_code_sha(code_sha)
+    normalized_run_id = _identifier(failed_run_id, "failed_run_id")
+    if type(attempt_count) is not int or attempt_count < 0:
+        raise RecoveryError("attempt_count must be a non-negative integer")
+    basis = {
+        "fingerprint": normalized_fingerprint,
+        "code_sha": normalized_code_sha,
+        "failed_run_id": normalized_run_id,
+        "attempt_count": attempt_count,
+    }
+    return hashlib.sha256(_canonical_json(basis)).hexdigest()
+
+
 def build_incident(
     project_root: Path | str,
     *,
@@ -454,12 +487,14 @@ def build_incident(
         failure_code=failure_code,
     )
     fingerprint = hashlib.sha256(_canonical_json(basis)).hexdigest()
+    normalized_code_sha = _validated_code_sha(code_sha)
+    normalized_run_id = _identifier(failed_run_id, "failed_run_id")
     classification = policy["classifications"][basis["error_class"]]
     retriable = bool(classification["automatic_retry"])
     if retriable:
         status = "RETRY_SCHEDULED"
         retry_after = _timestamp(
-            observed_at + timedelta(minutes=policy["retry"]["delays_minutes"][0])
+            observed_at + timedelta(seconds=policy["retry"]["initial_delay_seconds"])
         )
     elif classification["health_probe_only"]:
         status = "PROBE_ONLY"
@@ -477,6 +512,12 @@ def build_incident(
         "schema_version": "1.0",
         "incident_id": f"INC-{fingerprint[:20].upper()}",
         "fingerprint": fingerprint,
+        "idempotency_key": recovery_idempotency_key(
+            fingerprint=fingerprint,
+            code_sha=normalized_code_sha,
+            failed_run_id=normalized_run_id,
+            attempt_count=0,
+        ),
         "fingerprint_basis": basis,
         "market": basis["market"],
         "stage": basis["stage"],
@@ -487,8 +528,8 @@ def build_incident(
         "retry_after": retry_after,
         "attempt_count": 0,
         "max_attempts": policy["retry"]["max_automatic_attempts"],
-        "code_sha": _validated_code_sha(code_sha),
-        "failed_run_id": _identifier(failed_run_id, "failed_run_id"),
+        "code_sha": normalized_code_sha,
+        "failed_run_id": normalized_run_id,
         "run_url": _validated_run_url(run_url),
         "checkpoint_id": checkpoint,
         "fallbacks_tried": [
@@ -563,11 +604,27 @@ def validate_incident(
         raise RecoveryError("max_attempts differs from trusted policy")
     if attempts > maximum:
         raise RecoveryError("attempt_count exceeds max_attempts")
+    expected_idempotency_key = recovery_idempotency_key(
+        fingerprint=submitted,
+        code_sha=payload["code_sha"],
+        failed_run_id=payload["failed_run_id"],
+        attempt_count=attempts,
+    )
+    try:
+        submitted_idempotency_key = require_sha256(
+            payload["idempotency_key"], "idempotency_key"
+        )
+    except ValueError as exc:
+        raise RecoveryError(str(exc)) from exc
+    if submitted_idempotency_key != expected_idempotency_key:
+        raise RecoveryError("incident idempotency_key does not match canonical retry state")
     retry_after = payload["retry_after"]
     if retry_after is not None:
         due = _utc(retry_after, "retry_after")
         if due < last_seen:
             raise RecoveryError("retry_after precedes last_seen_at")
+        if retriable and attempts < maximum and due != last_seen:
+            raise RecoveryError("automatic workflow retry must be immediately due")
     if retriable and attempts < maximum and payload["status"] != "RESOLVED" and retry_after is None:
         raise RecoveryError("retriable incident requires retry_after")
     if (not retriable or attempts >= maximum or payload["status"] == "RESOLVED") and retry_after is not None:
@@ -725,12 +782,17 @@ def record_retry_attempt(
         raise RecoveryError("automatic retry window is expired")
     row["attempt_count"] += 1
     row["last_seen_at"] = _timestamp(current)
+    row["idempotency_key"] = recovery_idempotency_key(
+        fingerprint=row["fingerprint"],
+        code_sha=row["code_sha"],
+        failed_run_id=row["failed_run_id"],
+        attempt_count=row["attempt_count"],
+    )
     if row["attempt_count"] >= row["max_attempts"]:
         row["retry_after"] = None
         row["status"] = "EXHAUSTED"
     else:
-        delay = policy["retry"]["delays_minutes"][row["attempt_count"]]
-        row["retry_after"] = _timestamp(current + timedelta(minutes=delay))
+        row["retry_after"] = _timestamp(current)
         row["status"] = "RETRY_SCHEDULED"
     return validate_incident(row, policy=policy)
 

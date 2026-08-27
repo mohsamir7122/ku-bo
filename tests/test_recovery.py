@@ -25,6 +25,7 @@ from kubo.recovery import (
     mark_alert_sent,
     read_recovery_lease,
     record_retry_attempt,
+    recovery_idempotency_key,
     recovery_decision,
     release_recovery_lease,
     sanitize_diagnostics,
@@ -63,7 +64,7 @@ class RecoveryContractTests(unittest.TestCase):
     def test_policy_is_complete_and_fail_closed(self) -> None:
         report = validate_recovery_policy(ROOT)
         self.assertEqual(report["classification_count"], 16)
-        self.assertEqual(report["maximum_automatic_attempts"], 3)
+        self.assertEqual(report["maximum_automatic_attempts"], 2)
         self.assertFalse(report["publish_allowed_while_blocked"])
         self.assertEqual(report["direct_email_status"], "DIRECT_EMAIL_NOT_CONFIGURED")
 
@@ -110,39 +111,36 @@ class RecoveryContractTests(unittest.TestCase):
         self.assertIn("[REDACTED]", encoded)
         self.assertIn("page=2", encoded)
 
-    def test_transient_retry_is_due_only_after_thirty_minutes(self) -> None:
+    def test_transient_retry_is_due_immediately(self) -> None:
         incident = self.incident()
-        before = recovery_decision(
-            incident, now=NOW + timedelta(minutes=29), policy=self.policy
-        )
         due = recovery_decision(
-            incident, now=NOW + timedelta(minutes=30), policy=self.policy
+            incident, now=NOW, policy=self.policy
         )
-        self.assertEqual(before["action"], "WAIT_RETRY_NOT_DUE")
-        self.assertFalse(before["dispatch_allowed"])
         self.assertEqual(due["action"], "DISPATCH_RETRY")
         self.assertTrue(due["dispatch_allowed"])
+        self.assertEqual(incident["retry_after"], incident["last_seen_at"])
 
-    def test_retry_delays_and_maximum_cap_are_enforced(self) -> None:
+    def test_retry_attempt_budget_and_idempotency_are_enforced(self) -> None:
         incident = self.incident()
-        first = record_retry_attempt(
-            incident, now=NOW + timedelta(minutes=30), policy=self.policy
+        self.assertEqual(
+            incident["idempotency_key"],
+            recovery_idempotency_key(
+                fingerprint=incident["fingerprint"],
+                code_sha=incident["code_sha"],
+                failed_run_id=incident["failed_run_id"],
+                attempt_count=0,
+            ),
         )
+        first = record_retry_attempt(incident, now=NOW, policy=self.policy)
         self.assertEqual(first["attempt_count"], 1)
-        self.assertEqual(first["retry_after"], "2026-08-27T13:30:00Z")
-        second = record_retry_attempt(
-            first, now=NOW + timedelta(minutes=90), policy=self.policy
-        )
+        self.assertEqual(first["retry_after"], "2026-08-27T12:00:00Z")
+        self.assertNotEqual(first["idempotency_key"], incident["idempotency_key"])
+        second = record_retry_attempt(first, now=NOW + timedelta(seconds=1), policy=self.policy)
         self.assertEqual(second["attempt_count"], 2)
-        self.assertEqual(second["retry_after"], "2026-08-27T15:30:00Z")
-        third = record_retry_attempt(
-            second, now=NOW + timedelta(minutes=210), policy=self.policy
-        )
-        self.assertEqual(third["attempt_count"], 3)
-        self.assertEqual(third["status"], "EXHAUSTED")
-        self.assertIsNone(third["retry_after"])
+        self.assertEqual(second["status"], "EXHAUSTED")
+        self.assertIsNone(second["retry_after"])
         decision = recovery_decision(
-            third, now=NOW + timedelta(minutes=211), policy=self.policy
+            second, now=NOW + timedelta(seconds=2), policy=self.policy
         )
         self.assertEqual(decision["action"], "RETRY_EXHAUSTED")
         self.assertTrue(decision["alert_due"])
@@ -150,7 +148,7 @@ class RecoveryContractTests(unittest.TestCase):
     def test_active_market_run_suppresses_duplicate_retry(self) -> None:
         decision = recovery_decision(
             self.incident(),
-            now=NOW + timedelta(minutes=30),
+            now=NOW,
             policy=self.policy,
             active_runs=[{"market": "KUWAIT", "status": "in_progress"}],
         )

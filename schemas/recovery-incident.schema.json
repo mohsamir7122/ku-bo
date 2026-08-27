@@ -8,6 +8,7 @@
     "schema_version",
     "incident_id",
     "fingerprint",
+    "idempotency_key",
     "fingerprint_basis",
     "market",
     "stage",
@@ -36,6 +37,7 @@
       "pattern": "^INC-[0-9A-F]{20}$"
     },
     "fingerprint": {"$ref": "#/$defs/sha256"},
+    "idempotency_key": {"$ref": "#/$defs/sha256"},
     "fingerprint_basis": {
       "type": "object",
       "additionalProperties": false,
@@ -60,8 +62,8 @@
         {"type": "string", "format": "date-time"}
       ]
     },
-    "attempt_count": {"type": "integer", "minimum": 0, "maximum": 3},
-    "max_attempts": {"const": 3},
+    "attempt_count": {"type": "integer", "minimum": 0, "maximum": 2},
+    "max_attempts": {"const": 2},
     "code_sha": {
       "type": "string",
       "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$"
