@@ -7,10 +7,14 @@ MEASURED_IMPROVEMENT_PERCENT: NOT_AVAILABLE
 
 Two engineering weaknesses were corrected: the stale task/branch control record,
 and reflection of invalid raw row content in quarantine output. The final full
-suite passes 2,273/2,273 versus the baseline's one control failure, and a new
+Stage 1 passed 2,273/2,273 tests versus the baseline's one control failure, and a new
 negative test proves the quarantine does not reproduce a rejected credential
 marker. Because the test denominator changed and no locked market set exists,
 no percentage improvement is calculated.
+
+Stage 2 adds 34 dossier/identity tests and the expanded suite passes
+2,307/2,307. This is an engineering coverage increase, not a measured model or
+investment-performance improvement.
 
 No model, feature, ranking, or risk improvement has been accepted. A later
 improvement percentage may be reported only when `metrics-before.json` and

@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/issuer-universe.schema.json",
+  "title": "KU-BO effective-dated issuer universe",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_class",
+    "capture_mode",
+    "market",
+    "jurisdiction",
+    "currency",
+    "as_of",
+    "universe_status",
+    "expected_security_codes",
+    "membership_evidence_id",
+    "evidence",
+    "issuers"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-universe-v1"},
+    "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+    "capture_mode": {"enum": ["PROSPECTIVE", "HISTORICAL_POINT_IN_TIME"]},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "jurisdiction": {"const": "KW"},
+    "currency": {"const": "KWD"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "universe_status": {"enum": ["EXACT", "PARTIAL"]},
+    "expected_security_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/securityCode"}
+    },
+    "membership_evidence_id": {"$ref": "#/$defs/identifier"},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "issuers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/issuer"}
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 512},
+    "securityCode": {"type": "string", "pattern": "^[0-9]+$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidenceClass": {
+      "enum": ["SYNTHETIC_FIXTURE", "RECORDED_AUTHORIZED_FIXTURE", "PROVEN_REAL_EVIDENCE"]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "source_id",
+        "publisher",
+        "source_url",
+        "published_at",
+        "event_at",
+        "missing_date_fields",
+        "available_at",
+        "accessed_at",
+        "availability_evidence_status",
+        "raw_sha256",
+        "reconciliation_report_sha256",
+        "fact_status",
+        "source_grade",
+        "evidence_role",
+        "rights_status",
+        "robots_status"
+      ],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/identifier"},
+        "source_id": {"$ref": "#/$defs/identifier"},
+        "publisher": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "published_at": {"type": ["string", "null"], "format": "date-time"},
+        "event_at": {"type": ["string", "null"], "format": "date-time"},
+        "missing_date_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["published_at", "event_at"]}
+        },
+        "available_at": {"type": "string", "format": "date-time"},
+        "accessed_at": {"type": "string", "format": "date-time"},
+        "availability_evidence_status": {
+          "enum": ["CAPTURED_BEFORE_CUTOFF", "VERIFIED_ARCHIVE"]
+        },
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "reconciliation_report_sha256": {"$ref": "#/$defs/sha256"},
+        "fact_status": {"enum": ["confirmed", "unverified", "inferred"]},
+        "source_grade": {"enum": ["A", "B", "C", "D"]},
+        "evidence_role": {
+          "enum": [
+            "EXCHANGE_OFFICIAL",
+            "REGULATOR_OFFICIAL",
+            "CLEARING_OFFICIAL",
+            "ISSUER_PRIMARY",
+            "FINANCIAL_CONTEXT",
+            "NEWS_CONTEXT",
+            "SOCIAL_CONTEXT_LEAD_ONLY",
+            "ROUTING_ONLY"
+          ]
+        },
+        "rights_status": {"enum": ["PERMITTED", "USER_AUTHORIZED"]},
+        "robots_status": {"enum": ["ALLOWED", "NOT_APPLICABLE"]}
+      }
+    },
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer_id",
+        "official_registration_id",
+        "legal_name_ar",
+        "legal_name_en",
+        "security_identities",
+        "evidence_ids",
+        "identity_gaps"
+      ],
+      "properties": {
+        "issuer_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "official_registration_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "legal_name_ar": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "legal_name_en": {"type": "string", "minLength": 1, "maxLength": 65536},
+        "security_identities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/securityIdentity"}
+        },
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "identity_gaps": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/identityGap"}
+        }
+      }
+    },
+    "securityIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "security_code",
+        "ticker",
+        "isin",
+        "board",
+        "market_segment",
+        "currency",
+        "valid_from",
+        "valid_to",
+        "listing_status",
+        "evidence_ids"
+      ],
+      "properties": {
+        "security_code": {"$ref": "#/$defs/securityCode"},
+        "ticker": {"type": "string", "minLength": 1, "maxLength": 64},
+        "isin": {"type": ["string", "null"], "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"},
+        "board": {"const": "cash"},
+        "market_segment": {"type": "string", "minLength": 1, "maxLength": 128},
+        "currency": {"const": "KWD"},
+        "valid_from": {"type": "string", "format": "date"},
+        "valid_to": {"type": ["string", "null"], "format": "date"},
+        "listing_status": {
+          "enum": ["ACTIVE", "LISTED", "TRADING", "SUSPENDED", "HALTED", "DELISTED"]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "identityGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_name", "reason_code", "detail"],
+      "properties": {
+        "field_name": {"const": "official_registration_id"},
+        "reason_code": {"$ref": "#/$defs/gapReason"},
+        "detail": {"type": "string", "minLength": 1, "maxLength": 65536}
+      }
+    },
+    "gapReason": {
+      "enum": [
+        "SOURCE_UNAVAILABLE",
+        "NOT_DISCLOSED",
+        "RIGHTS_BLOCKED",
+        "PARSER_DRIFT",
+        "OUTSIDE_POINT_IN_TIME",
+        "NOT_APPLICABLE",
+        "UNRESOLVED_CONFLICT",
+        "NOT_COLLECTED"
+      ]
+    }
+  }
+}

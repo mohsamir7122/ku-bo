@@ -40,3 +40,8 @@ Stage 1 now provides the canonical source-attempt/observation reconciliation
 boundary and records rights/robots/access outcomes without converting failures
 into data. It has been tested only with synthetic inputs; every real source in
 the table remains unadmitted and uncollected in this run.
+
+Stage 2 binds dossier fields to those reconciled evidence references and requires
+source-quality rows derived from actual field links. Its source URLs are
+`example.test` fixtures only; no listed company website was accessed by this dry
+run.

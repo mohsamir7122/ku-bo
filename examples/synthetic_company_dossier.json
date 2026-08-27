@@ -1,0 +1,157 @@
+{
+  "schema_version": "company-dossier-v1",
+  "evidence_class": "SYNTHETIC_FIXTURE",
+  "capture_mode": "PROSPECTIVE",
+  "as_of": "2026-08-03T13:30:00+03:00",
+  "last_updated_at": "2026-08-03T13:30:00+03:00",
+  "issuer_id": "SYNTHETIC-ISSUER-1",
+  "security_codes": ["999001"],
+  "evidence": [
+    {
+      "evidence_id": "dossier-exchange-evidence",
+      "source_id": "synthetic_exchange_fixture",
+      "publisher": "Synthetic Exchange Fixture",
+      "source_url": "https://example.test/synthetic/exchange-company",
+      "published_at": "2026-08-03T13:00:00+03:00",
+      "event_at": "2026-08-03T12:45:00+03:00",
+      "missing_date_fields": [],
+      "available_at": "2026-08-03T13:05:00+03:00",
+      "accessed_at": "2026-08-03T13:05:00+03:00",
+      "availability_evidence_status": "CAPTURED_BEFORE_CUTOFF",
+      "raw_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "reconciliation_report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "fact_status": "confirmed",
+      "source_grade": "A",
+      "evidence_role": "EXCHANGE_OFFICIAL",
+      "rights_status": "PERMITTED",
+      "robots_status": "ALLOWED"
+    },
+    {
+      "evidence_id": "dossier-issuer-evidence",
+      "source_id": "synthetic_issuer_fixture",
+      "publisher": "Synthetic Issuer Fixture",
+      "source_url": "https://example.test/synthetic/issuer-report",
+      "published_at": "2026-08-03T12:00:00+03:00",
+      "event_at": "2026-08-03T12:00:00+03:00",
+      "missing_date_fields": [],
+      "available_at": "2026-08-03T12:05:00+03:00",
+      "accessed_at": "2026-08-03T12:05:00+03:00",
+      "availability_evidence_status": "CAPTURED_BEFORE_CUTOFF",
+      "raw_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "reconciliation_report_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "fact_status": "confirmed",
+      "source_grade": "A",
+      "evidence_role": "ISSUER_PRIMARY",
+      "rights_status": "PERMITTED",
+      "robots_status": "ALLOWED"
+    }
+  ],
+  "sections": {
+    "basic": {
+      "expected_fields": ["legal_name_ar", "legal_name_en", "listing_status", "official_registration_id"],
+      "critical_fields": ["legal_name_ar", "legal_name_en", "listing_status"],
+      "facts": [
+        {"field_name": "legal_name_ar", "value": "شركة اصطناعية للاختبار فقط", "unit": null, "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "legal_name_en", "value": "Synthetic Test Company", "unit": null, "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "listing_status", "value": "TRADING", "unit": null, "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "official_registration_id", "value": "SYNTHETIC-REGISTRATION-1", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    },
+    "business": {
+      "expected_fields": ["sector", "primary_activity"],
+      "critical_fields": ["sector", "primary_activity"],
+      "facts": [
+        {"field_name": "sector", "value": "Synthetic Services", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "primary_activity", "value": "Fixture-only research services", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    },
+    "financials": {
+      "expected_fields": ["reporting_period", "revenue", "net_profit_loss", "total_assets", "total_equity"],
+      "critical_fields": ["reporting_period"],
+      "facts": [
+        {"field_name": "reporting_period", "value": "2025-FY-SYNTHETIC", "unit": null, "effective_at": "2025-12-31T23:59:59+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "revenue", "value": 1000000, "unit": "KWD", "effective_at": "2025-12-31T23:59:59+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "net_profit_loss", "value": 100000, "unit": "KWD", "effective_at": "2025-12-31T23:59:59+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "total_assets", "value": 5000000, "unit": "KWD", "effective_at": "2025-12-31T23:59:59+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "total_equity", "value": 2500000, "unit": "KWD", "effective_at": "2025-12-31T23:59:59+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    },
+    "market": {
+      "expected_fields": ["reference_price", "reference_price_at", "liquidity", "volatility"],
+      "critical_fields": ["reference_price", "reference_price_at"],
+      "facts": [
+        {"field_name": "reference_price", "value": 100, "unit": "FILS", "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "reference_price_at", "value": "2026-08-03T12:45:00+03:00", "unit": null, "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "liquidity", "value": 500000, "unit": "SHARES", "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null},
+        {"field_name": "volatility", "value": 0.02, "unit": "DECIMAL", "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null}
+      ]
+    },
+    "disclosures": {
+      "expected_fields": ["latest_material_disclosure"],
+      "critical_fields": [],
+      "facts": [
+        {"field_name": "latest_material_disclosure", "value": "Synthetic disclosure; fixture only", "unit": null, "effective_at": "2026-08-03T12:45:00+03:00", "published_at": "2026-08-03T13:00:00+03:00", "available_at": "2026-08-03T13:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-exchange-evidence"], "missing_reason": null}
+      ]
+    },
+    "corporate_actions": {
+      "expected_fields": ["dividend_history", "capital_action_history"],
+      "critical_fields": [],
+      "facts": [
+        {"field_name": "dividend_history", "value": "Synthetic history present", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "capital_action_history", "value": "Synthetic history present", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    },
+    "governance_ownership": {
+      "expected_fields": ["management_coverage", "ownership_coverage"],
+      "critical_fields": [],
+      "facts": [
+        {"field_name": "management_coverage", "value": "Synthetic coverage present", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null},
+        {"field_name": "ownership_coverage", "value": "Synthetic coverage present", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    },
+    "risks": {
+      "expected_fields": ["principal_risks"],
+      "critical_fields": ["principal_risks"],
+      "facts": [
+        {"field_name": "principal_risks", "value": "Synthetic concentration and liquidity risks", "unit": null, "effective_at": "2026-08-03T12:00:00+03:00", "published_at": "2026-08-03T12:00:00+03:00", "available_at": "2026-08-03T12:05:00+03:00", "fact_status": "confirmed", "evidence_ids": ["dossier-issuer-evidence"], "missing_reason": null}
+      ]
+    }
+  },
+  "source_quality": [
+    {
+      "source_id": "synthetic_exchange_fixture",
+      "publisher": "Synthetic Exchange Fixture",
+      "source_url": "https://example.test/synthetic/exchange-company",
+      "source_grade": "A",
+      "rights_status": "PERMITTED",
+      "robots_status": "ALLOWED",
+      "access_status": "AVAILABLE",
+      "expected_fields": ["basic.legal_name_ar", "basic.legal_name_en", "basic.listing_status", "market.reference_price", "market.reference_price_at", "market.liquidity", "market.volatility", "disclosures.latest_material_disclosure"],
+      "resolved_fields": ["basic.legal_name_ar", "basic.legal_name_en", "basic.listing_status", "market.reference_price", "market.reference_price_at", "market.liquidity", "market.volatility", "disclosures.latest_material_disclosure"],
+      "last_checked_at": "2026-08-03T13:30:00+03:00",
+      "limitations": ["Synthetic fixture only"]
+    },
+    {
+      "source_id": "synthetic_issuer_fixture",
+      "publisher": "Synthetic Issuer Fixture",
+      "source_url": "https://example.test/synthetic/issuer-report",
+      "source_grade": "A",
+      "rights_status": "PERMITTED",
+      "robots_status": "ALLOWED",
+      "access_status": "AVAILABLE",
+      "expected_fields": ["basic.official_registration_id", "business.sector", "business.primary_activity", "financials.reporting_period", "financials.revenue", "financials.net_profit_loss", "financials.total_assets", "financials.total_equity", "corporate_actions.dividend_history", "corporate_actions.capital_action_history", "governance_ownership.management_coverage", "governance_ownership.ownership_coverage", "risks.principal_risks"],
+      "resolved_fields": ["basic.official_registration_id", "business.sector", "business.primary_activity", "financials.reporting_period", "financials.revenue", "financials.net_profit_loss", "financials.total_assets", "financials.total_equity", "corporate_actions.dividend_history", "corporate_actions.capital_action_history", "governance_ownership.management_coverage", "governance_ownership.ownership_coverage", "risks.principal_risks"],
+      "last_checked_at": "2026-08-03T13:30:00+03:00",
+      "limitations": ["Synthetic fixture only"]
+    }
+  ],
+  "data_gaps": [],
+  "claim_boundaries": {
+    "real_collection_complete": false,
+    "company_universe_complete": false,
+    "training_permitted": false,
+    "backtest_permitted": false,
+    "recommendation_permitted": false,
+    "financial_execution_permitted": false
+  }
+}

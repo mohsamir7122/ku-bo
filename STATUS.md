@@ -1,12 +1,12 @@
 # KU-BO Master Execution Status
 
-Updated: 2026-08-27T03:51:15Z (2026-08-27T06:51:15+03:00, Asia/Kuwait)
+Updated: 2026-08-27T04:24:26Z (2026-08-27T07:24:26+03:00, Asia/Kuwait)
 
 ```text
 RUN_ID: market-ai-20260827T020635Z-kuwait
 MARKET: Kuwait
 TASK: KU-BO-2026-08-27-DAY1
-STAGE: STAGE_1_SOURCE_EVIDENCE_LIFECYCLE_COMPLETE
+STAGE: STAGE_2_ISSUER_UNIVERSE_AND_DOSSIER_COMPLETE
 BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
 WORK_BRANCH: codex/kuwait-market-ai-day1-v1
 ROLLBACK_BRANCH: checkpoint/pre-market-ai-20260827-kuwait
@@ -67,12 +67,28 @@ STAGE_1_COMMIT: 23895a19f18f87ddb1f61489dd4bcef13fe6e88a
   expected `ABSTAIN / NO-TRADE` result, not live readiness.
 - Stage 1 is preserved in commit
   `23895a19f18f87ddb1f61489dd4bcef13fe6e88a`; it has not been pushed or merged.
+- Implemented Stage 2 effective-dated issuer-universe and company-dossier
+  contracts above the existing identity/history foundation. The validator
+  enforces exact security/issuer denominators, interval/ISIN/ticker collision
+  checks, eight required dossier sections, point-in-time evidence, explicit
+  missing cells and gaps, source-quality reconciliation, and immutable reports.
+- Stage 2 focused tests pass 34/34. The full candidate suite passes
+  2,307/2,307 tests in 565.428 seconds; 145 JSON files, 89 schemas, control,
+  compile, whitespace, and Secret Guard gates pass.
+- The repeated Stage 2 synthetic dry run produced byte-identical reports with
+  status `STRUCTURE_VALID_ONLY`, one explicitly synthetic issuer/security, and
+  21/21 synthetic fields. File SHA-256 is
+  `569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4`;
+  internal report SHA-256 is
+  `8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9`.
+- A fresh wheel/install/CLI smoke passed for the new command. Wheel SHA-256 is
+  `86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9`.
 
 ## Next active stage
 
-- Define the effective-dated Kuwait issuer universe and company dossier contracts
-  before any real collection. Source admission, rights, robots, provenance,
-  missing-data, and point-in-time gates remain mandatory.
+- Build the official-first source-admission ledger and bounded dry probes before
+  any real Kuwait collection. Rights, robots, licensing, provenance, retries,
+  and point-in-time gates remain mandatory.
 
 ## Not started or not yet evidenced
 

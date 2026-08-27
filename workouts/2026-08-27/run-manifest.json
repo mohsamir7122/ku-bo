@@ -51,12 +51,12 @@
     "compileall": "pass"
   },
   "candidate_full_validation": {
-    "recorded_at_utc": "2026-08-27T03:51:15Z",
-    "tests_total": 2273,
-    "tests_passed": 2273,
+    "recorded_at_utc": "2026-08-27T04:24:26Z",
+    "tests_total": 2307,
+    "tests_passed": 2307,
     "tests_failures": 0,
     "tests_errors": 0,
-    "duration_seconds": 490.736
+    "duration_seconds": 565.428
   },
   "stage_1_artifacts": {
     "source_evidence_input_schema": "source-evidence-lifecycle-v1",
@@ -69,6 +69,23 @@
     "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
     "package_install_cli_smoke": "pass",
     "stage_commit_sha": "23895a19f18f87ddb1f61489dd4bcef13fe6e88a"
+  },
+  "stage_2_artifacts": {
+    "issuer_universe_schema": "issuer-universe-v1",
+    "company_dossier_schema": "company-dossier-v1",
+    "validation_report_schema": "company-dossier-validation-report-v1",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "report_status": "STRUCTURE_VALID_ONLY",
+    "synthetic_issuer_count": 1,
+    "synthetic_security_count": 1,
+    "synthetic_expected_field_count": 21,
+    "report_file_sha256": "569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4",
+    "report_internal_sha256": "8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9",
+    "package_install_cli_smoke": "pass",
+    "real_company_count": 0,
+    "stage_commit_sha": null
   },
   "repository_audit": {
     "completed_at_utc": "2026-08-27T02:53:38Z",

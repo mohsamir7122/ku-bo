@@ -1,0 +1,57 @@
+{
+  "schema_version": "issuer-universe-v1",
+  "evidence_class": "SYNTHETIC_FIXTURE",
+  "capture_mode": "PROSPECTIVE",
+  "market": "BOURSA_KUWAIT",
+  "jurisdiction": "KW",
+  "currency": "KWD",
+  "as_of": "2026-08-03T13:30:00+03:00",
+  "universe_status": "EXACT",
+  "expected_security_codes": ["999001"],
+  "membership_evidence_id": "universe-exchange-evidence",
+  "evidence": [
+    {
+      "evidence_id": "universe-exchange-evidence",
+      "source_id": "synthetic_exchange_fixture",
+      "publisher": "Synthetic Exchange Fixture",
+      "source_url": "https://example.test/synthetic/exchange-universe",
+      "published_at": "2026-08-03T13:00:00+03:00",
+      "event_at": "2026-08-03T12:45:00+03:00",
+      "missing_date_fields": [],
+      "available_at": "2026-08-03T13:05:00+03:00",
+      "accessed_at": "2026-08-03T13:05:00+03:00",
+      "availability_evidence_status": "CAPTURED_BEFORE_CUTOFF",
+      "raw_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "reconciliation_report_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "fact_status": "confirmed",
+      "source_grade": "A",
+      "evidence_role": "EXCHANGE_OFFICIAL",
+      "rights_status": "PERMITTED",
+      "robots_status": "ALLOWED"
+    }
+  ],
+  "issuers": [
+    {
+      "issuer_id": "SYNTHETIC-ISSUER-1",
+      "official_registration_id": "SYNTHETIC-REGISTRATION-1",
+      "legal_name_ar": "شركة اصطناعية للاختبار فقط",
+      "legal_name_en": "Synthetic Test Company",
+      "security_identities": [
+        {
+          "security_code": "999001",
+          "ticker": "SYN1",
+          "isin": "KW0EQ9990010",
+          "board": "cash",
+          "market_segment": "Synthetic Segment",
+          "currency": "KWD",
+          "valid_from": "2020-01-01",
+          "valid_to": null,
+          "listing_status": "TRADING",
+          "evidence_ids": ["universe-exchange-evidence"]
+        }
+      ],
+      "evidence_ids": ["universe-exchange-evidence"],
+      "identity_gaps": []
+    }
+  ]
+}

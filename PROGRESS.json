@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "updated_at_utc": "2026-08-27T03:51:15Z",
-  "updated_at_kuwait": "2026-08-27T06:51:15+03:00",
+  "updated_at_utc": "2026-08-27T04:24:26Z",
+  "updated_at_kuwait": "2026-08-27T07:24:26+03:00",
   "run_id": "market-ai-20260827T020635Z-kuwait",
   "market_order": [
     "Kuwait",
@@ -10,7 +10,7 @@
   "active_market": "Kuwait",
   "repository": "mohsamir7122/ku-bo",
   "task_id": "KU-BO-2026-08-27-DAY1",
-  "stage": "STAGE_1_SOURCE_EVIDENCE_LIFECYCLE_COMPLETE",
+  "stage": "STAGE_2_ISSUER_UNIVERSE_AND_DOSSIER_COMPLETE",
   "base_sha": "93e4cab09915a4a4b58455d3cc45eb48be4bd499",
   "work_branch": "codex/kuwait-market-ai-day1-v1",
   "rollback_branch": "checkpoint/pre-market-ai-20260827-kuwait",
@@ -25,6 +25,7 @@
     {"name": "repository_audit", "status": "completed"},
     {"name": "integration_plan", "status": "completed"},
     {"name": "source_evidence_lifecycle", "status": "completed_tested_synthetic"},
+    {"name": "issuer_universe_and_company_dossier", "status": "completed_tested_synthetic"},
     {"name": "kuwait_collection", "status": "not_started"},
     {"name": "event_library", "status": "not_started"},
     {"name": "training_validation", "status": "not_started"},
@@ -57,11 +58,11 @@
   },
   "candidate_full_validation": {
     "command": "PYTHONPATH=src .venv/bin/python -m unittest discover -s tests",
-    "total": 2273,
-    "passed": 2273,
+    "total": 2307,
+    "passed": 2307,
     "failures": 0,
     "errors": 0,
-    "duration_seconds": 490.736
+    "duration_seconds": 565.428
   },
   "source_evidence_lifecycle": {
     "implementation_status": "implemented_tested_synthetic",
@@ -74,6 +75,25 @@
     "wheel_sha256": "18054cfb35c547d78ca137dbf10ea38615ed9aedfb49127f9d46d466ded29cad",
     "real_evidence_validated": false,
     "model_or_backtest_authorized": false
+  },
+  "issuer_universe_and_company_dossier": {
+    "implementation_status": "implemented_tested_synthetic",
+    "universe_schema": "issuer-universe-v1",
+    "dossier_schema": "company-dossier-v1",
+    "report_schema": "company-dossier-validation-report-v1",
+    "focused_tests_total": 34,
+    "focused_tests_passed": 34,
+    "synthetic_report_status": "STRUCTURE_VALID_ONLY",
+    "synthetic_issuer_count": 1,
+    "synthetic_security_count": 1,
+    "synthetic_expected_field_count": 21,
+    "synthetic_report_file_sha256": "569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4",
+    "synthetic_report_internal_sha256": "8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9",
+    "deterministic_repeat_match": true,
+    "wheel_sha256": "86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9",
+    "real_issuer_count": 0,
+    "real_company_dossier_count": 0,
+    "training_or_recommendation_authorized": false
   },
   "repository_audit": {
     "private_runtime_receipt_sha256": "9f23680e65f60d3ffcea1d1c7ad6376aabd367b9cd46b3f68f47c0f4856836e5",

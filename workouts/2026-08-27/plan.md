@@ -1,6 +1,6 @@
 # Day-One Execution Plan
 
-Status: STAGE_1_COMPLETE; STAGE_2_NEXT
+Status: STAGES_1_AND_2_COMPLETE; STAGE_3_NEXT
 
 1. Complete PRE-FLIGHT and record immutable starting SHAs, resources, tools,
    auth state, clean worktrees, Drive structure, baseline tests, and blockers.
@@ -14,13 +14,16 @@ Status: STAGE_1_COMPLETE; STAGE_2_NEXT
    dry work, and pass all applicable local gates. The pass proves plumbing only.
 5. **Completed for Stage 1:** implement the smallest missing Kuwait capability
    without bulk-copying or rewriting history; prepare an isolated commit.
-6. Prepare but do not activate sequential scheduled workflows until secrets,
+6. **Completed and tested synthetically:** add effective-dated issuer-universe
+   and company-dossier contracts with eight required sections, frozen
+   denominators, explicit gaps, source quality, and point-in-time validation.
+7. Prepare but do not activate sequential scheduled workflows until secrets,
    calendars, source admission, and dry-run gates are satisfied.
-7. Define issuer, source, provenance, event, split, blind-test, metrics, and live
+8. Define issuer, source, provenance, event, split, blind-test, metrics, and live
    candidate schemas before admitting real data.
-8. Collect Kuwait first from terms-compliant, authorized sources; report actual
+9. Collect Kuwait first from terms-compliant, authorized sources; report actual
    counts and gaps. Train/evaluate only with point-in-time and locked splits.
-9. Replicate the verified architecture for Saudi only after Kuwait's blind-test
+10. Replicate the verified architecture for Saudi only after Kuwait's blind-test
    and measurement gates pass.
 
 No irreversible action is part of this plan. No order placement, broker access,

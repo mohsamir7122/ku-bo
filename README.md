@@ -151,6 +151,17 @@ PYTHONPATH=src python -m kubo --project-root . reconcile-source-evidence \
   --output /private/runtime/source-evidence-report.json
 ```
 
+ويبني `validate-company-dossier-bundle` فوق هوية الأوراق الحالية مقام الشركات
+وملفاتها اليومية ذات الأقسام الثمانية والفجوات الصريحة وربط Point-in-Time. المثال
+اصطناعي فقط ولا يعدّ شركة مغطاة أوبيانات سوق حقيقية:
+
+```bash
+PYTHONPATH=src python -m kubo --project-root . validate-company-dossier-bundle \
+  --universe examples/synthetic_issuer_universe.json \
+  --dossier examples/synthetic_company_dossier.json \
+  --output /private/runtime/company-dossier-report.json
+```
+
 كما يفحص `validate-portfolio-state` Snapshot المحفظة وسجل الأوامر مقابل بايتات
 دليل خاصة فعلية وSHA-256 ووقت قرار، لكنه لا يتصل بالوسيط ولا يرسل أمرًا ولا
 يحوّل نجاح البنية إلى توصية:
@@ -461,6 +472,7 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `src/kubo/source_access_recipes.py`: مدقق الوصفات، مولد خطة الفحص، وربط إيصال الوصول بالخطة والبصمة.
 - `src/kubo/source_orchestrator.py`: موجات المحاولة وRetry/empty-result handling وسجل المحاولات المترابط.
 - `src/kubo/source_evidence_lifecycle.py`: مصالحة Point-in-Time للمحاولات والحقوق والـrobots والـlineage والمراجعات والتعارضات والنسخ والفجوات مع منع أي ادعاء تشغيلي.
+- `src/kubo/company_dossier.py`: تحقق هوية Issuer effective-dated ومقام ملفات الشركة والأقسام والفجوات وجودة المصدر من دون ملء افتراضي أوادعاء جمع حقيقي.
 - `src/kubo/context_research.py`: Context Events وSecurity Exposure وFactor Snapshot وصفوف المقام.
 - `src/kubo/kuwait_research_pipeline.py`: التحقق من Source Search المحفوظ وربطه بمدخلات Parser الصارمة وإخراج حزمة Context/Exposure/Factor ذرية.
 - `src/kubo/forty_session_replay.py`: تقييم 40 قرارًا/41 جلسة مع Stop gates قبل المقاييس.
@@ -482,6 +494,9 @@ Admission على الحدود الثمانية واختبارات خصومية �
 - `schemas/parsed-research-inputs.schema.json`: عقد الانتقال الصريح من البايتات المتحققة إلى الأحداث والتعرضات ومدخلات العوامل والتصرفات.
 - `schemas/source-evidence-lifecycle.schema.json`: عقد مدخلات دورة حياة الدليل والمقام الصريح.
 - `schemas/source-evidence-reconciliation-report.schema.json`: عقد تقرير المصالحة وحدود الادعاء.
+- `schemas/issuer-universe.schema.json`: عقد مقام Issuer/Security effective-dated للكويت.
+- `schemas/company-dossier.schema.json`: عقد ملف الشركة Point-in-Time بأقسامه الثمانية والفجوات الصريحة.
+- `schemas/company-dossier-validation-report.schema.json`: عقد تقرير تغطية ملفات الشركات وحدود الادعاء.
 - `schemas/`: عقود JSON Schema القابلة للقراءة الآلية.
 - `research/methodology_registry.json`: الأبحاث والقواعد والاختبارات المنهجية.
 - `.github/workflows/ci.yml`: Compile وUnit/Adversarial Tests وSmoke Check وSecret Guard.

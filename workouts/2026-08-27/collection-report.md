@@ -18,3 +18,7 @@ contracts are validated. Missing data will remain explicitly missing.
 The Stage 1 reconciliation dry run used `SYNTHETIC_FIXTURE` only. Its single
 synthetic expected cell and observation are excluded from every company/event
 count above.
+
+The Stage 2 dossier dry run used one explicitly synthetic issuer/security and 21
+synthetic fields. They validate software structure only and are likewise excluded
+from `VERIFIED_COMPANIES`, price-series, disclosure, and action counts.

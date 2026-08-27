@@ -50,10 +50,18 @@ This does not prove source rights, real-market coverage, or predictive quality.
 
 ### Stage 2 — issuer universe and company dossier
 
+Status: **COMPLETED AND TESTED WITH SYNTHETIC EVIDENCE ON THE WORK BRANCH.**
+
 Create effective-dated Kuwait issuer identities and a schema per company for
 business/sector, official links, financials, prices/liquidity/volatility,
 disclosures, actions, management/ownership where lawful, risks, gaps, source
 quality/coverage, and last update. Missing values remain null with reason/status.
+
+Exit evidence: 34/34 focused tests and 2,307/2,307 full repository tests pass.
+The deterministic synthetic report file SHA-256 is
+`569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4`.
+The one issuer/security and 21 fields are synthetic fixtures excluded from every
+real coverage count.
 
 ### Stage 3 — terms-compliant collection and private publication
 

@@ -13,6 +13,10 @@ from . import __version__
 from .capability_parity import validate_predecessor_capability_parity
 from .catalog import Catalog
 from .capture_plan import execute_capture_plan
+from .company_dossier import (
+    validate_company_research_bundle_files,
+    write_company_dossier_report,
+)
 from .foundation_io import prepare_output_root
 from .hashing import canonical_json_bytes, sha256_file
 from .historical_knowledge import HistoricalKnowledgeCatalog, compile_research_plan, parse_as_of
@@ -115,6 +119,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-historical-knowledge",
         "plan-historical-research",
         "reconcile-source-evidence",
+        "validate-company-dossier-bundle",
     }
 )
 
@@ -292,6 +297,13 @@ def parser() -> argparse.ArgumentParser:
     evidence_reconciliation = sub.add_parser("reconcile-source-evidence")
     evidence_reconciliation.add_argument("--input", type=Path, required=True)
     evidence_reconciliation.add_argument("--output", type=Path)
+
+    company_dossier = sub.add_parser("validate-company-dossier-bundle")
+    company_dossier.add_argument("--universe", type=Path, required=True)
+    company_dossier.add_argument(
+        "--dossier", type=Path, action="append", dest="dossiers", required=True
+    )
+    company_dossier.add_argument("--output", type=Path)
 
     replay = sub.add_parser("evaluate-forty-session-replay")
     replay.add_argument("--packet", type=Path, required=True)
@@ -560,6 +572,10 @@ def main(argv: list[str] | None = None) -> int:
         report = reconcile_source_evidence_file(args.input)
         if args.output is not None:
             write_reconciliation_report(args.output, report)
+    elif args.command == "validate-company-dossier-bundle":
+        report = validate_company_research_bundle_files(args.universe, args.dossiers)
+        if args.output is not None:
+            write_company_dossier_report(args.output, report)
     elif args.command == "evaluate-forty-session-replay":
         load_research_workflow(project_root / "config")
         report = evaluate_forty_session_replay(

@@ -76,3 +76,36 @@ Exact-head GitHub CI has not run because the Stage 1 commit has not yet been
 pushed. These results prove local software behavior only, not real source access,
 company coverage, model training, blind-test validity, market readiness, or
 investment performance.
+
+## Stage 2 issuer universe and company dossier
+
+```text
+FOCUSED_COMPANY_DOSSIER_TESTS: PASS — 34/34
+JSON_PARSE: PASS — 145 files
+SCHEMA_METASCHEMA: PASS — 89 schemas
+CONTROL_VALIDATOR: PASS
+SECRET_GUARD: PASS
+COMPILEALL: PASS
+GIT_DIFF_CHECK: PASS
+FULL_COMMAND: PYTHONPATH=src .venv/bin/python -m unittest discover -s tests
+FULL_RESULT: PASS — 2307/2307
+FULL_DURATION_SECONDS: 565.428
+```
+
+Two independent CLI dry runs on the Stage 2 examples were byte-identical:
+
+- status: `STRUCTURE_VALID_ONLY`;
+- evidence class: `SYNTHETIC_FIXTURE`;
+- synthetic denominator: one issuer, one security, 21 expected/resolved fields;
+- report file SHA-256:
+  `569a22be51d9ba52c36f538253d831cfd220017aaa6cd218938d480e20d4d9e4`;
+- internal report SHA-256:
+  `8445a279acb562382795d7be7645f1248549ebcad2e358081975f954c6e4fba9`.
+
+A fresh wheel was built and installed outside the checkout, then the new dossier
+CLI completed successfully. Wheel SHA-256:
+`86851b0f7bf284271b72fd683755e8f2aed1fa64d9eb54e86cf99c18454842f9`.
+
+The fixture company is intentionally fictional and excluded from real coverage.
+Stage 2 does not prove an exact Kuwait issuer universe, source admission, current
+prices, training data, blind-test performance, or readiness for live research.
