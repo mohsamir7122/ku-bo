@@ -11,7 +11,8 @@
 kubo --project-root . validate-source-quality-policy
 kubo --project-root . validate-ku-bo-live-program
 kubo --project-root . validate-factor9-admission \
-  --manifest AUTHORIZED_MANIFEST
+  --manifest AUTHORIZED_MANIFEST \
+  --artifact-root TRUSTED_FACTOR9_ARTIFACT_ROOT
 ```
 
 تشغيل Dry-run فارغ متعمدًا:
@@ -33,6 +34,10 @@ kubo --project-root . run-live-dry-run \
 الـManifest الخاص يلزم ثمانية أدوار Artifact وسبع بوابات وستة عوائق. المقام
 يبقى داخل الـManifest الخاص، والمدقق يفرض أن `Raw = Clean + Excluded` وأن Issue
 flags حقل مستقل لا يمكن استخدامه بدل الصفوف المستبعدة.
+
+لا تكفي hashes المعلنة. يعيد المدقق فتح كل Artifact من الجذر الموثوق، ويرفض
+symlink وpath traversal والملف المفقود، ويعيد حساب الحجم وSHA-256. كذلك لا تمر
+بوابة محلولة إذا كانت أدلتها لا تشير إلى Artifact أعيد فتحه داخل الـManifest.
 
 حتى بعد مرور كل البوابات، الحد الأقصى هو `ADMITTED_RESEARCH_INPUT_ONLY`، مع منع
 التدريب والتوصية والترقية الآلية.

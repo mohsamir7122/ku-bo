@@ -72,7 +72,7 @@
         "transport_status",
         "semantic_status",
         "qualified_row_count",
-        "zero_result_verified",
+        "zero_result_receipt",
         "cited_original_urls",
         "disposition"
       ],
@@ -82,9 +82,58 @@
         "transport_status": {"enum": ["SUCCESS", "HTTP_ERROR", "TIMEOUT", "ACCESS_BLOCKED", "ENTITLEMENT_REQUIRED", "NETWORK_ERROR"]},
         "semantic_status": {"enum": ["ROWS_PRESENT", "ZERO_ROWS", "VERIFIED_ZERO_RESULT", "PARSE_FAILED", "ACCESS_BLOCKED", "NOT_EVALUATED"]},
         "qualified_row_count": {"type": "integer", "minimum": 0},
-        "zero_result_verified": {"type": "boolean"},
+        "zero_result_receipt": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/verifiedZeroReceipt"}
+          ]
+        },
         "cited_original_urls": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "uri"}},
         "disposition": {"enum": ["AVAILABLE_ROWS", "VERIFIED_ZERO_RESULT", "UNVERIFIED_ZERO_RESULT", "SEMANTIC_FAILURE", "SOURCE_ACCESS_TERMINAL"]}
+      }
+    },
+    "verifiedZeroReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_logical_path",
+        "receipt_sha256",
+        "receipt_digest",
+        "raw_artifact_logical_path",
+        "raw_artifact_sha256",
+        "raw_artifact_size_bytes",
+        "canonical_query_sha256",
+        "query_time",
+        "source_id",
+        "strategy_id",
+        "pagination_coverage",
+        "validation_status"
+      ],
+      "properties": {
+        "receipt_logical_path": {"type": "string"},
+        "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "receipt_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "raw_artifact_logical_path": {"type": "string"},
+        "raw_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "raw_artifact_size_bytes": {"type": "integer", "minimum": 1},
+        "canonical_query_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "query_time": {"type": "string", "format": "date-time"},
+        "source_id": {"type": "string"},
+        "strategy_id": {"type": "string"},
+        "pagination_coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requested_pages", "received_pages", "first_page", "last_page", "terminal_page_reached", "next_page_token_present"],
+          "properties": {
+            "requested_pages": {"type": "integer", "minimum": 1},
+            "received_pages": {"type": "integer", "minimum": 1},
+            "first_page": {"const": 1},
+            "last_page": {"type": "integer", "minimum": 1},
+            "terminal_page_reached": {"const": true},
+            "next_page_token_present": {"const": false}
+          }
+        },
+        "validation_status": {"const": "PASS_REOPENED_AND_HASHED"}
       }
     },
     "sourceReceipt": {

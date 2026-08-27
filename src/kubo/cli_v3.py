@@ -347,10 +347,12 @@ def parser() -> argparse.ArgumentParser:
 
     factor9 = sub.add_parser("validate-factor9-admission")
     factor9.add_argument("--manifest", type=Path, required=True)
+    factor9.add_argument("--artifact-root", type=Path, required=True)
     factor9.add_argument("--output", type=Path)
 
     fallback = sub.add_parser("plan-source-fallback")
     fallback.add_argument("--request", type=Path, required=True)
+    fallback.add_argument("--artifact-root", type=Path)
 
     portfolio = sub.add_parser("validate-portfolio-state")
     portfolio.add_argument("--snapshot", type=Path, required=True)
@@ -523,7 +525,9 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "validate-source-fallback-policy":
         report = validate_source_fallback_policy(project_root)
     elif args.command == "plan-source-fallback":
-        report = plan_source_fallback(project_root, args.request)
+        report = plan_source_fallback(
+            project_root, args.request, artifact_root=args.artifact_root
+        )
     elif args.command == "validate-market-scope":
         report = validate_market_scope(project_root)
     elif args.command == "validate-predecessor-capability-parity":
@@ -697,9 +701,11 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "validate-factor9-admission":
         if args.output is None:
-            report = validate_factor9_admission_manifest(args.manifest)
+            report = validate_factor9_admission_manifest(args.manifest, args.artifact_root)
         else:
-            report = write_factor9_admission_report(args.manifest, args.output)
+            report = write_factor9_admission_report(
+                args.manifest, args.artifact_root, args.output
+            )
     elif args.command == "run-live-dry-run":
         validate_market_scope(project_root)
         validate_ku_bo_live_program(project_root)

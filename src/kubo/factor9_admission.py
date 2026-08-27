@@ -13,7 +13,11 @@ import re
 from typing import Any, Mapping
 
 from .codex_live_bootstrap import EXPECTED_FACTOR9
-from .foundation_io import load_strict_json_object, require_real_directory
+from .foundation_io import (
+    load_strict_json_object,
+    require_real_directory,
+    safe_regular_file,
+)
 from .hashing import canonical_json_bytes
 from .strict import parse_aware, require_sha256, safe_relative_path
 
@@ -164,13 +168,18 @@ def _hashes(value: Any, field: str) -> tuple[str, ...]:
     return tuple(result)
 
 
-def _validate_artifacts(rows: Any) -> tuple[list[dict[str, Any]], set[str]]:
+def _validate_artifacts(
+    rows: Any,
+    *,
+    artifact_root: Path,
+) -> tuple[list[dict[str, Any]], set[str], set[str]]:
     if not isinstance(rows, list) or not rows:
         raise Factor9AdmissionError("Factor 9 artifacts must be a non-empty array")
     normalized: list[dict[str, Any]] = []
     seen_paths: set[str] = set()
     by_hash: dict[str, list[str]] = {}
     roles: set[str] = set()
+    reopened_hashes: set[str] = set()
     for index, row in enumerate(rows):
         item = _exact(row, ARTIFACT_KEYS, f"artifacts[{index}]")
         logical_path = item["logical_path"]
@@ -185,6 +194,9 @@ def _validate_artifacts(rows: Any) -> tuple[list[dict[str, Any]], set[str]]:
             raise Factor9AdmissionError(
                 "Factor 9 logical paths must use the private inventory alias"
             )
+        relative_parts = relative.parts[1:]
+        if not relative_parts:
+            raise Factor9AdmissionError("Factor 9 logical path must name an artifact")
         if canonical_path in seen_paths:
             raise Factor9AdmissionError(f"duplicate Factor 9 logical path: {canonical_path}")
         seen_paths.add(canonical_path)
@@ -208,6 +220,27 @@ def _validate_artifacts(rows: Any) -> tuple[list[dict[str, Any]], set[str]]:
             raise Factor9AdmissionError(f"artifacts[{index}].review_status is invalid")
         if item["duplicate_disposition"] not in DUPLICATE_STATES:
             raise Factor9AdmissionError(f"artifacts[{index}].duplicate_disposition is invalid")
+        artifact_path = artifact_root.joinpath(*relative_parts)
+        try:
+            content = safe_regular_file(
+                artifact_path,
+                field=f"Factor 9 artifact {canonical_path}",
+                max_bytes=512 * 1024 * 1024,
+            )
+        except ValueError as exc:
+            raise Factor9AdmissionError(
+                f"cannot reopen Factor 9 artifact from trusted root: {canonical_path}"
+            ) from exc
+        actual_digest = hashlib.sha256(content).hexdigest()
+        if len(content) != size:
+            raise Factor9AdmissionError(
+                f"Factor 9 artifact size mismatch: {canonical_path}"
+            )
+        if actual_digest != digest:
+            raise Factor9AdmissionError(
+                f"Factor 9 artifact hash mismatch: {canonical_path}"
+            )
+        reopened_hashes.add(actual_digest)
         by_hash.setdefault(digest, []).append(str(item["duplicate_disposition"]))
         normalized.append({**item, "logical_path": canonical_path, "sha256": digest})
 
@@ -216,7 +249,7 @@ def _validate_artifacts(rows: Any) -> tuple[list[dict[str, Any]], set[str]]:
             raise Factor9AdmissionError(
                 f"duplicate hash {digest} needs one canonical candidate and quarantined copies"
             )
-    return normalized, roles
+    return normalized, roles, reopened_hashes
 
 
 def _validate_counts(value: Any) -> dict[str, int]:
@@ -267,10 +300,19 @@ def _validate_state_rows(
     return normalized
 
 
-def validate_factor9_admission_manifest(path: Path | str) -> dict[str, Any]:
+def validate_factor9_admission_manifest(
+    path: Path | str,
+    artifact_root: Path | str,
+) -> dict[str, Any]:
     """Validate one private manifest and return an admission decision."""
 
     manifest_path = Path(path)
+    try:
+        trusted_artifact_root = require_real_directory(
+            Path(artifact_root), field="Factor 9 trusted artifact root"
+        )
+    except ValueError as exc:
+        raise Factor9AdmissionError(str(exc)) from exc
     payload, manifest_content = _load(manifest_path)
     if _private_locator_leak(payload):
         raise Factor9AdmissionError("private Drive or connector locator leaked into the manifest")
@@ -293,7 +335,9 @@ def validate_factor9_admission_manifest(path: Path | str) -> dict[str, Any]:
     if payload["claim_boundaries"] != CLAIM_BOUNDARIES:
         raise Factor9AdmissionError("Factor 9 claim boundaries were weakened")
 
-    artifacts, artifact_roles = _validate_artifacts(payload["artifacts"])
+    artifacts, artifact_roles, reopened_hashes = _validate_artifacts(
+        payload["artifacts"], artifact_root=trusted_artifact_root
+    )
     gates = _validate_state_rows(
         payload["gates"],
         expected_ids=EXPECTED_GATES,
@@ -310,6 +354,13 @@ def validate_factor9_admission_manifest(path: Path | str) -> dict[str, Any]:
         allowed_states=BLOCKER_STATES,
         field="blockers",
     )
+    for collection_name, rows in (("gates", gates), ("blockers", blockers)):
+        for row in rows:
+            missing_evidence = sorted(set(row["evidence_sha256"]) - reopened_hashes)
+            if row["status"] in {"PASS", "RESOLVED"} and missing_evidence:
+                raise Factor9AdmissionError(
+                    f"{collection_name} evidence is not a reopened manifest artifact"
+                )
     missing_roles = sorted(EXPECTED_ARTIFACT_ROLES - artifact_roles)
     artifact_blocked = any(
         row["rights_status"] not in {"AUTHORIZED", "LICENSED"}
@@ -330,6 +381,8 @@ def validate_factor9_admission_manifest(path: Path | str) -> dict[str, Any]:
         "manifest_sha256": hashlib.sha256(manifest_content).hexdigest(),
         "counts": counts,
         "artifact_count": len(artifacts),
+        "reopened_artifact_count": len(artifacts),
+        "artifact_integrity_status": "PASS_REOPENED_AND_HASHED",
         "missing_artifact_roles": missing_roles,
         "pending_gates": pending_gates,
         "open_blockers": open_blockers,
@@ -342,11 +395,12 @@ def validate_factor9_admission_manifest(path: Path | str) -> dict[str, Any]:
 
 def write_factor9_admission_report(
     manifest_path: Path | str,
+    artifact_root: Path | str,
     output_path: Path | str,
 ) -> dict[str, Any]:
     """Write a sanitized, no-overwrite admission report."""
 
-    report = validate_factor9_admission_manifest(manifest_path)
+    report = validate_factor9_admission_manifest(manifest_path, artifact_root)
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     try:

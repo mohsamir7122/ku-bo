@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/verified-zero-result-receipt.schema.json",
+  "title": "KU-BO verified zero-result receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "canonical_query",
+    "query_time",
+    "pagination_coverage",
+    "source_id",
+    "strategy_id",
+    "raw_artifact",
+    "qualified_row_count",
+    "receipt_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "receipt_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "canonical_query": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "query_time": {"type": "string", "format": "date-time"},
+    "pagination_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_pages",
+        "received_pages",
+        "first_page",
+        "last_page",
+        "terminal_page_reached",
+        "next_page_token_present"
+      ],
+      "properties": {
+        "requested_pages": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "received_pages": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "first_page": {"const": 1},
+        "last_page": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "terminal_page_reached": {"const": true},
+        "next_page_token_present": {"const": false}
+      }
+    },
+    "source_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+    "strategy_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+    "raw_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_path", "sha256", "size_bytes"],
+      "properties": {
+        "logical_path": {"type": "string", "minLength": 1, "maxLength": 512},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "qualified_row_count": {"const": 0},
+    "receipt_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
