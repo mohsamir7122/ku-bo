@@ -36,6 +36,7 @@ class ExitStatusTests(unittest.TestCase):
             "CAPABILITY_EVIDENCE_AVAILABLE",
             "CAPABILITY_VERIFIED_ZERO_RESULT",
             "DRY_RUN_COMPLETE_NO_RECOMMENDATION",
+            "NO_PENDING_ACTIONS",
         ):
             with self.subTest(status=status):
                 self.assertFalse(is_blocking_status(status))
