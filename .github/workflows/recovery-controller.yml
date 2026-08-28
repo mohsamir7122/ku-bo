@@ -7,9 +7,8 @@ on:
       - CI
     types:
       - completed
-  schedule:
-    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
-    - cron: "13,43 * * * *"
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       incident_id:
@@ -102,7 +101,7 @@ jobs:
           fi
       - name: Upload sanitized controller diagnostics and state
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-state-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/

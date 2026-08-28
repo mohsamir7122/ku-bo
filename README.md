@@ -100,11 +100,17 @@ research_run/
 
 يتطلب Python 3.11 أو أحدث. تعتمد النواة على حزمة `tzdata` المثبتة تلقائيًا مع المشروع لضمان توفر قاعدة مناطق IANA و`Asia/Kuwait` حتى على Windows أوContainer مصغرة بلا System tzdb.
 
+لإعداد Checkout للتطوير وتشغيل الاختبارات كاملة، ثبّت حزمة الاختبار المعلنة بدل الاكتفاء باعتماديات Runtime:
+
 ```bash
-python3 -m pip install -e .
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e ".[test]"
 kubo validate-source-network
 kubo validate-live-probe --probe /absolute/path/to/fresh_access_probe.json
 ```
+
+أما التثبيت `python3 -m pip install -e .` فهو مناسب لتشغيل Runtime فقط، ولا يجهز `jsonschema` و`PyYAML` اللازمين لبوابات الاختبار المحلية.
 
 واجهة `kubo` تعتمد على ملفات العقود داخل Checkout المشروع. عند تثبيت Wheel وتشغيل الأمر من خارجه، مرر جذر المستودع قبل اسم الأمر:
 

@@ -1,15 +1,6 @@
 name: Kuwait Market Pipeline
 
 on:
-  schedule:
-    - cron: "0 12 * * *"
-    - cron: "0 1 * * 0-4"
-    - cron: "0 4 * * 0-4"
-    - cron: "0 6 * * 0-4"
-    - cron: "0 8 * * 0-4"
-    - cron: "0 9 * * 0-4"
-    - cron: "0 10 * * 0-4"
-    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -23,6 +14,10 @@ on:
           - resume
       incident_id:
         description: Required for retry or resume
+        required: false
+        type: string
+      incident_key:
+        description: Exact recovery incident state key for retry or resume
         required: false
         type: string
       checkpoint:
@@ -59,7 +54,9 @@ env:
 
 jobs:
   backfill_gate:
-    if: ${{ github.event_name == 'schedule' && github.event.schedule == '23 */2 * * *' }}
+    # The production backfill remains visible for review but unreachable while
+    # the repository contract says implementation_ready=false.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -70,6 +67,8 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Install pinned workflow-validator dependency
+        run: python -m pip install --disable-pip-version-check PyYAML==6.0.3
       - name: Resolve scheduled and actual background timestamps
         id: timing
         env:
@@ -156,7 +155,7 @@ jobs:
           echo "No source request, training, forecast, or publication is authorized by this gate." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload sanitized backfill diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-diagnostics-backfill-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/
@@ -169,13 +168,13 @@ jobs:
         run: exit "$BACKFILL_EXIT_CODE"
 
   gate:
-    if: ${{ github.event_name != 'schedule' || github.event.schedule != '23 */2 * * *' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       status: ${{ steps.resolve.outputs.status || 'PASS_HEALTH_PROBE' }}
       slot_id: ${{ steps.normalize.outputs.slot_id }}
       incident_id: ${{ steps.normalize.outputs.incident_id }}
+      incident_key: ${{ steps.normalize.outputs.incident_key }}
       checkpoint: ${{ steps.normalize.outputs.checkpoint }}
       probe_only: ${{ steps.normalize.outputs.probe_only }}
       run_collection: ${{ steps.resolve.outputs.run_collection || 'false' }}
@@ -189,6 +188,8 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Install pinned workflow-validator dependency
+        run: python -m pip install --disable-pip-version-check PyYAML==6.0.3
       - name: Normalize and allowlist the trigger
         id: normalize
         continue-on-error: true
@@ -327,7 +328,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload sanitized gate diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-diagnostics-gate-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/
@@ -367,7 +368,7 @@ jobs:
             --output runtime/recovery-incident.json
       - name: Upload sanitized collection diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-diagnostics-collection-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/
@@ -405,7 +406,7 @@ jobs:
           echo "Validation cannot run without hash-bound admitted collection artifacts."
       - name: Upload sanitized validation diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-diagnostics-validation-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/
@@ -445,7 +446,7 @@ jobs:
           echo "Live scoring remains blocked until canonical validators and point-in-time evidence pass."
       - name: Upload sanitized live-scoring diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-diagnostics-live-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/
@@ -457,25 +458,77 @@ jobs:
 
   recovery_success:
     needs: [gate, collection, validation, live_scoring]
-    if: ${{ always() && needs.gate.result == 'success' && needs.gate.outputs.probe_only != 'true' && needs.gate.outputs.incident_id != '' && needs.validation.result == 'success' && (needs.live_scoring.result == 'success' || needs.live_scoring.result == 'skipped') }}
+    if: ${{ always() && needs.gate.result == 'success' && needs.gate.outputs.probe_only != 'true' && needs.validation.result == 'success' && (needs.live_scoring.result == 'success' || needs.live_scoring.result == 'skipped') && ((needs.gate.outputs.incident_id != '' && needs.gate.outputs.incident_key != '') || github.run_attempt > 1) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Resolve exact incident state for a successful rerun
+        id: success_context
+        env:
+          DIRECT_INCIDENT_ID: ${{ needs.gate.outputs.incident_id }}
+          DIRECT_INCIDENT_KEY: ${{ needs.gate.outputs.incident_key }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          CODE_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          if [[ -n "$DIRECT_INCIDENT_ID" && -n "$DIRECT_INCIDENT_KEY" ]]; then
+            python - "$DIRECT_INCIDENT_ID" "$DIRECT_INCIDENT_KEY" "$GITHUB_OUTPUT" <<'PY'
+          import re
+          import sys
+
+          incident_id, incident_key, output_path = sys.argv[1:]
+          if re.fullmatch(r"INC-[0-9A-F]{20}", incident_id) is None:
+              raise SystemExit("direct incident id is invalid")
+          if re.fullmatch(r"[0-9a-f]{64}", incident_key) is None:
+              raise SystemExit("direct incident key is invalid")
+          with open(output_path, "a", encoding="utf-8") as handle:
+              handle.write(f"incident_id={incident_id}\n")
+              handle.write(f"incident_key={incident_key}\n")
+          PY
+          else
+            python scripts/recovery_controller.py --project-root . \
+              resolve-rerun-success-context \
+              --repository "$REPOSITORY" \
+              --run-id "$RUN_ID" \
+              --run-attempt "$RUN_ATTEMPT" \
+              --code-sha "$CODE_SHA" \
+              --output runtime/recovery-success-context.json \
+              --github-output "$GITHUB_OUTPUT"
+          fi
       - name: Create hash-bound recovery success receipt
         env:
-          INCIDENT_ID: ${{ needs.gate.outputs.incident_id }}
+          INCIDENT_ID: ${{ steps.success_context.outputs.incident_id }}
+          INCIDENT_KEY: ${{ steps.success_context.outputs.incident_key }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CODE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           mkdir -p runtime
           python scripts/recovery_controller.py --project-root . create-success-receipt \
-            --incident-id "$INCIDENT_ID" --run-url "$RUN_URL" --code-sha "$CODE_SHA" \
+            --incident-id "$INCIDENT_ID" --incident-key "$INCIDENT_KEY" \
+            --repository "$REPOSITORY" \
+            --workflow-path .github/workflows/kuwait-market-pipeline.yml \
+            --run-id "$RUN_ID" --run-attempt "$RUN_ATTEMPT" \
+            --run-url "$RUN_URL" --code-sha "$CODE_SHA" \
             --output runtime/recovery-success.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-success-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/recovery-success.json
@@ -488,8 +541,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Enforce no-trade on every blocked or failed gate
-        if: ${{ needs.gate.result != 'success' || needs.collection.result == 'failure' || needs.validation.result == 'failure' || needs.live_scoring.result == 'failure' }}
+      - name: Enforce no-trade for every pipeline outcome
         run: |
           echo "NO-TRADE"
           echo "No research candidate or actionable candidate may be published from this run."

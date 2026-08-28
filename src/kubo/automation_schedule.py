@@ -15,7 +15,9 @@ from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
 from .foundation_io import load_strict_json_object, safe_regular_file
+from .hashing import canonical_json_bytes
 from .strict import https_url, parse_aware, parse_iso_date
+from .workflow_yaml import WorkflowYamlError, load_workflow_yaml
 
 
 SCHEDULE_CONFIG = Path("config/kuwait_automation_schedule.json")
@@ -134,6 +136,62 @@ EXPECTED_SLOTS = [
     },
 ]
 
+_AUTOMATION_ACTION_ALLOWLIST = frozenset(
+    {
+        "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+    }
+)
+_AUTOMATION_JOB_SKELETON_SHA256 = {
+    "backfill_gate": "4d0188b7e9a6824e9dec8bfc3cb6ec2d76d9ded214efa50bb63b65531e22e0a4",
+    "gate": "e3961e554c3c590c5eeff5e5e0cfe72f4816a277f407571d7923a607c0a94eeb",
+    "collection": "39cc6108691250854fccbc0efb4dca4fb4dd2b1c11ba80e7d80a6442ced7939e",
+    "validation": "c538c53743364637f453fee2616bc532b7a6bef733e55b41a6abeea96c7ae992",
+    "live_scoring": "05b512ce0a65d00ccbdb693773a1aa8875cf74f328bfc639379cb92f1f1c0d80",
+    "recovery_success": "b98886271595277d9ba12306a29f1d22e9e027557c135026e070ad1cd82669a6",
+    "no_trade": "1bdbe81645e8941712a0173e7ec77e655c2a8fb46ca564787105d35db21940fa",
+}
+_AUTOMATION_RUN_SHA256 = {
+    "backfill_gate": (
+        "df846cc295169b3e22f1d661d35a2a580148bc9a1dc5c4748f38e310c96f4cb1",
+        "e5c94afeb8c10e096ab67db869ba1b5974ab57d47fd5c5341821ba383480206c",
+        "6c8c56950e8f3af98ffe5384526d299131896e5225d3531b814140b08852c3c9",
+        "5827fed219508a3b16cfe88265b25930f3c3d2deca07d2f77fb4c1a4743cc193",
+        "177e52c1bda3cf8dede302304ee74618e2a7885d155d48c3463a40d6485de8fb",
+        "3653b319c40bd0140d2f9abccd9e5c46025aca6fcf4fd146508d963755b7e7cd",
+    ),
+    "gate": (
+        "df846cc295169b3e22f1d661d35a2a580148bc9a1dc5c4748f38e310c96f4cb1",
+        "58f3dbcba4b4059206aa72c352c0881b873e6647aff89a0d876392eb599167a5",
+        "bcb46e7dc1fdaf3428ebb2dbd513b84d2fa2761e17009624a36fcc4e326d6142",
+        "a276f61f69ec92949601f07c53e2172e26dd07354127a060b427d6d8600efaf6",
+        "58b205d6755d02751756559efa8406eb4d3b5cfd9010a5e36e835bf5ec8da835",
+        "0c43a83b58ecde31c2d24d217ee11c3d51e3656c364aac677fd2b93a52fad007",
+        "f90cf90505b3b5d627adb9dd6288fbd416d6053203844b235ee8b0f37c73db21",
+        "13249ef966f1ddf3a79cf5f34363ab3e4583ddf85cd003e7bfe3d635a7aaf1ff",
+    ),
+    "collection": (
+        "d379373ea905e179949044c326e337b1769e8301038903a38936eb75b878193d",
+        "caf36839a4dea5e14d2ca7318df3e5419a72d683a222a36cbe55d3cdf9b56b53",
+    ),
+    "validation": (
+        "c4dcccdcd07295bcd0fa644b9eedc578472ae867a4fee20b57cbd31720412744",
+        "5362fb632b157f283b9135804a517da6491d939d8635435911a91f389c9e4aff",
+    ),
+    "live_scoring": (
+        "724ceac183a3191f2ea394de56a4ea6b6b7ebfe9aef4973e4a4b30ce6dc0c5c9",
+        "5362fb632b157f283b9135804a517da6491d939d8635435911a91f389c9e4aff",
+    ),
+    "recovery_success": (
+        "cafa22f5f83c46d9a865eab19d6e0435ce17601bbf2867c167cc587f3284538f",
+        "bb57f05a04288b7f6481d8fc0a362af5126c5fada2e130599d2f1f3ff6a80be0",
+    ),
+    "no_trade": (
+        "77b9b4fa3ff8e3a7c6029b582cfea0bbcce8570348476840726e1011e776147b",
+    ),
+}
+
 _ROOT_KEYS = frozenset(
     {
         "schema_version",
@@ -205,35 +263,210 @@ def _validate_workflow(path: Path) -> str:
         raise AutomationScheduleError(f"cannot read workflow safely: {path}") from exc
     if "\t" in text:
         raise AutomationScheduleError("workflow must not contain tab indentation")
-    crons = re.findall(r'^\s*- cron: "([^"]+)"\s*$', text, flags=re.MULTILINE)
-    expected_crons = [row["cron"] for row in EXPECTED_SLOTS] + [
-        BACKGROUND_BACKFILL_CRON
-    ]
-    if crons != expected_crons:
-        raise AutomationScheduleError("workflow cron order differs from the locked slots")
-    required = (
-        "permissions:\n  contents: read",
-        "group: kubo-kuwait-market-ai",
-        "cancel-in-progress: false",
-        "timeout-minutes: 5",
-        "timeout-minutes: 20",
-        "timeout-minutes: 15",
-        "needs: gate",
-        "needs: collection",
-        "needs: [gate, validation]",
-        "persist-credentials: false",
-        "KUBO_KUWAIT_AUTOMATION_ENABLED",
-        "KUBO_KUWAIT_DATA_ADMISSION_READY",
-        "KUBO_AUTHORIZED_SOURCE_ACCESS",
-        "KUBO_DRIVE_RUNTIME_CONFIG",
-        "github.run_id",
-        "Record unavailable collection adapter",
+    try:
+        workflow = load_workflow_yaml(content, field="Kuwait automation workflow")
+    except WorkflowYamlError as exc:
+        raise AutomationScheduleError("workflow must be valid unique-key YAML") from exc
+
+    root = _exact_keys(
+        workflow,
+        frozenset({"name", "on", "permissions", "concurrency", "env", "jobs"}),
+        "workflow",
     )
-    missing = [marker for marker in required if marker not in text]
-    if missing:
-        raise AutomationScheduleError(f"workflow is missing locked markers: {missing}")
-    if re.search(r"\b(push|pull_request):", text):
-        raise AutomationScheduleError("automation workflow must not push or open pull requests")
+    _exact(root["name"], "Kuwait Market Pipeline", "workflow.name")
+
+    raw_triggers = root["on"]
+    if isinstance(raw_triggers, Mapping) and "schedule" in raw_triggers:
+        raise AutomationScheduleError(
+            "workflow must not activate cron while implementation_ready is false"
+        )
+    triggers = _exact_keys(
+        raw_triggers,
+        frozenset({"workflow_dispatch", "repository_dispatch"}),
+        "workflow triggers",
+    )
+    expected_triggers = {
+        "workflow_dispatch": {
+            "inputs": {
+                "mode": {
+                    "description": "Fail-closed execution mode",
+                    "required": "true",
+                    "default": "normal",
+                    "type": "choice",
+                    "options": ["normal", "retry", "resume"],
+                },
+                "incident_id": {
+                    "description": "Required for retry or resume",
+                    "required": "false",
+                    "type": "string",
+                },
+                "incident_key": {
+                    "description": (
+                        "Exact recovery incident state key for retry or resume"
+                    ),
+                    "required": "false",
+                    "type": "string",
+                },
+                "checkpoint": {
+                    "description": "Optional validated checkpoint for resume only",
+                    "required": "false",
+                    "type": "string",
+                },
+                "slot_id": {
+                    "description": "Kuwait contract slot",
+                    "required": "true",
+                    "default": "main_1500",
+                    "type": "choice",
+                    "options": [row["slot_id"] for row in EXPECTED_SLOTS],
+                },
+            }
+        },
+        "repository_dispatch": {"types": ["market-recovery-request"]},
+    }
+    if triggers != expected_triggers:
+        raise AutomationScheduleError(
+            "workflow triggers do not match the locked manual/recovery contract"
+        )
+
+    _exact(root["permissions"], {"contents": "read"}, "workflow.permissions")
+    _exact(
+        root["concurrency"],
+        {"group": "kubo-kuwait-market-ai", "cancel-in-progress": "false"},
+        "workflow.concurrency",
+    )
+    _exact(
+        root["env"],
+        {"TZ": "Asia/Kuwait", "PYTHONUNBUFFERED": "1"},
+        "workflow.env",
+    )
+
+    jobs = _exact_keys(
+        root["jobs"],
+        frozenset(
+            {
+                "backfill_gate",
+                "gate",
+                "collection",
+                "validation",
+                "live_scoring",
+                "recovery_success",
+                "no_trade",
+            }
+        ),
+        "workflow.jobs",
+    )
+    expected_job_contracts = {
+        "backfill_gate": {"timeout": "5", "needs": None},
+        "gate": {"timeout": "5", "needs": None},
+        "collection": {"timeout": "20", "needs": "gate"},
+        "validation": {"timeout": "20", "needs": "collection"},
+        "live_scoring": {"timeout": "15", "needs": ["gate", "validation"]},
+        "recovery_success": {
+            "timeout": "5",
+            "needs": ["gate", "collection", "validation", "live_scoring"],
+        },
+        "no_trade": {
+            "timeout": "5",
+            "needs": ["gate", "collection", "validation", "live_scoring"],
+        },
+    }
+    for job_name, expected in expected_job_contracts.items():
+        job = jobs[job_name]
+        if not isinstance(job, Mapping):
+            raise AutomationScheduleError(f"workflow.jobs.{job_name} must be an object")
+        _exact(
+            job.get("timeout-minutes"),
+            expected["timeout"],
+            f"workflow.jobs.{job_name}.timeout-minutes",
+        )
+        _exact(
+            job.get("needs"),
+            expected["needs"],
+            f"workflow.jobs.{job_name}.needs",
+        )
+        steps = job.get("steps")
+        if not isinstance(steps, list) or not steps:
+            raise AutomationScheduleError(
+                f"workflow.jobs.{job_name}.steps must be a non-empty list"
+            )
+        permissions = job.get("permissions")
+        if permissions is not None:
+            if not isinstance(permissions, Mapping) or not permissions or any(
+                not isinstance(value, str) or value not in {"read", "none"}
+                for value in permissions.values()
+            ):
+                raise AutomationScheduleError(
+                    f"workflow.jobs.{job_name}.permissions must remain read-only"
+                )
+        locked_steps: list[dict[str, Any]] = []
+        run_hashes: list[str] = []
+        for index, step in enumerate(steps):
+            if not isinstance(step, Mapping):
+                raise AutomationScheduleError(
+                    f"workflow.jobs.{job_name}.steps[{index}] must be an object"
+                )
+            action = step.get("uses")
+            if action is not None and re.fullmatch(
+                r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}",
+                str(action),
+            ) is None:
+                raise AutomationScheduleError(
+                    f"workflow.jobs.{job_name}.steps[{index}].uses must pin a full SHA"
+                )
+            if action is not None and action not in _AUTOMATION_ACTION_ALLOWLIST:
+                raise AutomationScheduleError(
+                    f"workflow.jobs.{job_name}.steps[{index}].uses is not allowlisted"
+                )
+            if str(action).startswith("actions/checkout@"):
+                with_args = step.get("with")
+                if not isinstance(with_args, Mapping) or with_args.get(
+                    "persist-credentials"
+                ) != "false":
+                    raise AutomationScheduleError(
+                        f"workflow.jobs.{job_name} checkout must disable credentials"
+                    )
+            locked_step = dict(step)
+            if "run" in step:
+                run = step.get("run")
+                if not isinstance(run, str):
+                    raise AutomationScheduleError(
+                        f"workflow.jobs.{job_name}.steps[{index}].run must be a string"
+                    )
+                run_hashes.append(hashlib.sha256(run.encode("utf-8")).hexdigest())
+                locked_step["run"] = "<LOCKED_RUN>"
+            locked_steps.append(locked_step)
+        if tuple(run_hashes) != _AUTOMATION_RUN_SHA256[job_name]:
+            raise AutomationScheduleError(
+                f"workflow.jobs.{job_name} run bodies differ from the locked contract"
+            )
+        locked_job = {**job, "steps": locked_steps}
+        skeleton_sha256 = hashlib.sha256(canonical_json_bytes(locked_job)).hexdigest()
+        if skeleton_sha256 != _AUTOMATION_JOB_SKELETON_SHA256[job_name]:
+            raise AutomationScheduleError(
+                f"workflow.jobs.{job_name} skeleton differs from the locked contract"
+            )
+
+    _exact(
+        jobs["backfill_gate"].get("if"),
+        "${{ false }}",
+        "workflow.jobs.backfill_gate.if",
+    )
+    validator_install = {
+        "name": "Install pinned workflow-validator dependency",
+        "run": "python -m pip install --disable-pip-version-check PyYAML==6.0.3",
+    }
+    for job_name in ("backfill_gate", "gate"):
+        installs = [
+            step
+            for step in jobs[job_name]["steps"]
+            if isinstance(step, Mapping)
+            and step.get("name") == validator_install["name"]
+        ]
+        if installs != [validator_install]:
+            raise AutomationScheduleError(
+                f"workflow.jobs.{job_name} must install exact pinned PyYAML"
+            )
+
     return hashlib.sha256(content).hexdigest()
 
 

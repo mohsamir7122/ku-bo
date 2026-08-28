@@ -695,6 +695,138 @@ class SourceNetworkHardeningTests(unittest.TestCase):
             self.assertEqual(result.role_coverage.get("NEWS_ARCHIVE"), 1)
             self.assertIn("ROLE_QUORUM:NEWS_ARCHIVE:1/2", result.coverage_gaps)
 
+    def test_network_packet_rejects_unknown_fields_at_every_runtime_boundary(self):
+        cases = (
+            ("research_run.json", lambda payload: payload.update({"unexpected": True})),
+            (
+                "research_run.json",
+                lambda payload: payload["budget"].update({"unexpected": 1}),
+            ),
+            (
+                "manifest.json",
+                lambda payload: payload["artifacts"][0].update({"unexpected": 1}),
+            ),
+            (
+                "universe.json",
+                lambda payload: payload["securities"][0].update({"unexpected": 1}),
+            ),
+            (
+                "source_observations.json",
+                lambda payload: payload["sources"][0].update({"unexpected": 1}),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            for index, (name, mutate) in enumerate(cases):
+                with self.subTest(name=name, index=index):
+                    run = build_synthetic_network_run(Path(directory) / f"run-{index}")
+                    path = run / name
+                    payload = read_json(path)
+                    mutate(payload)
+                    write_json(path, payload)
+                    result = SourceNetworkRunValidator(
+                        run, self.catalog, "next_session_rank"
+                    ).validate()
+                    self.assertEqual(result.status, "BLOCKED", result.to_dict())
+                    self.assertTrue(
+                        any(
+                            "unknown=unexpected" in error
+                            for error in result.structural_errors
+                        ),
+                        result.to_dict(),
+                    )
+
+            run = build_synthetic_network_run(Path(directory) / "run-finding")
+            rows = read_findings(run / "findings.jsonl")
+            rows[0]["unexpected"] = True
+            write_findings(run / "findings.jsonl", rows)
+            result = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertEqual(result.status, "BLOCKED", result.to_dict())
+            self.assertTrue(
+                any(
+                    "unknown=unexpected" in error
+                    for error in result.structural_errors
+                ),
+                result.to_dict(),
+            )
+
+    def test_network_packet_rejects_duplicate_keys_and_non_json_constants(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = build_synthetic_network_run(Path(directory) / "duplicate")
+            path = run / "research_run.json"
+            payload = path.read_text(encoding="utf-8")
+            path.write_text(
+                payload.replace(
+                    '"product_id": "next_session_rank",',
+                    '"product_id": "shadow",\n  "product_id": "next_session_rank",',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            duplicate = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertEqual(duplicate.status, "BLOCKED", duplicate.to_dict())
+            self.assertTrue(
+                any(
+                    "duplicate key: product_id" in error
+                    for error in duplicate.structural_errors
+                ),
+                duplicate.to_dict(),
+            )
+
+            run = build_synthetic_network_run(Path(directory) / "nonfinite")
+            path = run / "research_run.json"
+            payload = read_json(path)
+            payload["usage"]["wall_seconds"] = float("nan")
+            path.write_text(json.dumps(payload, allow_nan=True), encoding="utf-8")
+            nonfinite = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertEqual(nonfinite.status, "BLOCKED", nonfinite.to_dict())
+            self.assertTrue(
+                any(
+                    "non-finite JSON: NaN" in error
+                    for error in nonfinite.structural_errors
+                ),
+                nonfinite.to_dict(),
+            )
+
+    def test_network_integer_fields_reject_json_booleans(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = build_synthetic_network_run(Path(directory) / "contract")
+            contract = read_json(run / "research_run.json")
+            contract["usage"]["wall_seconds"] = False
+            write_json(run / "research_run.json", contract)
+            result = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertEqual(result.status, "BLOCKED", result.to_dict())
+            self.assertTrue(
+                any(
+                    "usage.wall_seconds must be a JSON integer" in error
+                    for error in result.structural_errors
+                ),
+                result.to_dict(),
+            )
+
+            run = build_synthetic_network_run(Path(directory) / "observation")
+            observations = read_json(run / "source_observations.json")
+            observations["sources"][0]["qualified_items"] = True
+            write_json(run / "source_observations.json", observations)
+            result = SourceNetworkRunValidator(
+                run, self.catalog, "next_session_rank"
+            ).validate()
+            self.assertEqual(result.status, "BLOCKED", result.to_dict())
+            self.assertTrue(
+                any(
+                    "qualified_items must be a JSON integer" in error
+                    for error in result.structural_errors
+                ),
+                result.to_dict(),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

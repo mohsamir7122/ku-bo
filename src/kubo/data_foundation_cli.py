@@ -353,9 +353,12 @@ def _load_eod_runtime_trust_registry(
 def _report_is_blocking(report: dict[str, Any]) -> bool:
     """Honor independent validation results, not only a saved stage status."""
 
+    if "status" not in report:
+        return True
     return any(
         is_blocking_status(report.get(field), known=BLOCKING_STATUSES)
         for field in ("status", "validation_status", "contract_status")
+        if field == "status" or field in report
     )
 
 

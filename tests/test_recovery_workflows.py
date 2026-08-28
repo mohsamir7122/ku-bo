@@ -66,7 +66,7 @@ class RecoveryWorkflowTests(unittest.TestCase):
             {"group": "kubo-kuwait-market-ai", "cancel-in-progress": "false"},
         )
 
-    def test_controller_has_immediate_event_and_missed_event_watchdog(self) -> None:
+    def test_controller_is_manual_or_main_workflow_event_only(self) -> None:
         workflow = _base_yaml(CONTROLLER)
         triggers = workflow["on"]
         self.assertEqual(
@@ -74,13 +74,8 @@ class RecoveryWorkflowTests(unittest.TestCase):
             ["Kuwait Market Pipeline", "CI"],
         )
         self.assertEqual(triggers["workflow_run"]["types"], ["completed"])
-        self.assertEqual(
-            triggers["schedule"],
-            [
-                {"cron": "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"},
-                {"cron": "13,43 * * * *"},
-            ],
-        )
+        self.assertEqual(triggers["workflow_run"]["branches"], ["main"])
+        self.assertNotIn("schedule", triggers)
         self.assertEqual(
             triggers["repository_dispatch"]["types"],
             ["market-recovery-request"],
@@ -90,13 +85,13 @@ class RecoveryWorkflowTests(unittest.TestCase):
         self.assertIn("github-control", text)
         self.assertIn("github.token", text)
 
-    def test_pipeline_backfill_is_bounded_prioritized_and_fail_closed(self) -> None:
+    def test_pipeline_backfill_is_bounded_prioritized_and_dormant(self) -> None:
         workflow = _base_yaml(PIPELINE)
         triggers = workflow["on"]
-        self.assertEqual(triggers["schedule"][-1], {"cron": "23 */2 * * *"})
+        self.assertNotIn("schedule", triggers)
         backfill = workflow["jobs"]["backfill_gate"]
         self.assertEqual(backfill["timeout-minutes"], "5")
-        self.assertIn("23 */2 * * *", backfill["if"])
+        self.assertEqual(backfill["if"], "${{ false }}")
         text = _text(PIPELINE)
         self.assertIn("priority=BACKFILL_90D:10", text)
         self.assertIn("--production", text)
@@ -104,6 +99,27 @@ class RecoveryWorkflowTests(unittest.TestCase):
         self.assertIn("BLOCKED_UNWIRED_PRODUCTION_COORDINATOR", text)
         self.assertIn("Preserve backfill blocker exit code", text)
         self.assertNotRegex(text, r"\bsleep\s+\d+")
+
+    def test_successful_failed_job_rerun_requires_hash_bound_incident_context(self) -> None:
+        workflow = _base_yaml(PIPELINE)
+        job = workflow["jobs"]["recovery_success"]
+        self.assertEqual(job["permissions"], {"actions": "read", "contents": "read"})
+        self.assertIn("github.run_attempt > 1", job["if"])
+        text = _text(PIPELINE)
+        self.assertIn("resolve-rerun-success-context", text)
+        self.assertIn("steps.success_context.outputs.incident_id", text)
+        self.assertIn("steps.success_context.outputs.incident_key", text)
+        self.assertIn("recovery-success-context.json", text)
+
+    def test_no_trade_marker_runs_for_success_failure_cancel_and_skip_outcomes(self) -> None:
+        workflow = _base_yaml(PIPELINE)
+        job = workflow["jobs"]["no_trade"]
+        self.assertEqual(job["if"], "always()")
+        self.assertEqual(len(job["steps"]), 1)
+        step = job["steps"][0]
+        self.assertNotIn("if", step)
+        self.assertEqual(step["name"], "Enforce no-trade for every pipeline outcome")
+        self.assertIn("NO-TRADE", step["run"])
 
     def test_legacy_sequential_workflow_is_manual_only(self) -> None:
         workflow = _base_yaml(LEGACY)

@@ -2,11 +2,17 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   contracts-and-tests:
@@ -18,118 +24,50 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install package and test contracts
         run: python -m pip install --disable-pip-version-check -e ".[test]"
+      - name: Verify installed dependency consistency
+        run: python -m pip check
       - name: Compile
         run: python -m compileall -q src tests scripts
       - name: Codex control integrity
+        if: matrix.python-version == '3.12'
         run: python scripts/codex_control_check.py --root .
       - name: Private predecessor migration preparation controls
+        if: matrix.python-version == '3.12'
         run: |
           python scripts/validate_private_predecessor_migration_control.py --project-root . --json
-          python -m unittest tests.test_private_predecessor_migration_control -v
       - name: Codex live bootstrap and previous-freeze contracts
+        if: matrix.python-version == '3.12'
         run: |
           python scripts/validate_codex_live_bootstrap.py --project-root . --json
-          python -m unittest \
-            tests.test_codex_live_bootstrap \
-            tests.test_champion_freeze \
-            -v
       - name: Fail-closed Kuwait automation schedule contract
+        if: matrix.python-version == '3.12'
         run: |
           python scripts/validate_kuwait_automation_schedule.py --project-root .
-          python -m unittest tests.test_automation_schedule -v
       - name: KU-BO-011 deterministic acceptance-corpus audit
+        if: matrix.python-version == '3.12'
         run: |
           python scripts/generate_ku_bo_011_corpus.py --check
           python scripts/audit_ku_bo_011_corpus.py --json
       - name: Unit and adversarial tests
         run: python -m unittest discover -s tests -v
-      - name: KU-BO-012 Kuwait context, source-search, factor, and replay gates
-        run: |
-          python -m unittest \
-            tests.test_research_workflow \
-            tests.test_source_orchestrator \
-            tests.test_context_research \
-            tests.test_kuwait_research_pipeline \
-            tests.test_forty_session_replay \
-            tests.test_kuwait_workflow_cli \
-            -v
-      - name: KU-BO-017 market, fallback, parity, portfolio, and dry-run gates
-        run: |
-          python -m unittest \
-            tests.test_market_scope \
-            tests.test_source_quality \
-            tests.test_source_fallback \
-            tests.test_capability_parity \
-            tests.test_portfolio_state \
-            tests.test_factor9_admission \
-            tests.test_ku_bo_live_program \
-            tests.test_live_dry_run \
-            tests.test_local_skill \
-            -v
-      - name: Source parser and fresh-probe contract gates
-        run: python -m unittest tests.test_source_parsers tests.test_live_probe -v
-      - name: Official identity and calendar contract gates
-        run: |
-          python -m unittest \
-            tests.test_official_parsers \
-            tests.test_official_foundation_workspace \
-            tests.test_official_foundation_import \
-            -v
-      - name: Security status and corporate-action schedule gates
-        run: |
-          python -m unittest \
-            tests.test_status_corporate_parsers \
-            tests.test_status_corporate_workspace \
-            tests.test_status_corporate_import \
-            -v
-      - name: Corporate-action enrichment gates
-        run: |
-          python -m unittest \
-            tests.test_ca_adjustments \
-            tests.test_ca_enrichment_workspace \
-            tests.test_ca_enrichment_import \
-            -v
-      - name: Historical status notice and interval gates
-        run: |
-          python -m unittest \
-            tests.test_status_history \
-            tests.test_status_history_workspace \
-            tests.test_status_history_import \
-            -v
-      - name: Benchmark registry history and comparison gates
-        run: |
-          python -m unittest \
-            tests.test_catalog_pack_pipeline \
-            tests.test_benchmark_capability_catalog \
-            tests.test_benchmark_registry \
-            tests.test_benchmark_workspace \
-            tests.test_benchmark_history \
-            tests.test_benchmark_import \
-            -v
-      - name: Official complete daily EOD gates
-        run: python -m unittest tests.test_official_eod_pipeline -v
-      - name: Final data foundation reconciliation gates
-        run: |
-          python -m unittest \
-            tests.test_foundation_io \
-            tests.test_outcome_session_policy \
-            tests.test_outcome_sessions \
-            tests.test_ledger \
-            tests.test_stopgates_evaluation \
-            tests.test_data_foundation_reconciliation \
-            tests.test_data_foundation_cli \
-            -v
       - name: Synthetic smoke check
+        if: matrix.python-version == '3.12'
         run: python scripts/smoke_check.py
       - name: Secret-pattern guard
+        if: matrix.python-version == '3.12'
         run: python scripts/secret_guard.py
       - name: Build and exercise the repository-bound wheel
+        if: matrix.python-version == '3.12'
         run: |
           python -m pip wheel --no-deps --wheel-dir dist .
           installed_venv="$RUNNER_TEMP/kubo-installed-wheel-venv"
@@ -138,6 +76,7 @@ jobs:
             --disable-pip-version-check \
             dist/*.whl \
             jsonschema==4.25.1
+          "$installed_venv/bin/python" -m pip check
           installed_python="$installed_venv/bin/python"
           installed_kubo="$installed_venv/bin/kubo"
           installed_foundation="$installed_venv/bin/kubo-data-foundation"

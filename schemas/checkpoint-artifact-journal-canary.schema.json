@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/checkpoint-artifact-journal-canary.schema.json",
+  "title": "KU-BO GitHub Artifact checkpoint journal canary manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "journal_kind",
+    "status",
+    "production_coordinator_status",
+    "repository",
+    "workflow",
+    "workflow_ref",
+    "workflow_sha",
+    "run_id",
+    "run_attempt",
+    "head_sha",
+    "job_stage",
+    "generation",
+    "checkpoint_relative_path",
+    "checkpoint_sha256",
+    "checkpoint_id",
+    "checkpoint_digest",
+    "workload_id",
+    "owner_run_id",
+    "checkpoint_status",
+    "previous_manifest_sha256",
+    "cas_rejection_verified",
+    "fencing_rejection_verified",
+    "created_at",
+    "claim_boundaries",
+    "manifest_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "journal_kind": {"const": "GITHUB_ARTIFACT_JOURNAL"},
+    "status": {"const": "CANARY_ONLY"},
+    "production_coordinator_status": {"const": "NOT_PRODUCTION_COORDINATOR"},
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "workflow": {"const": "checkpoint-artifact-journal-canary.yml"},
+    "workflow_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/\\.github/workflows/checkpoint-artifact-journal-canary\\.yml@refs/(heads|pull)/[A-Za-z0-9._/-]+$",
+      "maxLength": 512
+    },
+    "workflow_sha": {"$ref": "#/$defs/git_sha"},
+    "run_id": {"type": "string", "pattern": "^[1-9][0-9]{0,19}$"},
+    "run_attempt": {"type": "integer", "minimum": 1},
+    "head_sha": {"$ref": "#/$defs/git_sha"},
+    "job_stage": {
+      "enum": [
+        "GENERATION_1_CREATE_PREEMPT",
+        "GENERATION_2_REOPEN_RESUME_CAS_FENCING"
+      ]
+    },
+    "generation": {"enum": [1, 2]},
+    "checkpoint_relative_path": {
+      "const": "checkpoint-store/artifact-journal-canary.checkpoint.json"
+    },
+    "checkpoint_sha256": {"$ref": "#/$defs/sha256"},
+    "checkpoint_id": {"type": "string", "pattern": "^CP-[A-F0-9]{24}$"},
+    "checkpoint_digest": {"$ref": "#/$defs/sha256"},
+    "workload_id": {"const": "artifact-journal-canary"},
+    "owner_run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "checkpoint_status": {"enum": ["PREEMPTED", "RUNNING"]},
+    "previous_manifest_sha256": {
+      "oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]
+    },
+    "cas_rejection_verified": {"type": "boolean"},
+    "fencing_rejection_verified": {"type": "boolean"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "claim_boundaries": {
+      "const": {
+        "artifact_transfer_proves_production_durability": false,
+        "canary_is_production_coordinator": false,
+        "canary_authorizes_collection": false,
+        "canary_authorizes_training_or_backtest": false,
+        "canary_authorizes_forecast_or_recommendation": false,
+        "canary_resolves_blocked_checkpoint_store": false
+      }
+    },
+    "manifest_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"generation": {"const": 1}}},
+      "then": {
+        "properties": {
+          "job_stage": {"const": "GENERATION_1_CREATE_PREEMPT"},
+          "checkpoint_status": {"const": "PREEMPTED"},
+          "previous_manifest_sha256": {"type": "null"},
+          "cas_rejection_verified": {"const": false},
+          "fencing_rejection_verified": {"const": false}
+        }
+      },
+      "else": {
+        "properties": {
+          "job_stage": {"const": "GENERATION_2_REOPEN_RESUME_CAS_FENCING"},
+          "checkpoint_status": {"const": "RUNNING"},
+          "previous_manifest_sha256": {"$ref": "#/$defs/sha256"},
+          "cas_rejection_verified": {"const": true},
+          "fencing_rejection_verified": {"const": true}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "git_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

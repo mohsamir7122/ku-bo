@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timedelta, timezone
+import hashlib
 import io
 import json
 import os
@@ -48,6 +49,8 @@ from kubo.strict import parse_aware
 
 PIPELINE_WORKFLOW = "kuwait-market-pipeline.yml"
 CONTROLLER_WORKFLOW = "recovery-controller.yml"
+PIPELINE_WORKFLOW_PATH = f".github/workflows/{PIPELINE_WORKFLOW}"
+CONTROLLER_WORKFLOW_PATH = f".github/workflows/{CONTROLLER_WORKFLOW}"
 PIPELINE_WORKFLOW_NAME = "Kuwait Market Pipeline"
 CI_WORKFLOW_NAME = "CI"
 RECOVERY_EVENT = "market-recovery-request"
@@ -71,6 +74,18 @@ MAX_ARCHIVE_MEMBERS = 128
 MAX_INCIDENTS_PER_PASS = 64
 _REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _INCIDENT_ID_RE = re.compile(r"^INC-[0-9A-F]{20}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_ARTIFACT_NAME_RE = re.compile(
+    r"^(?P<kind>recovery-(?:diagnostics-(?:backfill|gate|collection|validation|live)|state|success))"
+    r"-(?P<run_id>[1-9][0-9]*)-(?P<run_attempt>[1-9][0-9]*)$"
+)
+_DIAGNOSTIC_STAGE_BY_KIND = {
+    "recovery-diagnostics-backfill": "backfill",
+    "recovery-diagnostics-gate": "gate",
+    "recovery-diagnostics-collection": "collection",
+    "recovery-diagnostics-validation": "validation",
+    "recovery-diagnostics-live": "live_scoring",
+}
 _RETRIABLE_PIPELINE_CONCLUSIONS = frozenset(
     {"failure", "timed_out", "startup_failure", "stale"}
 )
@@ -175,6 +190,16 @@ def _slot(value: Any) -> str:
     return slot
 
 
+def _dispatch_incident_key(value: Any, *, mode: str) -> str | None:
+    key = str(value or "").casefold() or None
+    if mode in {"retry", "resume"}:
+        if key is None or not _SHA256_RE.fullmatch(key):
+            raise RecoveryError("retry and resume require a valid incident_key")
+    elif key is not None:
+        raise RecoveryError("normal mode cannot accept incident_key")
+    return key
+
+
 def validate_github_event(
     *,
     event_name: str,
@@ -212,7 +237,7 @@ def validate_github_event(
         raw_inputs = event.get("inputs") or {}
         if not isinstance(raw_inputs, Mapping):
             raise RecoveryError("workflow_dispatch inputs must be an object")
-        allowed = {"mode", "incident_id", "checkpoint", "slot_id"}
+        allowed = {"mode", "incident_id", "incident_key", "checkpoint", "slot_id"}
         if set(raw_inputs) - allowed:
             raise RecoveryError("workflow_dispatch contains unknown inputs")
         normalized = validate_dispatch_inputs(
@@ -220,11 +245,15 @@ def validate_github_event(
             incident_id=raw_inputs.get("incident_id"),
             checkpoint=raw_inputs.get("checkpoint"),
         )
+        incident_key = _dispatch_incident_key(
+            raw_inputs.get("incident_key"), mode=normalized["mode"]
+        )
         return {
             "schema_version": "1.0",
             "event_name": "workflow_dispatch",
             "action": normalized["mode"],
             **normalized,
+            "incident_key": incident_key,
             "slot_id": _slot(raw_inputs.get("slot_id")),
             "event_schedule": None,
             "probe_only": False,
@@ -238,7 +267,14 @@ def validate_github_event(
         if actor not in ALLOWED_DISPATCH_ACTORS or sender_login not in ALLOWED_DISPATCH_ACTORS:
             raise RecoveryError("repository_dispatch actor is not allowlisted")
         client = event.get("client_payload")
-        expected = {"action", "market", "incident_id", "checkpoint", "slot_id"}
+        expected = {
+            "action",
+            "market",
+            "incident_id",
+            "incident_key",
+            "checkpoint",
+            "slot_id",
+        }
         if not isinstance(client, Mapping) or set(client) != expected:
             raise RecoveryError("repository_dispatch client_payload fields are not exact")
         action = str(client["action"])
@@ -252,6 +288,9 @@ def validate_github_event(
             incident_id=client["incident_id"],
             checkpoint=client["checkpoint"] if mode == "resume" else None,
         )
+        incident_key = _dispatch_incident_key(
+            client["incident_key"], mode=normalized["mode"]
+        )
         if mode == "retry" and client["checkpoint"] not in (None, ""):
             raise RecoveryError("retry/probe dispatch cannot supply a checkpoint")
         return {
@@ -259,6 +298,7 @@ def validate_github_event(
             "event_name": "repository_dispatch",
             "action": action,
             **normalized,
+            "incident_key": incident_key,
             "slot_id": _slot(client["slot_id"]),
             "event_schedule": None,
             "probe_only": action == "probe",
@@ -299,10 +339,16 @@ def validate_controller_event(
                 if isinstance(payload_repository, Mapping)
                 else None
             )
-            if trigger_event != "push" or not default_branch or run.get(
-                "head_branch"
-            ) != default_branch:
-                raise RecoveryError("CI recovery requires a default-branch push")
+            if not default_branch:
+                raise RecoveryError("CI recovery requires a repository default branch")
+            if trigger_event != "push" or run.get("head_branch") != default_branch:
+                return {
+                    **context,
+                    "kind": "ignored_ci",
+                    "skip_reason": "NON_DEFAULT_OR_NON_PUSH_CI",
+                    "incident_id": None,
+                    "force_probe": False,
+                }
         elif trigger_event not in {
             "schedule",
             "workflow_dispatch",
@@ -364,6 +410,7 @@ def _write_github_outputs(path: Path, payload: Mapping[str, Any]) -> None:
         "action",
         "mode",
         "incident_id",
+        "incident_key",
         "checkpoint",
         "slot_id",
         "event_schedule",
@@ -474,6 +521,16 @@ class GitHubApi:
             raw=True,
             max_bytes=MAX_ARTIFACT_BYTES,
         )
+
+    def workflow_run(self, run_id: int) -> dict[str, Any]:
+        if type(run_id) is not int or run_id <= 0:
+            raise RecoveryError("workflow run id is invalid")
+        payload = self._request(
+            "GET", f"/repos/{self.repository}/actions/runs/{run_id}"
+        )
+        if not isinstance(payload, Mapping):
+            raise RecoveryError("GitHub workflow-run response is invalid")
+        return dict(payload)
 
     def active_pipeline_runs(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -594,75 +651,289 @@ def _safe_zip_rows(content: bytes) -> list[tuple[str, bytes]]:
     return rows
 
 
+_SUCCESS_RECEIPT_KEYS = frozenset(
+    {
+        "schema_version",
+        "incident_id",
+        "incident_idempotency_key",
+        "completed_at",
+        "repository",
+        "workflow_path",
+        "run_id",
+        "run_attempt",
+        "run_url",
+        "code_sha",
+    }
+)
+
+
+def _repository_name(run: Mapping[str, Any], field: str) -> str:
+    value = run.get(field)
+    return str(value.get("full_name") or "") if isinstance(value, Mapping) else ""
+
+
+def _workflow_path(run: Mapping[str, Any]) -> str:
+    return str(run.get("path") or "").split("@", 1)[0]
+
+
+def _trusted_artifact_origin(
+    api: GitHubApi,
+    artifact: Mapping[str, Any],
+    *,
+    default_ref: str,
+) -> dict[str, Any] | None:
+    """Return API-bound provenance for one exact recovery artifact.
+
+    Artifacts from feature branches, forks, unrelated workflows, or the legacy
+    pre-digest format are ignored before download. A candidate from the trusted
+    workflows must match its immutable run metadata exactly.
+    """
+
+    name = str(artifact.get("name") or "")
+    match = _ARTIFACT_NAME_RE.fullmatch(name)
+    if match is None or artifact.get("expired") is True:
+        return None
+    artifact_id = artifact.get("id")
+    nested_run = artifact.get("workflow_run")
+    if type(artifact_id) is not int or artifact_id <= 0 or not isinstance(
+        nested_run, Mapping
+    ):
+        raise RecoveryError("recovery artifact metadata is invalid")
+    run_id = nested_run.get("id")
+    if type(run_id) is not int or run_id <= 0:
+        raise RecoveryError("recovery artifact workflow run id is invalid")
+    if str(run_id) != match.group("run_id"):
+        raise RecoveryError("recovery artifact name differs from its workflow run")
+    run = api.workflow_run(run_id)
+    repository = _repository_name(run, "repository")
+    head_repository = _repository_name(run, "head_repository")
+    head_branch = str(run.get("head_branch") or "")
+    if (
+        repository != api.repository
+        or head_repository != api.repository
+        or head_branch != default_ref
+    ):
+        return None
+    if run.get("status") != "completed":
+        return None
+    run_attempt = run.get("run_attempt")
+    if type(run_attempt) is not int or not 1 <= run_attempt <= 100:
+        raise RecoveryError("trusted artifact workflow run attempt is invalid")
+    if str(run_attempt) != match.group("run_attempt"):
+        raise RecoveryError("recovery artifact name differs from its run attempt")
+    head_sha = str(run.get("head_sha") or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", head_sha):
+        raise RecoveryError("trusted artifact workflow run SHA is invalid")
+    for key, expected in (
+        ("head_branch", head_branch),
+        ("head_sha", head_sha),
+    ):
+        if key in nested_run and str(nested_run.get(key) or "") != expected:
+            raise RecoveryError(f"artifact {key} differs from workflow run metadata")
+    nested_repository_id = nested_run.get("repository_id")
+    repository_row = run.get("repository")
+    if nested_repository_id is not None and (
+        not isinstance(repository_row, Mapping)
+        or nested_repository_id != repository_row.get("id")
+    ):
+        raise RecoveryError("artifact repository id differs from workflow run")
+    nested_head_repository_id = nested_run.get("head_repository_id")
+    head_repository_row = run.get("head_repository")
+    if nested_head_repository_id is not None and (
+        not isinstance(head_repository_row, Mapping)
+        or nested_head_repository_id != head_repository_row.get("id")
+    ):
+        raise RecoveryError("artifact head repository id differs from workflow run")
+
+    kind = match.group("kind")
+    path = _workflow_path(run)
+    expected_path = (
+        CONTROLLER_WORKFLOW_PATH if kind == "recovery-state" else PIPELINE_WORKFLOW_PATH
+    )
+    if path != expected_path:
+        return None
+    if kind == "recovery-success" and run.get("conclusion") != "success":
+        raise RecoveryError("recovery success artifact did not come from a successful run")
+    if kind == "recovery-state" and run.get("conclusion") != "success":
+        return None
+    expected_url = f"https://github.com/{api.repository}/actions/runs/{run_id}"
+    if str(run.get("html_url") or "") != expected_url:
+        raise RecoveryError("workflow run URL differs from trusted repository and run")
+    digest = str(artifact.get("digest") or "")
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        return None
+    return {
+        "artifact_id": artifact_id,
+        "artifact_name": name,
+        "artifact_sha256": digest.removeprefix("sha256:"),
+        "kind": kind,
+        "repository": api.repository,
+        "workflow_path": path,
+        "run_id": run_id,
+        "run_attempt": run_attempt,
+        "run_url": expected_url,
+        "head_sha": head_sha,
+        "conclusion": str(run.get("conclusion") or ""),
+        "run_started_at": run.get("run_started_at") or run.get("created_at"),
+        "completed_at": run.get("updated_at"),
+    }
+
+
+def _validate_success_receipt(
+    payload: Mapping[str, Any], *, origin: Mapping[str, Any]
+) -> dict[str, Any]:
+    if frozenset(payload) != _SUCCESS_RECEIPT_KEYS or payload.get(
+        "schema_version"
+    ) != "2.0":
+        raise RecoveryError("recovery success receipt fields are invalid")
+    if not _INCIDENT_ID_RE.fullmatch(str(payload["incident_id"])):
+        raise RecoveryError("recovery success incident_id is invalid")
+    if not _SHA256_RE.fullmatch(str(payload["incident_idempotency_key"])):
+        raise RecoveryError("recovery success incident key is invalid")
+    completed = parse_aware(payload["completed_at"], "recovery success completed_at")
+    started_raw = origin.get("run_started_at")
+    ended_raw = origin.get("completed_at")
+    if started_raw is not None and completed < parse_aware(
+        started_raw, "workflow run started_at"
+    ):
+        raise RecoveryError("recovery success predates its workflow run")
+    if ended_raw is not None and completed > parse_aware(
+        ended_raw, "workflow run completed_at"
+    ) + timedelta(minutes=1):
+        raise RecoveryError("recovery success postdates its workflow run")
+    exact = {
+        "repository": origin["repository"],
+        "workflow_path": origin["workflow_path"],
+        "run_id": str(origin["run_id"]),
+        "run_attempt": origin["run_attempt"],
+        "run_url": origin["run_url"],
+        "code_sha": origin["head_sha"],
+    }
+    for key, expected in exact.items():
+        if payload[key] != expected:
+            raise RecoveryError(f"recovery success {key} differs from artifact origin")
+    return dict(payload)
+
+
 def _artifact_records(
-    content: bytes, *, project_root: Path
+    content: bytes,
+    *,
+    project_root: Path,
+    origin: Mapping[str, Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     incidents: list[dict[str, Any]] = []
     successes: list[dict[str, Any]] = []
     for name, raw in _safe_zip_rows(content):
-        basename = PurePosixPath(name).name
-        if basename == "recovery-incident.json" or (
-            basename.startswith("INC-") and basename.endswith(".json")
-        ):
+        path = PurePosixPath(name)
+        kind = origin["kind"]
+        is_pipeline_incident = kind.startswith("recovery-diagnostics-") and path.parts == (
+            "recovery-incident.json",
+        )
+        is_controller_state = (
+            kind == "recovery-state"
+            and len(path.parts) == 2
+            and path.parts[0] == "recovery-state"
+            and re.fullmatch(r"INC-[0-9A-F]{20}\.json", path.parts[1]) is not None
+        )
+        if is_pipeline_incident or is_controller_state:
             try:
-                payload = strict_json_object(raw, f"artifact {basename}")
-                incidents.append(validate_incident(payload, project_root=project_root))
+                payload = strict_json_object(raw, f"artifact {path.name}")
+                incident = validate_incident(payload, project_root=project_root)
+                if is_pipeline_incident:
+                    _validate_diagnostic_incident_origin(incident, origin=origin)
+                incidents.append(incident)
             except ValueError as exc:
                 raise RecoveryError(str(exc)) from exc
-        elif basename == "recovery-success.json":
+        elif kind == "recovery-success" and path.parts == ("recovery-success.json",):
             try:
                 payload = strict_json_object(raw, "recovery success receipt")
             except ValueError as exc:
                 raise RecoveryError(str(exc)) from exc
-            expected = {
-                "schema_version",
-                "incident_id",
-                "completed_at",
-                "run_url",
-                "code_sha",
-            }
-            if set(payload) != expected or payload["schema_version"] != "1.0":
-                raise RecoveryError("recovery success receipt fields are invalid")
-            if not _INCIDENT_ID_RE.fullmatch(str(payload["incident_id"])):
-                raise RecoveryError("recovery success incident_id is invalid")
-            parse_aware(payload["completed_at"], "recovery success completed_at")
-            if not re.fullmatch(r"[0-9a-f]{40}", str(payload["code_sha"])):
-                raise RecoveryError("recovery success code_sha is invalid")
-            parsed_url = urlsplit(str(payload["run_url"]))
-            if (
-                parsed_url.scheme != "https"
-                or parsed_url.hostname != "github.com"
-                or "/actions/runs/" not in parsed_url.path
-                or parsed_url.query
-                or parsed_url.fragment
-            ):
-                raise RecoveryError("recovery success run_url is invalid")
-            successes.append(payload)
+            successes.append(_validate_success_receipt(payload, origin=origin))
+    if len(incidents) > 1 or len(successes) > 1:
+        raise RecoveryError("recovery artifact contains duplicate state records")
     return incidents, successes
 
 
+def _validate_diagnostic_incident_origin(
+    incident: Mapping[str, Any], *, origin: Mapping[str, Any]
+) -> None:
+    """Bind one pipeline diagnostic to its immutable artifact run and stage."""
+
+    kind = str(origin.get("kind") or "")
+    expected_stage = _DIAGNOSTIC_STAGE_BY_KIND.get(kind)
+    if expected_stage is None:
+        raise RecoveryError("pipeline diagnostic artifact kind is invalid")
+    run_id = origin.get("run_id")
+    run_attempt = origin.get("run_attempt")
+    if type(run_id) is not int or run_id <= 0:
+        raise RecoveryError("pipeline diagnostic artifact run_id is invalid")
+    if type(run_attempt) is not int or not 1 <= run_attempt <= 100:
+        raise RecoveryError("pipeline diagnostic artifact run_attempt is invalid")
+    expected = {
+        "stage": expected_stage,
+        "failed_run_id": str(run_id),
+        "attempt_count": run_attempt - 1,
+        "code_sha": origin.get("head_sha"),
+        "run_url": origin.get("run_url"),
+    }
+    mismatches = [key for key, value in expected.items() if incident.get(key) != value]
+    if mismatches:
+        raise RecoveryError(
+            "pipeline diagnostic incident differs from artifact origin: "
+            + ",".join(mismatches)
+        )
+
+
+def _validate_incident_run_origin(
+    api: GitHubApi, incident: Mapping[str, Any], *, default_ref: str
+) -> None:
+    try:
+        run_id = int(str(incident["failed_run_id"]))
+    except ValueError as exc:
+        raise RecoveryError("incident failed_run_id is not a GitHub workflow run") from exc
+    if run_id <= 0:
+        raise RecoveryError("incident failed_run_id is invalid")
+    run = api.workflow_run(run_id)
+    if (
+        _repository_name(run, "repository") != api.repository
+        or _repository_name(run, "head_repository") != api.repository
+        or str(run.get("head_branch") or "") != default_ref
+        or _workflow_path(run) != PIPELINE_WORKFLOW_PATH
+        or run.get("status") != "completed"
+        or str(run.get("head_sha") or "") != incident["code_sha"]
+        or str(run.get("html_url") or "") != incident["run_url"]
+    ):
+        raise RecoveryError("incident differs from its trusted pipeline run")
+
+
 def discover_recovery_records(
-    api: GitHubApi, *, project_root: Path
+    api: GitHubApi, *, project_root: Path, default_ref: str = "main"
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     incidents: list[dict[str, Any]] = []
     successes: list[dict[str, Any]] = []
     artifacts = sorted(
-        api.list_artifacts(), key=lambda row: str(row.get("created_at", "")), reverse=True
+        (
+            row
+            for row in api.list_artifacts()
+            if _ARTIFACT_NAME_RE.fullmatch(str(row.get("name") or "")) is not None
+            and row.get("expired") is not True
+        ),
+        key=lambda row: str(row.get("created_at", "")),
+        reverse=True,
     )
     for artifact in artifacts[:MAX_INCIDENTS_PER_PASS]:
-        name = str(artifact.get("name", ""))
-        if not name.startswith(
-            ("recovery-diagnostics-", "recovery-state-", "recovery-success-")
-        ):
+        origin = _trusted_artifact_origin(api, artifact, default_ref=default_ref)
+        if origin is None:
             continue
-        if artifact.get("expired") is True:
-            continue
-        artifact_id = artifact.get("id")
-        if type(artifact_id) is not int:
-            raise RecoveryError("recovery artifact id is invalid")
+        content = api.download_artifact(origin["artifact_id"])
+        if hashlib.sha256(content).hexdigest() != origin["artifact_sha256"]:
+            raise RecoveryError("recovery artifact digest differs from GitHub metadata")
         found_incidents, found_successes = _artifact_records(
-            api.download_artifact(artifact_id), project_root=project_root
+            content, project_root=project_root, origin=origin
         )
+        for incident in found_incidents:
+            _validate_incident_run_origin(api, incident, default_ref=default_ref)
         incidents.extend(found_incidents)
         successes.extend(found_successes)
     return incidents, successes
@@ -685,6 +956,66 @@ def _latest_incidents(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]
         if previous_order is None or item_order > previous_order:
             latest[fingerprint] = item
     return sorted(latest.values(), key=lambda item: str(item["incident_id"]))
+
+
+def resolve_rerun_success_context(
+    incidents: Sequence[Mapping[str, Any]],
+    *,
+    project_root: Path,
+    run_id: Any,
+    run_attempt: Any,
+    code_sha: Any,
+) -> dict[str, Any]:
+    """Resolve the one trusted incident state for a successful failed-job rerun.
+
+    GitHub keeps the original ``workflow_dispatch`` inputs when failed jobs are
+    rerun.  A normal first attempt therefore has no incident key in its gate
+    outputs.  The recovery controller persists the incremented, hash-bound
+    incident state before the serialized rerun starts; this resolver reopens
+    that state instead of accepting an untrusted input or silently succeeding
+    without a receipt.
+    """
+
+    normalized_run_id = str(run_id or "")
+    if not re.fullmatch(r"[1-9][0-9]*", normalized_run_id):
+        raise RecoveryError("rerun success run_id is invalid")
+    if type(run_attempt) is not int or not 2 <= run_attempt <= 100:
+        raise RecoveryError("rerun success requires workflow run_attempt >= 2")
+    normalized_sha = str(code_sha or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", normalized_sha):
+        raise RecoveryError("rerun success code_sha is invalid")
+
+    policy, _ = load_recovery_policy(project_root)
+    expected_attempt_count = min(
+        run_attempt - 1,
+        policy["retry"]["max_automatic_attempts"],
+    )
+    candidates: list[dict[str, Any]] = []
+    for incident in _latest_incidents(incidents):
+        row = validate_incident(incident, policy=policy)
+        if (
+            row["failed_run_id"] == normalized_run_id
+            and row["code_sha"] == normalized_sha
+            and row["retriable"] is True
+            and row["attempt_count"] == expected_attempt_count
+            and row["status"] in {"RETRY_SCHEDULED", "EXHAUSTED"}
+        ):
+            candidates.append(row)
+    if len(candidates) != 1:
+        raise RecoveryError(
+            "rerun success requires exactly one trusted incident retry state"
+        )
+    row = candidates[0]
+    return {
+        "schema_version": "1.0",
+        "status": "PASS_HASH_BOUND_RERUN_CONTEXT",
+        "incident_id": row["incident_id"],
+        "incident_key": row["idempotency_key"],
+        "failed_run_id": row["failed_run_id"],
+        "attempt_count": row["attempt_count"],
+        "code_sha": row["code_sha"],
+        "publish_allowed": False,
+    }
 
 
 def _change_is_relevant(component: str, files: Sequence[str]) -> bool:
@@ -832,7 +1163,17 @@ def run_github_controller(
     workflow_run_id = context.get("run_id")
     workflow_run_attempt = context.get("run_attempt")
     active_runs = api.active_pipeline_runs()
-    successful_ids = {str(row["incident_id"]): row for row in successes}
+    successful_states: dict[tuple[str, str], Mapping[str, Any]] = {}
+    successful_state_order: dict[tuple[str, str], tuple[datetime, bytes]] = {}
+    for row in successes:
+        key = (str(row["incident_id"]), str(row["incident_idempotency_key"]))
+        order = (
+            parse_aware(row["completed_at"], "recovery success completed_at"),
+            canonical_json_bytes(row),
+        )
+        if key not in successful_state_order or order > successful_state_order[key]:
+            successful_states[key] = row
+            successful_state_order[key] = order
     outputs: list[dict[str, Any]] = []
     state_rows: list[dict[str, Any]] = []
     selected = _latest_incidents(incidents)
@@ -840,6 +1181,15 @@ def run_github_controller(
         selected = [
             row for row in selected if str(row["failed_run_id"]) == str(workflow_run_id)
         ]
+        retriable_for_run = [
+            row
+            for row in selected
+            if validate_incident(row, policy=policy)["retriable"] is True
+        ]
+        if len(retriable_for_run) > 1:
+            raise RecoveryError(
+                "pipeline workflow event has ambiguous retriable incidents for one run"
+            )
     elif workflow_name == CI_WORKFLOW_NAME:
         selected = [row for row in selected if row["error_class"] == "deterministic_code"]
     if incident_id is not None:
@@ -849,7 +1199,12 @@ def run_github_controller(
 
     for incident in selected[:MAX_INCIDENTS_PER_PASS]:
         row = validate_incident(incident, policy=policy)
-        if row["incident_id"] in successful_ids:
+        success = successful_states.get(
+            (str(row["incident_id"]), str(row["idempotency_key"]))
+        )
+        if success is not None and parse_aware(
+            success["completed_at"], "recovery success completed_at"
+        ) >= parse_aware(row["last_seen_at"], "last_seen_at"):
             resolved = resolve_incident(row, now=now, policy=policy)
             closed = _close_alert(api, str(row["fingerprint"]))
             state_rows.append(resolved)
@@ -982,6 +1337,7 @@ def run_github_controller(
                 inputs = {
                     "mode": "resume",
                     "incident_id": str(row["incident_id"]),
+                    "incident_key": str(row["idempotency_key"]),
                     "checkpoint": str(row.get("checkpoint_id") or ""),
                     "slot_id": "main_1500",
                 }
@@ -1101,28 +1457,56 @@ def workflow_event_context(event_name: str, event: Mapping[str, Any]) -> dict[st
 
 
 def build_success_receipt(
-    *, incident_id: Any, completed_at: datetime, run_url: Any, code_sha: Any
+    *,
+    incident_id: Any,
+    incident_key: Any,
+    completed_at: datetime,
+    repository: Any,
+    workflow_path: Any,
+    run_id: Any,
+    run_attempt: Any,
+    run_url: Any,
+    code_sha: Any,
 ) -> dict[str, Any]:
     incident = str(incident_id or "")
     sha = str(code_sha or "")
     url = str(run_url or "")
+    key = str(incident_key or "").casefold()
+    repo = str(repository or "")
+    workflow = str(workflow_path or "")
+    normalized_run_id = str(run_id or "")
     if not _INCIDENT_ID_RE.fullmatch(incident):
         raise RecoveryError("recovery success incident_id is invalid")
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise RecoveryError("recovery success code_sha is invalid")
+    if not _SHA256_RE.fullmatch(key):
+        raise RecoveryError("recovery success incident key is invalid")
+    if not _REPOSITORY_RE.fullmatch(repo):
+        raise RecoveryError("recovery success repository is invalid")
+    if workflow != PIPELINE_WORKFLOW_PATH:
+        raise RecoveryError("recovery success workflow path is invalid")
+    if not re.fullmatch(r"[1-9][0-9]*", normalized_run_id):
+        raise RecoveryError("recovery success run_id is invalid")
+    if type(run_attempt) is not int or not 1 <= run_attempt <= 100:
+        raise RecoveryError("recovery success run_attempt is invalid")
     parsed_url = urlsplit(url)
     if (
         parsed_url.scheme != "https"
         or parsed_url.hostname != "github.com"
-        or "/actions/runs/" not in parsed_url.path
+        or url != f"https://github.com/{repo}/actions/runs/{normalized_run_id}"
         or parsed_url.query
         or parsed_url.fragment
     ):
         raise RecoveryError("recovery success run_url is invalid")
     return {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "incident_id": incident,
+        "incident_idempotency_key": key,
         "completed_at": completed_at.astimezone(timezone.utc).isoformat(),
+        "repository": repo,
+        "workflow_path": workflow,
+        "run_id": normalized_run_id,
+        "run_attempt": run_attempt,
         "run_url": url,
         "code_sha": sha,
     }
@@ -1187,10 +1571,25 @@ def parser() -> argparse.ArgumentParser:
 
     success = commands.add_parser("create-success-receipt")
     success.add_argument("--incident-id", required=True)
+    success.add_argument("--incident-key", required=True)
+    success.add_argument("--repository", required=True)
+    success.add_argument("--workflow-path", required=True)
+    success.add_argument("--run-id", required=True)
+    success.add_argument("--run-attempt", type=int, required=True)
     success.add_argument("--run-url", required=True)
     success.add_argument("--code-sha", required=True)
     success.add_argument("--completed-at")
     success.add_argument("--output", type=Path, required=True)
+
+    rerun_success = commands.add_parser("resolve-rerun-success-context")
+    rerun_success.add_argument("--repository", required=True)
+    rerun_success.add_argument("--token-env", default="GITHUB_TOKEN")
+    rerun_success.add_argument("--default-ref", default="main")
+    rerun_success.add_argument("--run-id", required=True)
+    rerun_success.add_argument("--run-attempt", type=int, required=True)
+    rerun_success.add_argument("--code-sha", required=True)
+    rerun_success.add_argument("--output", type=Path, required=True)
+    rerun_success.add_argument("--github-output", type=Path)
 
     github = commands.add_parser("github-control")
     github.add_argument("--repository", required=True)
@@ -1286,13 +1685,34 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "create-success-receipt":
             result = build_success_receipt(
                 incident_id=args.incident_id,
+                incident_key=args.incident_key,
                 completed_at=_now(args.completed_at),
+                repository=args.repository,
+                workflow_path=args.workflow_path,
+                run_id=args.run_id,
+                run_attempt=args.run_attempt,
                 run_url=args.run_url,
                 code_sha=args.code_sha,
             )
             _safe_write_json(args.output, result)
-        elif args.command == "github-control":
+        elif args.command == "resolve-rerun-success-context":
             api = GitHubApi(args.repository, os.environ.get(args.token_env, ""))
+            incidents, _successes = discover_recovery_records(
+                api,
+                project_root=root,
+                default_ref=args.default_ref,
+            )
+            result = resolve_rerun_success_context(
+                incidents,
+                project_root=root,
+                run_id=args.run_id,
+                run_attempt=args.run_attempt,
+                code_sha=args.code_sha,
+            )
+            _safe_write_json(args.output, result)
+            if args.github_output:
+                _write_github_outputs(args.github_output, result)
+        elif args.command == "github-control":
             event = _safe_event(args.event_path)
             event_context = validate_controller_event(
                 event_name=args.event_name,
@@ -1300,6 +1720,26 @@ def main(argv: list[str] | None = None) -> int:
                 actor=args.actor,
                 repository=args.repository,
             )
+            if event_context.get("kind") == "ignored_ci":
+                result = {
+                    "schema_version": "1.0",
+                    "status": "SKIP_NON_DEFAULT_CI",
+                    "processed_at": _now(args.now).isoformat(),
+                    "processed_incident_count": 0,
+                    "active_run_count": 0,
+                    "trigger_kind": "ignored_ci",
+                    "skip_reason": event_context["skip_reason"],
+                    "decisions": [],
+                    "incidents": [],
+                    "claim_boundaries": {
+                        "ignored_ci_may_dispatch_recovery": False,
+                        "ignored_ci_may_modify_issue": False,
+                    },
+                }
+                _safe_write_json(args.output, result)
+                _print(result)
+                return 0
+            api = GitHubApi(args.repository, os.environ.get(args.token_env, ""))
             requested_incident_id = event_context.get("incident_id")
             requested_force_probe = bool(event_context.get("force_probe", False))
             if args.incident_id and args.incident_id != requested_incident_id:
@@ -1309,7 +1749,9 @@ def main(argv: list[str] | None = None) -> int:
             ci_passed = bool(event_context.get("ci_passed", False))
             smoke_passed = bool(event_context.get("smoke_passed", False))
             current_sha = str(event_context.get("head_sha") or args.current_code_sha)
-            incidents, successes = discover_recovery_records(api, project_root=root)
+            incidents, successes = discover_recovery_records(
+                api, project_root=root, default_ref=args.default_ref
+            )
             changed_files: tuple[str, ...] = ()
             if ci_passed:
                 bases = sorted(
