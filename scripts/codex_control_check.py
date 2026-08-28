@@ -267,6 +267,23 @@ def _github_event() -> dict[str, Any] | None:
     return value
 
 
+def _github_environment_matches_root(root: Path) -> bool:
+    """Use GitHub event context only for the checkout that owns it.
+
+    The unit suite builds independent Git repositories under temporary roots.
+    Ambient ``GITHUB_*`` values from the outer Actions checkout must not be
+    treated as authority for those repositories.
+    """
+
+    workspace = os.environ.get("GITHUB_WORKSPACE", "").strip()
+    if not workspace:
+        return False
+    try:
+        return Path(workspace).resolve() == root.resolve()
+    except OSError:
+        return False
+
+
 def _validate_git_state(
     root: Path,
     state: Mapping[str, Any],
@@ -302,9 +319,18 @@ def _validate_git_state(
     actual_branch = branch_result.stdout.strip() if branch_result.returncode == 0 else None
     report["actual_branch"] = actual_branch
 
-    github_head_ref = os.environ.get("GITHUB_HEAD_REF", "").strip()
-    github_ref = os.environ.get("GITHUB_REF", "").strip()
-    event = _github_event()
+    use_github_environment = _github_environment_matches_root(root)
+    github_head_ref = (
+        os.environ.get("GITHUB_HEAD_REF", "").strip()
+        if use_github_environment
+        else ""
+    )
+    github_ref = (
+        os.environ.get("GITHUB_REF", "").strip()
+        if use_github_environment
+        else ""
+    )
+    event = _github_event() if use_github_environment else None
     pull_request = event.get("pull_request") if isinstance(event, dict) else None
     event_head_sha: str | None = None
     if isinstance(pull_request, dict):
@@ -326,7 +352,11 @@ def _validate_git_state(
             f"GIT_WORK_BRANCH_MISMATCH:{observed_branch or 'DETACHED'}:{expected_branch}"
         )
 
-    github_sha = os.environ.get("GITHUB_SHA", "").strip()
+    github_sha = (
+        os.environ.get("GITHUB_SHA", "").strip()
+        if use_github_environment
+        else ""
+    )
     expected_checkout_sha = event_head_sha or github_sha
     if expected_checkout_sha and expected_checkout_sha != actual_head:
         errors.append(

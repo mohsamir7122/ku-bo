@@ -229,6 +229,9 @@ class CodexControlCheckTests(unittest.TestCase):
             with mock.patch.dict(
                 "os.environ",
                 {
+                    "GITHUB_WORKSPACE": str(root),
+                    "GITHUB_EVENT_PATH": "",
+                    "GITHUB_HEAD_REF": "",
                     "GITHUB_REF": f"refs/heads/{expected_branch}",
                     "GITHUB_SHA": head_sha,
                 },
@@ -263,6 +266,7 @@ class CodexControlCheckTests(unittest.TestCase):
             with mock.patch.dict(
                 "os.environ",
                 {
+                    "GITHUB_WORKSPACE": str(root),
                     "GITHUB_EVENT_PATH": str(event_path),
                     "GITHUB_HEAD_REF": expected_branch,
                     "GITHUB_REF": "refs/pull/1/merge",
