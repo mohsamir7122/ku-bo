@@ -5,7 +5,7 @@ Canonical machine-readable control:
 
 ```text
 TASK_ID: KU-BO-2026-08-28-READINESS-CANARY
-STATUS: IN_PROGRESS
+STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
 CONTROL_STATE_FILE: config/codex_control_state.json
 CONTROL_BASE_BRANCH: main
@@ -107,3 +107,16 @@ recommendation, or execute a trade.
 - Missing official identity, authority, rights, durable state, or usable source
   evidence must remain a blocker or yield `ABSTAIN / NO-TRADE`.
 - Do not merge while this control surface says `MERGE_ALLOWED: NO`.
+
+## Completion record
+
+The bounded task completed on 2026-08-28 in Draft PR #29. Exact implementation
+head `8b47a4c2a73c002e8f9d2f4deb8437c2677a663b` passed CI run
+`33180204416`. Checkpoint canary run `33178972634` passed. The single authorized
+access-only canary, run `33178972676`, stopped truthfully at
+`BLOCKED_ACCESS_ONLY_CANARY` with `SOURCE_STATE_ERROR`, produced no admitted
+market evidence, and remained `ABSTAIN / NO-TRADE`.
+
+Task completion does not authorize merge, automatic schedules, production
+collection, or closure of Issue #28. The blockers and claim boundaries above
+remain active.

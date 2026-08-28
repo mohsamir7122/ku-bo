@@ -9,7 +9,7 @@ Canonical machine-readable control:
 
 ```text
 task:                 KU-BO-2026-08-28-READINESS-CANARY
-status:               IN_PROGRESS
+status:               COMPLETED
 repository:           mohsamir7122/ku-bo
 base branch:          main
 base SHA:             8860989f6a2affdc66bc790f639757c9a897f353
@@ -48,12 +48,19 @@ longer active control.
 
 ## Active scope
 
-The current branch repairs repository readiness, proves only the bounded
-`GITHUB_ARTIFACT_JOURNAL` checkpoint canary path, and may attempt one manually
-invoked access canary. Automatic schedules are disabled or absent. Issue #28
-remains open until separately reviewed production wiring and genuine cross-run
-persistence evidence exist. A blocked or empty canary is a truthful result, not
-a failure to be hidden and not proof of `LIVE_OPERATIONAL` status.
+The bounded readiness-remediation task is complete in Draft PR #29. Implementation
+head `8b47a4c2a73c002e8f9d2f4deb8437c2677a663b` passed exact-head CI run
+`33180204416` across Python 3.11, 3.12, 3.13, and 3.14. Local validation passed
+2,596 tests, the clean installed-wheel eight-boundary check, bootstrap/control,
+schema, compile, secret, automation, and migration-preparation gates.
+
+Checkpoint canary run `33178972634` passed its bounded two-runner artifact-journal
+contract. The single authorized access-only canary run `33178972676` stopped at
+`BLOCKED_ACCESS_ONLY_CANARY` with `SOURCE_STATE_ERROR`; it emitted a sanitized
+receipt and `ABSTAIN / NO-TRADE`, not admitted market evidence. No retry was
+performed. Automatic schedules remain disabled or absent. Issue #28 remains open
+until separately reviewed production wiring and genuine cross-run persistence
+evidence exist. These outcomes do not prove `LIVE_OPERATIONAL` status.
 
 ## Governance state
 
@@ -66,3 +73,5 @@ a failure to be hidden and not proof of `LIVE_OPERATIONAL` status.
   this branch cannot claim it is enforced.
 - Draft PR #26 is separate checkpoint-v2 work and is not merged merely because it
   is clean or its CI is green.
+- Draft PR #29 contains this completed bounded task. It remains unmerged because
+  `MERGE_ALLOWED: NO`; completion closes the task record, not the merge boundary.
