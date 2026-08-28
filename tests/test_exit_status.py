@@ -36,9 +36,36 @@ class ExitStatusTests(unittest.TestCase):
             "CAPABILITY_EVIDENCE_AVAILABLE",
             "CAPABILITY_VERIFIED_ZERO_RESULT",
             "DRY_RUN_COMPLETE_NO_RECOMMENDATION",
+            "NO_PENDING_ACTIONS",
         ):
             with self.subTest(status=status):
                 self.assertFalse(is_blocking_status(status))
+
+    def test_missing_malformed_and_unknown_statuses_fail_closed(self) -> None:
+        for status in (
+            None,
+            "",
+            "PASS ",
+            "pass",
+            "BROKEN_RESULT",
+            "PASS_FUTURE_UNREGISTERED_STATUS",
+            0,
+            False,
+        ):
+            with self.subTest(status=status):
+                self.assertTrue(is_blocking_status(status))
+
+    def test_data_foundation_requires_primary_status_but_allows_absent_optional_statuses(
+        self,
+    ) -> None:
+        self.assertTrue(_report_is_blocking({}))
+        self.assertTrue(_report_is_blocking({"status": "BROKEN_RESULT"}))
+        self.assertFalse(_report_is_blocking({"status": "PASS"}))
+        self.assertTrue(
+            _report_is_blocking(
+                {"status": "PASS", "validation_status": "BROKEN_RESULT"}
+            )
+        )
 
     def test_data_foundation_nested_statuses_fail_closed(self) -> None:
         self.assertTrue(

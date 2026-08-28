@@ -1,0 +1,165 @@
+name: Checkpoint Artifact Journal Canary
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-checkpoint-artifact-journal-canary-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+  CANARY_WORKFLOW_FILE: checkpoint-artifact-journal-canary.yml
+
+jobs:
+  generation_1_runner:
+    name: Generation 1 - create and upload
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/codex/ku-bo-readiness-live-canary-v1') ||
+        (github.event_name == 'pull_request' &&
+          github.event.action == 'opened' &&
+          github.base_ref == 'main' &&
+          github.head_ref == 'codex/ku-bo-readiness-live-canary-v1' &&
+          github.event.pull_request.head.repo.full_name == github.repository)
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Create bounded generation 1 checkpoint
+        env:
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          now="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/checkpoint_artifact_journal_canary.py create-generation-1 \
+            --output runtime/generation-1 \
+            --repository "$REPOSITORY" \
+            --workflow "$CANARY_WORKFLOW_FILE" \
+            --workflow-ref "$WORKFLOW_REF" \
+            --workflow-sha "$WORKFLOW_SHA" \
+            --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" \
+            --head-sha "$HEAD_SHA" \
+            --now "$now" \
+            > runtime/generation-1-report.json
+          python scripts/checkpoint_artifact_journal_canary.py validate \
+            --root runtime/generation-1 \
+            --repository "$REPOSITORY" \
+            --workflow "$CANARY_WORKFLOW_FILE" \
+            --workflow-ref "$WORKFLOW_REF" \
+            --workflow-sha "$WORKFLOW_SHA" \
+            --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" \
+            --head-sha "$HEAD_SHA"
+      - name: State explicit canary boundaries
+        run: |
+          echo "CANARY_ONLY" >> "$GITHUB_STEP_SUMMARY"
+          echo "NOT_PRODUCTION_COORDINATOR" >> "$GITHUB_STEP_SUMMARY"
+          echo "This run does not change BLOCKED_CHECKPOINT_STORE or close an incident." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload immutable generation 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: checkpoint-journal-canary-${{ github.run_id }}-${{ github.run_attempt }}-g1
+          path: runtime/generation-1/
+          if-no-files-found: error
+          retention-days: 14
+
+  generation_2_runner:
+    name: Generation 2 - cross-runner reopen and CAS
+    needs: generation_1_runner
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/codex/ku-bo-readiness-live-canary-v1') ||
+        (github.event_name == 'pull_request' &&
+          github.event.action == 'opened' &&
+          github.base_ref == 'main' &&
+          github.head_ref == 'codex/ku-bo-readiness-live-canary-v1' &&
+          github.event.pull_request.head.repo.full_name == github.repository)
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Download generation 1 from the prior runner
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: checkpoint-journal-canary-${{ github.run_id }}-${{ github.run_attempt }}-g1
+          path: runtime/downloaded-generation-1
+      - name: Reopen, reject stale CAS and fencing, and create generation 2
+        env:
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          now="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/checkpoint_artifact_journal_canary.py create-generation-2 \
+            --previous runtime/downloaded-generation-1 \
+            --output runtime/generation-2 \
+            --repository "$REPOSITORY" \
+            --workflow "$CANARY_WORKFLOW_FILE" \
+            --workflow-ref "$WORKFLOW_REF" \
+            --workflow-sha "$WORKFLOW_SHA" \
+            --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" \
+            --head-sha "$HEAD_SHA" \
+            --now "$now" \
+            > runtime/generation-2-report.json
+          python scripts/checkpoint_artifact_journal_canary.py validate-chain \
+            --previous runtime/downloaded-generation-1 \
+            --current runtime/generation-2 \
+            --repository "$REPOSITORY" \
+            --workflow "$CANARY_WORKFLOW_FILE" \
+            --workflow-ref "$WORKFLOW_REF" \
+            --workflow-sha "$WORKFLOW_SHA" \
+            --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" \
+            --head-sha "$HEAD_SHA"
+      - name: State explicit canary boundaries
+        run: |
+          echo "CANARY_ONLY" >> "$GITHUB_STEP_SUMMARY"
+          echo "NOT_PRODUCTION_COORDINATOR" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cross-runner artifact reopening is not a production durability claim." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload immutable generation 2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: checkpoint-journal-canary-${{ github.run_id }}-${{ github.run_attempt }}-g2
+          path: runtime/generation-2/
+          if-no-files-found: error
+          retention-days: 14

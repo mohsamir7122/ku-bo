@@ -19,6 +19,9 @@ from scripts.validate_private_predecessor_migration_control import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ACTIVE_CONTROL = json.loads(
+    (ROOT / "config/codex_control_state.json").read_text(encoding="utf-8")
+)
 
 
 class PrivatePredecessorMigrationControlTests(unittest.TestCase):
@@ -44,7 +47,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             self._copy_control(root)
             task_path = root / TASK
             task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                f"TASK_ID: {ACTIVE_CONTROL['task_id']}",
                 "TASK_ID: KU-BO-MIG-001",
                 1,
             )
@@ -74,10 +77,10 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
                 "CONTROL_BASE_BRANCH: main": (
                     "CONTROL_BASE_BRANCH: agent/ku-bo-016-codex-live-bootstrap"
                 ),
-                "CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499": (
+                f"CONTROL_BASE_SHA: {ACTIVE_CONTROL['control_base_sha']}": (
                     "CONTROL_BASE_SHA: 6e9ab870e727494d5eb9e1ec9fa98829d6391d68"
                 ),
-                "EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1": (
+                f"EXPECTED_NEW_BRANCH: {ACTIVE_CONTROL['work_branch']}": (
                     "EXPECTED_NEW_BRANCH: agent/private-predecessor-capability-migration-v1"
                 ),
                 "EXPECTED_PR_BASE: main": (
@@ -118,7 +121,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
             self._copy_control(root)
             task_path = root / TASK
             task_text = task_path.read_text(encoding="utf-8").replace(
-                "TASK_ID: KU-BO-2026-08-27-DAY1",
+                f"TASK_ID: {ACTIVE_CONTROL['task_id']}",
                 "TASK_ID: KU-BO-MIG-001",
                 1,
             )
@@ -135,7 +138,7 @@ class PrivatePredecessorMigrationControlTests(unittest.TestCase):
 
     def test_duplicate_task_metadata_keys_are_rejected(self) -> None:
         for key_line in (
-            "TASK_ID: KU-BO-2026-08-27-DAY1",
+            f"TASK_ID: {ACTIVE_CONTROL['task_id']}",
             "PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO",
         ):
             with self.subTest(key_line=key_line), tempfile.TemporaryDirectory() as directory:

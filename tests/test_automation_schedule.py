@@ -34,6 +34,18 @@ def _write(path: Path, payload: object) -> None:
 
 
 class AutomationScheduleTests(unittest.TestCase):
+    def _rejects_workflow(self, text: str, pattern: str | None = None) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "workflow.yml"
+            path.write_text(text, encoding="utf-8")
+            context = (
+                self.assertRaisesRegex(AutomationScheduleError, pattern)
+                if pattern is not None
+                else self.assertRaises(AutomationScheduleError)
+            )
+            with context:
+                validate_automation_schedule(ROOT, workflow_path=path)
+
     def test_repository_schedule_and_workflow_pass_locked_contract(self) -> None:
         report = validate_automation_schedule(ROOT)
         self.assertEqual(report["status"], "PASS_SCHEDULE_CONTRACT")
@@ -191,10 +203,20 @@ class AutomationScheduleTests(unittest.TestCase):
                 self.assertNotIn("schedule:", legacy)
                 self.assertIn("workflow_dispatch:", legacy)
 
-    def test_background_backfill_cron_is_separate_from_live_slots(self) -> None:
+    def test_legacy_contract_workflow_installs_yaml_parser_exactly(self) -> None:
+        legacy = (
+            ROOT / ".github" / "workflows" / "kuwait-market-ai.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "python -m pip install --disable-pip-version-check -e . PyYAML==6.0.3",
+            legacy,
+        )
+
+    def test_background_backfill_is_planned_but_not_activated(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        self.assertEqual(workflow.count('cron: "23 */2 * * *"'), 1)
+        self.assertNotIn("cron:", workflow)
         self.assertIn("backfill_gate:", workflow)
+        self.assertIn("if: ${{ false }}", workflow)
         self.assertIn("BLOCKED_CHECKPOINT_STORE", workflow)
         self.assertIn("schedule_active_claim=false", workflow)
 
@@ -222,13 +244,80 @@ class AutomationScheduleTests(unittest.TestCase):
 
     def test_workflow_cron_drift_is_rejected(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8").replace(
-            'cron: "0 6 * * 0-4"', 'cron: "1 6 * * 0-4"', 1
+            "  workflow_dispatch:\n",
+            '  schedule:\n    - cron: "1 6 * * 0-4"\n  workflow_dispatch:\n',
+            1,
         )
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "workflow.yml"
-            path.write_text(text, encoding="utf-8")
-            with self.assertRaisesRegex(AutomationScheduleError, "cron order"):
-                validate_automation_schedule(ROOT, workflow_path=path)
+        self._rejects_workflow(text, "must not activate cron")
+
+    def test_every_yaml_schedule_spelling_is_rejected(self) -> None:
+        original = WORKFLOW.read_text(encoding="utf-8")
+        trigger_spellings = (
+            "  schedule:\n    - cron: '1 6 * * 0-4'\n",
+            "  schedule :\n    - cron: 1 6 * * 0-4\n",
+            '  "schedule": [{cron: "1 6 * * 0-4"}]\n',
+            "  schedule: [{cron: '1 6 * * 0-4'}]\n",
+        )
+        for trigger in trigger_spellings:
+            with self.subTest(trigger=trigger.strip()):
+                text = original.replace("on:\n", f"on:\n{trigger}", 1)
+                self._rejects_workflow(text, "must not activate cron")
+
+    def test_inline_on_mapping_with_schedule_is_rejected(self) -> None:
+        original = WORKFLOW.read_text(encoding="utf-8")
+        before_on, after_on = original.split("on:\n", 1)
+        _, after_triggers = after_on.split("\npermissions:\n", 1)
+        inline = (
+            f"{before_on}on: {{workflow_dispatch: {{}}, repository_dispatch: {{types: "
+            "[market-recovery-request]}, schedule: [{cron: '1 6 * * 0-4'}]}\n\n"
+            f"permissions:\n{after_triggers}"
+        )
+        self._rejects_workflow(inline, "must not activate cron")
+
+    def test_duplicate_trigger_key_is_rejected_fail_closed(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "  repository_dispatch:\n",
+            "  workflow_dispatch: {}\n  repository_dispatch:\n",
+            1,
+        )
+        self._rejects_workflow(text, "valid unique-key YAML")
+
+    def test_unexpected_trigger_with_noncanonical_spacing_is_rejected(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "  repository_dispatch:\n", "  push : {branches: [main]}\n  repository_dispatch:\n", 1
+        )
+        self._rejects_workflow(text, "workflow triggers")
+
+    def test_validator_dependency_install_must_be_exact_and_pinned(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "PyYAML==6.0.3", "PyYAML>=6", 1
+        )
+        self._rejects_workflow(text, "run bodies")
+
+    def test_gate_run_body_mutation_is_rejected(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "            validate-event \\\n",
+            "            validate-policy \\\n",
+            1,
+        )
+        self.assertNotEqual(text, WORKFLOW.read_text(encoding="utf-8"))
+        self._rejects_workflow(text, "run bodies")
+
+    def test_job_guard_mutation_is_rejected(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "needs.gate.outputs.run_collection == 'true'",
+            "needs.gate.outputs.run_collection != 'true'",
+            1,
+        )
+        self._rejects_workflow(text, "skeleton")
+
+    def test_arbitrary_sha_pinned_action_is_not_allowlisted(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8").replace(
+            "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "attacker/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            1,
+        )
+        self._rejects_workflow(text, "not allowlisted")
 
 
 if __name__ == "__main__":

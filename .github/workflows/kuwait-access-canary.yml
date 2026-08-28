@@ -1,0 +1,139 @@
+name: Kuwait Public Access Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_id:
+        description: Fixed public source to probe once
+        required: true
+        default: kcc_maqasa_official
+        type: choice
+        options:
+          - kcc_maqasa_official
+          - boursa_reports_archive
+      confirm_no_trade:
+        description: Confirm access-only execution with no market evidence or trade
+        required: true
+        default: true
+        type: boolean
+  pull_request:
+    branches: [main]
+    types: [opened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubo-kuwait-public-access-canary
+  cancel-in-progress: false
+
+jobs:
+  access_canary:
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/codex/ku-bo-readiness-live-canary-v1') ||
+      (github.event_name == 'pull_request' &&
+      github.event.action == 'opened' &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.ref == 'codex/ku-bo-readiness-live-canary-v1' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.draft == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CANARY_SOURCE_ID: ${{ github.event_name == 'pull_request' && 'kcc_maqasa_official' || inputs.source_id }}
+      CANARY_CONFIRM_NO_TRADE: ${{ github.event_name == 'pull_request' && 'true' || inputs.confirm_no_trade }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install pinned workflow-validator dependency
+        run: python -m pip install --disable-pip-version-check PyYAML==6.0.3
+      - name: Validate bounded access-only workflow contract
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python - <<'PY'
+          from kubo.access_canary import validate_access_canary_workflow
+          report = validate_access_canary_workflow(".")
+          assert report["status"] == "PASS_ACCESS_CANARY_WORKFLOW_CONTRACT"
+          assert report["claim_boundaries"]["market_evidence_created"] is False
+          assert report["claim_boundaries"]["candidate_generation_invoked"] is False
+          PY
+      - name: Build one bounded public access plan
+        id: plan
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p runtime/private
+          planned_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          PYTHONPATH=src python -m kubo --project-root . \
+            plan-source-access-probe \
+            --planned-at "$planned_at" \
+            --source "$CANARY_SOURCE_ID" \
+            --output runtime/private/source-probe-plan.json \
+            > runtime/private/plan-command-report.json \
+            2> runtime/private/plan-command-error.log
+      - name: Execute one credential-free public access probe
+        id: probe
+        if: ${{ steps.plan.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python -m kubo --project-root . \
+            execute-public-source-access-probe \
+            --plan runtime/private/source-probe-plan.json \
+            --output-root runtime/private/probe \
+            > runtime/private/probe-execution-report.json \
+            2> runtime/private/probe-execution-error.log
+      - name: Reopen bytes and create sanitized no-trade audit
+        id: audit
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python scripts/validate_kuwait_access_canary.py \
+            --project-root . \
+            --source-id "$CANARY_SOURCE_ID" \
+            --confirm-no-trade "$CANARY_CONFIRM_NO_TRADE" \
+            --plan runtime/private/source-probe-plan.json \
+            --probe runtime/private/probe/access-probe.json \
+            --execution-report runtime/private/probe-execution-report.json \
+            --output-root runtime/public
+      - name: Write sanitized access-only summary
+        if: always()
+        run: |
+          {
+            echo "ACCESS_ONLY_CANARY"
+            echo "NO-TRADE"
+            if [[ -f runtime/public/canary-audit.json ]]; then
+              echo '```json'
+              cat runtime/public/canary-audit.json
+              echo '```'
+            else
+              echo '{"status":"BLOCKED_ACCESS_ONLY_CANARY","candidate_count":0,"no_trade":true}'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload sanitized plan receipt and audit only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kuwait-access-canary-${{ env.CANARY_SOURCE_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/public/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve truthful canary result
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: |
+          if [[ "$AUDIT_OUTCOME" != "success" ]]; then
+            echo "NO-TRADE"
+            exit 2
+          fi
+          echo "PASS_ACCESS_ONLY_CANARY"
+          echo "NO-TRADE"

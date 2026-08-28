@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "source_of_truth": true,
+  "updated_at_utc": "2026-08-28T14:40:05Z",
+  "task_id": "KU-BO-2026-08-28-READINESS-CANARY",
+  "status": "COMPLETED",
+  "repository": "mohsamir7122/ku-bo",
+  "control_base_branch": "main",
+  "control_base_sha": "8860989f6a2affdc66bc790f639757c9a897f353",
+  "work_branch": "codex/ku-bo-readiness-live-canary-v1",
+  "pr_mode": "DRAFT",
+  "scope": "READINESS_REMEDIATION_AND_MANUAL_FAIL_CLOSED_CANARY",
+  "permissions": {
+    "merge_allowed": false,
+    "force_push_allowed": false,
+    "permanent_delete_allowed": false,
+    "real_data_commit_allowed": false,
+    "private_conversation_commit_allowed": false,
+    "model_training_allowed": false,
+    "real_backtest_allowed": false,
+    "automatic_schedules_allowed": false,
+    "manual_canary_allowed": true,
+    "financial_execution_allowed": false
+  },
+  "claim_boundaries": {
+    "live_operational_claim_allowed": false,
+    "predictive_claim_allowed": false,
+    "accuracy_claim_allowed": false,
+    "recommendation_claim_allowed": false
+  },
+  "manual_canary": {
+    "mode": "MANUAL_ONLY_FAIL_CLOSED",
+    "maximum_active_securities": 1,
+    "output_policy": "PRIVATE_OR_EPHEMERAL_NOT_COMMITTED",
+    "success_ceiling": "BOUNDED_RUNTIME_EVIDENCE_ONLY"
+  },
+  "known_blockers": [
+    "BLOCKED_CHECKPOINT_STORE",
+    "ADMITTED_OFFICIAL_POINT_IN_TIME_UNIVERSE_MISSING",
+    "SIGNED_ISSUER_DOMAIN_TRUST_REGISTRY_MISSING",
+    "ADMITTED_LIVE_ADAPTERS_MISSING",
+    "SOURCE_RIGHTS_AND_RUNTIME_AUTHORITY_INCOMPLETE"
+  ]
+}

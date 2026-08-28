@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
@@ -9,6 +10,11 @@ from typing import Any, Iterable
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
+from .foundation_io import (
+    load_strict_json_object,
+    safe_regular_file,
+    strict_json_object,
+)
 from .hashing import hash_json, sha256_file
 from .provenance import evidence_packet_hash as compute_evidence_packet_hash
 from .runtime_trust import RuntimeTrustError, RuntimeTrustRegistry
@@ -98,11 +104,163 @@ EVIDENCE_SOURCE_CLASSES = frozenset(
     }
 )
 
+_RESEARCH_RUN_FIELDS = frozenset(
+    {
+        "schema_version",
+        "run_id",
+        "product_id",
+        "decision_at",
+        "timezone",
+        "scope",
+        "covered_universe_count",
+        "expected_universe_count",
+        "budget",
+        "usage",
+    }
+)
+_RESEARCH_BUDGET_FIELDS = frozenset(
+    {"max_requests", "max_raw_bytes", "max_wall_seconds"}
+)
+_RESEARCH_USAGE_FIELDS = frozenset({"requests", "raw_bytes", "wall_seconds"})
+_NETWORK_MANIFEST_FIELDS = frozenset({"schema_version", "artifacts"})
+_NETWORK_ARTIFACT_REQUIRED_FIELDS = frozenset(
+    {
+        "path",
+        "sha256",
+        "size_bytes",
+        "source_id",
+        "source_url",
+        "observed_at",
+        "capture_kind",
+    }
+)
+_RUNTIME_AUTHORITY_FIELDS = frozenset(
+    {
+        "registry_id",
+        "verified_domain",
+        "subject_id",
+        "security_codes",
+        "evidence_sha256",
+        "verified_at",
+    }
+)
+_UNIVERSE_FIELDS = frozenset(
+    {
+        "schema_version",
+        "reconciliation_status",
+        "membership_basis",
+        "membership_source_id",
+        "membership_raw_sha256",
+        "membership_as_of",
+        "expected_security_codes",
+        "covered_security_codes",
+        "securities",
+    }
+)
+_UNIVERSE_SECURITY_REQUIRED_FIELDS = frozenset(
+    {"security_code", "ticker", "valid_from", "valid_to"}
+)
+_SOURCE_OBSERVATIONS_FIELDS = frozenset({"schema_version", "sources"})
+_SOURCE_OBSERVATION_REQUIRED_FIELDS = frozenset(
+    {
+        "source_id",
+        "state",
+        "access_mode",
+        "attempted_at",
+        "query_status",
+        "roles_observed",
+        "qualified_items",
+        "zero_result",
+        "raw_sha256s",
+        "data_quality_flags",
+        "limitations",
+    }
+)
+_SOURCE_OBSERVATION_OPTIONAL_FIELDS = frozenset(
+    {
+        "entitlement_id",
+        "entitlement_evidence_sha256",
+        "enabled_for_run",
+        "activation_id",
+        "activation_evidence_sha256",
+    }
+)
+_FINDING_FIELDS = frozenset(
+    {
+        "finding_id",
+        "security_code",
+        "ticker",
+        "source_id",
+        "source_url",
+        "published_at",
+        "available_at",
+        "capture_mode",
+        "timing_grade",
+        "raw_sha256",
+        "evidence_roles",
+        "signal_kind",
+        "direction",
+        "strength",
+        "materiality",
+        "origin_id",
+        "event_key",
+        "claim_text",
+    }
+)
+
+
+def _exact_object(
+    value: Any,
+    *,
+    field: str,
+    required: frozenset[str],
+    optional: frozenset[str] = frozenset(),
+) -> dict[str, Any]:
+    """Require one explicitly versioned JSON object surface."""
+
+    if not isinstance(value, dict):
+        raise ValueError(f"{field} must be a JSON object")
+    actual = frozenset(value)
+    missing = sorted(required - actual)
+    unknown = sorted(actual - required - optional)
+    if missing or unknown:
+        details = []
+        if missing:
+            details.append("missing=" + ",".join(missing))
+        if unknown:
+            details.append("unknown=" + ",".join(unknown))
+        raise ValueError(
+            f"{field} has unknown or missing fields: {';'.join(details)}"
+        )
+    return value
+
+
+def _json_integer(
+    value: Any,
+    field: str,
+    *,
+    minimum: int | None = None,
+    maximum: int | None = None,
+) -> int:
+    """Apply JSON Schema integer semantics without accepting booleans/strings."""
+
+    if isinstance(value, bool):
+        raise ValueError(f"{field} must be a JSON integer")
+    if isinstance(value, int):
+        parsed = value
+    elif isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        parsed = int(value)
+    else:
+        raise ValueError(f"{field} must be a JSON integer")
+    if minimum is not None and parsed < minimum:
+        raise ValueError(f"{field} must be >= {minimum}")
+    if maximum is not None and parsed > maximum:
+        raise ValueError(f"{field} must be <= {maximum}")
+    return parsed
+
 
 def _load_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"{path.name} must contain a JSON object")
+    payload, _ = load_strict_json_object(path, field=path.name)
     return payload
 
 
@@ -872,7 +1030,12 @@ class SourceNetworkRunValidator:
             errors.append("MISSING_SECURITY_IDENTITY_RECEIPT")
             return False
         try:
-            payload = _load_json(path)
+            payload = _exact_object(
+                _load_json(path),
+                field="universe",
+                required=_UNIVERSE_FIELDS - {"securities"},
+                optional=frozenset({"securities"}),
+            )
             if payload.get("schema_version") != "3.0":
                 raise ValueError("unsupported universe schema")
             if payload.get("reconciliation_status") != "EXACT":
@@ -902,8 +1065,12 @@ class SourceNetworkRunValidator:
             kuwait_tz = ZoneInfo(contract.timezone)
             decision_day = contract.decision_at.astimezone(kuwait_tz).date()
             for index, row in enumerate(identity_rows):
-                if not isinstance(row, dict):
-                    raise ValueError(f"securities[{index}] is not an object")
+                row = _exact_object(
+                    row,
+                    field=f"securities[{index}]",
+                    required=_UNIVERSE_SECURITY_REQUIRED_FIELDS,
+                    optional=frozenset({"isin"}),
+                )
                 code = str(row.get("security_code", "")).strip()
                 ticker = _ticker_alias(row.get("ticker"))
                 if not code.isdigit() or code in bindings:
@@ -1008,7 +1175,11 @@ class SourceNetworkRunValidator:
             errors.append("MISSING_RESEARCH_RUN")
             return None
         try:
-            payload = _load_json(path)
+            payload = _exact_object(
+                _load_json(path),
+                field="research_run",
+                required=_RESEARCH_RUN_FIELDS,
+            )
             if payload.get("schema_version") != "3.0":
                 raise ValueError("unsupported research run schema")
             run_id = str(payload.get("run_id", "")).strip()
@@ -1022,24 +1193,38 @@ class SourceNetworkRunValidator:
             scope = str(payload.get("scope", ""))
             if scope not in SCOPES:
                 raise ValueError("invalid research scope")
-            expected = int(payload.get("expected_universe_count", 0))
-            covered = int(payload.get("covered_universe_count", 0))
-            if expected <= 0 or covered < 0 or covered > expected:
+            expected = _json_integer(
+                payload.get("expected_universe_count"),
+                "expected_universe_count",
+                minimum=1,
+            )
+            covered = _json_integer(
+                payload.get("covered_universe_count"),
+                "covered_universe_count",
+                minimum=0,
+            )
+            if covered > expected:
                 raise ValueError("invalid universe counts")
-            budget = payload.get("budget")
-            usage = payload.get("usage")
-            if not isinstance(budget, dict) or not isinstance(usage, dict):
-                raise ValueError("budget and usage are required")
+            budget = _exact_object(
+                payload.get("budget"),
+                field="budget",
+                required=_RESEARCH_BUDGET_FIELDS,
+            )
+            usage = _exact_object(
+                payload.get("usage"),
+                field="usage",
+                required=_RESEARCH_USAGE_FIELDS,
+            )
             budget_values: dict[str, int] = {}
             usage_values: dict[str, int] = {}
             for key in ("max_requests", "max_raw_bytes", "max_wall_seconds"):
-                budget_values[key] = int(budget.get(key, 0))
-                if budget_values[key] <= 0:
-                    raise ValueError(f"budget.{key} must be positive")
+                budget_values[key] = _json_integer(
+                    budget.get(key), f"budget.{key}", minimum=1
+                )
             for key in ("requests", "raw_bytes", "wall_seconds"):
-                usage_values[key] = int(usage.get(key, -1))
-                if usage_values[key] < 0:
-                    raise ValueError(f"usage.{key} must be non-negative")
+                usage_values[key] = _json_integer(
+                    usage.get(key), f"usage.{key}", minimum=0
+                )
             if any(usage_values[key] > budget_values["max_" + key] for key in ("requests", "raw_bytes", "wall_seconds")):
                 raise ValueError("research budget exceeded")
             return NetworkRunContract(
@@ -1072,7 +1257,11 @@ class SourceNetworkRunValidator:
         hashes: set[str] = set()
         seen_paths: set[str] = set()
         try:
-            payload = _load_json(path)
+            payload = _exact_object(
+                _load_json(path),
+                field="network_manifest",
+                required=_NETWORK_MANIFEST_FIELDS,
+            )
             if payload.get("schema_version") != "3.0":
                 raise ValueError("unsupported network manifest schema")
             rows = payload.get("artifacts")
@@ -1081,8 +1270,16 @@ class SourceNetworkRunValidator:
             for index, row in enumerate(rows):
                 prefix = f"artifact_{index}"
                 try:
-                    if not isinstance(row, dict):
-                        raise ValueError("not an object")
+                    if isinstance(row, dict) and "runtime_authority_verified" in row:
+                        raise ValueError(
+                            "structured runtime_authority is required; a bare boolean is not evidence"
+                        )
+                    row = _exact_object(
+                        row,
+                        field=f"artifact[{index}]",
+                        required=_NETWORK_ARTIFACT_REQUIRED_FIELDS,
+                        optional=frozenset({"runtime_authority"}),
+                    )
                     relative = safe_relative_path(row.get("path"), "path")
                     if not relative.parts or relative.parts[0] != "raw":
                         raise ValueError("artifact path must be inside raw/")
@@ -1094,7 +1291,9 @@ class SourceNetworkRunValidator:
                     digest = require_sha256(row.get("sha256"), "sha256")
                     if sha256_file(file_path) != digest:
                         raise ValueError("artifact hash mismatch")
-                    size = int(row.get("size_bytes", -1))
+                    size = _json_integer(
+                        row.get("size_bytes"), "size_bytes", minimum=0
+                    )
                     if size != file_path.stat().st_size:
                         raise ValueError("artifact size mismatch")
                     source_id = str(row.get("source_id", ""))
@@ -1122,6 +1321,11 @@ class SourceNetworkRunValidator:
                             raise ValueError(
                                 "structured runtime_authority is required; a bare boolean is not evidence"
                             )
+                        authority = _exact_object(
+                            authority,
+                            field=f"artifact[{index}].runtime_authority",
+                            required=_RUNTIME_AUTHORITY_FIELDS,
+                        )
                         registry_id = str(authority.get("registry_id", "")).strip()
                         authority_domain = str(authority.get("verified_domain", "")).strip().lower().rstrip(".")
                         authority_subject = str(authority.get("subject_id", "")).strip()
@@ -1253,7 +1457,11 @@ class SourceNetworkRunValidator:
         for artifact in artifacts:
             artifact_map.setdefault((artifact.source_id, artifact.sha256), []).append(artifact)
         try:
-            payload = _load_json(path)
+            payload = _exact_object(
+                _load_json(path),
+                field="source_observations",
+                required=_SOURCE_OBSERVATIONS_FIELDS,
+            )
             if payload.get("schema_version") != "3.0":
                 raise ValueError("unsupported source observation schema")
             rows = payload.get("sources")
@@ -1262,8 +1470,12 @@ class SourceNetworkRunValidator:
             for index, row in enumerate(rows):
                 prefix = f"source_observation_{index}"
                 try:
-                    if not isinstance(row, dict):
-                        raise ValueError("not an object")
+                    row = _exact_object(
+                        row,
+                        field=f"source_observation[{index}]",
+                        required=_SOURCE_OBSERVATION_REQUIRED_FIELDS,
+                        optional=_SOURCE_OBSERVATION_OPTIONAL_FIELDS,
+                    )
                     source_id = str(row.get("source_id", ""))
                     if source_id not in self.catalog.sources or source_id in seen:
                         raise ValueError("unknown or duplicate source_id")
@@ -1285,7 +1497,11 @@ class SourceNetworkRunValidator:
                     roles_observed = frozenset(str(item) for item in row.get("roles_observed", []))
                     if not roles_observed or roles_observed - source.roles:
                         raise ValueError("roles_observed outside source contract")
-                    qualified_items = int(row.get("qualified_items", -1))
+                    qualified_items = _json_integer(
+                        row.get("qualified_items"),
+                        "qualified_items",
+                        minimum=0,
+                    )
                     zero_result = strict_bool(row.get("zero_result"), "zero_result")
                     if qualified_items < 0 or zero_result != (query_status == "ZERO_RESULT"):
                         raise ValueError("invalid qualified_items or zero_result")
@@ -1428,14 +1644,22 @@ class SourceNetworkRunValidator:
             artifact_map.setdefault((artifact.source_id, artifact.sha256), []).append(artifact)
         findings: list[ResearchFinding] = []
         seen: set[str] = set()
-        for index, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
+        try:
+            findings_content = safe_regular_file(path, field="findings.jsonl")
+        except (OSError, TypeError, ValueError) as exc:
+            errors.append(f"INVALID_FINDINGS:{exc}")
+            return []
+        for index, line in enumerate(findings_content.splitlines()):
             if not line.strip():
                 continue
             prefix = f"finding_{index}"
             try:
-                row = json.loads(line)
-                if not isinstance(row, dict):
-                    raise ValueError("not an object")
+                row = _exact_object(
+                    strict_json_object(line, f"findings[{index}]"),
+                    field=f"findings[{index}]",
+                    required=_FINDING_FIELDS,
+                    optional=frozenset({"fact_type"}),
+                )
                 finding_id = str(row.get("finding_id", "")).strip()
                 if not finding_id or finding_id in seen:
                     raise ValueError("duplicate or empty finding_id")

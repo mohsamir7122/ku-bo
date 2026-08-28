@@ -1,12 +1,17 @@
-# CURRENT TASK — KU-BO-2026-08-27-DAY1
+# CURRENT TASK — KU-BO-2026-08-28-READINESS-CANARY
+
+Canonical machine-readable control:
+`config/codex_control_state.json`.
 
 ```text
-TASK_ID: KU-BO-2026-08-27-DAY1
-STATUS: IN_PROGRESS
+TASK_ID: KU-BO-2026-08-28-READINESS-CANARY
+STATUS: COMPLETED
 REPOSITORY: mohsamir7122/ku-bo
+CONTROL_STATE_FILE: config/codex_control_state.json
 CONTROL_BASE_BRANCH: main
-CONTROL_BASE_SHA: 93e4cab09915a4a4b58455d3cc45eb48be4bd499
-EXPECTED_NEW_BRANCH: codex/kuwait-market-ai-day1-v1
+CONTROL_BASE_SHA: 8860989f6a2affdc66bc790f639757c9a897f353
+EXPECTED_NEW_BRANCH: codex/ku-bo-readiness-live-canary-v1
+EXPECTED_PR_BASE: main
 EXPECTED_PR_MODE: DRAFT
 MERGE_ALLOWED: NO
 FORCE_PUSH_ALLOWED: NO
@@ -15,122 +20,103 @@ REAL_DATA_COMMIT_ALLOWED: NO
 PRIVATE_CONVERSATION_COMMIT_ALLOWED: NO
 MODEL_TRAINING_ALLOWED: NO
 REAL_BACKTEST_ALLOWED: NO
-HISTORICAL_CORPUS_COLLECTION_REQUESTED: YES
-BLOCKED_ON: LIVE_SCHEDULE_SECRETS_AND_VARIABLES_MISSING; REAL_DATA_AND_EVALUATION_GATES_NOT_YET_SATISFIED
-CONTROL_FILES: docs/codex/HANDOFF_TEMPLATE.md; docs/codex/USER_DECISIONS.md
-MERGE_GUARD: Do not merge until exact-head CI and every Section 8 gate pass.
-MASTER_CONTRACT: /root/codexphone/workspaces/CODEX_MARKET_AI_MASTER_EXECUTION_CONTRACT_AR.md (runtime-local; not committed)
+AUTOMATIC_SCHEDULES_ALLOWED: NO
+MANUAL_CANARY_ALLOWED: YES
+FINANCIAL_EXECUTION_ALLOWED: NO
+LIVE_OPERATIONAL_CLAIM_ALLOWED: NO
+PREDICTIVE_CLAIM_ALLOWED: NO
+PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO
+PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
+GOOGLE_DRIVE_RUNTIME_ACCESS: NO
 MIGRATION_CONTROL_REFERENCE: KU-BO-MIG-001
 MIGRATION_CONTROL_BRANCH_REFERENCE: agent/private-predecessor-capability-migration-v1
 MIGRATION_CONTROL_EXPECTED_PR_BASE: agent/ku-bo-016-codex-live-bootstrap
-EXPECTED_PR_BASE: main
-PRIVATE_SOURCE_REPOSITORY_READ_ALLOWED: NO
-PRIVATE_RUNTIME_DATA_ACCESS_ALLOWED: NO
-GOOGLE_DRIVE_RUNTIME_ACCESS: READ_ONLY_PREFLIGHT_VERIFICATION_ONLY
 MIGRATION_FIELDS_APPLICABILITY: HISTORICAL_REFERENCE_ONLY_UNLESS_TASK_ID_IS_KU-BO-MIG-001
+BLOCKED_ON: BLOCKED_CHECKPOINT_STORE; ADMITTED_OFFICIAL_POINT_IN_TIME_UNIVERSE_MISSING; SIGNED_ISSUER_DOMAIN_TRUST_REGISTRY_MISSING; ADMITTED_LIVE_ADAPTERS_MISSING; SOURCE_RIGHTS_AND_RUNTIME_AUTHORITY_INCOMPLETE
+CONTROL_FILES: docs/codex/HANDOFF_TEMPLATE.md; docs/codex/USER_DECISIONS.md
+MERGE_GUARD: Do not merge until the exact candidate head passes every applicable gate and a separate merge boundary is authorized.
 ```
 
 ## Mission
 
-Execute day one of the master Kuwait-first market research contract on a fresh
-branch. Establish a reproducible pre-flight baseline, reconcile repository and
-legacy capabilities, preserve provenance and Git history, repair the active
-control surface, and run the first deterministic dry work without claiming
-real market coverage or predictive performance.
+Repair the repository-readiness and control defects observed after PR #25 merged,
+harden and prove the bounded `GITHUB_ARTIFACT_JOURNAL` checkpoint canary path, and
+attempt one credential-free, access-only canary after its own narrow safety
+contract passes. The probe is not admitted market evidence and does not bypass
+any production admission gate. This work does not by itself provide a
+production-durable store or close Issue #28. `BLOCKED_CHECKPOINT_STORE` remains
+until production wiring and cross-run evidence pass a separate review.
 
-## Mobile Codex CLI delegation
-
-The owner has delegated the remaining repository repair and project continuation
-to Codex CLI running in the existing Android Termux/Ubuntu environment. ChatGPT's
-handoff is intentionally small; Codex CLI owns the inspect, repair, test, publish,
-conditional-merge, checkpoint, and resume cycles.
-
-Before any merge, Codex CLI must perform a fresh read-only audit of `main`, every
-remote branch, every open PR, exact SHAs, dependencies, mergeability, and CI. An
-unmerged branch is not automatically missing work: classify it as `MERGE_CANDIDATE`,
-`ALREADY_INTEGRATED`, `SUPERSEDED`, `BLOCKED`, or `USER_DECISION_REQUIRED`.
-Only useful non-duplicated engineering work may be repaired and merged, in
-dependency order, after its exact head passes all applicable acceptance gates.
-
-`MERGE_ALLOWED` remains `NO` during implementation and review. The separately
-recorded conditional authority in `KU-BO-MOBILE-CODEX-D01` may be exercised only
-at a proven merge boundary. It does not authorize force-push, history rewrite,
-deletion, gate weakening, secret exposure, private/licensed-data publication,
-paid access, scheduler activation, training on unadmitted data, financial
-recommendations, or trading.
-
-The mobile delegation does not override a narrower open decision. In particular,
-`KU-BO-MIG-001` and its Draft PR remain `USER_DECISION_REQUIRED` and unmerged
-while `KU-BO-MIG-D02` is open and Gate 12 requires `MERGE_NOT_PERFORMED`.
-
-After repository consolidation, Codex CLI must create the next bounded task from
-the exact merged `main` and continue the security-by-security sequence. It must
-finish all terminal source receipts and one security seal before starting the
-next security, persist resumable checkpoints outside Git, and store real/private
-artifacts only under the authorized logical `AI Rebuild/04_Curated_Core/KU_BO`
-runtime boundary. The current Day-One task does not authorize private-runtime or
-Drive writes: the later task must record explicit write authority before creating
-any such checkpoint or artifact.
+This task may prove software behavior and bounded runtime evidence. It may not
+activate an automatic schedule, commit real data, train a model, run a real
+backtest, claim `LIVE_OPERATIONAL` or predictive performance, issue a financial
+recommendation, or execute a trade.
 
 ## Required sequence
 
-1. Record UTC/Kuwait timestamps, host/tool/resource/network checks, GitHub
-   authentication, repository state, pre-existing CI failures, and rollback
-   checkpoints.
-2. Audit `ku-bo` and its public refs. Audit `PRIVATE_PREDECESSOR_SOURCE`, the
-   Saudi target, or other private/archived repositories only if a later
-   `CURRENT_TASK.md` explicitly activates `KU-BO-MIG-001`; then follow its
-   migration plan, validator, exact-source handling, and narrower decisions.
-3. Keep private source locators, credentials, raw evidence, licensed bytes,
-   and Google Drive identifiers outside this public repository.
-4. Repair the task/branch control mismatch and retain every fail-closed claim
-   boundary.
-5. Run a deterministic synthetic dry-run and the applicable test, schema,
-   provenance, leakage, duplicate, missing-data, corporate-action, workflow,
-   source-failure, and secret checks.
-6. Prepare gated sequential GitHub Actions without activating schedules until
-   required secrets, variables, calendars, and dry-run gates are verified.
-7. Apply the owner-directed collection correction: make `security_code` the
-   outer unit of work, allow only one active security, exhaust the frozen
-   per-security source denominator, seal it, and only then start the next
-   security. Include an authority-bound official company website source for
-   every security and enumerate licensed, secondary, news, community, and
-   search-routing sources without promoting any of them to live status.
+1. Validate `config/codex_control_state.json`, the exact Git branch, current
+   `HEAD`, frozen base branch/SHA, ancestry, and cross-file status before changing
+   implementation code.
+2. Keep changes on `codex/ku-bo-readiness-live-canary-v1` and publish only a
+   Draft PR against `main`. Do not merge, force-push, delete history, or weaken a
+   fail-closed gate.
+3. Reconcile Issue #28 against the checkpoint artifact-journal canary contract.
+   Prove only the bounded canary behavior implemented here; a temporary runner
+   directory or uploaded test artifact must never be represented as a
+   production-durable store or as closure of Issue #28.
+4. Keep automatic schedules disabled or absent. The production market pipeline
+   must stop before admitted source collection whenever checkpoint, identity,
+   authority, rights, secrets, calendar, or adapter gates are incomplete.
+   Separately, the user-invoked Draft-PR opening may trigger one credential-free
+   access-only probe to the fixed public allowlist. It must not parse the response
+   into market evidence, create candidates, publish data, or invoke trading.
+5. The access-only canary must preserve exact receipt provenance and an explicit
+   `ABSTAIN / NO-TRADE` boundary. Raw bytes remain private and ephemeral; only a
+   sanitized receipt/audit may be uploaded, and no real artifact may enter Git.
+6. Run targeted tests, the complete relevant suite, control/bootstrap/security
+   checks, package validation, and exact-head CI. Record the exact outcomes
+   without converting a blocked canary into success.
+7. Write the final result with `docs/codex/HANDOFF_TEMPLATE.md` and keep
+   `docs/codex/USER_DECISIONS.md` as the decision authority.
 
 ## Acceptance gates
 
-1. The dated workout contains the contract-required files and truthful status.
-2. Every adopted capability is locked to repository, branch, PR, and exact
-   source SHA in runtime evidence and summarized without secrets.
-3. `git diff` is reviewed and contains no unintended files or credentials.
-4. Baseline and candidate tests are recorded; no gate is weakened.
-5. The dry-run produces a valid, replayable receipt and preserves failures.
-6. Exact-head CI is green on the candidate SHA before any merge consideration.
-7. Privacy, licensing, robots/access, temporal, provenance, and claim-boundary
-   checks pass.
-8. Rollback, status, handoff, and next-action records are current.
-9. The security-sequential contract rejects group-level processing, partial
-   universes, source substitution, unresolved source receipts, and starting a
-   second security before the first security seal. It records the official
-   company-site gap explicitly when no signed runtime authority binding exists.
+- The canonical JSON control and every active Markdown/JSON mirror agree.
+- The control validator rejects the wrong branch, a moved base ref, invalid
+  ancestry, unsafe permissions, and stale cross-file task identity.
+- The checkpoint artifact-journal canary passes its integrity, corruption,
+  concurrency, fencing, restore, and fail-closed configuration tests without a
+  production-durability claim.
+- Issue #28 remains open unless separately reviewed production wiring and genuine
+  cross-run persistence evidence are available.
+- Automatic schedules are disabled or absent and remain unauthorized.
+- At most one user-invoked access-only canary is attempted through the Draft-PR
+  opening. Its evidence states exactly where it stopped and never implies source
+  admission, market-wide, predictive, recommendation, or trading readiness.
+- No private source locator, credential, licensed byte, raw conversation, or real
+  runtime artifact enters Git.
+- The Draft PR exact head passes all applicable local checks and GitHub CI before
+  any later merge decision.
 
 ## Safety and non-claims
 
-- This remains a research and analysis system; it does not place orders or
-  move money.
-- No live source is promoted merely because it is catalogued or reachable.
-- Synthetic fixtures prove software behavior only, not prediction quality,
-  accuracy, full-market coverage, training completion, or live readiness.
-- An `EXACT` input universe proves exact agreement with its own expected codes;
-  it does not by itself prove that every Boursa Kuwait security is present.
-- The security-sequential coordinator accepts a separately admitted adapter;
-  this task does not authorize live source access, licensed bytes, or Drive
-  publication merely because the scheduling contract exists.
-- Do not bypass login, CAPTCHA, paywalls, robots controls, rate limits, or
-  licensing restrictions.
-- Do not merge, force-push, delete, expose secrets, or weaken gates while this
-  control surface says `MERGE_ALLOWED: NO`; the separate user decision permits
-  only a conditional merge after all contract gates pass.
+- `MANUAL_CANARY_ALLOWED: YES` authorizes only the bounded fail-closed attempt
+  described above; it is not automatic-scheduler authorization.
+- A green synthetic or canary run proves neither predictive skill nor an accuracy
+  rate.
+- Missing official identity, authority, rights, durable state, or usable source
+  evidence must remain a blocker or yield `ABSTAIN / NO-TRADE`.
+- Do not merge while this control surface says `MERGE_ALLOWED: NO`.
 
-Write the final result using `docs/codex/HANDOFF_TEMPLATE.md` and record the
-exact candidate SHA, CI, receipts, unresolved blockers, and status.
+## Completion record
+
+The bounded task completed on 2026-08-28 in Draft PR #29. Exact implementation
+head `8b47a4c2a73c002e8f9d2f4deb8437c2677a663b` passed CI run
+`33180204416`. Checkpoint canary run `33178972634` passed. The single authorized
+access-only canary, run `33178972676`, stopped truthfully at
+`BLOCKED_ACCESS_ONLY_CANARY` with `SOURCE_STATE_ERROR`, produced no admitted
+market evidence, and remained `ABSTAIN / NO-TRADE`.
+
+Task completion does not authorize merge, automatic schedules, production
+collection, or closure of Issue #28. The blockers and claim boundaries above
+remain active.
