@@ -133,6 +133,23 @@ PYTHONPATH=src python -m kubo.cli_v3 --project-root . \
 خيار سجل الثقة مطلوب عند وجود نتيجة موجبة أو`VERIFIED_ZERO` لمصدر حساس،
 ولا يلزم لإعادة فتح تشغيل كل مصادره الحساسة محجوبة بإيصالات صريحة.
 
+## Checkpoint v2 الاصطناعي
+
+يتحقق الأمر الآتي من السياسة المقفلة فقط ولا ينشئ مجلدًا أوCheckpoint:
+
+```bash
+PYTHONPATH=src python -m kubo.cli_v3 --project-root . \
+  validate-issuer-security-checkpoint-policy
+```
+
+تختبر الوحدة `kubo.issuer_security_checkpoint`، داخل مجلدات مؤقتة مولدة فقط،
+29 إيصال مصدر مرتبة في سبع موجات، وCAS يربط revision وgeneration وfencing token
+والمالك والبصمة السابقة، وإعادة فتح Manifest وكل Raw byte، والمصالحة، وختم HMAC
+نهائي. مفتاح الختم ومنحة التخزين يأتيان من Runtime ولا يثبتان في Git. منحة
+`runtime-storage-authority-v1` لا تكفي وحدها: `KU-BO-CHK-D01` مفتوح، ولا توجد
+سلطة كتابة خاصة أوDrive، Universe رسمي مقبول، Adapters حية، سجل ثقة وEntitlements،
+أوPhysical durable store. لذلك لا يبدأ سهم حقيقي ولا سهم ثانٍ.
+
 ## حدود الإثبات الحالية
 
 يعيد المدقق فتح Universe خارجيًا ويطابق بصمته وهويات Queue كاملة؛ لذلك لا تكفي

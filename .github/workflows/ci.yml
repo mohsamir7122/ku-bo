@@ -39,6 +39,13 @@ jobs:
             tests.test_codex_live_bootstrap \
             tests.test_champion_freeze \
             -v
+      - name: One-security checkpoint v2 synthetic and adversarial gates
+        run: |
+          python -m unittest \
+            tests.test_authenticated_runtime_storage \
+            tests.test_issuer_security_checkpoint \
+            tests.test_issuer_security_checkpoint_adversarial \
+            -v
       - name: Fail-closed Kuwait automation schedule contract
         run: |
           python scripts/validate_kuwait_automation_schedule.py --project-root .
@@ -149,6 +156,7 @@ jobs:
           "$installed_kubo" --help | grep -q "build-kuwait-research-bundle"
           "$installed_kubo" --help | grep -q "evaluate-forty-session-replay"
           "$installed_kubo" --help | grep -q "validate-source-quality-policy"
+          "$installed_kubo" --help | grep -q "validate-issuer-security-checkpoint-policy"
           "$installed_kubo" --help | grep -q "validate-source-fallback-policy"
           "$installed_kubo" --help | grep -q "plan-source-fallback"
           "$installed_kubo" --help | grep -q "validate-market-scope"
@@ -175,6 +183,15 @@ jobs:
           from kubo.factor9_admission import validate_factor9_admission_manifest
           from kubo.capability_parity import validate_predecessor_capability_parity
           from kubo.ku_bo_live_program import validate_ku_bo_live_program
+          from kubo.issuer_security_checkpoint import (
+              IssuerSecurityCheckpointStore,
+              checkpoint_cas,
+              validate_issuer_security_checkpoint_policy,
+          )
+          from kubo.authenticated_runtime_storage import (
+              load_runtime_storage_authority,
+              require_storage_grant,
+          )
           from kubo.live_dry_run import run_daily_dry_run, validate_live_dry_run
           from kubo.market_scope import validate_market_scope
           from kubo.portfolio_state import validate_portfolio_state
@@ -197,6 +214,11 @@ jobs:
           assert callable(validate_factor9_admission_manifest)
           assert callable(validate_predecessor_capability_parity)
           assert callable(validate_ku_bo_live_program)
+          assert callable(IssuerSecurityCheckpointStore)
+          assert callable(checkpoint_cas)
+          assert callable(validate_issuer_security_checkpoint_policy)
+          assert callable(load_runtime_storage_authority)
+          assert callable(require_storage_grant)
           assert callable(run_daily_dry_run)
           assert callable(validate_live_dry_run)
           assert callable(validate_market_scope)

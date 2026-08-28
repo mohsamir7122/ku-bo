@@ -78,6 +78,10 @@ Authority أوFinal Data Foundation Authority، ولذلك لا يفتح أي ق
 - `issuer-sequential-collection-policy.schema.json`: عقد المقام الثابت والموجات وترتيب سهم واحد نشط في كل مرة.
 - `issuer-sequential-collection-plan.schema.json`: خطة Queue مرتبطة بـUniverse خارجي وبـ29 محاولة مصدر لكل `security_code`.
 - `issuer-sequential-collection-run.schema.json`: إيصال اتساق داخلي لمحاولات الـAdapter وسلسلة Content hashes؛ لا يُعد توقيعًا أوإثباتًا لملفات Raw.
+- `issuer-security-checkpoint-v2.schema.json`: جيل Append-only لسهم اصطناعي واحد يثبت 29 خانة في سبع موجات وCAS كاملًا من دون تفويض Production.
+- `issuer-security-reconciliation.schema.json`: مصالحة مقام 29 إيصالًا بعد إعادة فتح كل Manifest وRaw fixture محتفظ به.
+- `issuer-security-terminal-seal.schema.json`: ختم HMAC نهائي يربط السهم والمصالحة وقائمة الإيصالات ويمنع تفويض سهم ثانٍ.
+- `runtime-storage-authority.schema.json`: منحة تخزين منطقية خارجية مصادق عليها ومقيدة بسهم واحد وعمليات محددة؛ وجود الـSchema لا يمنح سلطة كتابة.
 - `codex-live-bootstrap.schema.json`: عقد تسليم Codex المقفل، ومسارات AI Rebuild المنطقية، وبروتوكول 50/200 ثم 500-600، وترتيب التشغيل اليومي وحدود الادعاء.
 - `champion-freeze-manifest.schema.json`: عقد Champion سابق معتمد ومربوط ببصمات، يمنع Challenger أو اعتماد اليوم نفسه من تشغيل تقرير اليوم.
 

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mohsamir7122/ku-bo/schemas/runtime-storage-authority.schema.json",
+  "title": "KU-BO authenticated runtime storage authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audience",
+    "grant_id",
+    "subject_id",
+    "logical_root",
+    "allowed_subpaths",
+    "store_kind",
+    "market",
+    "security_codes",
+    "operations",
+    "issued_at",
+    "expires_at",
+    "authentication"
+  ],
+  "properties": {
+    "schema_version": {"const": "runtime-storage-authority-v1"},
+    "audience": {"const": "kubo-issuer-security-checkpoint"},
+    "grant_id": {"$ref": "#/$defs/identifier"},
+    "subject_id": {"$ref": "#/$defs/identifier"},
+    "logical_root": {"const": "AI Rebuild/04_Curated_Core/KU_BO"},
+    "allowed_subpaths": {
+      "const": [
+        "00_Manifests/Issuer_Security_Runs",
+        "02_Event_Evidence/Issuer_Security_Runs"
+      ]
+    },
+    "store_kind": {"const": "AUTHORIZED_FILESYSTEM"},
+    "market": {"const": "BOURSA_KUWAIT"},
+    "security_codes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9]+$"}
+    },
+    "operations": {
+      "const": ["READ_REOPEN", "CREATE_EXCLUSIVE", "APPEND_GENERATION"]
+    },
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "tag"],
+      "properties": {
+        "algorithm": {"const": "HMAC-SHA256"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "tag": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/-]*$"
+    }
+  }
+}

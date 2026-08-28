@@ -4,40 +4,41 @@ Status date: 2026-08-27
 
 Repository: `mohsamir7122/ku-bo`
 
-## Last validated implementation checkpoint
+## Current checkpoint-v2 task
 
 ```text
-working branch:                codex/kuwait-market-ai-day1-v1
-validated implementation head: 48d139ca7d7f496228f2909b3c2549c6a5cd96ad
-main:                          93e4cab09915a4a4b58455d3cc45eb48be4bd499
-ahead/behind main:             31 / 0
-worktree:                      clean
-current-branch PR:             Draft #25
-merge:                         not performed
-focused sequential tests:     PASS — 84/84
-recovery/ledger tests:         PASS — 38/38
-full local suite:              PASS — 2,512/2,512
-exact-head CI:                 PASS — run 33098426912, Python 3.11-3.14
-security-by-security contract: IMPLEMENTED_AND_TESTED_SYNTHETICALLY
-admitted live security runs:   0
-current research decision:     ABSTAIN
+base main:                    8860989f6a2affdc66bc790f639757c9a897f353
+working branch:               codex/one-security-checkpoint-v2
+committed head:               62991c6 (implementation not yet committed)
+Draft PR:                     #26 against main
+merge:                        prohibited by active task
+private runtime writes:       NOT AUTHORIZED
+live source access:           NOT AUTHORIZED
+production checkpoint:        BLOCKED
+PR #21 / KU-BO-MIG-D02:       OPEN Draft / OPEN decision / UNMERGED
 ```
 
-This block supersedes older `CI pending`, 2,243-test, and branch-orientation
-statements below. The branch proves the deterministic one-security/29-source
-contract, not live collection. The repository still lacks an admitted official
-point-in-time universe, signed issuer-domain trust registry, admitted live
-adapters, and security-aware durable checkpoint v2. Provisional runtime captures
-remain private/ignored and `CAPTURED_NOT_ADMITTED`; admitted company, event,
-training, backtest, prediction, and live-run counts remain zero.
+Day One PR #25 exact head `a9879b5c9a2eb63c553a3ba05035d9a6d05ff7f4`
+was merged under `KU-BO-MOBILE-CODEX-D01` as main
+`8860989f6a2affdc66bc790f639757c9a897f353`. Post-merge CI run
+`33102246889` passed on Python 3.11 through 3.14.
 
-The owner delegated repository reconciliation and later continuation to Codex CLI
-under `KU-BO-MOBILE-CODEX-D01`. `MERGE_ALLOWED:NO` remains the implementation
-default; the decision can be exercised only at a fully proven exact-head merge
-boundary. The green run above applies to implementation checkpoint `48d139c`;
-the later evidence-only control head must receive its own fresh exact-head CI.
+The active task adds a separate synthetic-only security checkpoint v2 for one
+numeric Kuwait `security_code`: 29 ordered source slots in seven waves,
+append-only CAS generations, reopened generated manifests/raw bytes, exact
+reconciliation, and an HMAC terminal seal. An independent review found
+additional authority, receipt-binding, source-domain/time, and crash-durability
+gaps after the first 102-test focused pass; those gaps are being repaired and
+all final gates remain pending. No real checkpoint, market capture, training,
+backtest, forecast, recommendation, or execution has occurred.
 
-## Active master-contract execution
+`KU-BO-CHK-D01` remains OPEN. A real run also lacks an admitted official
+one-security universe, live adapter registry, authenticated source trust and
+entitlements, and a physical durable store. The repository contains only
+logical private paths and sanitized conclusions; no private identifiers, raw
+private bytes, licensed data, or runtime HMAC keys are committed.
+
+## Historical Day One execution
 
 ```text
 task:                         KU-BO-2026-08-27-DAY1

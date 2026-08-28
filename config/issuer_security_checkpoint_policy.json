@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "ku-bo-issuer-security-checkpoint-v2",
+  "status": "SYNTHETIC_CONTRACT_ONLY",
+  "market": "BOURSA_KUWAIT",
+  "scope": {
+    "security_count": 1,
+    "planned_source_count": 29,
+    "wave_count": 7,
+    "max_active_sources": 1,
+    "maximum_worker_attempts_per_source": 2
+  },
+  "cas": {
+    "revision_required": true,
+    "generation_required": true,
+    "fencing_token_required": true,
+    "owner_run_id_required": true,
+    "prior_checkpoint_digest_required": true,
+    "revision_files_create_exclusive": true,
+    "terminal_sources_immutable": true
+  },
+  "completion": {
+    "all_29_terminal_before_reconciliation": true,
+    "all_manifests_reopened_before_reconciliation": true,
+    "terminal_hmac_required": true,
+    "second_security_allowed": false
+  },
+  "production": {
+    "authorized": false,
+    "status": "BLOCKED_PENDING_DURABLE_STORE_AND_RUNTIME_AUTHORITY"
+  },
+  "claim_boundaries": {
+    "synthetic_checkpoint_is_live_operational": false,
+    "content_digest_is_external_authentication": false,
+    "checkpoint_grants_source_access": false,
+    "checkpoint_grants_private_runtime_write_authority": false,
+    "checkpoint_unlocks_training_backtest_forecast_or_execution": false,
+    "terminal_seal_authorizes_a_second_security": false
+  }
+}

@@ -499,6 +499,12 @@ kubo validate-issuer-sequential-collection-run \
 فقط؛ فلا تُعد Content hashes توقيعًا ولا تثبت البايتات وحدها. التفاصيل
 والحدود في `docs/SECURITY_BY_SECURITY_COLLECTION_AR.md`.
 
+يضيف checkpoint v2 المنفصل سلسلة أجيال Append-only لسهم اصطناعي واحد، ويعيد
+فتح Manifest وRaw bytes قبل المصالحة، ثم يصدر ختم HMAC بمفتاح Runtime-only.
+تحقق السياسة فقط بالأمر `kubo validate-issuer-security-checkpoint-policy`.
+تبقى الكتابة الخاصة وGoogle Drive والجمع الحي محظورة، ولا يجيز الختم سهمًا ثانيًا؛
+التنفيذ الحالي `SYNTHETIC_ONLY` إلى أن يُحسم `KU-BO-CHK-D01` وتوجد بقية سلطات التشغيل.
+
 تشغّل GitHub Actions هذه البوابات على Python `3.11` و`3.12` و`3.13` و`3.14`. لا تثبت الوثائق عدد اختبارات ثابتًا؛ نتيجة CI الخاصة بالـCommit هي المرجع.
 
 تغطي الاختبارات حالات غياب بورصة الكويت، فتح قناة رسمية بلا Finding، المجتمع وحده، Finding مستقبلي، Hash تابع لمصدر آخر، Artifact جُمع بعد القرار، Access Receipt أوSearch Snippet كدليل، تضارب مستقل، إعادة النشر، Counts بلا Universe Receipt، Probability غير مدعومة، السيولة الصفرية، التعليق، Limit Queue، وPartial Fill.

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/issuer-security-reconciliation.schema.json",
+  "title": "KU-BO one-security source-denominator reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "checkpoint_id", "plan_sha256", "security_code",
+    "planned_source_count", "terminal_source_count", "wave_count",
+    "source_receipt_sha256s", "manifest_sha256s", "status",
+    "reconciled_at", "reconciliation_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-security-reconciliation-v1"},
+    "checkpoint_id": {"type": "string", "pattern": "^ISCP2-[A-F0-9]{24}$"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+    "planned_source_count": {"const": 29},
+    "terminal_source_count": {"const": 29},
+    "wave_count": {"const": 7},
+    "source_receipt_sha256s": {
+      "type": "array", "minItems": 29, "maxItems": 29,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "manifest_sha256s": {
+      "type": "array", "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "status": {"const": "PASS_29_TERMINAL_SOURCE_DENOMINATOR"},
+    "reconciled_at": {"type": "string", "format": "date-time"},
+    "reconciliation_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

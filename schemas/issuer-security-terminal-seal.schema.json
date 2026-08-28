@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubo.local/schemas/issuer-security-terminal-seal.schema.json",
+  "title": "KU-BO synthetic one-security HMAC terminal seal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "checkpoint_id", "plan_sha256", "security_code",
+    "identity_sha256", "reconciliation_sha256", "preseal_checkpoint_digest",
+    "source_receipt_sha256s", "manifest_sha256s",
+    "previous_security_seal_sha256", "algorithm", "key_id", "sealed_at",
+    "production_authorized", "second_security_authorized", "seal_tag"
+  ],
+  "properties": {
+    "schema_version": {"const": "issuer-security-terminal-seal-v1"},
+    "checkpoint_id": {"type": "string", "pattern": "^ISCP2-[A-F0-9]{24}$"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "security_code": {"type": "string", "pattern": "^[0-9]+$"},
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "reconciliation_sha256": {"$ref": "#/$defs/sha256"},
+    "preseal_checkpoint_digest": {"$ref": "#/$defs/sha256"},
+    "source_receipt_sha256s": {
+      "type": "array", "minItems": 29, "maxItems": 29,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "manifest_sha256s": {
+      "type": "array", "uniqueItems": true,
+      "items": {"$ref": "#/$defs/sha256"}
+    },
+    "previous_security_seal_sha256": {"type": "null"},
+    "algorithm": {"const": "HMAC-SHA256"},
+    "key_id": {"$ref": "#/$defs/identifier"},
+    "sealed_at": {"type": "string", "format": "date-time"},
+    "production_authorized": {"const": false},
+    "second_security_authorized": {"const": false},
+    "seal_tag": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"}
+  }
+}

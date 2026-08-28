@@ -27,6 +27,7 @@ from .issuer_sequential_collection import (
     validate_issuer_sequential_collection_run,
     write_issuer_sequential_collection_plan,
 )
+from .issuer_security_checkpoint import validate_issuer_security_checkpoint_policy
 from .ingestion import PublicHttpConnector
 from .ledger import ForecastLedger
 from .outcome_sessions import OutcomeSessionAuthority
@@ -134,6 +135,7 @@ PROJECT_CONFIG_COMMANDS = frozenset(
         "validate-issuer-sequential-collection-plan",
         "validate-issuer-sequential-collection-run",
         "plan-issuer-sequential-collection",
+        "validate-issuer-security-checkpoint-policy",
     }
 )
 
@@ -151,6 +153,7 @@ REQUIRED_PROJECT_CONFIG = (
     Path("config/source_access_recipes.json"),
     Path("config/source_fallback_policy.json"),
     Path("config/issuer_sequential_collection_policy.json"),
+    Path("config/issuer_security_checkpoint_policy.json"),
     Path("config/source_quality_policy.json"),
     Path("config/source_query_strategies.json"),
     Path("config/sources.json"),
@@ -322,6 +325,7 @@ def parser() -> argparse.ArgumentParser:
     company_dossier.add_argument("--output", type=Path)
 
     sub.add_parser("validate-issuer-sequential-collection-policy")
+    sub.add_parser("validate-issuer-security-checkpoint-policy")
 
     validate_sequential_plan = sub.add_parser(
         "validate-issuer-sequential-collection-plan"
@@ -547,6 +551,9 @@ def main(argv: list[str] | None = None) -> int:
             "issuer_sequential_collection_policy": (
                 validate_issuer_sequential_collection_policy(project_root)
             ),
+            "issuer_security_checkpoint_policy": (
+                validate_issuer_security_checkpoint_policy(project_root)
+            ),
             "predecessor_capability_parity": validate_predecessor_capability_parity(
                 project_root
             ),
@@ -631,6 +638,8 @@ def main(argv: list[str] | None = None) -> int:
             write_company_dossier_report(args.output, report)
     elif args.command == "validate-issuer-sequential-collection-policy":
         report = validate_issuer_sequential_collection_policy(project_root)
+    elif args.command == "validate-issuer-security-checkpoint-policy":
+        report = validate_issuer_security_checkpoint_policy(project_root)
     elif args.command == "validate-issuer-sequential-collection-plan":
         plan = _load_strict_json_object(args.plan, "sequential collection plan")
         runtime_trust_registry = None
